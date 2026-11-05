@@ -96,9 +96,11 @@
     .eliminated-text { color: #94a3b8 !important; text-decoration: line-through; }
     .dark .eliminated-text { color: #64748b !important; text-decoration: line-through; }
     
-    /* Sparkline Styling */
-    .sparkline-path { fill: none; stroke: #0284c7; stroke-width: 2px; }
-    .dark .sparkline-path { stroke: #38bdf8; }
+    /* Sparkline Styling & Hover Nodes */
+    .sparkline-path { fill: none; stroke: #64748b; stroke-width: 1.5px; opacity: 0.6; }
+    .dark .sparkline-path { stroke: #94a3b8; opacity: 0.6; }
+    .sparkline-dot { transition: r 0.15s ease, filter 0.15s ease; }
+    .sparkline-dot:hover { r: 5.5; filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.8)); }
   </style>
 </head>
 
@@ -185,18 +187,16 @@
   <main class="max-w-[1700px] mx-auto px-4 py-4">
 
     <!-- STANDINGS TAB CONTENT -->
-    <section id="tab-standings" class="tab-content space-y-4">
+    <section id="tab-standings" class="tab-content space-y-3">
       
-      <div class="bg-white/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 rounded-lg p-3 text-xs text-slate-700 dark:text-slate-300 flex flex-wrap items-center justify-between gap-2 shadow-sm">
-        <div>
-          <strong class="text-slate-900 dark:text-white">Standings Formula Legend:</strong>
-          <span class="ml-2 text-slate-600 dark:text-slate-400"><strong class="text-slate-800 dark:text-slate-300">ETEW%</strong> = avg share of league outscored each week · <strong class="text-slate-800 dark:text-slate-300">WABL</strong> = wins − (ETEW% × games) · <strong class="text-slate-800 dark:text-slate-300">RABL</strong> = ETEW rank − actual rank · <strong class="text-slate-800 dark:text-slate-300">AVG*</strong> = trimmed avg (excl. best & worst week) · <span class="border-b border-dashed border-brand-500 dark:border-brand-400 text-brand-600 dark:text-brand-300 font-semibold">dashed line</span> = playoff cut</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <button id="btn-export-standings-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 flex items-center gap-1">
-            <i class="fa-solid fa-download text-xs"></i> CSV
-          </button>
-        </div>
+      <!-- Toolbar Row with Title & Export Button -->
+      <div class="flex items-center justify-between gap-2 px-1">
+        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-list-ol text-brand-500"></i> League Standings
+        </h2>
+        <button id="btn-export-standings-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
+          <i class="fa-solid fa-download text-xs"></i> CSV
+        </button>
       </div>
 
       <!-- Standings Table Container -->
@@ -204,21 +204,21 @@
         <table class="standings-table" id="standings-table">
           <thead>
             <tr>
-              <th data-sort="actualRank" class="text-center">RANK</th>
-              <th data-sort="team_name" class="text-left">TEAM</th>
-              <th data-sort="W" class="text-center">W-L-T</th>
-              <th data-sort="PF" class="text-right">PF</th>
-              <th data-sort="PA" class="text-right">PA</th>
-              <th data-sort="ETEW_pct" class="text-right">ETEW%</th>
-              <th data-sort="WABL" class="text-right">WABL</th>
-              <th data-sort="RABL" class="text-right">RABL</th>
-              <th data-sort="bestScore" class="text-right">BEST_WK</th>
-              <th data-sort="worstScore" class="text-right">WORST_WK</th>
-              <th data-sort="AVG" class="text-right">AVG</th>
-              <th data-sort="AVG_star" class="text-right">AVG*</th>
-              <th data-sort="SDEV" class="text-right">SDEV</th>
-              <th data-sort="faab" class="text-right">FAAB</th>
-              <th class="text-center">TREND</th>
+              <th data-sort="actualRank" class="text-center" title="Standings rank based on Wins, then Points For (PF)">RANK</th>
+              <th data-sort="team_name" class="text-left" title="Team Name & Manager (Green = Clinched Playoffs, Strikethrough = Eliminated)">TEAM</th>
+              <th data-sort="W" class="text-center" title="Head-to-head regular season record (Wins - Losses - Ties)">W-L-T</th>
+              <th data-sort="PF" class="text-right" title="Points For: Total points scored during regular season weeks">PF</th>
+              <th data-sort="PA" class="text-right" title="Points Allowed: Total points scored by opponents against this team">PA</th>
+              <th data-sort="ETEW_pct" class="text-right" title="Every Team Every Week %: Average share of all other league teams outscored each week">ETEW%</th>
+              <th data-sort="WABL" class="text-right" title="Wins Above League Level: Actual Wins minus ETEW Expected Wins (Wins - [ETEW% × Games])">WABL</th>
+              <th data-sort="RABL" class="text-right" title="Rank Above League Level: ETEW Rank minus Standings Rank">RABL</th>
+              <th data-sort="bestScore" class="text-right" title="Single highest weekly score and week number">BEST_WK</th>
+              <th data-sort="worstScore" class="text-right" title="Single lowest weekly score and week number">WORST_WK</th>
+              <th data-sort="AVG" class="text-right" title="Average points scored per week">AVG</th>
+              <th data-sort="AVG_star" class="text-right" title="Trimmed average score excluding single highest and single lowest week">AVG*</th>
+              <th data-sort="SDEV" class="text-right" title="Sample standard deviation of weekly scores (scoring consistency)">SDEV</th>
+              <th data-sort="faab" class="text-right" title="Free Agent Acquisition Budget remaining balance">FAAB</th>
+              <th class="text-center" title="Weekly scoring trend. Hover over dots to view weekly match details">TREND</th>
             </tr>
           </thead>
           <tbody id="standings-tbody">
@@ -228,6 +228,9 @@
       </div>
     </section>
   </main>
+
+  <!-- SPARKLINE HOVER TOOLTIP DIV -->
+  <div id="sparkline-tooltip" class="fixed hidden pointer-events-none z-50 bg-slate-900/95 text-white text-xs px-3 py-2 rounded-lg shadow-2xl border border-slate-700 backdrop-blur font-sans"></div>
 
   <!-- HELP GLOSSARY MODAL -->
   <div id="help-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -358,6 +361,10 @@
       return { min, mid, max };
     }
 
+    function escapeHTML(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     // ==========================================
     // SECTION 2: METRIC ENGINE
     // ==========================================
@@ -383,7 +390,8 @@
               manager_name: r.manager_name || '',
               team_name: r.team_name || '',
               team_points: Number(r.team_points) || 0,
-              opponent_points: Number(r.opponent_points) || 0
+              opponent_points: Number(r.opponent_points) || 0,
+              opponent_team_id: Number(r.opponent_team_id) || 0
             };
           }
         });
@@ -466,6 +474,22 @@
             sdev = Math.sqrt(variance);
           }
 
+          // Build Detailed Weekly Match Breakdown for Sparkline Tooltips
+          const weeklyDetails = group.sort((a,b) => a.week - b.week).map(r => {
+            const oppMeta = teamMetaMap[r.opponent_team_id] || {};
+            const oppName = oppMeta.team_name || `Team ${r.opponent_team_id}`;
+            const oppMgr = oppMeta.manager || '';
+            const res = r.team_points > r.opponent_points ? 'W' : (r.team_points < r.opponent_points ? 'L' : 'T');
+            return {
+              week: r.week,
+              pts: r.team_points,
+              oppPts: r.opponent_points,
+              oppName: oppName,
+              oppMgr: oppMgr,
+              result: res
+            };
+          });
+
           result.push({
             team_id: Number(team_id),
             manager: mgr,
@@ -486,7 +510,7 @@
             AVG_star: avgStar,
             SDEV: sdev,
             faab: Number(meta.faab_balance) || 0,
-            weeklyScores: group.sort((a,b) => a.week - b.week).map(r => r.team_points),
+            weeklyDetails: weeklyDetails,
             playoffStartWeek: Number(meta.playoff_start_week) || 15,
             numPlayoffTeams: Number(meta.num_playoff_teams) || 6
           });
@@ -536,19 +560,12 @@
         const curYear = Number(cw[0].year);
         const curWeek = Number(cw[0].week);
 
-        // Check if URL hash has parameters
         const hash = window.location.hash.replace('#', '');
         const params = new URLSearchParams(hash);
 
-        if (!params.has('year')) {
-          STATE.filters.year = curYear;
-        }
-        if (!params.has('wmin')) {
-          STATE.filters.weekMin = 1;
-        }
-        if (!params.has('wmax')) {
-          STATE.filters.weekMax = Math.max(1, curWeek - 1);
-        }
+        if (!params.has('year')) STATE.filters.year = curYear;
+        if (!params.has('wmin')) STATE.filters.weekMin = 1;
+        if (!params.has('wmax')) STATE.filters.weekMax = Math.max(1, curWeek - 1);
       }
     }
 
@@ -618,7 +635,7 @@
     }
 
     // ==========================================
-    // SECTION 4: TABLE RENDERER & FORMATTING
+    // SECTION 4: TABLE RENDERER & SPARKLINE ENGINE
     // ==========================================
     function populateYearSelector() {
       const yearSelect = document.getElementById('filter-year');
@@ -690,29 +707,18 @@
         const isCutoff = r.actualRank === 6;
         const rowClass = isCutoff ? "playoff-cutoff-row" : "";
 
-        // Cell Color Assignments:
-        // 1. W-L-T, ETEW%, FAAB, PF: green > clear > red
+        // Cell Color Assignments
         const wBg = HEATMAPS.greenClearRed(r.winPct, wStats.min, wStats.mid, wStats.max);
         const etewBg = HEATMAPS.greenClearRed(r.ETEW_pct, etewStats.min, 0.50, etewStats.max);
         const faabBg = HEATMAPS.greenClearRed(r.faab, faabStats.min, faabStats.mid, faabStats.max);
         const pfBg = HEATMAPS.greenClearRed(r.PF, pfStats.min, pfStats.mid, pfStats.max);
-
-        // 2. PA: Highest = Red, Lowest = Clear
         const paBg = HEATMAPS.redToClear(r.PA, paStats.min, paStats.max);
-
-        // 3. SDEV: Highest = Red, Lowest = Green (red > clear > green)
         const sdevBg = HEATMAPS.redClearGreen(r.SDEV, sdevStats.min, sdevStats.mid, sdevStats.max);
-
-        // 4. WABL, RABL: green > clear > red (zero-centered)
         const wablBg = HEATMAPS.zeroCenteredDiverging(r.WABL, maxAbsWABL);
         const rablBg = HEATMAPS.zeroCenteredDiverging(r.RABL, maxAbsRABL);
-
-        // 5. BEST_WK, AVG, AVG*: green > clear (highest > lowest)
         const bestBg = HEATMAPS.greenToClear(r.bestScore, bestStats.min, bestStats.max);
         const avgBg = HEATMAPS.greenToClear(r.AVG, avgStats.min, avgStats.max);
         const avgStarBg = HEATMAPS.greenToClear(r.AVG_star, avgStarStats.min, avgStarStats.max);
-
-        // 6. WORST_WK: clear > red (highest > lowest)
         const worstBg = HEATMAPS.clearToRed(r.worstScore, worstStats.min, worstStats.max);
 
         return `
@@ -734,22 +740,41 @@
             <td class="text-right font-mono" style="background-color: ${avgStarBg}">${r.AVG_star.toFixed(2)}</td>
             <td class="text-right font-mono" style="background-color: ${sdevBg}">${r.SDEV.toFixed(2)}</td>
             <td class="text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold" style="background-color: ${faabBg}">$${r.faab}</td>
-            <td class="text-center">${generateSparklineSVG(r.weeklyScores)}</td>
+            <td class="text-center">${generateSparklineSVG(r.weeklyDetails)}</td>
           </tr>`;
       }).join('');
     }
 
-    function generateSparklineSVG(scores) {
-      if (!scores || scores.length === 0) return '';
-      const w = 90, h = 24, pad = 3, min = Math.min(...scores), max = Math.max(...scores), r = (max - min) || 1;
-      const pts = scores.map((v, i) => `${(pad + (i / Math.max(1, scores.length - 1)) * (w - 2 * pad)).toFixed(1)},${(h - pad - ((v - min) / r) * (h - 2 * pad)).toFixed(1)}`).join(' ');
-      const lastX = (pad + ((scores.length - 1) / Math.max(1, scores.length - 1)) * (w - 2 * pad)).toFixed(1);
-      const lastY = (h - pad - ((scores[scores.length - 1] - min) / r) * (h - 2 * pad)).toFixed(1);
+    function generateSparklineSVG(weeklyDetails) {
+      if (!weeklyDetails || weeklyDetails.length === 0) return '';
+      const w = 100, h = 28, pad = 5;
+      const scores = weeklyDetails.map(d => d.pts);
+      const min = Math.min(...scores), max = Math.max(...scores);
+      const r = (max - min) || 1;
+
+      const pts = weeklyDetails.map((d, i) => {
+        const x = pad + (i / Math.max(1, weeklyDetails.length - 1)) * (w - 2 * pad);
+        const y = h - pad - ((d.pts - min) / r) * (h - 2 * pad);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+
+      const dots = weeklyDetails.map((d, i) => {
+        const x = (pad + (i / Math.max(1, weeklyDetails.length - 1)) * (w - 2 * pad)).toFixed(1);
+        const y = (h - pad - ((d.pts - min) / r) * (h - 2 * pad)).toFixed(1);
+
+        // Color coding: Win = Green, Loss = Red, Tie = Amber
+        const color = d.result === 'W' ? '#22c55e' : (d.result === 'L' ? '#ef4444' : '#f59e0b');
+        const resColorClass = d.result === 'W' ? 'text-emerald-400 font-bold' : (d.result === 'L' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
+
+        const tooltipInfo = `<div class="font-bold text-slate-100">Week ${d.week} vs ${escapeHTML(d.oppName)}${d.oppMgr ? ' <span class="text-slate-400 font-normal">(' + escapeHTML(d.oppMgr) + ')</span>' : ''}</div><div class="mt-0.5 flex items-center gap-1.5 font-mono"><span class="${resColorClass}">${d.result}</span> <span>${d.pts.toFixed(2)} - ${d.oppPts.toFixed(2)}</span></div>`;
+
+        return `<circle cx="${x}" cy="${y}" r="3" fill="${color}" class="sparkline-dot cursor-pointer" data-info="${escapeHTML(tooltipInfo)}"/>`;
+      }).join('');
 
       return `
         <svg width="${w}" height="${h}" class="overflow-visible inline-block">
           <polyline points="${pts}" class="sparkline-path"/>
-          <circle cx="${lastX}" cy="${lastY}" r="2.5" fill="#38bdf8" />
+          ${dots}
         </svg>`;
     }
 
@@ -770,10 +795,35 @@
     }
 
     // ==========================================
-    // SECTION 5: INITIALIZATION & HANDLERS
+    // SECTION 5: INITIALIZATION & HOVER EVENT HANDLERS
     // ==========================================
     document.addEventListener('DOMContentLoaded', async () => {
       initTheme();
+
+      // Sparkline Hover Event Delegation
+      const tooltip = document.getElementById('sparkline-tooltip');
+      document.addEventListener('mouseover', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          const info = e.target.getAttribute('data-info');
+          if (info) {
+            tooltip.innerHTML = info;
+            tooltip.classList.remove('hidden');
+          }
+        }
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!tooltip.classList.contains('hidden')) {
+          tooltip.style.left = (e.clientX + 12) + 'px';
+          tooltip.style.top = (e.clientY + 12) + 'px';
+        }
+      });
+
+      document.addEventListener('mouseout', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          tooltip.classList.add('hidden');
+        }
+      });
 
       // Sorting Click Handlers
       document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
