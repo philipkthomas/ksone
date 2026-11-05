@@ -207,7 +207,6 @@
     <!-- LIVE WIN PROB TAB CONTENT -->
     <section id="tab-live_prob" class="tab-content space-y-4 hidden">
       
-      <!-- Live Win Prob Controls Header -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex flex-wrap items-center gap-5">
           <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -227,26 +226,15 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-5">
-          <!-- Speed Control Slider -->
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800">
-            <span class="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
-              <i class="fa-solid fa-gauge-high text-brand-500"></i> Speed:
-            </span>
-            <input type="range" id="live-prob-speed" min="1" max="10" value="5" class="w-24 accent-brand-500 cursor-pointer">
-            <span id="speed-label" class="font-mono font-bold text-brand-600 dark:text-brand-400 w-8 text-right">1.0x</span>
-          </div>
-
+        <div class="flex items-center gap-3">
           <button id="btn-replay-animation" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-4 py-1.5 rounded-md transition shadow flex items-center gap-2">
-            <i class="fa-solid fa-play"></i> Replay Graph
+            <i class="fa-solid fa-rotate-right"></i> Replay Graph
           </button>
         </div>
       </div>
 
-      <!-- Matchup Summary Scorecard -->
       <div id="live-prob-scorecard" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-          
           <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
             <div>
               <span id="scorecard-tma-mgr" class="text-xs text-slate-500 dark:text-slate-400 block font-normal">--</span>
@@ -270,11 +258,9 @@
               <div class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-0.5">Win Prob: <span id="scorecard-tmb-wp" class="text-orange-500">--%</span></div>
             </div>
           </div>
-
         </div>
       </div>
 
-      <!-- Live Win Prob Chart Container -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
         <div class="relative w-full h-[480px]">
           <canvas id="liveWinProbChart"></canvas>
@@ -317,8 +303,7 @@
       liveProb: {
         chartInstance: null,
         fullSeries: null,
-        animationTimer: null,
-        replayIndex: 0
+        animationTimer: null
       }
     };
 
@@ -402,6 +387,7 @@
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    // Helper for robust property reading across sqlite/CSV case differences
     function getVal(obj, keys) {
       if (!obj) return undefined;
       for (let k of keys) {
@@ -579,63 +565,15 @@
     };
 
     // ==========================================
-    // SECTION 3: FAIL-SAFE DATA PIPELINE WITH TIMEOUTS
+    // SECTION 3: ROBUST DATA PIPELINE (FETCH TIMEOUT & FALLBACKS)
     // ==========================================
-    function parseCSVUrl(url, timeoutMs = 2000) {
-      return new Promise((resolve) => {
-        let done = false;
-        const timer = setTimeout(() => {
-          if (!done) { done = true; resolve([]); }
-        }, timeoutMs);
-
-        try {
-          Papa.parse(url, {
-            download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
-            complete: (res) => {
-              if (!done) { done = true; clearTimeout(timer); resolve(res.data || []); }
-            },
-            error: () => {
-              if (!done) { done = true; clearTimeout(timer); resolve([]); }
-            }
-          });
-        } catch (e) {
-          if (!done) { done = true; clearTimeout(timer); resolve([]); }
-        }
+    function parseCSVUrl(url) {
+      return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+          download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
+          complete: (res) => resolve(res.data), error: (err) => reject(err)
+        });
       });
-    }
-
-    function loadSqlJsWithTimeout(timeoutMs = 2000) {
-      return new Promise((resolve) => {
-        let done = false;
-        const timer = setTimeout(() => {
-          if (!done) { done = true; resolve(null); }
-        }, timeoutMs);
-
-        if (!window.initSqlJs) {
-          clearTimeout(timer); return resolve(null);
-        }
-
-        window.initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` })
-          .then(SQL => {
-            if (!done) { done = true; clearTimeout(timer); resolve(SQL); }
-          })
-          .catch(() => {
-            if (!done) { done = true; clearTimeout(timer); resolve(null); }
-          });
-      });
-    }
-
-    async function fetchWithTimeout(url, timeoutMs = 2500) {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(id);
-        return res;
-      } catch (err) {
-        clearTimeout(id);
-        throw err;
-      }
     }
 
     function applyDefaultFiltersFromCurrentWeek() {
@@ -656,70 +594,79 @@
       }
     }
 
+    async function fetchWithTimeout(url, timeoutMs = 5000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(id);
+        return res;
+      } catch (err) {
+        clearTimeout(id);
+        throw err;
+      }
+    }
+
     async function loadDataPipeline() {
       updateStatus("amber", "Loading data...");
       let loaded = false;
 
-      const autoLoadPromise = (async () => {
-        // 1. Try Remote SQLite
-        try {
-          const response = await fetchWithTimeout('https://pub-19c72385a8a14ab098f1badf7251e65b.r2.dev/live.db', 2500);
-          if (response.ok) {
-            const buffer = await response.arrayBuffer();
-            const SQL = await loadSqlJsWithTimeout(2500);
-            if (SQL) {
-              const db = new SQL.Database(new Uint8Array(buffer));
-              ['scores', 'teams', 'transactions', 'points', 'currentweek'].forEach(table => {
-                try {
-                  const res = db.exec(`SELECT * FROM ${table}`);
-                  if (res.length > 0) {
-                    const cols = res[0].columns;
-                    STATE.data[table] = res[0].values.map(row => {
-                      const obj = {};
-                      cols.forEach((col, idx) => obj[col] = row[idx]);
-                      return obj;
-                    });
-                  }
-                } catch (e) {}
-              });
-              db.close();
-              if ((STATE.data.points && STATE.data.points.length > 0) || (STATE.data.scores && STATE.data.scores.length > 0)) {
-                loaded = true;
+      // 1. Primary Engine: Remote SQLite live.db with 5s strict timeout
+      try {
+        const response = await fetchWithTimeout('https://pub-19c72385a8a14ab098f1badf7251e65b.r2.dev/live.db', 5000);
+        if (response.ok) {
+          const buffer = await response.arrayBuffer();
+          if (window.initSqlJs) {
+            const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
+            const db = new SQL.Database(new Uint8Array(buffer));
+            
+            ['scores', 'teams', 'transactions', 'points', 'currentweek'].forEach(table => {
+              try {
+                const res = db.exec(`SELECT * FROM ${table}`);
+                if (res.length > 0) {
+                  const cols = res[0].columns;
+                  STATE.data[table] = res[0].values.map(row => {
+                    const obj = {};
+                    cols.forEach((col, idx) => obj[col] = row[idx]);
+                    return obj;
+                  });
+                }
+              } catch (e) {
+                console.warn(`Table ${table} query failed:`, e);
               }
-            }
-          }
-        } catch (err) {
-          console.warn("Remote SQLite bypass:", err);
-        }
-
-        // 2. Try Local CSVs if SQLite didn't yield data
-        if (!loaded) {
-          try {
-            const [points, teams, scores, transactions, currentweek] = await Promise.all([
-              parseCSVUrl('./points.csv', 1800),
-              parseCSVUrl('./teams.csv', 1800),
-              parseCSVUrl('./scores.csv', 1800),
-              parseCSVUrl('./transactions.csv', 1800),
-              parseCSVUrl('./currentweek.csv', 1800)
-            ]);
-
-            if (points && points.length > 0) {
-              STATE.data = { points, teams, scores, transactions, currentweek };
+            });
+            db.close();
+            if ((STATE.data.points && STATE.data.points.length > 0) || (STATE.data.scores && STATE.data.scores.length > 0)) {
               loaded = true;
             }
-          } catch (err) {
-            console.warn("CSV bypass:", err);
           }
         }
+      } catch (err) {
+        console.warn("Remote SQLite fetch timed out or failed. Attempting CSV fallback...", err);
+      }
 
-        return loaded;
-      })();
+      // 2. Secondary Engine: Repository CSV Fallback
+      if (!loaded) {
+        try {
+          const [points, teams, scores, transactions, currentweek] = await Promise.all([
+            parseCSVUrl('./points.csv').catch(() => []),
+            parseCSVUrl('./teams.csv').catch(() => []),
+            parseCSVUrl('./scores.csv').catch(() => []),
+            parseCSVUrl('./transactions.csv').catch(() => []),
+            parseCSVUrl('./currentweek.csv').catch(() => [])
+          ]);
 
-      // Hard 3.5s limit to guarantee status indicator never hangs on yellow
-      const timeoutFallback = new Promise(resolve => setTimeout(() => resolve(false), 3500));
-      const isDataReady = await Promise.race([autoLoadPromise, timeoutFallback]);
+          if (points && points.length > 0) {
+            STATE.data = { points, teams, scores, transactions, currentweek };
+            loaded = true;
+          }
+        } catch (err) {
+          console.warn("CSV Fallback failed:", err);
+        }
+      }
 
-      if (isDataReady && ((STATE.data.points && STATE.data.points.length > 0) || (STATE.data.scores && STATE.data.scores.length > 0))) {
+      // 3. UI Update / Fallback Banner State
+      if (loaded) {
         applyDefaultFiltersFromCurrentWeek();
         populateYearSelector();
         updateFilterUI();
@@ -741,10 +688,10 @@
               <i class="fa-solid fa-file-circle-exclamation text-amber-500 text-3xl"></i>
               <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">No Data Sources Connected</h3>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Could not auto-fetch live.db or local CSVs (due to file:// browser CORS restrictions).
+                Could not automatically fetch live SQLite or local CSVs (due to local browser CORS or server restrictions).
               </p>
               <label for="csv-upload" class="inline-block cursor-pointer bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow transition">
-                <i class="fa-solid fa-upload mr-1.5"></i> Select live.db or CSV Files
+                <i class="fa-solid fa-upload mr-1.5"></i> Add CSVs / live.db File Now
               </label>
             </div>
           </td>
@@ -947,7 +894,6 @@
       const weekSelect = document.getElementById('live-prob-week');
       const matchupSelect = document.getElementById('live-prob-matchup');
       const replayBtn = document.getElementById('btn-replay-animation');
-      const speedSlider = document.getElementById('live-prob-speed');
 
       if (!weekSelect || !matchupSelect) return;
 
@@ -966,17 +912,6 @@
         replayBtn.addEventListener('click', () => {
           if (STATE.liveProb.fullSeries) {
             playGraphReplayAnimation();
-          }
-        });
-      }
-
-      if (speedSlider) {
-        speedSlider.addEventListener('input', (e) => {
-          const val = Number(e.target.value);
-          const mult = (val / 5).toFixed(1);
-          document.getElementById('speed-label').innerText = `${mult}x`;
-          if (STATE.liveProb.animationTimer && STATE.liveProb.fullSeries) {
-            restartAnimationInterval();
           }
         });
       }
@@ -1121,35 +1056,28 @@
       STATE.liveProb.fullSeries = {
         metaA, metaB, labels,
         tmaPts, tmbPts, tmaProj, tmbProj, tmaWp, tmbWp,
-        rows: rows
+        lastRow: rows[rows.length - 1]
       };
 
-      updateScorecardToFrame(rows.length - 1);
-      playGraphReplayAnimation();
-    }
-
-    function updateScorecardToFrame(idx) {
-      const s = STATE.liveProb.fullSeries;
-      if (!s || !s.rows || s.rows.length === 0) return;
-      const targetIdx = Math.min(idx, s.rows.length - 1);
-      const row = s.rows[targetIdx];
-
-      const nameA = getVal(s.metaA, ['team_name', 'name']) || `Team A`;
-      const mgrA = getVal(s.metaA, ['manager', 'manager_name']);
-      const nameB = getVal(s.metaB, ['team_name', 'name']) || `Team B`;
-      const mgrB = getVal(s.metaB, ['manager', 'manager_name']);
+      const last = rows[rows.length - 1];
+      const nameA = getVal(metaA, ['team_name', 'name']) || `Team ${tma}`;
+      const mgrA = getVal(metaA, ['manager', 'manager_name']);
+      const nameB = getVal(metaB, ['team_name', 'name']) || `Team ${tmb}`;
+      const mgrB = getVal(metaB, ['manager', 'manager_name']);
 
       document.getElementById('scorecard-tma-name').innerText = nameA;
       document.getElementById('scorecard-tma-mgr').innerText = mgrA ? `Manager: ${mgrA}` : '';
-      document.getElementById('scorecard-tma-pts').innerText = Number(getVal(row, ['TMAPTS', 'team_points']) || 0).toFixed(2);
-      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${Number(getVal(row, ['TMAPROJ', 'team_proj_points']) || 0).toFixed(2)}`;
-      document.getElementById('scorecard-tma-wp').innerText = `${Number(getVal(row, ['TMAWP']) || 0).toFixed(0)}%`;
+      document.getElementById('scorecard-tma-pts').innerText = Number(getVal(last, ['TMAPTS', 'team_points']) || 0).toFixed(2);
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${Number(getVal(last, ['TMAPROJ', 'team_proj_points']) || 0).toFixed(2)}`;
+      document.getElementById('scorecard-tma-wp').innerText = `${Number(getVal(last, ['TMAWP']) || 0).toFixed(0)}%`;
 
       document.getElementById('scorecard-tmb-name').innerText = nameB;
       document.getElementById('scorecard-tmb-mgr').innerText = mgrB ? `Manager: ${mgrB}` : '';
-      document.getElementById('scorecard-tmb-pts').innerText = Number(getVal(row, ['TMBPTS', 'opponent_points']) || 0).toFixed(2);
-      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${Number(getVal(row, ['TMBPROJ', 'opponent_proj_points']) || 0).toFixed(2)}`;
-      document.getElementById('scorecard-tmb-wp').innerText = `${Number(getVal(row, ['TMBWP']) || 0).toFixed(0)}%`;
+      document.getElementById('scorecard-tmb-pts').innerText = Number(getVal(last, ['TMBPTS', 'opponent_points']) || 0).toFixed(2);
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${Number(getVal(last, ['TMBPROJ', 'opponent_proj_points']) || 0).toFixed(2)}`;
+      document.getElementById('scorecard-tmb-wp').innerText = `${Number(getVal(last, ['TMBWP']) || 0).toFixed(0)}%`;
+
+      playGraphReplayAnimation();
     }
 
     function playGraphReplayAnimation() {
@@ -1160,64 +1088,39 @@
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
 
-      STATE.liveProb.replayIndex = 1;
+      const total = s.labels.length;
+      let currentIdx = 1;
+      const step = Math.max(1, Math.floor(total / 60));
 
       initOrUpdateChart(
-        s.labels,
-        getSlicedArray(s.tmaPts, 1),
-        getSlicedArray(s.tmbPts, 1),
-        getSlicedArray(s.tmaProj, 1),
-        getSlicedArray(s.tmbProj, 1),
-        getSlicedArray(s.tmaWp, 1),
-        getSlicedArray(s.tmbWp, 1),
+        s.labels.slice(0, currentIdx),
+        s.tmaPts.slice(0, currentIdx),
+        s.tmbPts.slice(0, currentIdx),
+        s.tmaProj.slice(0, currentIdx),
+        s.tmbProj.slice(0, currentIdx),
+        s.tmaWp.slice(0, currentIdx),
+        s.tmbWp.slice(0, currentIdx),
         getVal(s.metaA, ['team_name', 'name']) || 'Team A',
         getVal(s.metaB, ['team_name', 'name']) || 'Team B'
       );
 
-      restartAnimationInterval();
-    }
-
-    function restartAnimationInterval() {
-      if (STATE.liveProb.animationTimer) {
-        clearInterval(STATE.liveProb.animationTimer);
-      }
-
-      const s = STATE.liveProb.fullSeries;
-      if (!s) return;
-
-      const total = s.labels.length;
-      const speedVal = Number(document.getElementById('live-prob-speed').value || 5);
-      const intervalMs = Math.max(6, Math.round(100 / (speedVal * 0.7)));
-      const stepSize = speedVal > 8 ? 2 : 1;
-
       STATE.liveProb.animationTimer = setInterval(() => {
-        STATE.liveProb.replayIndex += stepSize;
-        if (STATE.liveProb.replayIndex >= total) {
-          STATE.liveProb.replayIndex = total;
+        currentIdx += step;
+        if (currentIdx >= total) {
+          currentIdx = total;
           clearInterval(STATE.liveProb.animationTimer);
         }
 
-        const idx = STATE.liveProb.replayIndex;
         updateChartDataSlices(
-          getSlicedArray(s.tmaPts, idx),
-          getSlicedArray(s.tmbPts, idx),
-          getSlicedArray(s.tmaProj, idx),
-          getSlicedArray(s.tmbProj, idx),
-          getSlicedArray(s.tmaWp, idx),
-          getSlicedArray(s.tmbWp, idx)
+          s.labels.slice(0, currentIdx),
+          s.tmaPts.slice(0, currentIdx),
+          s.tmbPts.slice(0, currentIdx),
+          s.tmaProj.slice(0, currentIdx),
+          s.tmbProj.slice(0, currentIdx),
+          s.tmaWp.slice(0, currentIdx),
+          s.tmbWp.slice(0, currentIdx)
         );
-
-        updateScorecardToFrame(idx - 1);
-      }, intervalMs);
-    }
-
-    function getSlicedArray(arr, length) {
-      if (!arr) return [];
-      const res = new Array(arr.length).fill(null);
-      for (let i = 0; i < length && i < arr.length; i++) {
-        res[i] = arr[i];
-      }
-      return res;
+      }, 30);
     }
 
     function initOrUpdateChart(labels, tmaPts, tmbPts, tmaProj, tmbProj, tmaWp, tmbWp, nameA, nameB) {
@@ -1285,10 +1188,9 @@
             {
               label: `${nameA} Win %`,
               data: tmaWp,
-              borderColor: 'rgba(14, 165, 233, 0.6)',
-              backgroundColor: 'rgba(14, 165, 233, 0.25)',
+              borderColor: 'rgba(14, 165, 233, 0.4)',
+              backgroundColor: 'rgba(14, 165, 233, 0.15)',
               fill: 'origin',
-              stack: 'winprob',
               borderWidth: 1.5,
               pointRadius: 0,
               yAxisID: 'y1',
@@ -1297,10 +1199,9 @@
             {
               label: `${nameB} Win %`,
               data: tmbWp,
-              borderColor: 'rgba(249, 115, 22, 0.6)',
-              backgroundColor: 'rgba(249, 115, 22, 0.25)',
-              fill: '-1',
-              stack: 'winprob',
+              borderColor: 'rgba(249, 115, 22, 0.4)',
+              backgroundColor: 'rgba(249, 115, 22, 0.15)',
+              fill: 'origin',
               borderWidth: 1.5,
               pointRadius: 0,
               yAxisID: 'y1',
@@ -1346,7 +1247,6 @@
               type: 'linear',
               display: true,
               position: 'left',
-              stacked: false,
               title: { display: true, text: 'Points Scored', color: textColor, font: { size: 11, weight: '700' } },
               grid: { color: gridColor },
               ticks: { color: textColor, font: { size: 10 } },
@@ -1356,7 +1256,6 @@
               type: 'linear',
               display: true,
               position: 'right',
-              stacked: true,
               title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '700' } },
               grid: { drawOnChartArea: false },
               ticks: { color: textColor, font: { size: 10 }, callback: v => `${v}%` },
@@ -1368,10 +1267,11 @@
       });
     }
 
-    function updateChartDataSlices(tmaPts, tmbPts, tmaProj, tmbProj, tmaWp, tmbWp) {
+    function updateChartDataSlices(labels, tmaPts, tmbPts, tmaProj, tmbProj, tmaWp, tmbWp) {
       const chart = STATE.liveProb.chartInstance;
       if (!chart) return;
 
+      chart.data.labels = labels;
       chart.data.datasets[0].data = tmaPts;
       chart.data.datasets[1].data = tmbPts;
       chart.data.datasets[2].data = tmaProj;
@@ -1470,8 +1370,10 @@
         document.body.removeChild(link);
       });
 
+      // Flexible File Upload supporting both .csv files and .sqlite/.db database files
       document.getElementById('csv-upload').addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
+        let parsedAny = false;
 
         files.forEach(file => {
           const fileName = file.name.toLowerCase();
@@ -1503,7 +1405,9 @@
                   initLiveProbTab();
                   updateStatus("emerald", "Live");
                 }
-              } catch (err) {}
+              } catch (err) {
+                console.error("Failed to parse loaded SQLite DB", err);
+              }
             };
             reader.readAsArrayBuffer(file);
           } else if (fileName.endsWith('.csv')) {
@@ -1512,6 +1416,7 @@
               header: true, dynamicTyping: true, skipEmptyLines: true,
               complete: (res) => { 
                 STATE.data[tableKey] = res.data; 
+                parsedAny = true;
                 applyDefaultFiltersFromCurrentWeek();
                 populateYearSelector(); 
                 renderStandingsTable(); 
