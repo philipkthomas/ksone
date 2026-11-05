@@ -199,7 +199,10 @@ const tlab = d => {
   const hh = (d.getHours() % 12) || 12;
   const mm = String(d.getMinutes()).padStart(2, '0');
   const dateStr = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
-  return `${mm}\n${hh}:\n${dy}\n${dateStr}`;
+  return `${mm}
+${hh}:
+${dy}
+${dateStr}`;
 };
 
 function liveCtx() {
@@ -321,3 +324,71 @@ V.live.post = () => {
     series: [
       { name: A.team + ' win %', type: 'line', stack: 'wp', symbol: 'none', data: awData, color: cA, lineStyle: { width: 0 }, areaStyle: { opacity: .45, color: cA } },
       { name: B.team + ' win %', type: 'line', stack: 'wp', symbol: 'none', data: bwData, color: cB, lineStyle: { width: 0 }, areaStyle: { opacity: .45, color: cB }, markLine: { symbol: 'none', silent: true, label: { show: false }, lineStyle: { type: 'dashed', color: '#666', width: 1.5 }, data: [{ yAxis: 50 }] } },
+      { name: A.team + ' pts', type: 'line', yAxisIndex: 1, symbol: 'none', data: apData, color: cA, lineStyle: { width: 3 }, step: 'end' },
+      { name: B.team + ' pts', type: 'line', yAxisIndex: 1, symbol: 'none', data: bpData, color: cB, lineStyle: { width: 3 }, step: 'end' },
+      { name: A.team + ' proj', type: 'line', yAxisIndex: 1, symbol: 'none', data: ajData, color: cA, lineStyle: { type: 'dotted', width: 2 } },
+      { name: B.team + ' proj', type: 'line', yAxisIndex: 1, symbol: 'none', data: bjData, color: cB, lineStyle: { type: 'dotted', width: 2 } }
+    ]
+  });
+};
+
+let pt;
+function play() {
+  clearInterval(pt);
+  const sl = $('#sl'); if (!sl) return;
+  const mx = +sl.max;
+  S.cur = 1;
+  pt = setInterval(() => {
+    S.cur++;
+    if (S.cur > mx) {
+      S.cur = 0;
+      clearInterval(pt);
+    }
+    V.live.post();
+  }, 40);
+}
+
+// 7. Weekly Leaders
+V.leaders=()=>{const A=agg(D.T),best=(arr,f)=>arr.length?arr.reduce((a,b)=>f(b)>f(a)?b:a):null,rk=(rows,k)=>[...rows].sort((a,b)=>(b[k]??-1)-(a[k]??-1)).forEach((r,i)=>r['r'+k]=i+1);
+ const R=A.map(o=>{const tw=best(o.rows,t=>t.pf),tl=best(o.rows.filter(t=>t.res==0),t=>t.pf),pl=(f)=>o.rows.flatMap(t=>t.pl.filter(f).map(p=>({p,t}))),ts=best(pl(isStart),x=>x.p.points),tb=best(pl(r=>r.selected_position=='BN'),x=>x.p.points);
+  const on=tl?(D.byW[tl.week].find(x=>x.id==tl.opp)?.team||'?'):'';return{mgr:o.mgr,team:o.team,PF:o.PF,PA:o.PA,tw:tw.pf,tww:tw.week,tl:tl?.pf,tlw:tl?.week,tlo:tl?.pa,on,ts:ts?.p.points,tsn:ts?.p.name,tsw:ts?.t.week,tb:tb?.p.points,tbn:tb?.p.name,tbw:tb?.t.week}});
+ ['PF','tw','tl','ts','tb'].forEach(k=>rk(R,k));R.forEach(r=>r.rPA=1+R.filter(x=>x.PA<r.PA).length);
+ return`<h3>Weekly Leaders <small>[n] = rank among teams</small></h3>`+tbl('ld',[{h:'Team',v:r=>r.mgr,f:r=>`<span class=dot style="background:${D.col(r.mgr)}"></span>${esc(r.team)} <small>${esc(r.mgr)}</small>`},{h:'PF [rk]',v:r=>r.PF,f:r=>`${f1(r.PF)} [${r.rPF}]`},{h:'PA [rk]',v:r=>r.PA,f:r=>`${f1(r.PA)} [${r.rPA}]`},
+  {h:'Top Week',v:r=>r.tw,f:r=>`${f2(r.tw)} (${r.tww}) [${r.rtw}]`},{h:'Top Loss',v:r=>r.tl??0,f:r=>r.tl==null?'–':`${f2(r.tl)} vs ${esc(r.on)} ${f2(r.tlo)} (${r.tlw}) [${r.rtl}]`},{h:'Top Starter',v:r=>r.ts,f:r=>`${esc(r.tsn)} ${f2(r.ts)} (${r.tsw}) [${r.rts}]`},{h:'Top Bench',v:r=>r.tb??0,f:r=>r.tb==null?'–':`${esc(r.tbn)} ${f2(r.tbn)} (${r.tbw}) [${r.rtb}]`}],R)};
+
+// Settings
+V.settings=()=>`<div class=card><h3>Settings</h3><p><label>Belt start holder (manager name; PDF starts with Mike; blank = best week-1 scorer) <input id=sb value="${esc(S.set.belt)}"></label></p>
+ <p><label>Belt tie rule <select id=stie><option value=hold ${S.set.tie=='hold'?'selected':''}>Holder keeps belt</option><option value=lose ${S.set.tie=='lose'?'selected':''}>Holder loses belt</option></select></label></p>
+ <p>Live CSV URLs (one per line, polled every 60s; CORS-enabled)<br><textarea id=su rows=3 style="width:100%">${esc(S.set.csvUrls)}</textarea></p>
+ <p><label>Live SQLite file URL (polled every 60s) <input id=sq style="width:100%" value="${esc(S.set.sqlUrl)}"></label></p>
+ <button class=btn onclick="saveSet()">Save &amp; poll now</button> <button class=btn onclick="resetAll()" style="color:#D55E00">Reset data</button></div>
+ <div class=card><small>Rows: points ${S.pts.length} · scores ${S.scr.length} · teams ${S.teams.length} · transactions ${S.tx.length}</small></div>`;
+function saveSet(){S.set={belt:$('#sb').value.trim(),tie:$('#stie').value,csvUrls:$('#su').value.trim(),sqlUrl:$('#sq').value.trim()};put('set',S.set);poll()}
+async function resetAll(){if(!confirm('Delete all stored data?'))return;S.pts=[];S.scr=[];S.teams=[];S.tx=[];S.cw=null;await save();refresh()}
+
+/* ============ 7. SHELL, ROUTING, THEME ============ */
+const TABS=[['standings','Standings'],['matchups','Matchups'],['leaders','Weekly Leaders'],['wae','Wins Above Even'],['rank','Rank'],['pos','Points by Position'],['survivor','Survivor'],['belt','Belt'],['live','Live Win Prob'],['settings','Settings']];
+function render(){CH.forEach(c=>c.dispose());CH=[];clearInterval(pt);document.documentElement.dataset.t=S.dark?'dark':'light';
+ $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${k==S.tab?'on':''}" onclick="S.tab='${k}';render()">${l}</button>`).join('')+(S.hl?` <span class=btn onclick="S.hl=null;render()">✕ ${esc(S.hl)}</span>`:'');
+ location.hash=`t=${S.tab}&y=${S.lg}-${S.yr}&w=${S.w[0]}-${S.w[1]}`;
+ const noData=!S.pts.length&&!S.scr.length&&S.tab!='settings'&&S.tab!='live';
+ const ban=D.pend.size&&!['settings','live'].includes(S.tab)?`<div class=card>⏱ Week ${[...D.pend].join(', ')} is still in progress, so it is left out of the results below (tick “In-progress wk” to include it). See the <a href="#" onclick="S.tab='live';render();return false">Live Win Prob</a> tab.</div>`:'';
+ const has=S.tab=='pos'?D.TP.length:D.T.length;
+ $('#main').innerHTML=noData?empty():ban+(has||S.tab=='settings'||S.tab=='live'||S.scr.length?V[S.tab]():empty('No completed regular-season rows match the current filters.'));
+ if(!noData&&V[S.tab].post)try{V[S.tab].post()}catch(e){console.warn(e)}}
+function refresh(){
+ const ss=[...new Map([...S.pts.map(r=>[r.league+'|'+r.year,{lg:r.league,yr:r.year}]), ...S.scr.map(r=>[r.league+'|'+r.YR,{lg:r.league,yr:r.YR}]), ...S.teams.map(r=>[r.league+'|'+r.year,{lg:r.league,yr:r.year}])].filter(x=>x[1].yr)).values()].sort((a,b)=>a.yr-b.yr||(a.lg<b.lg?-1:1));
+ if(!ss.some(x=>x.yr==S.yr&&x.lg==S.lg)){const l=ss[ss.length-1];S.yr=l?l.yr:'';S.lg=l?l.lg:''}
+ $('#fy').innerHTML=ss.map(x=>`<option value="${x.lg}|${x.yr}" ${x.yr==S.yr&&x.lg==S.lg?'selected':''}>${x.lg} ${x.yr}</option>`).join('');build();render()}
+$('#fy').onchange=e=>{const[l,y]=e.target.value.split('|');S.lg=l;S.yr=+y;S.lm='';S.lvw='';S.mw='';refresh()};
+$('#po').onchange=e=>{S.po=e.target.checked;build();render()};$('#ip').onchange=e=>{S.ip=e.target.checked;build();render()};
+let db;[$('#w1'),$('#w2')].forEach(i=>i.oninput=()=>{clearTimeout(db);db=setTimeout(()=>{S.w=[+$('#w1').value||1,+$('#w2').value||99];build();render()},250)});
+$('#th').onclick=()=>{S.dark=!S.dark;render()};
+(async()=>{for(const k of['pts','scr','teams','tx'])S[k]=(await get(k))||[];S.set={...S.set,...(await get('set')||{})};S.cw=(await get('cw'))||null;
+ const h=new URLSearchParams(location.hash.slice(1));if(h.get('t')&&V[h.get('t')])S.tab=h.get('t');
+ const y=(h.get('y')||'').split('-');if(y.length==2&&y[0]&&+y[1]){S.lg=y[0];S.yr=+y[1]}
+ const w=(h.get('w')||'').split('-');if(w.length==2){S.w=[+w[0]||1,+w[1]||99];$('#w1').value=S.w[0];$('#w2').value=S.w[1]}
+ refresh();
+ if(S.set.csvUrls||S.set.sqlUrl){await poll()}
+})();
+</script></body></html>
