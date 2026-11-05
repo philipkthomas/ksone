@@ -184,34 +184,146 @@ V.survivor=()=>{const n=D.mgrs.length,ps=D.ps,s0=+S.set.svStart||ps-n+1,sv=survi
 V.belt=()=>{const B=belt(D.T,D.weeks),wk={};B.forEach(r=>wk[r.holder]=(wk[r.holder]||0)+1);
  return`<h3>Belt <small>Holder keeps belt until losing; set start holder & tie rule in Settings</small></h3>`+tbl('belt',[{h:'Wk',v:r=>r.week},{h:'Holder',v:r=>r.holder},{h:'PF',v:r=>r.pf,f:r=>f2(r.pf)},{h:'Challenger',v:r=>r.chal},{h:'PF',v:r=>r.pa,f:r=>f2(r.pa)},{h:'Result',v:r=>r.res}],B)+
  `<div class=card><b>Weeks held:</b> ${Object.entries(wk).sort((a,b)=>b[1]-a[1]).map(([m,n])=>`${esc(m)} ${n}`).join(' · ')}</div>`};
-// 11. Live win probability. Each snapshot row = one matchup at one time. Areas: both teams' win % stacked (B bottom, A top) on the left axis; solid = current points, dotted = projected final (right axis).
-const tparse=t=>{const m=String(t).match(/(\d+)-(\d+)-(\d+)\s+(\d+):(\d+):(\d+)/);return m?new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6]):new Date(NaN)};
-const tlab=d=>isNaN(d)?'':['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+((d.getHours()%12)||12)+':'+String(d.getMinutes()).padStart(2,'0')+(d.getHours()<12?'am':'pm');
-function liveCtx(){const sc=S.scr.filter(r=>r.YR==S.yr&&r.league==S.lg),ws=[...new Set(sc.map(r=>r.WK))].sort((a,b)=>a-b);if(!ws.length)return{ws,seasons:[...new Set(S.scr.map(r=>r.league+' '+r.YR))].sort()};
- const cwk=S.cw&&S.cw.year==S.yr&&ws.includes(S.cw.week)?S.cw.week:ws[ws.length-1],w=ws.includes(+S.lvw)?+S.lvw:cwk,rows=sc.filter(r=>r.WK==w),seen=new Set(),mu=[];
- rows.forEach(r=>{const k=r.TMA+'|'+r.TMB;if(seen.has(r.TMB+'|'+r.TMA)||seen.has(k))return;seen.add(k);mu.push(k)});mu.sort((x,y)=>tname(x.split('|')[0]).localeCompare(tname(y.split('|')[0])));
- const m=mu.includes(S.lm)?S.lm:mu[0],[a,b]=m.split('|').map(Number);
- const R=rows.filter(r=>(r.TMA==a&&r.TMB==b)||(r.TMA==b&&r.TMB==a)).map(r=>{const f=r.TMA==a;return{d:tparse(r.TIME),run:r.RUN,aw:f?r.TMAWP:r.TMBWP,ap:f?r.TMAPTS:r.TMBPTS,aj:f?r.TMAPROJ:r.TMBPROJ,bw:f?r.TMBWP:r.TMAWP,bp:f?r.TMBPTS:r.TMAPTS,bj:f?r.TMBPROJ:r.TMAPROJ}}).sort((x,y)=>(x.d-y.d)||(x.run-y.run));
- return{ws,w,mu,m,a,b,R}}
-V.live=()=>{const c=liveCtx();if(!c.ws.length)return empty(`No live-score snapshots for ${S.lg} ${S.yr}.${c.seasons&&c.seasons.length?' Scores exist for: '+c.seasons.join(', ')+'.':' Drop a scores CSV/.sqlite or set a live URL in Settings.'}`);
- const A=D.info.get(c.a)||{team:'Team '+c.a,mgr:''},B=D.info.get(c.b)||{team:'Team '+c.b,mgr:''};
- return`<h3 id=lh></h3><label>Week <select onchange="S.lvw=this.value;S.lm='';S.cur=0;render()">${c.ws.map(x=>`<option value=${x} ${x==c.w?'selected':''}>${x}</option>`).join('')}</select></label>
- <label>Matchup <select onchange="S.lm=this.value;S.cur=0;render()">${c.mu.map(x=>`<option value="${x}" ${x==c.m?'selected':''}>${esc(tname(x.split('|')[0])+' vs '+tname(x.split('|')[1]))}</option>`).join('')}</select></label>
- <button class=btn onclick="play()">▶ Replay</button> <input id=sl type=range min=1 value=1 style="width:240px" oninput="S.cur=+this.value>=+this.max?0:+this.value;V.live.post()"> <small id=lt></small><div id=c1 class=ch style="height:480px"></div>`};
-V.live.post=()=>{const c=liveCtx();if(!c.ws.length||!c.R||!c.R.length){const e=$('#c1');if(e)e.outerHTML=empty('No snapshots for this matchup yet.');return}
- const A=D.info.get(c.a)||{team:'Team '+c.a,mgr:''},B=D.info.get(c.b)||{team:'Team '+c.b,mgr:''},cA=A.mgr?D.col(A.mgr):PAL[0],cB=B.mgr?D.col(B.mgr):PAL[3],n=c.R.length,sl=$('#sl');if(sl){sl.max=n;sl.value=S.cur||n}
- const X=c.R.slice(0,S.cur||n),L=X.map(r=>tlab(r.d)),last=X[X.length-1],mx=Math.max(10,...X.flatMap(r=>[r.ap,r.bp,r.aj,r.bj])),rm=Math.ceil(mx/10)*10;
- $('#lh').innerHTML=`<span style="color:${cA}">${esc(A.team)}</span> <small>(${esc(A.mgr)})</small> vs <span style="color:${cB}">${esc(B.team)}</span> <small>(${esc(B.mgr)})</small> <small>· ${esc(S.lg)} ${esc(S.yr)} Week ${c.w}</small>`;
- $('#lt').textContent=`${L[L.length-1]} · ${f2(last.ap)}–${f2(last.bp)} · win ${last.aw}%/${last.bw}% · ${n} snapshots`+(S.cur?'':' (latest)');
- ch('c1',{tooltip:{trigger:'axis',confine:true,formatter:ps=>{const r=X[ps[0].dataIndex];return`<b>${L[ps[0].dataIndex]}</b><br><span class=dot style="background:${cA}"></span>${esc(A.team)}: <b>${r.aw}%</b> · ${f2(r.ap)} pts · proj ${f2(r.aj)}<br><span class=dot style="background:${cB}"></span>${esc(B.team)}: <b>${r.bw}%</b> · ${f2(r.bp)} pts · proj ${f2(r.bj)}`}},
-  animation:false,legend:{type:'scroll',top:0,selectedMode:true},grid:{left:52,right:52,top:44,bottom:56},
-  xAxis:{type:'category',data:L,boundaryGap:false,axisLabel:{hideOverlap:true,interval:Math.max(0,Math.floor(X.length/9)-1),rotate:0}},
-  yAxis:[{type:'value',min:0,max:100,interval:10,name:'Win probability',axisLabel:{formatter:'{value}%'}},{type:'value',min:0,max:rm,interval:rm/10,name:'Points',splitLine:{show:false}}],
-  series:[{name:B.team+' win %',type:'line',stack:'wp',symbol:'none',data:X.map(r=>r.bw),color:cB,lineStyle:{width:0},areaStyle:{opacity:.35,color:cB},markLine:{symbol:'none',silent:true,label:{show:false},lineStyle:{type:'dashed',color:'#888'},data:[{yAxis:50}]}},
-   {name:A.team+' win %',type:'line',stack:'wp',symbol:'none',data:X.map(r=>r.aw),color:cA,lineStyle:{width:0},areaStyle:{opacity:.35,color:cA}},
-   {name:A.team+' pts',type:'line',yAxisIndex:1,symbol:'none',data:X.map(r=>r.ap),color:cA,lineStyle:{width:3},step:'end'},{name:B.team+' pts',type:'line',yAxisIndex:1,symbol:'none',data:X.map(r=>r.bp),color:cB,lineStyle:{width:3},step:'end'},
-   {name:A.team+' proj',type:'line',yAxisIndex:1,symbol:'none',data:X.map(r=>r.aj),color:cA,lineStyle:{type:'dotted',width:2}},{name:B.team+' proj',type:'line',yAxisIndex:1,symbol:'none',data:X.map(r=>r.bj),color:cB,lineStyle:{type:'dotted',width:2}}]})};
-let pt;function play(){clearInterval(pt);const sl=$('#sl');if(!sl)return;const mx=+sl.max;S.cur=1;pt=setInterval(()=>{S.cur++;if(S.cur>=mx){S.cur=0;clearInterval(pt)}V.live.post()},60)}
+
+/* ============ 11. LIVE WIN PROBABILITY FIXES ============ */
+const tparse = t => {
+  if (!t) return new Date(NaN);
+  const s = String(t).trim();
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+  const dt = new Date(s);
+  return isNaN(dt) ? new Date(NaN) : dt;
+};
+
+const tlab = d => isNaN(d) ? '' : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+((d.getHours()%12)||12)+':'+String(d.getMinutes()).padStart(2,'0')+(d.getHours()<12?'am':'pm');
+
+function liveCtx() {
+  const sc = S.scr.filter(r => r.YR == S.yr && r.league == S.lg), ws = [...new Set(sc.map(r => r.WK))].sort((a,b)=>a-b);
+  if (!ws.length) return { ws, seasons: [...new Set(S.scr.map(r => r.league+' '+r.YR))].sort() };
+  const cwk = S.cw && S.cw.year == S.yr && ws.includes(S.cw.week) ? S.cw.week : ws[ws.length-1];
+  const w = ws.includes(+S.lvw) ? +S.lvw : cwk, rows = sc.filter(r => r.WK == w), seen = new Set(), mu = [];
+  rows.forEach(r => { const k = r.TMA+'|'+r.TMB; if (seen.has(r.TMB+'|'+r.TMA) || seen.has(k)) return; seen.add(k); mu.push(k) });
+  mu.sort((x,y)=>tname(x.split('|')[0]).localeCompare(tname(y.split('|')[0])));
+  const m = mu.includes(S.lm) ? S.lm : mu[0];
+  const [a, b] = m ? m.split('|').map(Number) : [0, 0];
+  
+  const R = rows.filter(r => (r.TMA == a && r.TMB == b) || (r.TMA == b && r.TMA != r.TMB && r.TMB == a))
+    .map(r => { 
+      const f = r.TMA == a; 
+      return { 
+        d: tparse(r.TIME), 
+        run: +r.RUN || 0, 
+        aw: f ? (+r.TMAWP || 0) : (+r.TMBWP || 0), 
+        ap: f ? (+r.TMAPTS || 0) : (+r.TMBPTS || 0), 
+        aj: f ? (+r.TMAPROJ || 0) : (+r.TMBPROJ || 0), 
+        bw: f ? (+r.TMBWP || 0) : (+r.TMAWP || 0), 
+        bp: f ? (+r.TMBPTS || 0) : (+r.TMAPTS || 0), 
+        bj: f ? (+r.TMBPROJ || 0) : (+r.TMAPROJ || 0) 
+      }; 
+    })
+    .filter(r => !isNaN(r.d))
+    .sort((x, y) => (x.d - y.d) || (x.run - y.run));
+
+  return { ws, w, mu, m, a, b, R };
+}
+
+V.live = () => {
+  const c = liveCtx();
+  if (!c.ws.length || !c.R || !c.R.length) {
+    return empty(`No live-score snapshots for ${S.lg} ${S.yr}.${c.seasons && c.seasons.length ? ' Scores exist for: ' + c.seasons.join(', ') + '.' : ''} Drop a scores CSV/.sqlite or set a live URL in Settings.`);
+  }
+  return `<h3 id=lh></h3>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <label>Week <select onchange="S.lvw=this.value;S.lm='';S.cur=0;render()">${c.ws.map(x=>`<option value=${x} ${x==c.w?'selected':''}>${x}</option>`).join('')}</select></label>
+      <label>Matchup <select onchange="S.lm=this.value;S.cur=0;render()">${c.mu.map(x=>`<option value="${x}" ${x==c.m?'selected':''}>${esc(tname(x.split('|')[0])+' vs '+tname(x.split('|')[1]))}</option>`).join('')}</select></label>
+      <button class=btn onclick="play()">▶ Replay</button> 
+      <input id=sl type=range min=1 value=1 style="width:200px" oninput="S.cur=+this.value>=+this.max?0:+this.value;V.live.post()"> 
+      <small id=lt></small>
+    </div>
+    <div id=c1 class=ch style="height:480px"></div>`;
+};
+
+V.live.post = () => {
+  const c = liveCtx();
+  if (!c.ws.length || !c.R || !c.R.length) {
+    const e = $('#c1'); if (e) e.outerHTML = empty('No snapshots for this matchup.');
+    return;
+  }
+  const A = D.info.get(c.a) || { team: 'Team ' + c.a, mgr: '' };
+  const B = D.info.get(c.b) || { team: 'Team ' + c.b, mgr: '' };
+  const cA = A.mgr ? D.col(A.mgr) : PAL[0];
+  const cB = B.mgr ? D.col(B.mgr) : PAL[3];
+  const n = c.R.length;
+  const sl = $('#sl');
+  if (sl) { sl.max = n; sl.value = S.cur && S.cur <= n ? S.cur : n; }
+  
+  const curIdx = S.cur && S.cur <= n ? S.cur : n;
+  const X = c.R.slice(0, curIdx);
+  if (!X.length) return;
+  
+  const L = X.map(r => tlab(r.d));
+  const last = X[X.length - 1];
+  const mx = Math.max(10, ...X.flatMap(r => [r.ap, r.bp, r.aj, r.bj]));
+  const rm = Math.ceil(mx / 10) * 10;
+  
+  const lhEl = $('#lh');
+  if (lhEl) lhEl.innerHTML = `<span style="color:${cA}">${esc(A.team)}</span> <small>(${esc(A.mgr)})</small> vs <span style="color:${cB}">${esc(B.team)}</span> <small>(${esc(B.mgr)})</small> <small>· ${esc(S.lg)} ${esc(S.yr)} Week ${c.w}</small>`;
+  const ltEl = $('#lt');
+  if (ltEl) ltEl.textContent = `${L[L.length - 1] || ''} · ${f2(last.ap)}–${f2(last.bp)} · win ${last.aw}%/${last.bw}% · ${curIdx}/${n} snapshots` + (S.cur ? '' : ' (latest)');
+
+  ch('c1', {
+    tooltip: {
+      trigger: 'axis',
+      confine: true,
+      formatter: ps => {
+        const idx = ps[0].dataIndex;
+        const r = X[idx];
+        if (!r) return '';
+        return `<b>${L[idx]}</b><br>` +
+               `<span class=dot style="background:${cA}"></span>${esc(A.team)}: <b>${r.aw}%</b> · ${f2(r.ap)} pts · proj ${f2(r.aj)}<br>` +
+               `<span class=dot style="background:${cB}"></span>${esc(B.team)}: <b>${r.bw}%</b> · ${f2(r.bp)} pts · proj ${f2(r.bj)}`;
+      }
+    },
+    animation: false,
+    legend: { type: 'scroll', top: 0 },
+    grid: { left: 52, right: 52, top: 44, bottom: 56 },
+    xAxis: {
+      type: 'category',
+      data: L,
+      boundaryGap: false,
+      axisLabel: { hideOverlap: true, interval: Math.max(0, Math.floor(X.length / 9) - 1), rotate: 0 }
+    },
+    yAxis: [
+      { type: 'value', min: 0, max: 100, interval: 10, name: 'Win probability', axisLabel: { formatter: '{value}%' } },
+      { type: 'value', min: 0, max: rm, interval: rm / 10, name: 'Points', splitLine: { show: false } }
+    ],
+    series: [
+      { name: B.team + ' win %', type: 'line', stack: 'wp', symbol: 'none', data: X.map(r => r.bw), color: cB, lineStyle: { width: 0 }, areaStyle: { opacity: .35, color: cB }, markLine: { symbol: 'none', silent: true, label: { show: false }, lineStyle: { type: 'dashed', color: '#888' }, data: [{ yAxis: 50 }] } },
+      { name: A.team + ' win %', type: 'line', stack: 'wp', symbol: 'none', data: X.map(r => r.aw), color: cA, lineStyle: { width: 0 }, areaStyle: { opacity: .35, color: cA } },
+      { name: A.team + ' pts', type: 'line', yAxisIndex: 1, symbol: 'none', data: X.map(r => r.ap), color: cA, lineStyle: { width: 3 }, step: 'end' },
+      { name: B.team + ' pts', type: 'line', yAxisIndex: 1, symbol: 'none', data: X.map(r => r.bp), color: cB, lineStyle: { width: 3 }, step: 'end' },
+      { name: A.team + ' proj', type: 'line', yAxisIndex: 1, symbol: 'none', data: X.map(r => r.aj), color: cA, lineStyle: { type: 'dotted', width: 2 } },
+      { name: B.team + ' proj', type: 'line', yAxisIndex: 1, symbol: 'none', data: X.map(r => r.bj), color: cB, lineStyle: { type: 'dotted', width: 2 } }
+    ]
+  });
+};
+
+let pt;
+function play() {
+  clearInterval(pt);
+  const sl = $('#sl'); if (!sl) return;
+  const mx = +sl.max;
+  S.cur = 1;
+  pt = setInterval(() => {
+    S.cur++;
+    if (S.cur > mx) {
+      S.cur = 0;
+      clearInterval(pt);
+    }
+    V.live.post();
+  }, 60);
+}
+
 // 6. Weekly Leaders: [rank] = rank of that value among all teams' own best
 V.leaders=()=>{const A=agg(D.T),best=(arr,f)=>arr.length?arr.reduce((a,b)=>f(b)>f(a)?b:a):null,rk=(rows,k)=>[...rows].sort((a,b)=>(b[k]??-1)-(a[k]??-1)).forEach((r,i)=>r['r'+k]=i+1);
  const R=A.map(o=>{const tw=best(o.rows,t=>t.pf),tl=best(o.rows.filter(t=>t.res==0),t=>t.pf),pl=(f)=>o.rows.flatMap(t=>t.pl.filter(f).map(p=>({p,t}))),ts=best(pl(isStart),x=>x.p.points),tb=best(pl(r=>r.selected_position=='BN'),x=>x.p.points);
