@@ -1333,4 +1333,333 @@
               stacked: true,
               title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '700' } },
               grid: { drawOnChartArea: false },
-              ticks: { color: textColor, font: { size: 10
+              ticks: { color: textColor, font: { size: 10 }, callback: v => `${v}%` },
+              min: 0,
+              max: 100
+            }
+          }
+        }
+      });
+    }
+
+    function renderFrameAtIdx(idx) {
+      const s = STATE.liveProb.fullSeries;
+      if (!s || !STATE.liveProb.chartInstance) return;
+
+      const total = s.labels.length;
+      const validIdx = Math.min(total, Math.max(1, idx));
+
+      const nameA = getVal(s.metaA, ['team_name', 'name']) || 'Team A';
+      const mgrA = getVal(s.metaA, ['manager', 'manager_name']);
+      const nameB = getVal(s.metaB, ['team_name', 'name']) || 'Team B';
+      const mgrB = getVal(s.metaB, ['manager', 'manager_name']);
+
+      const idx0 = validIdx - 1;
+      document.getElementById('scorecard-tma-name').innerText = nameA;
+      document.getElementById('scorecard-tma-mgr').innerText = mgrA ? `Manager: ${mgrA}` : '';
+      document.getElementById('scorecard-tma-pts').innerText = s.tmaPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.tmaProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tma-wp').innerText = `${s.tmaWpNorm[idx0].toFixed(0)}%`;
+
+      document.getElementById('scorecard-tmb-name').innerText = nameB;
+      document.getElementById('scorecard-tmb-mgr').innerText = mgrB ? `Manager: ${mgrB}` : '';
+      document.getElementById('scorecard-tmb-pts').innerText = s.tmbPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tmb-wp').innerText = `${s.tmbWpNorm[idx0].toFixed(0)}%`;
+
+      // Update scrubber bar without triggering recursive input handler
+      const scrubber = document.getElementById('replay-scrubber');
+      if (scrubber) {
+        scrubber.value = Math.round((validIdx / total) * 100);
+      }
+
+      // Populate dataset arrays padding unreached time steps with null
+      const padNull = (arr) => arr.slice(0, validIdx).concat(new Array(total - validIdx).fill(null));
+
+      const chart = STATE.liveProb.chartInstance;
+      chart.data.datasets[0].data = padNull(s.tmaPts);
+      chart.data.datasets[1].data = padNull(s.tmbPts);
+      chart.data.datasets[2].data = padNull(s.tmaProj);
+      chart.data.datasets[3].data = padNull(s.tmbProj);
+      chart.data.datasets[4].data = padNull(s.tmaWpNorm);
+      chart.data.datasets[5].data = padNull(s.tmbWpNorm);
+      chart.update('none');
+    }
+
+    function togglePlayPause() {
+      if (STATE.liveProb.isPlaying) {
+        pauseReplay();
+      } else {
+        const s = STATE.liveProb.fullSeries;
+        if (s && STATE.liveProb.currentIdx >= s.labels.length) {
+          STATE.liveProb.currentIdx = 1;
+        }
+        startReplay();
+      }
+    }
+
+    function startReplay() {
+      STATE.liveProb.isPlaying = true;
+      updatePlayPauseUI();
+      restartIntervalTimer();
+    }
+
+    function pauseReplay() {
+      STATE.liveProb.isPlaying = false;
+      if (STATE.liveProb.animationTimer) {
+        clearInterval(STATE.liveProb.animationTimer);
+        STATE.liveProb.animationTimer = null;
+      }
+      updatePlayPauseUI();
+    }
+
+    function restartReplay() {
+      STATE.liveProb.currentIdx = 1;
+      renderFrameAtIdx(1);
+      startReplay();
+    }
+
+    function restartIntervalTimer() {
+      if (STATE.liveProb.animationTimer) {
+        clearInterval(STATE.liveProb.animationTimer);
+      }
+
+      const mult = STATE.liveProb.speedMultiplier || 3;
+      const intervalMs = Math.max(10, Math.round(120 / mult));
+
+      STATE.liveProb.animationTimer = setInterval(() => {
+        const s = STATE.liveProb.fullSeries;
+        if (!s) return;
+
+        STATE.liveProb.currentIdx += 1;
+        if (STATE.liveProb.currentIdx >= s.labels.length) {
+          STATE.liveProb.currentIdx = s.labels.length;
+          renderFrameAtIdx(STATE.liveProb.currentIdx);
+          pauseReplay();
+        } else {
+          renderFrameAtIdx(STATE.liveProb.currentIdx);
+        }
+      }, intervalMs);
+    }
+
+    function updatePlayPauseUI() {
+      const icon = document.getElementById('play-pause-icon');
+      const text = document.getElementById('play-pause-text');
+      const btn = document.getElementById('btn-play-pause-replay');
+
+      if (STATE.liveProb.isPlaying) {
+        icon.className = 'fa-solid fa-pause';
+        text.innerText = 'Pause';
+        btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
+      } else {
+        icon.className = 'fa-solid fa-play';
+        text.innerText = 'Play';
+        btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
+      }
+    }
+
+    function updateChartThemeColors() {
+      const chart = STATE.liveProb.chartInstance;
+      if (!chart) return;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+
+      chart.options.scales.x.grid.color = gridColor;
+      chart.options.scales.x.ticks.color = textColor;
+      chart.options.scales.y.grid.color = gridColor;
+      chart.options.scales.y.ticks.color = textColor;
+      chart.options.scales.y.title.color = textColor;
+      chart.options.scales.y1.ticks.color = textColor;
+      chart.options.scales.y1.title.color = textColor;
+      chart.options.plugins.legend.labels.color = textColor;
+      chart.update();
+    }
+
+    function downloadChartPNG() {
+      const chart = STATE.liveProb.chartInstance;
+      if (!chart) return;
+      const link = document.createElement('a');
+      link.download = `Live_Win_Prob_Week_${document.getElementById('live-prob-week').value}.png`;
+      link.href = chart.toBase64Image();
+      link.click();
+    }
+
+    function downloadChartCSV() {
+      const s = STATE.liveProb.fullSeries;
+      if (!s) return;
+      const rows = [];
+      const nameA = getVal(s.metaA, ['team_name', 'name']) || 'Team A';
+      const nameB = getVal(s.metaB, ['team_name', 'name']) || 'Team B';
+
+      for (let i = 0; i < s.labels.length; i++) {
+        rows.push({
+          Timestamp: s.labels[i],
+          [`${nameA}_Pts`]: s.tmaPts[i],
+          [`${nameB}_Pts`]: s.tmbPts[i],
+          [`${nameA}_Proj`]: s.tmaProj[i],
+          [`${nameB}_Proj`]: s.tmbProj[i],
+          [`${nameA}_WinProb%`]: s.tmaWpNorm[i].toFixed(2),
+          [`${nameB}_WinProb%`]: s.tmbWpNorm[i].toFixed(2)
+        });
+      }
+
+      const csv = Papa.unparse(rows);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", `Matchup_WinProb_Data_Week_${document.getElementById('live-prob-week').value}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ==========================================
+    // SECTION 6: INITIALIZATION & KEYBOARD LISTENERS
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      initTheme();
+      setupTabNavigation();
+      parseUrlHash();
+
+      // Keyboard Esc Listener to clear manager cross-filters
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (STATE.filters.selectedManager) {
+            toggleManagerFilter(null);
+          }
+          const helpModal = document.getElementById('help-modal');
+          if (helpModal && !helpModal.classList.contains('hidden')) {
+            helpModal.classList.add('hidden');
+          }
+        }
+      });
+
+      const tooltip = document.getElementById('sparkline-tooltip');
+      document.addEventListener('mouseover', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          const info = e.target.getAttribute('data-info');
+          if (info) {
+            tooltip.innerHTML = info;
+            tooltip.classList.remove('hidden');
+          }
+        }
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!tooltip.classList.contains('hidden')) {
+          tooltip.style.left = (e.clientX + 12) + 'px';
+          tooltip.style.top = (e.clientY + 12) + 'px';
+        }
+      });
+
+      document.addEventListener('mouseout', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          tooltip.classList.add('hidden');
+        }
+      });
+
+      document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          if (STATE.sort.field === field) {
+            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            STATE.sort.field = field;
+            STATE.sort.dir = field === 'actualRank' ? 'asc' : 'desc';
+          }
+          renderStandingsTable();
+        });
+      });
+
+      document.getElementById('help-popover-btn').addEventListener('click', () => document.getElementById('help-modal').classList.remove('hidden'));
+      document.getElementById('close-help-modal').addEventListener('click', () => document.getElementById('help-modal').classList.add('hidden'));
+      document.getElementById('clear-manager-filter').addEventListener('click', () => toggleManagerFilter(null));
+
+      document.getElementById('filter-year').addEventListener('change', (e) => { 
+        STATE.filters.year = Number(e.target.value); 
+        renderStandingsTable(); 
+        populateLiveProbWeeks();
+        renderLiveProbMatchup();
+        updateUrlHash();
+      });
+
+      document.getElementById('filter-week-min').addEventListener('change', (e) => { STATE.filters.weekMin = Number(e.target.value); renderStandingsTable(); updateUrlHash(); });
+      document.getElementById('filter-week-max').addEventListener('change', (e) => { STATE.filters.weekMax = Number(e.target.value); renderStandingsTable(); updateUrlHash(); });
+      
+      document.getElementById('btn-export-standings-csv').addEventListener('click', () => {
+        if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
+        const csv = Papa.unparse(STATE.computedStandings);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+
+      // Flexible File Upload supporting both .csv files and .sqlite/.db database files
+      document.getElementById('csv-upload').addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+
+        files.forEach(file => {
+          const fileName = file.name.toLowerCase();
+
+          if (fileName.endsWith('.sqlite') || fileName.endsWith('.db')) {
+            const reader = new FileReader();
+            reader.onload = async () => {
+              try {
+                if (window.initSqlJs) {
+                  const SQL = await initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${f}` });
+                  const db = new SQL.Database(new Uint8Array(reader.result));
+                  ['scores', 'teams', 'transactions', 'points', 'currentweek'].forEach(table => {
+                    try {
+                      const res = db.exec(`SELECT * FROM ${table}`);
+                      if (res.length > 0) {
+                        const cols = res[0].columns;
+                        STATE.data[table] = res[0].values.map(row => {
+                          const obj = {};
+                          cols.forEach((col, idx) => obj[col] = row[idx]);
+                          return obj;
+                        });
+                      }
+                    } catch (err) {}
+                  });
+                  db.close();
+                  applyDefaultFiltersFromCurrentWeek();
+                  populateYearSelector();
+                  renderStandingsTable();
+                  initLiveProbTab();
+                  updateStatus("emerald", "Live");
+                }
+              } catch (err) {
+                console.error("Failed to parse loaded SQLite DB", err);
+              }
+            };
+            reader.readAsArrayBuffer(file);
+          } else if (fileName.endsWith('.csv')) {
+            const tableKey = fileName.replace('.csv', '').trim();
+            Papa.parse(file, {
+              header: true, dynamicTyping: true, skipEmptyLines: true,
+              complete: (res) => { 
+                STATE.data[tableKey] = res.data; 
+                applyDefaultFiltersFromCurrentWeek();
+                populateYearSelector(); 
+                renderStandingsTable(); 
+                populateLiveProbWeeks();
+                renderLiveProbMatchup();
+                updateStatus("emerald", "Live");
+              }
+            });
+          }
+        });
+      });
+
+      await loadDataPipeline();
+      startLivePolling();
+    });
+  </script>
+</body>
+</html>
