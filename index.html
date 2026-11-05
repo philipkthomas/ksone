@@ -14,7 +14,7 @@ main{padding:10px 12px;max-width:1400px;margin:auto}
 .sc{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:4px 8px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}
 th{position:sticky;top:0;background:var(--card);cursor:pointer}td:nth-child(2),th:nth-child(2){text-align:left}
 tr.po td{border-bottom:2px dashed var(--ac)}tr.hl td{background:color-mix(in srgb,var(--ac) 18%,transparent)}
-.ch{width:100%;height:420px}.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:10px;margin:8px 0}
+.ch{width:100%;height:480px}.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:10px;margin:8px 0}
 .empty{padding:40px;text-align:center;border:2px dashed var(--bd);border-radius:10px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
 .sv{display:flex;gap:2px;align-items:center;margin:2px 0}.sv b{width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
@@ -40,7 +40,7 @@ small{opacity:.75}.dot{display:inline-block;width:10px;height:10px;border-radius
 /* ============ 0. STATE, STORAGE, INGEST (dedupe keys per spec) ============ */
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const PAL=['#0072B2','#E69F00','#009E73','#D55E00','#CC79A7','#56B4E9','#C9A800','#999999','#332288','#882255']; // Okabe-Ito-based
-const S={pts:[],scr:[],teams:[],tx:[],set:{belt:'Mike',svStart:'',tie:'hold',csvUrls:'',sqlUrl:''},yr:'',lg:'',w:[1,99],po:false,ip:false,cw:null,hl:null,tab:'standings',wae:'wl',pos:'stack',pw:'avg',mw:'',lvw:'',lm:'',cur:0,dark:matchMedia('(prefers-color-scheme:dark)').matches};
+const S={pts:[],scr:[],teams:[],tx:[],set:{belt:'Mike',svStart:'',tie:'hold',csvUrls:'',sqlUrl:'https://pub-19c72385a8a14ab098f1badf7251e65b.r2.dev/live.db'},yr:'',lg:'',w:[1,99],po:false,ip:false,cw:null,hl:null,tab:'standings',wae:'wl',pos:'stack',pw:'avg',mw:'',lvw:'',lm:'',cur:0,dark:matchMedia('(prefers-color-scheme:dark)').matches};
 const idb=new Promise(r=>{try{const q=indexedDB.open('ndl',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)}catch(e){r(null)}});
 const put=async(k,v)=>{const d=await idb;if(d)d.transaction('kv','readwrite').objectStore('kv').put(v,k)};
 const get=async k=>{const d=await idb;return d?new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r()}):undefined};
@@ -124,7 +124,8 @@ document.addEventListener('click',e=>{const h=e.target.closest('th[data-s]');if(
 addEventListener('keydown',e=>{if(e.key=='Escape'&&S.hl){S.hl=null;render()}});
 function ch(id,opt){const el=document.getElementById(id);if(!el)return;let c=echarts.getInstanceByDom(el);
  if(!c){c=echarts.init(el,S.dark?'dark':null);CH.push(c);c.on('click',p=>{const m=D.mgrs.includes(p.seriesName)?p.seriesName:D.mgrs.includes(p.name)?p.name:null;if(m){S.hl=S.hl==m?null:m;render()}})}
- c.setOption({animation:false,backgroundColor:'transparent',tooltip:{trigger:'axis',confine:true},legend:{type:'scroll',top:0},grid:{left:48,right:48,top:40,bottom:40},toolbox:{feature:{saveAsImage:{title:'PNG'},dataZoom:{},dataView:{title:'Data',readOnly:true}}},...opt},true)}
+ c.setOption({animation:false,backgroundColor:'transparent',tooltip:{trigger:'axis',confine:true},legend:{type:'scroll',top:0},grid:{left:48,right:48,top:40,bottom:40},toolbox:{feature:{saveAsImage:{title:'PNG'},dataZoom:{},dataView:{title:'Data',readOnly:true}}},...opt},true);
+ setTimeout(()=>c.resize(),50)}
 addEventListener('resize',()=>CH.forEach(c=>c.resize()));
 const spark=a=>{if(a.length<2)return'';const mn=Math.min(...a),mx=Math.max(...a),p=a.map((v,i)=>`${i*60/(a.length-1)},${18-(v-mn)/(mx-mn||1)*16}`).join(' ');return`<svg width=62 height=20><polyline points="${p}" fill=none stroke="currentColor" stroke-width=1.5 /></svg>`};
 const f1=x=>(+x).toFixed(1),f2=x=>(+x).toFixed(2),sg=x=>(x>0?'+':'')+f2(x);
