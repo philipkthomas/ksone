@@ -111,8 +111,8 @@
       </div>
 
       <div class="flex items-center gap-3 text-xs">
-        <label for="csv-upload" class="cursor-pointer bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-file-csv text-emerald-600 dark:text-emerald-400"></i> Add CSVs / .sqlite
+        <label for="csv-upload" class="cursor-pointer bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md shadow transition flex items-center gap-1.5">
+          <i class="fa-solid fa-file-csv text-white"></i> Add CSVs / .sqlite
           <input type="file" id="csv-upload" multiple accept=".csv,.sqlite,.db" class="hidden" />
         </label>
         
@@ -125,8 +125,8 @@
         </button>
 
         <div class="text-slate-500 dark:text-slate-400 text-[11px] flex items-center gap-1.5 bg-slate-200/60 dark:bg-slate-900 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-800">
-          <span id="status-indicator" class="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
-          <span id="status-text">Loading Data...</span>
+          <span id="status-indicator" class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+          <span id="status-text" class="font-medium">Loading Data...</span>
         </div>
       </div>
     </div>
@@ -207,7 +207,6 @@
     <!-- LIVE WIN PROB TAB CONTENT -->
     <section id="tab-live_prob" class="tab-content space-y-4 hidden">
       
-      <!-- Live Win Prob Controls Header -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex flex-wrap items-center gap-5">
           <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -234,11 +233,8 @@
         </div>
       </div>
 
-      <!-- Matchup Summary Scorecard -->
       <div id="live-prob-scorecard" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-          
-          <!-- Team A Score Card -->
           <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
             <div>
               <span id="scorecard-tma-mgr" class="text-xs text-slate-500 dark:text-slate-400 block font-normal">--</span>
@@ -251,7 +247,6 @@
             </div>
           </div>
 
-          <!-- Team B Score Card -->
           <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
             <div>
               <span id="scorecard-tmb-mgr" class="text-xs text-slate-500 dark:text-slate-400 block font-normal">--</span>
@@ -263,11 +258,9 @@
               <div class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-0.5">Win Prob: <span id="scorecard-tmb-wp" class="text-orange-500">--%</span></div>
             </div>
           </div>
-
         </div>
       </div>
 
-      <!-- Live Win Prob Chart Container -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
         <div class="relative w-full h-[480px]">
           <canvas id="liveWinProbChart"></canvas>
@@ -277,7 +270,6 @@
     </section>
   </main>
 
-  <!-- SPARKLINE HOVER TOOLTIP DIV -->
   <div id="sparkline-tooltip" class="fixed hidden pointer-events-none z-50 bg-slate-900/95 text-white text-xs px-3 py-2 rounded-lg shadow-2xl border border-slate-700 backdrop-blur font-sans"></div>
 
   <!-- HELP GLOSSARY MODAL -->
@@ -338,7 +330,6 @@
       });
     }
 
-    // Precise Color Scale Interpolators for Standings
     const HEATMAPS = {
       greenClearRed: (val, min, mid, max) => {
         if (max <= min) return 'transparent';
@@ -396,6 +387,19 @@
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    // Helper for robust property reading across sqlite/CSV case differences
+    function getVal(obj, keys) {
+      if (!obj) return undefined;
+      for (let k of keys) {
+        if (obj[k] !== undefined && obj[k] !== null) return obj[k];
+        const lowerKey = k.toLowerCase();
+        for (let prop in obj) {
+          if (prop.toLowerCase() === lowerKey && obj[prop] !== undefined && obj[prop] !== null) return obj[prop];
+        }
+      }
+      return undefined;
+    }
+
     // ==========================================
     // SECTION 2: STANDINGS METRIC ENGINE
     // ==========================================
@@ -403,26 +407,28 @@
       computeStandings(year, weekMin, weekMax) {
         if (!STATE.data.points || STATE.data.points.length === 0) return [];
 
-        const pointsFiltered = STATE.data.points.filter(r => 
-          Number(r.year) === Number(year) && 
-          Number(r.week) >= Number(weekMin) && 
-          Number(r.week) <= Number(weekMax)
-        );
+        const pointsFiltered = STATE.data.points.filter(r => {
+          const rYear = Number(getVal(r, ['year', 'YR']));
+          const rWeek = Number(getVal(r, ['week', 'WK']));
+          return rYear === Number(year) && rWeek >= Number(weekMin) && rWeek <= Number(weekMax);
+        });
 
         if (pointsFiltered.length === 0) return [];
 
         const weeklyMap = {};
         pointsFiltered.forEach(r => {
-          const key = `${r.week}_${r.team_id}`;
+          const rWeek = Number(getVal(r, ['week', 'WK']));
+          const rTeamId = Number(getVal(r, ['team_id', 'TMA', 'team']));
+          const key = `${rWeek}_${rTeamId}`;
           if (!weeklyMap[key]) {
             weeklyMap[key] = {
-              week: Number(r.week),
-              team_id: Number(r.team_id),
-              manager_name: r.manager_name || '',
-              team_name: r.team_name || '',
-              team_points: Number(r.team_points) || 0,
-              opponent_points: Number(r.opponent_points) || 0,
-              opponent_team_id: Number(r.opponent_team_id) || 0
+              week: rWeek,
+              team_id: rTeamId,
+              manager_name: getVal(r, ['manager_name', 'manager']) || '',
+              team_name: getVal(r, ['team_name', 'name']) || '',
+              team_points: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
+              opponent_points: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
+              opponent_team_id: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0
             };
           }
         });
@@ -459,8 +465,8 @@
         });
 
         const teamMetaMap = {};
-        (STATE.data.teams || []).filter(t => Number(t.year) === Number(year)).forEach(t => {
-          teamMetaMap[Number(t.team_id)] = t;
+        (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(year)).forEach(t => {
+          teamMetaMap[Number(getVal(t, ['team_id']))] = t;
         });
 
         const result = [];
@@ -512,8 +518,8 @@
               week: r.week,
               pts: r.team_points,
               oppPts: r.opponent_points,
-              oppName: oppMeta.team_name || `Team ${r.opponent_team_id}`,
-              oppMgr: oppMeta.manager || '',
+              oppName: getVal(oppMeta, ['team_name', 'name']) || `Team ${r.opponent_team_id}`,
+              oppMgr: getVal(oppMeta, ['manager', 'manager_name']) || '',
               result: res
             };
           });
@@ -529,10 +535,10 @@
             bestScore: maxScore, bestWk: bestWk,
             worstScore: minScore, worstWk: worstWk,
             AVG: avg, AVG_star: avgStar, SDEV: sdev,
-            faab: Number(meta.faab_balance) || 0,
+            faab: Number(getVal(meta, ['faab_balance', 'faab'])) || 0,
             weeklyDetails: weeklyDetails,
-            playoffStartWeek: Number(meta.playoff_start_week) || 15,
-            numPlayoffTeams: Number(meta.num_playoff_teams) || 6
+            playoffStartWeek: Number(getVal(meta, ['playoff_start_week'])) || 15,
+            numPlayoffTeams: Number(getVal(meta, ['num_playoff_teams'])) || 6
           });
         });
 
@@ -559,7 +565,7 @@
     };
 
     // ==========================================
-    // SECTION 3: DATA PIPELINE & DEFAULTS
+    // SECTION 3: ROBUST DATA PIPELINE (FETCH TIMEOUT & FALLBACKS)
     // ==========================================
     function parseCSVUrl(url) {
       return new Promise((resolve, reject) => {
@@ -572,15 +578,32 @@
 
     function applyDefaultFiltersFromCurrentWeek() {
       const cw = STATE.data.currentweek;
-      if (cw && cw.length > 0 && cw[0].year && cw[0].week) {
-        const curYear = Number(cw[0].year);
-        const curWeek = Number(cw[0].week);
-        const hash = window.location.hash.replace('#', '');
-        const params = new URLSearchParams(hash);
+      if (cw && cw.length > 0) {
+        const first = cw[0];
+        const curYear = Number(getVal(first, ['year', 'YR']));
+        const curWeek = Number(getVal(first, ['week', 'WK']));
 
-        if (!params.has('year')) STATE.filters.year = curYear;
-        if (!params.has('wmin')) STATE.filters.weekMin = 1;
-        if (!params.has('wmax')) STATE.filters.weekMax = Math.max(1, curWeek - 1);
+        if (curYear && curWeek) {
+          const hash = window.location.hash.replace('#', '');
+          const params = new URLSearchParams(hash);
+
+          if (!params.has('year')) STATE.filters.year = curYear;
+          if (!params.has('wmin')) STATE.filters.weekMin = 1;
+          if (!params.has('wmax')) STATE.filters.weekMax = Math.max(1, curWeek - 1);
+        }
+      }
+    }
+
+    async function fetchWithTimeout(url, timeoutMs = 5000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(id);
+        return res;
+      } catch (err) {
+        clearTimeout(id);
+        throw err;
       }
     }
 
@@ -588,30 +611,41 @@
       updateStatus("amber", "Loading data...");
       let loaded = false;
 
+      // 1. Primary Engine: Remote SQLite live.db with 5s strict timeout
       try {
-        const response = await fetch('https://pub-19c72385a8a14ab098f1badf7251e65b.r2.dev/live.db');
+        const response = await fetchWithTimeout('https://pub-19c72385a8a14ab098f1badf7251e65b.r2.dev/live.db', 5000);
         if (response.ok) {
           const buffer = await response.arrayBuffer();
-          const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
-          const db = new SQL.Database(new Uint8Array(buffer));
-          ['scores', 'teams', 'transactions', 'points', 'currentweek'].forEach(table => {
-            const res = db.exec(`SELECT * FROM ${table}`);
-            if (res.length > 0) {
-              const cols = res[0].columns;
-              STATE.data[table] = res[0].values.map(row => {
-                const obj = {};
-                cols.forEach((col, idx) => obj[col] = row[idx]);
-                return obj;
-              });
+          if (window.initSqlJs) {
+            const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
+            const db = new SQL.Database(new Uint8Array(buffer));
+            
+            ['scores', 'teams', 'transactions', 'points', 'currentweek'].forEach(table => {
+              try {
+                const res = db.exec(`SELECT * FROM ${table}`);
+                if (res.length > 0) {
+                  const cols = res[0].columns;
+                  STATE.data[table] = res[0].values.map(row => {
+                    const obj = {};
+                    cols.forEach((col, idx) => obj[col] = row[idx]);
+                    return obj;
+                  });
+                }
+              } catch (e) {
+                console.warn(`Table ${table} query failed:`, e);
+              }
+            });
+            db.close();
+            if ((STATE.data.points && STATE.data.points.length > 0) || (STATE.data.scores && STATE.data.scores.length > 0)) {
+              loaded = true;
             }
-          });
-          db.close();
-          loaded = true;
+          }
         }
       } catch (err) {
-        console.warn("Remote SQLite fetch failed. Falling back to CSVs...", err);
+        console.warn("Remote SQLite fetch timed out or failed. Attempting CSV fallback...", err);
       }
 
+      // 2. Secondary Engine: Repository CSV Fallback
       if (!loaded) {
         try {
           const [points, teams, scores, transactions, currentweek] = await Promise.all([
@@ -621,7 +655,8 @@
             parseCSVUrl('./transactions.csv').catch(() => []),
             parseCSVUrl('./currentweek.csv').catch(() => [])
           ]);
-          if (points.length > 0) {
+
+          if (points && points.length > 0) {
             STATE.data = { points, teams, scores, transactions, currentweek };
             loaded = true;
           }
@@ -630,6 +665,7 @@
         }
       }
 
+      // 3. UI Update / Fallback Banner State
       if (loaded) {
         applyDefaultFiltersFromCurrentWeek();
         populateYearSelector();
@@ -638,18 +674,38 @@
         initLiveProbTab();
         updateStatus("emerald", "Live");
       } else {
-        updateStatus("rose", "Load Error");
+        updateStatus("rose", "Data Missing / Upload Below");
+        renderEmptyStateBanner();
       }
+    }
+
+    function renderEmptyStateBanner() {
+      const tbody = document.getElementById('standings-tbody');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="15" class="p-10 text-center">
+            <div class="max-w-md mx-auto space-y-3">
+              <i class="fa-solid fa-file-circle-exclamation text-amber-500 text-3xl"></i>
+              <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">No Data Sources Connected</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Could not automatically fetch live SQLite or local CSVs (due to local browser CORS or server restrictions).
+              </p>
+              <label for="csv-upload" class="inline-block cursor-pointer bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow transition">
+                <i class="fa-solid fa-upload mr-1.5"></i> Add CSVs / live.db File Now
+              </label>
+            </div>
+          </td>
+        </tr>`;
     }
 
     function updateStatus(color, text) {
       const ind = document.getElementById('status-indicator');
-      ind.className = `inline-block w-2 h-2 rounded-full bg-${color}-500`;
-      document.getElementById('status-text').innerText = `${text} (${new Date().toLocaleTimeString()})`;
+      ind.className = `inline-block w-2.5 h-2.5 rounded-full bg-${color}-500`;
+      document.getElementById('status-text').innerText = `${text}`;
     }
 
     // ==========================================
-    // SECTION 4: TAB SWITCHING & STANDINGS RENDER
+    // SECTION 4: TAB NAVIGATION & STANDINGS
     // ==========================================
     function setupTabNavigation() {
       document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -684,7 +740,7 @@
 
     function populateYearSelector() {
       const yearSelect = document.getElementById('filter-year');
-      const years = [...new Set((STATE.data.points || []).map(r => Number(r.year)))].filter(Boolean).sort((a,b) => b - a);
+      const years = [...new Set((STATE.data.points || []).map(r => Number(getVal(r, ['year', 'YR']))))].filter(Boolean).sort((a,b) => b - a);
       if (years.length > 0) {
         yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
         if (!years.includes(STATE.filters.year)) STATE.filters.year = years[0];
@@ -839,6 +895,8 @@
       const matchupSelect = document.getElementById('live-prob-matchup');
       const replayBtn = document.getElementById('btn-replay-animation');
 
+      if (!weekSelect || !matchupSelect) return;
+
       populateLiveProbWeeks();
 
       weekSelect.addEventListener('change', () => {
@@ -850,31 +908,34 @@
         renderLiveProbMatchup();
       });
 
-      replayBtn.addEventListener('click', () => {
-        if (STATE.liveProb.fullSeries) {
-          playGraphReplayAnimation();
-        }
-      });
+      if (replayBtn) {
+        replayBtn.addEventListener('click', () => {
+          if (STATE.liveProb.fullSeries) {
+            playGraphReplayAnimation();
+          }
+        });
+      }
     }
 
     function populateLiveProbWeeks() {
       const weekSelect = document.getElementById('live-prob-week');
+      if (!weekSelect) return;
+
       const yr = STATE.filters.year;
       const sc = STATE.data.scores || [];
-      const scoresYr = sc.filter(r => Number(r.YR || r.year) === Number(yr));
+      const scoresYr = sc.filter(r => Number(getVal(r, ['YR', 'year'])) === Number(yr));
       
-      let availableWeeks = [...new Set(scoresYr.map(r => Number(r.WK || r.week)))].filter(Boolean).sort((a,b) => a - b);
+      let availableWeeks = [...new Set(scoresYr.map(r => Number(getVal(r, ['WK', 'week']))))].filter(Boolean).sort((a,b) => a - b);
       if (availableWeeks.length === 0) {
         availableWeeks = Array.from({length: 17}, (_, i) => i + 1);
       }
 
       weekSelect.innerHTML = availableWeeks.map(w => `<option value="${w}">Week ${w}</option>`).join('');
 
-      // Default week selection: currentweek - 1
       const cw = STATE.data.currentweek;
       let defaultWk = 8;
-      if (cw && cw.length > 0 && Number(cw[0].year) === Number(yr)) {
-        defaultWk = Math.max(1, Number(cw[0].week) - 1);
+      if (cw && cw.length > 0 && Number(getVal(cw[0], ['year', 'YR'])) === Number(yr)) {
+        defaultWk = Math.max(1, Number(getVal(cw[0], ['week', 'WK'])) - 1);
       } else if (availableWeeks.length > 0) {
         defaultWk = availableWeeks[availableWeeks.length - 1];
       }
@@ -890,24 +951,27 @@
 
     function populateLiveProbMatchups() {
       const matchupSelect = document.getElementById('live-prob-matchup');
+      const weekSelect = document.getElementById('live-prob-week');
+      if (!matchupSelect || !weekSelect) return;
+
       const yr = STATE.filters.year;
-      const wk = Number(document.getElementById('live-prob-week').value);
+      const wk = Number(weekSelect.value);
 
       const sc = STATE.data.scores || [];
-      const filtered = sc.filter(r => Number(r.YR || r.year) === Number(yr) && Number(r.WK || r.week) === Number(wk));
+      const filtered = sc.filter(r => Number(getVal(r, ['YR', 'year'])) === Number(yr) && Number(getVal(r, ['WK', 'week'])) === Number(wk));
 
       const teamMetaMap = {};
-      (STATE.data.teams || []).filter(t => Number(t.year) === Number(yr)).forEach(t => {
-        teamMetaMap[Number(t.team_id)] = t;
+      (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(yr)).forEach(t => {
+        teamMetaMap[Number(getVal(t, ['team_id']))] = t;
       });
 
       const matchupsMap = {};
       filtered.forEach(r => {
-        const tma = Number(r.TMA);
-        const tmb = Number(r.TMB);
-        const key = `${tma}_${tmb}`;
-        if (!matchupsMap[key]) {
-          matchupsMap[key] = { tma, tmb };
+        const tma = Number(getVal(r, ['TMA', 'team_id']));
+        const tmb = Number(getVal(r, ['TMB', 'opponent_team_id']));
+        if (tma && tmb) {
+          const key = `${tma}_${tmb}`;
+          if (!matchupsMap[key]) matchupsMap[key] = { tma, tmb };
         }
       });
 
@@ -920,22 +984,21 @@
       matchupSelect.innerHTML = matchupList.map(m => {
         const metaA = teamMetaMap[m.tma] || {};
         const metaB = teamMetaMap[m.tmb] || {};
-        const nameA = metaA.team_name || `Team ${m.tma}`;
-        const mgrA = metaA.manager ? ` (${metaA.manager})` : '';
-        const nameB = metaB.team_name || `Team ${m.tmb}`;
-        const mgrB = metaB.manager ? ` (${metaB.manager})` : '';
+        const nameA = getVal(metaA, ['team_name', 'name']) || `Team ${m.tma}`;
+        const mgrA = getVal(metaA, ['manager', 'manager_name']) ? ` (${getVal(metaA, ['manager', 'manager_name'])})` : '';
+        const nameB = getVal(metaB, ['team_name', 'name']) || `Team ${m.tmb}`;
+        const mgrB = getVal(metaB, ['manager', 'manager_name']) ? ` (${getVal(metaB, ['manager', 'manager_name'])})` : '';
         return `<option value="${m.tma}_${m.tmb}">${nameA}${mgrA} vs ${nameB}${mgrB}</option>`;
       }).join('');
 
-      // Default to first matchup in table
       matchupSelect.selectedIndex = 0;
     }
 
     function formatTimeLabel(tsStr) {
       if (!tsStr) return '';
       try {
-        const dt = new Date(tsStr.replace(' ', 'T'));
-        if (isNaN(dt.getTime())) return tsStr;
+        const dt = new Date(String(tsStr).replace(' ', 'T'));
+        if (isNaN(dt.getTime())) return String(tsStr);
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const day = days[dt.getDay()];
         let hours = dt.getHours();
@@ -944,68 +1007,75 @@
         hours = hours % 12 || 12;
         return `${day} ${hours}:${mins} ${ampm}`;
       } catch (e) {
-        return tsStr;
+        return String(tsStr);
       }
     }
 
     function renderLiveProbMatchup() {
+      const weekSelect = document.getElementById('live-prob-week');
+      const matchupSelect = document.getElementById('live-prob-matchup');
+      if (!weekSelect || !matchupSelect) return;
+
       const yr = STATE.filters.year;
-      const wk = Number(document.getElementById('live-prob-week').value);
-      const val = document.getElementById('live-prob-matchup').value;
+      const wk = Number(weekSelect.value);
+      const val = matchupSelect.value;
 
       if (!val) return;
       const [tma, tmb] = val.split('_').map(Number);
 
       const sc = STATE.data.scores || [];
       const rows = sc.filter(r => 
-        Number(r.YR || r.year) === Number(yr) && 
-        Number(r.WK || r.week) === Number(wk) && 
-        Number(r.TMA) === tma && 
-        Number(r.TMB) === tmb
+        Number(getVal(r, ['YR', 'year'])) === Number(yr) && 
+        Number(getVal(r, ['WK', 'week'])) === Number(wk) && 
+        Number(getVal(r, ['TMA', 'team_id'])) === tma && 
+        Number(getVal(r, ['TMB', 'opponent_team_id'])) === tmb
       ).sort((a, b) => {
-        const ta = String(a.TIME || '');
-        const tb = String(b.TIME || '');
-        return ta.localeCompare(tb) || Number(a.RUN || 0) - Number(b.RUN || 0);
+        const ta = String(getVal(a, ['TIME', 'time']) || '');
+        const tb = String(getVal(b, ['TIME', 'time']) || '');
+        return ta.localeCompare(tb) || Number(getVal(a, ['RUN', 'run']) || 0) - Number(getVal(b, ['RUN', 'run']) || 0);
       });
 
       if (rows.length === 0) return;
 
       const teamMetaMap = {};
-      (STATE.data.teams || []).filter(t => Number(t.year) === Number(yr)).forEach(t => {
-        teamMetaMap[Number(t.team_id)] = t;
+      (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(yr)).forEach(t => {
+        teamMetaMap[Number(getVal(t, ['team_id']))] = t;
       });
 
       const metaA = teamMetaMap[tma] || {};
       const metaB = teamMetaMap[tmb] || {};
 
-      const labels = rows.map(r => formatTimeLabel(r.TIME));
-      const tmaPts = rows.map(r => Number(r.TMAPTS) || 0);
-      const tmbPts = rows.map(r => Number(r.TMBPTS) || 0);
-      const tmaProj = rows.map(r => Number(r.TMAPROJ) || 0);
-      const tmbProj = rows.map(r => Number(r.TMBPROJ) || 0);
-      const tmaWp = rows.map(r => Number(r.TMAWP) || 0);
-      const tmbWp = rows.map(r => Number(r.TMBWP) || 0);
+      const labels = rows.map(r => formatTimeLabel(getVal(r, ['TIME', 'time'])));
+      const tmaPts = rows.map(r => Number(getVal(r, ['TMAPTS', 'team_points'])) || 0);
+      const tmbPts = rows.map(r => Number(getVal(r, ['TMBPTS', 'opponent_points'])) || 0);
+      const tmaProj = rows.map(r => Number(getVal(r, ['TMAPROJ', 'team_proj_points'])) || 0);
+      const tmbProj = rows.map(r => Number(getVal(r, ['TMBPROJ', 'opponent_proj_points'])) || 0);
+      const tmaWp = rows.map(r => Number(getVal(r, ['TMAWP'])) || 0);
+      const tmbWp = rows.map(r => Number(getVal(r, ['TMBWP'])) || 0);
 
-      // Save Full Series for Replay Animation Loop
       STATE.liveProb.fullSeries = {
         metaA, metaB, labels,
         tmaPts, tmbPts, tmaProj, tmbProj, tmaWp, tmbWp,
         lastRow: rows[rows.length - 1]
       };
 
-      // Update Top Scorecard Banner
       const last = rows[rows.length - 1];
-      document.getElementById('scorecard-tma-name').innerText = metaA.team_name || `Team ${tma}`;
-      document.getElementById('scorecard-tma-mgr').innerText = metaA.manager ? `Manager: ${metaA.manager}` : '';
-      document.getElementById('scorecard-tma-pts').innerText = Number(last.TMAPTS || 0).toFixed(2);
-      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${Number(last.TMAPROJ || 0).toFixed(2)}`;
-      document.getElementById('scorecard-tma-wp').innerText = `${Number(last.TMAWP || 0).toFixed(0)}%`;
+      const nameA = getVal(metaA, ['team_name', 'name']) || `Team ${tma}`;
+      const mgrA = getVal(metaA, ['manager', 'manager_name']);
+      const nameB = getVal(metaB, ['team_name', 'name']) || `Team ${tmb}`;
+      const mgrB = getVal(metaB, ['manager', 'manager_name']);
 
-      document.getElementById('scorecard-tmb-name').innerText = metaB.team_name || `Team ${tmb}`;
-      document.getElementById('scorecard-tmb-mgr').innerText = metaB.manager ? `Manager: ${metaB.manager}` : '';
-      document.getElementById('scorecard-tmb-pts').innerText = Number(last.TMBPTS || 0).toFixed(2);
-      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${Number(last.TMBPROJ || 0).toFixed(2)}`;
-      document.getElementById('scorecard-tmb-wp').innerText = `${Number(last.TMBWP || 0).toFixed(0)}%`;
+      document.getElementById('scorecard-tma-name').innerText = nameA;
+      document.getElementById('scorecard-tma-mgr').innerText = mgrA ? `Manager: ${mgrA}` : '';
+      document.getElementById('scorecard-tma-pts').innerText = Number(getVal(last, ['TMAPTS', 'team_points']) || 0).toFixed(2);
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${Number(getVal(last, ['TMAPROJ', 'team_proj_points']) || 0).toFixed(2)}`;
+      document.getElementById('scorecard-tma-wp').innerText = `${Number(getVal(last, ['TMAWP']) || 0).toFixed(0)}%`;
+
+      document.getElementById('scorecard-tmb-name').innerText = nameB;
+      document.getElementById('scorecard-tmb-mgr').innerText = mgrB ? `Manager: ${mgrB}` : '';
+      document.getElementById('scorecard-tmb-pts').innerText = Number(getVal(last, ['TMBPTS', 'opponent_points']) || 0).toFixed(2);
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${Number(getVal(last, ['TMBPROJ', 'opponent_proj_points']) || 0).toFixed(2)}`;
+      document.getElementById('scorecard-tmb-wp').innerText = `${Number(getVal(last, ['TMBWP']) || 0).toFixed(0)}%`;
 
       playGraphReplayAnimation();
     }
@@ -1020,4 +1090,347 @@
 
       const total = s.labels.length;
       let currentIdx = 1;
-      const step = Math.max(1, Math.floor(total / 60)); //
+      const step = Math.max(1, Math.floor(total / 60));
+
+      initOrUpdateChart(
+        s.labels.slice(0, currentIdx),
+        s.tmaPts.slice(0, currentIdx),
+        s.tmbPts.slice(0, currentIdx),
+        s.tmaProj.slice(0, currentIdx),
+        s.tmbProj.slice(0, currentIdx),
+        s.tmaWp.slice(0, currentIdx),
+        s.tmbWp.slice(0, currentIdx),
+        getVal(s.metaA, ['team_name', 'name']) || 'Team A',
+        getVal(s.metaB, ['team_name', 'name']) || 'Team B'
+      );
+
+      STATE.liveProb.animationTimer = setInterval(() => {
+        currentIdx += step;
+        if (currentIdx >= total) {
+          currentIdx = total;
+          clearInterval(STATE.liveProb.animationTimer);
+        }
+
+        updateChartDataSlices(
+          s.labels.slice(0, currentIdx),
+          s.tmaPts.slice(0, currentIdx),
+          s.tmbPts.slice(0, currentIdx),
+          s.tmaProj.slice(0, currentIdx),
+          s.tmbProj.slice(0, currentIdx),
+          s.tmaWp.slice(0, currentIdx),
+          s.tmbWp.slice(0, currentIdx)
+        );
+      }, 30);
+    }
+
+    function initOrUpdateChart(labels, tmaPts, tmbPts, tmaProj, tmbProj, tmaWp, tmbWp, nameA, nameB) {
+      const canvas = document.getElementById('liveWinProbChart');
+      if (!canvas) return;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+
+      if (STATE.liveProb.chartInstance) {
+        STATE.liveProb.chartInstance.destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+      STATE.liveProb.chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: `${nameA} (Actual)`,
+              data: tmaPts,
+              borderColor: '#0ea5e9',
+              backgroundColor: '#0ea5e9',
+              borderWidth: 3,
+              pointRadius: 0,
+              pointHoverRadius: 6,
+              yAxisID: 'y',
+              tension: 0.15
+            },
+            {
+              label: `${nameB} (Actual)`,
+              data: tmbPts,
+              borderColor: '#f97316',
+              backgroundColor: '#f97316',
+              borderWidth: 3,
+              pointRadius: 0,
+              pointHoverRadius: 6,
+              yAxisID: 'y',
+              tension: 0.15
+            },
+            {
+              label: `${nameA} (Proj)`,
+              data: tmaProj,
+              borderColor: '#38bdf8',
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              yAxisID: 'y',
+              tension: 0.15
+            },
+            {
+              label: `${nameB} (Proj)`,
+              data: tmbProj,
+              borderColor: '#fb923c',
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              yAxisID: 'y',
+              tension: 0.15
+            },
+            {
+              label: `${nameA} Win %`,
+              data: tmaWp,
+              borderColor: 'rgba(14, 165, 233, 0.4)',
+              backgroundColor: 'rgba(14, 165, 233, 0.15)',
+              fill: 'origin',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              yAxisID: 'y1',
+              tension: 0.2
+            },
+            {
+              label: `${nameB} Win %`,
+              data: tmbWp,
+              borderColor: 'rgba(249, 115, 22, 0.4)',
+              backgroundColor: 'rgba(249, 115, 22, 0.15)',
+              fill: 'origin',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              yAxisID: 'y1',
+              tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14 }
+            },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+              titleColor: isDark ? '#f8fafc' : '#0f172a',
+              bodyColor: isDark ? '#cbd5e1' : '#334155',
+              borderColor: isDark ? '#334155' : '#cbd5e1',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: function(ctx) {
+                  let label = ctx.dataset.label || '';
+                  if (label) label += ': ';
+                  if (ctx.parsed.y !== null) {
+                    label += ctx.dataset.yAxisID === 'y1' ? `${ctx.parsed.y.toFixed(0)}%` : ctx.parsed.y.toFixed(2);
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 14 }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: { display: true, text: 'Points Scored', color: textColor, font: { size: 11, weight: '700' } },
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 10 } },
+              min: 0
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '700' } },
+              grid: { drawOnChartArea: false },
+              ticks: { color: textColor, font: { size: 10 }, callback: v => `${v}%` },
+              min: 0,
+              max: 100
+            }
+          }
+        }
+      });
+    }
+
+    function updateChartDataSlices(labels, tmaPts, tmbPts, tmaProj, tmbProj, tmaWp, tmbWp) {
+      const chart = STATE.liveProb.chartInstance;
+      if (!chart) return;
+
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = tmaPts;
+      chart.data.datasets[1].data = tmbPts;
+      chart.data.datasets[2].data = tmaProj;
+      chart.data.datasets[3].data = tmbProj;
+      chart.data.datasets[4].data = tmaWp;
+      chart.data.datasets[5].data = tmbWp;
+      chart.update('none');
+    }
+
+    function updateChartThemeColors() {
+      const chart = STATE.liveProb.chartInstance;
+      if (!chart) return;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+
+      chart.options.scales.x.grid.color = gridColor;
+      chart.options.scales.x.ticks.color = textColor;
+      chart.options.scales.y.grid.color = gridColor;
+      chart.options.scales.y.ticks.color = textColor;
+      chart.options.scales.y.title.color = textColor;
+      chart.options.scales.y1.ticks.color = textColor;
+      chart.options.scales.y1.title.color = textColor;
+      chart.options.plugins.legend.labels.color = textColor;
+      chart.update();
+    }
+
+    // ==========================================
+    // SECTION 6: INITIALIZATION & HANDLERS
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      initTheme();
+      setupTabNavigation();
+
+      const tooltip = document.getElementById('sparkline-tooltip');
+      document.addEventListener('mouseover', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          const info = e.target.getAttribute('data-info');
+          if (info) {
+            tooltip.innerHTML = info;
+            tooltip.classList.remove('hidden');
+          }
+        }
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!tooltip.classList.contains('hidden')) {
+          tooltip.style.left = (e.clientX + 12) + 'px';
+          tooltip.style.top = (e.clientY + 12) + 'px';
+        }
+      });
+
+      document.addEventListener('mouseout', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          tooltip.classList.add('hidden');
+        }
+      });
+
+      document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          if (STATE.sort.field === field) {
+            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            STATE.sort.field = field;
+            STATE.sort.dir = field === 'actualRank' ? 'asc' : 'desc';
+          }
+          renderStandingsTable();
+        });
+      });
+
+      document.getElementById('help-popover-btn').addEventListener('click', () => document.getElementById('help-modal').classList.remove('hidden'));
+      document.getElementById('close-help-modal').addEventListener('click', () => document.getElementById('help-modal').classList.add('hidden'));
+      document.getElementById('clear-manager-filter').addEventListener('click', () => toggleManagerFilter(null));
+
+      document.getElementById('filter-year').addEventListener('change', (e) => { 
+        STATE.filters.year = Number(e.target.value); 
+        renderStandingsTable(); 
+        populateLiveProbWeeks();
+        renderLiveProbMatchup();
+      });
+
+      document.getElementById('filter-week-min').addEventListener('change', (e) => { STATE.filters.weekMin = Number(e.target.value); renderStandingsTable(); });
+      document.getElementById('filter-week-max').addEventListener('change', (e) => { STATE.filters.weekMax = Number(e.target.value); renderStandingsTable(); });
+      
+      document.getElementById('btn-export-standings-csv').addEventListener('click', () => {
+        if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
+        const csv = Papa.unparse(STATE.computedStandings);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+
+      // Flexible File Upload supporting both .csv files and .sqlite/.db database files
+      document.getElementById('csv-upload').addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        let parsedAny = false;
+
+        files.forEach(file => {
+          const fileName = file.name.toLowerCase();
+
+          if (fileName.endsWith('.sqlite') || fileName.endsWith('.db')) {
+            const reader = new FileReader();
+            reader.onload = async () => {
+              try {
+                if (window.initSqlJs) {
+                  const SQL = await initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${f}` });
+                  const db = new SQL.Database(new Uint8Array(reader.result));
+                  ['scores', 'teams', 'transactions', 'points', 'currentweek'].forEach(table => {
+                    try {
+                      const res = db.exec(`SELECT * FROM ${table}`);
+                      if (res.length > 0) {
+                        const cols = res[0].columns;
+                        STATE.data[table] = res[0].values.map(row => {
+                          const obj = {};
+                          cols.forEach((col, idx) => obj[col] = row[idx]);
+                          return obj;
+                        });
+                      }
+                    } catch (err) {}
+                  });
+                  db.close();
+                  applyDefaultFiltersFromCurrentWeek();
+                  populateYearSelector();
+                  renderStandingsTable();
+                  initLiveProbTab();
+                  updateStatus("emerald", "Live");
+                }
+              } catch (err) {
+                console.error("Failed to parse loaded SQLite DB", err);
+              }
+            };
+            reader.readAsArrayBuffer(file);
+          } else if (fileName.endsWith('.csv')) {
+            const tableKey = fileName.replace('.csv', '').trim();
+            Papa.parse(file, {
+              header: true, dynamicTyping: true, skipEmptyLines: true,
+              complete: (res) => { 
+                STATE.data[tableKey] = res.data; 
+                parsedAny = true;
+                applyDefaultFiltersFromCurrentWeek();
+                populateYearSelector(); 
+                renderStandingsTable(); 
+                populateLiveProbWeeks();
+                renderLiveProbMatchup();
+                updateStatus("emerald", "Live");
+              }
+            });
+          }
+        });
+      });
+
+      await loadDataPipeline();
+    });
+  </script>
+</body>
+</html>
