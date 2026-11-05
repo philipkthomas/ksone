@@ -222,7 +222,7 @@
 
   <script>
     // ==========================================
-    // SECTION 1: GLOBAL STATE & REFINED COLOR SCALES
+    // SECTION 1: GLOBAL STATE & COLOR SCALES
     // ==========================================
     const STATE = {
       data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
@@ -231,12 +231,11 @@
       computedStandings: []
     };
 
-    // Color Heatmap Interpolators matching precise requested specifications:
-    // 1. Green > Clear > Red: Green for high, clear (transparent) for mid/median, red for low.
-    // 2. Green > Clear: Green for highest, linear gradient down to clear (transparent) for lowest.
-    // 3. Clear > Red: Clear (transparent) for highest, linear gradient down to red for lowest.
+    // Precise Color Scale Interpolators
     const HEATMAPS = {
+      // High = Green, Mid = Clear, Low = Red
       greenClearRed: (val, min, mid, max) => {
+        if (max <= min) return 'transparent';
         if (val > mid && max > mid) {
           const norm = Math.min(1, (val - mid) / (max - mid));
           if (norm <= 0.05) return 'transparent';
@@ -249,6 +248,22 @@
         return 'transparent';
       },
 
+      // High = Red, Mid = Clear, Low = Green (Inverted)
+      redClearGreen: (val, min, mid, max) => {
+        if (max <= min) return 'transparent';
+        if (val > mid && max > mid) {
+          const norm = Math.min(1, (val - mid) / (max - mid));
+          if (norm <= 0.05) return 'transparent';
+          return `rgba(239, 68, 68, ${(norm * 0.45 + 0.05).toFixed(2)})`;
+        } else if (val < mid && mid > min) {
+          const norm = Math.min(1, (mid - val) / (mid - min));
+          if (norm <= 0.05) return 'transparent';
+          return `rgba(34, 197, 94, ${(norm * 0.45 + 0.05).toFixed(2)})`;
+        }
+        return 'transparent';
+      },
+
+      // Zero-Centered (+ Green, - Red)
       zeroCenteredDiverging: (val, maxAbs) => {
         if (val > 0) {
           const norm = Math.min(1, val / (maxAbs || 1));
@@ -260,6 +275,7 @@
         return 'transparent';
       },
 
+      // Highest = Green, Lowest = Clear
       greenToClear: (val, min, max) => {
         if (max <= min) return 'transparent';
         const norm = Math.max(0, Math.min(1, (val - min) / (max - min)));
@@ -267,6 +283,15 @@
         return `rgba(34, 197, 94, ${(norm * 0.45 + 0.05).toFixed(2)})`;
       },
 
+      // Highest = Red, Lowest = Clear
+      redToClear: (val, min, max) => {
+        if (max <= min) return 'transparent';
+        const norm = Math.max(0, Math.min(1, (val - min) / (max - min)));
+        if (norm <= 0.05) return 'transparent';
+        return `rgba(239, 68, 68, ${(norm * 0.45 + 0.05).toFixed(2)})`;
+      },
+
+      // Highest = Clear, Lowest = Red
       clearToRed: (val, min, max) => {
         if (max <= min) return 'transparent';
         const norm = Math.max(0, Math.min(1, (max - val) / (max - min)));
@@ -583,25 +608,29 @@
         const isCutoff = r.actualRank === 6;
         const rowClass = isCutoff ? "playoff-cutoff-row" : "";
 
-        // Cell Color Assignments according to specifications:
-        // W-L-T, ETEW%, SDEV, FAAB: green > clear > red
+        // Cell Color Assignments:
+        // 1. W-L-T, ETEW%, FAAB, PF: green > clear > red
         const wBg = HEATMAPS.greenClearRed(r.winPct, wStats.min, wStats.mid, wStats.max);
         const etewBg = HEATMAPS.greenClearRed(r.ETEW_pct, etewStats.min, 0.50, etewStats.max);
-        const sdevBg = HEATMAPS.greenClearRed(r.SDEV, sdevStats.min, sdevStats.mid, sdevStats.max);
         const faabBg = HEATMAPS.greenClearRed(r.faab, faabStats.min, faabStats.mid, faabStats.max);
         const pfBg = HEATMAPS.greenClearRed(r.PF, pfStats.min, pfStats.mid, pfStats.max);
-        const paBg = HEATMAPS.clearToRed(r.PA, paStats.min, paStats.max);
 
-        // WABL, RABL: green > clear > red (zero-centered)
+        // 2. PA: Highest = Red, Lowest = Clear
+        const paBg = HEATMAPS.redToClear(r.PA, paStats.min, paStats.max);
+
+        // 3. SDEV: Highest = Red, Lowest = Green (red > clear > green)
+        const sdevBg = HEATMAPS.redClearGreen(r.SDEV, sdevStats.min, sdevStats.mid, sdevStats.max);
+
+        // 4. WABL, RABL: green > clear > red (zero-centered)
         const wablBg = HEATMAPS.zeroCenteredDiverging(r.WABL, maxAbsWABL);
         const rablBg = HEATMAPS.zeroCenteredDiverging(r.RABL, maxAbsRABL);
 
-        // BEST_WK, AVG, AVG*: green > clear (highest > lowest)
+        // 5. BEST_WK, AVG, AVG*: green > clear (highest > lowest)
         const bestBg = HEATMAPS.greenToClear(r.bestScore, bestStats.min, bestStats.max);
         const avgBg = HEATMAPS.greenToClear(r.AVG, avgStats.min, avgStats.max);
         const avgStarBg = HEATMAPS.greenToClear(r.AVG_star, avgStarStats.min, avgStarStats.max);
 
-        // WORST_WK: clear > red (highest > lowest)
+        // 6. WORST_WK: clear > red (highest > lowest)
         const worstBg = HEATMAPS.clearToRed(r.worstScore, worstStats.min, worstStats.max);
 
         return `
