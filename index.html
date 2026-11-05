@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NDL Fantasy Football - League Data Heaven</title>
 
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS & FontAwesome CDNs -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -19,21 +19,58 @@
       }
     };
   </script>
-
-  <!-- External CDNs: Sql.js (SQLite WASM), PapaParse, ECharts, Tabulator -->
+  <!-- Sql.js (SQLite WASM) & PapaParse CDNs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-  <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator_dark.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
-    .sparkline-path { fill: none; stroke: #38bdf8; stroke-width: 2; }
-    .tabulator-cell { transition: background-color 0.2s ease; display: flex; align-items: center; }
-    .tabulator-row-dashed { border-bottom: 2px dashed #0284c7 !important; }
+    /* Excel-Style Standings Table Formatting */
+    .standings-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+    .standings-table th {
+      background-color: #0f172a;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 10px 12px;
+      border-bottom: 2px solid #334155;
+      border-right: 1px solid #1e293b;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .standings-table th:hover {
+      background-color: #1e293b;
+      color: #f8fafc;
+    }
+    .standings-table td {
+      padding: 8px 12px;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #1e293b;
+      border-right: 1px solid #1e293b;
+      white-space: nowrap;
+      transition: background-color 0.15s ease;
+    }
+    .standings-table tr:hover td {
+      filter: brightness(1.15);
+    }
+    /* Dashed line after Playoff Cutoff (Rank 6) */
+    .playoff-cutoff-row td {
+      border-bottom: 2px dashed #0284c7 !important;
+    }
+    /* Playoff Status Font Styling */
     .clinched-text { color: #22c55e !important; font-weight: 700; }
-    .eliminated-text { color: #94a3b8 !important; text-decoration: line-through; }
+    .eliminated-text { color: #64748b !important; text-decoration: line-through; }
+    
+    /* Sparkline Styling */
+    .sparkline-path { fill: none; stroke: #38bdf8; stroke-width: 2px; }
   </style>
 </head>
 
@@ -134,8 +171,32 @@
         </div>
       </div>
 
-      <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-        <div id="standings-table" class="min-h-[450px]"></div>
+      <!-- Standings Table Container -->
+      <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-x-auto shadow-xl">
+        <table class="standings-table" id="standings-table">
+          <thead>
+            <tr>
+              <th data-sort="actualRank" class="text-center">RANK</th>
+              <th data-sort="team_name" class="text-left">TEAM</th>
+              <th data-sort="W" class="text-center">W-L-T</th>
+              <th data-sort="PF" class="text-right">PF</th>
+              <th data-sort="PA" class="text-right">PA</th>
+              <th data-sort="ETEW_pct" class="text-right">ETEW%</th>
+              <th data-sort="WABL" class="text-right">WABL</th>
+              <th data-sort="RABL" class="text-right">RABL</th>
+              <th data-sort="bestScore" class="text-right">BEST_WK</th>
+              <th data-sort="worstScore" class="text-right">WORST_WK</th>
+              <th data-sort="AVG" class="text-right">AVG</th>
+              <th data-sort="AVG_star" class="text-right">AVG*</th>
+              <th data-sort="SDEV" class="text-right">SDEV</th>
+              <th data-sort="faab" class="text-right">FAAB</th>
+              <th class="text-center">TREND</th>
+            </tr>
+          </thead>
+          <tbody id="standings-tbody">
+            <!-- Dynamically populated rows -->
+          </tbody>
+        </table>
       </div>
     </section>
   </main>
@@ -161,18 +222,30 @@
 
   <script>
     // ==========================================
-    // SECTION 1: GLOBAL STATE & PALETTES
+    // SECTION 1: GLOBAL STATE & COLOR HEATMAPS
     // ==========================================
     const STATE = {
       data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
       filters: { year: 2026, weekMin: 1, weekMax: 17, selectedManager: null },
-      tableInstance: null
+      sort: { field: 'actualRank', dir: 'asc' },
+      computedStandings: []
     };
 
-    const COLOR_PALETTES = {
-      green: (val, min, max) => `rgba(34, 197, 94, ${0.1 + Math.max(0, Math.min(1, (val - min) / (max - min || 1))) * 0.45})`,
-      red: (val, min, max) => `rgba(239, 68, 68, ${0.1 + Math.max(0, Math.min(1, (val - min) / (max - min || 1))) * 0.45})`,
-      diverging: (val) => val > 0 ? `rgba(34, 197, 94, ${Math.min(0.5, 0.15 + val * 0.1)})` : val < 0 ? `rgba(239, 68, 68, ${Math.min(0.5, 0.15 + Math.abs(val) * 0.1)})` : 'transparent'
+    // Color Heatmap Interpolators matching Excel screenshot
+    const HEATMAPS = {
+      green: (val, min, max) => {
+        const norm = Math.max(0, Math.min(1, (val - min) / (max - min || 1)));
+        return `rgba(34, 197, 94, ${0.15 + norm * 0.45})`;
+      },
+      red: (val, min, max) => {
+        const norm = Math.max(0, Math.min(1, (val - min) / (max - min || 1)));
+        return `rgba(239, 68, 68, ${0.15 + norm * 0.45})`;
+      },
+      diverging: (val) => {
+        if (val > 0) return `rgba(34, 197, 94, ${Math.min(0.5, 0.15 + val * 0.12)})`;
+        if (val < 0) return `rgba(239, 68, 68, ${Math.min(0.5, 0.15 + Math.abs(val) * 0.12)})`;
+        return 'rgba(254, 240, 138, 0.15)'; // soft yellow for 0
+      }
     };
 
     // ==========================================
@@ -372,7 +445,7 @@
           loaded = true;
         }
       } catch (err) {
-        console.warn("Remote SQLite fetch failed (likely CORS). Falling back to CSVs...", err);
+        console.warn("Remote SQLite fetch failed. Falling back to CSVs...", err);
       }
 
       // Method B: Fallback to repository CSV files
@@ -410,7 +483,7 @@
     }
 
     // ==========================================
-    // SECTION 4: RENDER TABLE & FILTERS
+    // SECTION 4: TABLE RENDERER & SPARKLINE ENGINE
     // ==========================================
     function populateYearSelector() {
       const yearSelect = document.getElementById('filter-year');
@@ -423,103 +496,82 @@
     }
 
     function renderStandingsTable() {
-      const data = MetricsEngine.computeStandings(STATE.filters.year, STATE.filters.weekMin, STATE.filters.weekMax);
-      
+      let data = MetricsEngine.computeStandings(STATE.filters.year, STATE.filters.weekMin, STATE.filters.weekMax);
+      STATE.computedStandings = data;
+
       if (!data || data.length === 0) {
-        document.getElementById('standings-table').innerHTML = `
-          <div class="p-12 text-center text-slate-400">
-            <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-            <p>No standings data available for Year ${STATE.filters.year} (Weeks ${STATE.filters.weekMin}-${STATE.filters.weekMax}).</p>
-          </div>`;
+        document.getElementById('standings-tbody').innerHTML = `
+          <tr><td colspan="15" class="p-8 text-center text-slate-400">No standings data available for Year ${STATE.filters.year}.</td></tr>`;
         return;
       }
 
+      // Filter by Manager if selected
+      if (STATE.filters.selectedManager) {
+        data = data.filter(r => r.manager === STATE.filters.selectedManager);
+      }
+
+      // Sort Data
+      const field = STATE.sort.field;
+      const dir = STATE.sort.dir === 'asc' ? 1 : -1;
+      data.sort((a, b) => {
+        if (typeof a[field] === 'string') return dir * a[field].localeCompare(b[field]);
+        return dir * (a[field] - b[field]);
+      });
+
+      // Min/Max bounds for color scales
       const pfVals = data.map(d => d.PF), paVals = data.map(d => d.PA);
       const minPF = Math.min(...pfVals), maxPF = Math.max(...pfVals);
       const minPA = Math.min(...paVals), maxPA = Math.max(...paVals);
+      const minWorst = Math.min(...data.map(d => d.worstScore)), maxWorst = Math.max(...data.map(d => d.worstScore));
 
-      STATE.tableInstance = new Tabulator("#standings-table", {
-        data: data,
-        layout: "fitColumns",
-        columns: [
-          { title: "#", field: "actualRank", width: 50, hozAlign: "center", headerSort: false, 
-            formatter: (cell) => `<span class="font-semibold ${cell.getValue() <= 6 ? 'text-emerald-400' : 'text-slate-500'}">${cell.getValue()}</span>`
-          },
-          { title: "Team", field: "team_name", minWidth: 220, 
-            formatter: (cell) => {
-              const r = cell.getRow().getData();
-              let nameClass = r.isClinched ? "clinched-text" : r.isEliminated ? "eliminated-text" : "text-slate-100 font-medium";
-              const isSelected = STATE.filters.selectedManager === r.manager;
-              return `
-                <div class="flex items-center gap-2 cursor-pointer ${isSelected ? 'ring-2 ring-brand-500 bg-brand-900/30' : ''} p-1 rounded">
-                  <span class="w-2.5 h-2.5 rounded-full bg-brand-500 flex-shrink-0"></span>
-                  <div class="truncate">
-                    <span class="${nameClass}">${r.team_name}</span>
-                    <span class="text-xs text-slate-400 font-normal ml-1">${r.manager}</span>
-                  </div>
-                </div>`;
-            },
-            cellClick: (e, cell) => toggleManagerFilter(cell.getRow().getData().manager)
-          },
-          { title: "W-L", field: "W", hozAlign: "center", width: 85,
-            formatter: (cell) => {
-              const r = cell.getRow().getData();
-              return `<span class="font-mono font-bold">${r.W}-${r.L}${r.T > 0 ? `-${r.T}` : ''}</span>`;
-            }
-          },
-          { title: "PF", field: "PF", hozAlign: "right", 
-            formatter: (cell) => `<span class="font-mono">${cell.getValue().toFixed(1)}</span>`,
-            created: (cell) => cell.getElement().style.backgroundColor = COLOR_PALETTES.green(cell.getValue(), minPF, maxPF)
-          },
-          { title: "PA", field: "PA", hozAlign: "right",
-            formatter: (cell) => `<span class="font-mono">${cell.getValue().toFixed(1)}</span>`,
-            created: (cell) => cell.getElement().style.backgroundColor = COLOR_PALETTES.red(cell.getValue(), minPA, maxPA)
-          },
-          { title: "ETEW%", field: "ETEW_pct", hozAlign: "right",
-            formatter: (cell) => `<span class="font-mono font-semibold">${(cell.getValue() * 100).toFixed(1)}%</span>`,
-            created: (cell) => cell.getElement().style.backgroundColor = COLOR_PALETTES.green(cell.getValue(), 0.1, 0.9)
-          },
-          { title: "WABL", field: "WABL", hozAlign: "right",
-            formatter: (cell) => {
-              const v = cell.getValue();
-              return `<span class="font-mono font-bold ${v > 0 ? 'text-emerald-400' : v < 0 ? 'text-rose-400' : 'text-slate-400'}">${v > 0 ? '+' : ''}${v.toFixed(2)}</span>`;
-            },
-            created: (cell) => cell.getElement().style.backgroundColor = COLOR_PALETTES.diverging(cell.getValue())
-          },
-          { title: "RABL", field: "RABL", hozAlign: "right", width: 75,
-            formatter: (cell) => `<span class="font-mono">${cell.getValue() > 0 ? '+' : ''}${cell.getValue()}</span>`
-          },
-          { title: "Best", field: "bestScore", hozAlign: "right",
-            formatter: (cell) => {
-              const r = cell.getRow().getData();
-              return `<span class="font-mono text-xs">${r.bestScore.toFixed(2)} (${r.bestWk})</span>`;
-            }
-          },
-          { title: "Worst", field: "worstScore", hozAlign: "right",
-            formatter: (cell) => {
-              const r = cell.getRow().getData();
-              return `<span class="font-mono text-xs">${r.worstScore.toFixed(2)} (${r.worstWk})</span>`;
-            }
-          },
-          { title: "AVG", field: "AVG", hozAlign: "right", formatter: (c) => `<span class="font-mono">${c.getValue().toFixed(2)}</span>` },
-          { title: "AVG*", field: "AVG_star", hozAlign: "right", formatter: (c) => `<span class="font-mono">${c.getValue().toFixed(2)}</span>` },
-          { title: "SDEV", field: "SDEV", hozAlign: "right", formatter: (c) => `<span class="font-mono text-slate-300">${c.getValue().toFixed(2)}</span>` },
-          { title: "FAAB", field: "faab", hozAlign: "right", formatter: (c) => `<span class="font-mono text-emerald-400">$${c.getValue()}</span>` },
-          { title: "Trend", field: "weeklyScores", hozAlign: "center", headerSort: false, width: 110,
-            formatter: (cell) => generateSparklineSVG(cell.getValue())
-          }
-        ],
-        rowFormatter: (row) => {
-          if (row.getData().actualRank === 6) row.getElement().classList.add("tabulator-row-dashed");
-        }
-      });
+      const tbody = document.getElementById('standings-tbody');
+      tbody.innerHTML = data.map(r => {
+        const rankStr = String(r.actualRank).padStart(2, '0');
+        const rankClass = r.actualRank <= 6 ? "text-emerald-400 font-bold" : "text-slate-500 line-through";
+        
+        let teamClass = "text-slate-100 font-semibold";
+        if (r.isClinched) teamClass = "clinched-text";
+        if (r.isEliminated) teamClass = "eliminated-text";
+
+        const isCutoff = r.actualRank === 6;
+        const rowClass = isCutoff ? "playoff-cutoff-row" : "";
+
+        return `
+          <tr class="${rowClass}">
+            <td class="text-center ${rankClass}">${rankStr}</td>
+            <td class="text-left cursor-pointer" onclick="toggleManagerFilter('${r.manager}')">
+              <span class="text-xs text-slate-400 font-normal mr-1 border-r border-slate-700 pr-1.5">${r.manager}</span>
+              <span class="${teamClass}">${r.team_name}</span>
+            </td>
+            <td class="text-center font-mono font-bold" style="background-color: ${HEATMAPS.green(r.W, 0, 14)}">${r.W} - ${r.L}${r.T > 0 ? ` - ${r.T}` : ''}</td>
+            <td class="text-right font-mono" style="background-color: ${HEATMAPS.green(r.PF, minPF, maxPF)}">${r.PF.toFixed(1)}</td>
+            <td class="text-right font-mono" style="background-color: ${HEATMAPS.red(r.PA, minPA, maxPA)}">${r.PA.toFixed(1)}</td>
+            <td class="text-right font-mono font-semibold" style="background-color: ${HEATMAPS.green(r.ETEW_pct, 0.1, 0.9)}">${(r.ETEW_pct * 100).toFixed(1)}%</td>
+            <td class="text-right font-mono font-bold ${r.WABL > 0 ? 'text-emerald-400' : r.WABL < 0 ? 'text-rose-400' : 'text-slate-400'}" style="background-color: ${HEATMAPS.diverging(r.WABL)}">${r.WABL > 0 ? '+' : ''}${r.WABL.toFixed(2)}</td>
+            <td class="text-right font-mono" style="background-color: ${HEATMAPS.diverging(r.RABL)}">${r.RABL > 0 ? '+' : ''}${r.RABL}</td>
+            <td class="text-right font-mono text-xs" style="background-color: ${HEATMAPS.green(r.bestScore, minPF/14, maxPF/14)}">${r.bestScore.toFixed(2)} <span class="text-slate-400">(${String(r.bestWk).padStart(2, '0')})</span></td>
+            <td class="text-right font-mono text-xs" style="background-color: ${HEATMAPS.red(r.worstScore, minWorst, maxWorst)}">${r.worstScore.toFixed(2)} <span class="text-slate-400">(${String(r.worstWk).padStart(2, '0')})</span></td>
+            <td class="text-right font-mono" style="background-color: ${HEATMAPS.green(r.AVG, minPF/14, maxPF/14)}">${r.AVG.toFixed(2)}</td>
+            <td class="text-right font-mono" style="background-color: ${HEATMAPS.green(r.AVG_star, minPF/14, maxPF/14)}">${r.AVG_star.toFixed(2)}</td>
+            <td class="text-right font-mono text-slate-300">${r.SDEV.toFixed(2)}</td>
+            <td class="text-right font-mono text-emerald-400 font-semibold" style="background-color: ${HEATMAPS.green(r.faab, 0, 1000)}">$${r.faab}</td>
+            <td class="text-center">${generateSparklineSVG(r.weeklyScores)}</td>
+          </tr>`;
+      }).join('');
     }
 
     function generateSparklineSVG(scores) {
       if (!scores || scores.length === 0) return '';
       const w = 90, h = 24, pad = 3, min = Math.min(...scores), max = Math.max(...scores), r = (max - min) || 1;
       const pts = scores.map((v, i) => `${(pad + (i / Math.max(1, scores.length - 1)) * (w - 2 * pad)).toFixed(1)},${(h - pad - ((v - min) / r) * (h - 2 * pad)).toFixed(1)}`).join(' ');
-      return `<svg width="${w}" height="${h}"><polyline points="${pts}" class="sparkline-path"/></svg>`;
+      const lastX = (pad + ((scores.length - 1) / Math.max(1, scores.length - 1)) * (w - 2 * pad)).toFixed(1);
+      const lastY = (h - pad - ((scores[scores.length - 1] - min) / r) * (h - 2 * pad)).toFixed(1);
+
+      return `
+        <svg width="${w}" height="${h}" class="overflow-visible inline-block">
+          <polyline points="${pts}" class="sparkline-path"/>
+          <circle cx="${lastX}" cy="${lastY}" r="2.5" fill="#38bdf8" />
+        </svg>`;
     }
 
     function toggleManagerFilter(mgr) {
@@ -542,6 +594,20 @@
     // SECTION 5: INITIALIZATION & HANDLERS
     // ==========================================
     document.addEventListener('DOMContentLoaded', async () => {
+      // Table Header Click Sorting
+      document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          if (STATE.sort.field === field) {
+            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            STATE.sort.field = field;
+            STATE.sort.dir = field === 'actualRank' ? 'asc' : 'desc';
+          }
+          renderStandingsTable();
+        });
+      });
+
       document.getElementById('help-popover-btn').addEventListener('click', () => document.getElementById('help-modal').classList.remove('hidden'));
       document.getElementById('close-help-modal').addEventListener('click', () => document.getElementById('help-modal').classList.add('hidden'));
       document.getElementById('clear-manager-filter').addEventListener('click', () => toggleManagerFilter(null));
@@ -549,7 +615,18 @@
       document.getElementById('filter-year').addEventListener('change', (e) => { STATE.filters.year = Number(e.target.value); renderStandingsTable(); });
       document.getElementById('filter-week-min').addEventListener('change', (e) => { STATE.filters.weekMin = Number(e.target.value); renderStandingsTable(); });
       document.getElementById('filter-week-max').addEventListener('change', (e) => { STATE.filters.weekMax = Number(e.target.value); renderStandingsTable(); });
-      document.getElementById('btn-export-standings-csv').addEventListener('click', () => STATE.tableInstance && STATE.tableInstance.download("csv", `Standings_${STATE.filters.year}.csv`));
+      
+      document.getElementById('btn-export-standings-csv').addEventListener('click', () => {
+        if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
+        const csv = Papa.unparse(STATE.computedStandings);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
 
       document.getElementById('csv-upload').addEventListener('change', (e) => {
         Array.from(e.target.files).forEach(file => {
