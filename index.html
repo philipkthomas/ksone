@@ -1,202 +1,405 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NDL League Data Heaven</title>
-<style>
-:root{--bg:#fff;--fg:#1b1f24;--card:#f3f5f7;--bd:#d0d7de;--ac:#0072B2}
-[data-t=dark]{--bg:#12161b;--fg:#e6e9ed;--card:#1c222a;--bd:#323b46;--ac:#56B4E9}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,"Segoe UI","Apple Color Emoji","Segoe UI Emoji",sans-serif;overflow-wrap:anywhere}
-nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--bd);padding:6px 10px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
-nav button,.btn{background:none;color:var(--fg);border:1px solid var(--bd);border-radius:6px;padding:5px 9px;cursor:pointer;font:inherit}
-nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
-.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--bd)}
-select,input,textarea{background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:6px;padding:4px 6px;font:inherit}
-main{padding:10px 12px;max-width:1400px;margin:auto}
-.sc{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:4px 8px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}
-th{position:sticky;top:0;background:var(--card);cursor:pointer}td:nth-child(2),th:nth-child(2){text-align:left}
-tr.po td{border-bottom:2px dashed var(--ac)}tr.hl td{background:color-mix(in srgb,var(--ac) 18%,transparent)}
-.ch{width:100%;height:420px}.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:10px;margin:8px 0}
-.empty{padding:40px;text-align:center;border:2px dashed var(--bd);border-radius:10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
-.sv{display:flex;gap:2px;align-items:center;margin:2px 0}.sv b{width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
-.sv i{font-style:normal;font-size:11px;text-align:center;padding:3px 0;overflow:hidden;white-space:nowrap}
-small{opacity:.75}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
-@media print{nav,.bar,.noprint{display:none}}
-</style></head><body>
-<nav id="nav"></nav>
-<div class="bar noprint">
- <label>Year <select id="fy"></select></label>
- <label>Weeks <input id="w1" type="number" min="1" value="1" style="width:56px"> – <input id="w2" type="number" min="1" value="99" style="width:56px"></label>
- <label class="btn">Add CSVs / .sqlite<input id="file" type="file" multiple accept=".csv,.sqlite,.db" hidden></label>
- <button class="btn" id="th">◐ Theme</button><button class="btn" onclick="print()">Print</button>
- <small id="st"></small>
-</div>
-<main id="main"></main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.1/echarts.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
-<script>
-/* ============ 0. STATE, STORAGE, INGEST (dedupe keys per spec) ============ */
-const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const PAL=['#0072B2','#E69F00','#009E73','#D55E00','#CC79A7','#56B4E9','#F0E442','#999999','#332288','#882255']; // Okabe-Ito-based
-const S={pts:[],scr:[],teams:[],tx:[],set:{belt:'Mike',svStart:'',tie:'hold',csvUrls:'',sqlUrl:''},yr:'',w:[1,99],hl:null,tab:'standings',wae:'etew',pos:'stack',pw:'avg',lw:'',lm:'',cur:0,dark:matchMedia('(prefers-color-scheme:dark)').matches};
-const idb=new Promise(r=>{try{const q=indexedDB.open('ndl',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)}catch(e){r(null)}});
-const put=async(k,v)=>{const d=await idb;if(d)d.transaction('kv','readwrite').objectStore('kv').put(v,k)};
-const get=async k=>{const d=await idb;return d?new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r()}):undefined};
-const KEY={pts:r=>[r.league,r.year,r.week,r.team_id,r.player_id].join('|'),scr:r=>[r.YR,r.WK,r.TIME,r.TMA,r.TMB].join('|'),teams:r=>[r.year,r.team_id].join('|'),tx:r=>[r.transaction_id,r.player_id,r.type].join('|')};
-function merge(k,rows){const m=new Map(S[k].map(r=>[KEY[k](r),r]));rows.forEach(r=>m.set(KEY[k](r),r));S[k]=[...m.values()]}
-const kind=f=>{const h=new Set(f);return h.has('TMAWP')?'scr':h.has('selected_position')?'pts':h.has('faab_balance')?'teams':h.has('transaction_id')?'tx':null};
-function ingestCSV(t){const p=Papa.parse(t.trim(),{header:true,dynamicTyping:true,skipEmptyLines:true,transformHeader:h=>h.trim()});const k=kind(p.meta.fields||[]);if(k)merge(k,p.data);return k}
-async function ingestSQL(buf){const SQL=await initSqlJs({locateFile:f=>'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/'+f});const db=new SQL.Database(new Uint8Array(buf));
- (db.exec("select name from sqlite_master where type='table'")[0]?.values||[]).forEach(([n])=>{const r=db.exec(`select * from "${n}"`)[0];if(!r)return;const k=kind(r.columns);if(k)merge(k,r.values.map(v=>Object.fromEntries(r.columns.map((c,i)=>[c,v[i]]))))});db.close()}
-async function save(){for(const k of['pts','scr','teams','tx'])await put(k,S[k]);await put('set',S.set)}
-async function files(fl){let n=0;for(const f of fl){try{if(/\.(sqlite|db)$/i.test(f.name))await ingestSQL(await f.arrayBuffer());else ingestCSV(await f.text());n++}catch(e){console.warn(f.name,e)}}await save();refresh();$('#st').textContent=`Loaded ${n} file(s)`}
-$('#file').onchange=e=>files(e.target.files);
-addEventListener('dragover',e=>e.preventDefault());addEventListener('drop',e=>{e.preventDefault();files(e.dataTransfer.files)});
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NDL Fantasy Football - League Data Heaven</title>
 
-/* ============ 1. LIVE UPDATING (polls CSV URLs and/or a hosted .sqlite every 60s) ============ */
-async function poll(){const s=S.set;try{
-  for(const u of(s.csvUrls||'').split(/\s+/).filter(Boolean)){ingestCSV(await(await fetch(u,{cache:'no-store'})).text())}
-  if(s.sqlUrl)await ingestSQL(await(await fetch(s.sqlUrl,{cache:'no-store'})).arrayBuffer());
-  if(s.csvUrls||s.sqlUrl){await save();refresh();$('#st').textContent='Updated '+new Date().toLocaleTimeString()}}catch(e){$('#st').textContent='Poll failed: '+e.message}}
-setInterval(()=>{if(S.set.csvUrls||S.set.sqlUrl)poll()},60000);
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0f9ff', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' },
+            slate: { 850: '#151f32', 900: '#0f172a', 950: '#080d1a' }
+          }
+        }
+      }
+    };
+  </script>
 
-/* ============ 2. METRICS MODULE (tweak formulas here) ============ */
-const sum=a=>a.reduce((x,y)=>x+y,0),mean=a=>a.length?sum(a)/a.length:0,sd=a=>{if(a.length<2)return 0;const m=mean(a);return Math.sqrt(sum(a.map(x=>(x-m)**2))/(a.length-1))};
-const SLOTS=['SFX1','FX3','FX2','FX1','TE1','WR2','WR1','RB2','RB1','QB1'];
-const isStart=r=>r.selected_position!=='BN'&&r.selected_position!=='IR';
-// Slots follow the PDF: by PLAYER position (RB1/RB2, WR1/WR2, TE1); 2nd starting QB -> SFX1 (else best leftover); remaining leftovers -> FX1..3
-function slots(pl){const st=pl.filter(isStart),o={QB1:0,SFX1:0,RB1:0,RB2:0,WR1:0,WR2:0,TE1:0},used=new Set();let nq=0;
- const take=(p,ns)=>{const a=st.filter(r=>r.position===p&&!used.has(r)).sort((x,y)=>y.points-x.points);ns.forEach((n,i)=>{if(a[i]){o[n]=a[i].points;used.add(a[i]);if(p=='QB')nq++}})};
- take('QB',['QB1','SFX1']);take('RB',['RB1','RB2']);take('WR',['WR1','WR2']);take('TE',['TE1']);
- const l=st.filter(r=>!used.has(r)).map(r=>r.points).sort((a,b)=>b-a);if(nq<2)o.SFX1=l.shift()||0;
- o.FX1=l[0]||0;o.FX2=l[1]||0;o.FX3=l[2]||0;return o}
-// ETEW per week = share of the other teams that team outscored (ties = 0.5). Expected wins = sum over weeks.
-// WABL = actual wins - expected wins.  AVG* ASSUMPTION = mean excluding best & worst week ("trimmed avg").
-function agg(T){const m=new Map();T.forEach(t=>{if(!m.has(t.mgr))m.set(t.mgr,{mgr:t.mgr,rows:[]});m.get(t.mgr).rows.push(t)});
- const a=[...m.values()].map(o=>{const R=o.rows.sort((x,y)=>x.week-y.week),g=R.length,pf=R.map(t=>t.pf),L=R[g-1],W=R.filter(t=>t.res==1).length,Ti=R.filter(t=>t.res==.5).length,et=mean(R.map(t=>t.etew));
-  const bi=pf.indexOf(Math.max(...pf)),wi=pf.indexOf(Math.min(...pf)),s=[...pf].sort((x,y)=>x-y),tr=g>2?s.slice(1,-1):s;
-  return Object.assign(o,{team:L.team,id:L.id,g,W,L:g-W-Ti,T:Ti,PF:sum(pf),PA:sum(R.map(t=>t.pa)),et,exp:et*g,wabl:W+Ti/2-et*g,best:pf[bi],bw:R[bi].week,worst:pf[wi],ww:R[wi].week,avg:mean(pf),avgT:mean(tr),sd:sd(pf),pfs:pf})});
- a.sort((x,y)=>(y.W+y.T/2)-(x.W+x.T/2)||y.PF-x.PF);a.forEach((o,i)=>o.rank=i+1);a.forEach(o=>o.rE=1+a.filter(x=>x.et>o.et+1e-9).length);return a} // RABL = ETEW rank - actual rank
-// Survivor: each week the lowest score among remaining teams is eliminated.
-function survivor(T,weeks){let alive=new Set(T.map(t=>t.mgr)),out=[];for(const w of weeks){const g=T.filter(t=>t.week==w&&alive.has(t.mgr));if(g.length<2)break;const lo=g.reduce((a,b)=>b.pf<a.pf?b:a);alive.delete(lo.mgr);out.push({week:w,mgr:lo.mgr,pf:lo.pf})}return{alive,out}}
-// Belt: holder keeps it until losing (tie behaviour set in Settings); start holder = Settings or best week-1 scorer (ASSUMPTION).
-function belt(T,weeks){let h=S.set.belt&&T.some(t=>t.mgr==S.set.belt)?S.set.belt:null;const rows=[];
- for(const w of weeks){const g=T.filter(t=>t.week==w);if(!h)h=g.reduce((a,b)=>b.pf>a.pf?b:a,g[0]).mgr;const t=g.find(x=>x.mgr==h);if(!t)continue;
-  rows.push({week:w,holder:h,pf:t.pf,chal:t.om,pa:t.pa,res:t.res==1?'Held':t.res==0?'Lost':'Tie'});if(t.res==0||(t.res==.5&&S.set.tie=='lose'))h=t.om}
- return rows}
+  <!-- External CDNs: Sql.js (SQLite WASM), PapaParse, ECharts, Tabulator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator_dark.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-/* ============ 3. DERIVED DATA (matchups come from Points; no schedule file) ============ */
-const D={};
-function build(){const W=new Map(),TM=new Map(S.teams.map(t=>[t.year+'|'+t.team_id,t]));
- S.pts.filter(r=>!S.yr||r.year==S.yr).forEach(r=>{const k=r.year+'|'+r.week+'|'+r.team_id;let t=W.get(k);if(!t)W.set(k,t={year:r.year,week:r.week,id:r.team_id,mgr:TM.get(r.year+'|'+r.team_id)?.manager||r.manager_name,team:TM.get(r.year+'|'+r.team_id)?.team_name||r.team_name,opp:r.opponent_team_id,pf:0,pa:r.opponent_points,pl:[]});t.pl.push(r)});
- const all=[...W.values()];all.forEach(t=>{t.pf=sum(t.pl.filter(isStart).map(r=>r.points));if(!isFinite(t.pf))t.pf=0;const o=W.get(t.year+'|'+t.week+'|'+t.opp);t.om=o?o.mgr:'?'});
- const T=all.filter(t=>t.week>=S.w[0]&&t.week<=S.w[1]);const byW={};T.forEach(t=>(byW[t.week]??=[]).push(t));
- for(const w in byW){const g=byW[w],n=g.length;g.forEach(t=>{t.etew=n>1?(g.filter(o=>o!==t&&o.pf<t.pf).length+.5*g.filter(o=>o!==t&&o.pf==t.pf).length)/(n-1):0;t.res=t.pf>t.pa?1:t.pf<t.pa?0:.5;t.rank=1+g.filter(o=>o.pf>t.pf).length;t.slots=slots(t.pl)})}
- D.T=T;D.weeks=Object.keys(byW).map(Number).sort((a,b)=>a-b);D.byW=byW;D.mgrs=[...new Set(all.map(t=>t.mgr))].filter(Boolean).sort();
- D.col=m=>PAL[Math.max(0,D.mgrs.indexOf(m))%PAL.length]}
-const tname=(id,yr)=>{const t=S.teams.find(r=>r.team_id==id&&(!yr||r.year==yr));return t?`${t.team_name} (${t.manager})`:'Team '+id};
+  <style>
+    /* Custom Sparkline SVG Styling */
+    .sparkline-path { fill: none; stroke: #38bdf8; stroke-width: 2; }
+    .sparkline-dot { fill: #38bdf8; }
+    
+    /* Heatmap cell padding & transitions */
+    .tabulator-cell { transition: background-color 0.2s ease; display: flex; align-items: center; }
+    .tabulator-row-dashed { border-bottom: 2px dashed #0284c7 !important; }
+    
+    /* Playoff Status Styling */
+    .clinched-text { color: #22c55e !important; font-weight: 700; }
+    .eliminated-text { color: #94a3b8 !important; text-decoration: line-through; }
+  </style>
+</head>
 
-/* ============ 4. UI HELPERS (sortable table, chart wrapper) ============ */
-const SORT={};let CH=[];
-function tbl(id,cols,rows,cls){const s=SORT[id];if(s){const c=cols[s.i];rows=[...rows].sort((a,b)=>{const x=c.v(a),y=c.v(b);return(x>y?1:x<y?-1:0)*s.d})}
- return`<div class=sc><table><thead><tr>${cols.map((c,i)=>`<th data-s="${id}|${i}">${c.h}</th>`).join('')}</tr></thead><tbody>${rows.map((r,i)=>`<tr data-m="${esc(r.mgr||'')}" class="${(cls?cls(r,i):'')+(S.hl&&S.hl==r.mgr?' hl':'')}">${cols.map(c=>`<td>${c.f?c.f(r):esc(c.v(r))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
-document.addEventListener('click',e=>{const h=e.target.closest('th[data-s]');if(h){const[id,i]=h.dataset.s.split('|');const s=SORT[id];SORT[id]={i:+i,d:s&&s.i==+i?-s.d:-1};render();return}
- const r=e.target.closest('tr[data-m]');if(r&&r.dataset.m){S.hl=S.hl==r.dataset.m?null:r.dataset.m;render()}});
-addEventListener('keydown',e=>{if(e.key=='Escape'&&S.hl){S.hl=null;render()}});
-function ch(id,opt){const el=document.getElementById(id);if(!el)return;const c=echarts.init(el,S.dark?'dark':null);c.setOption({backgroundColor:'transparent',tooltip:{trigger:'axis',confine:true},legend:{type:'scroll',top:0},grid:{left:48,right:48,top:40,bottom:40},toolbox:{feature:{saveAsImage:{title:'PNG'},dataZoom:{},dataView:{title:'Data',readOnly:true}}},...opt});CH.push(c);c.on('legendselectchanged',()=>{})}
-addEventListener('resize',()=>CH.forEach(c=>c.resize()));
-const spark=a=>{if(a.length<2)return'';const mn=Math.min(...a),mx=Math.max(...a),p=a.map((v,i)=>`${i*60/(a.length-1)},${18-(v-mn)/(mx-mn||1)*16}`).join(' ');return`<svg width=62 height=20><polyline points="${p}" fill=none stroke="currentColor" stroke-width=1.5 /></svg>`};
-const f1=x=>(+x).toFixed(1),f2=x=>(+x).toFixed(2),sg=x=>(x>0?'+':'')+f2(x);
-const lineS=(m,data,extra)=>({name:m,type:'line',data,color:D.col(m),symbolSize:5,emphasis:{focus:'series'},lineStyle:{width:S.hl==m?4:2,opacity:!S.hl||S.hl==m?1:.2},...extra});
-const empty=t=>`<div class=empty>${t||'No data yet. Drop <b>W##Points.csv</b>, <b>W##Scores.csv</b>, <b>W##Teams.csv</b>, <b>W##Transactions.csv</b> (or a .sqlite file) anywhere on this page, or set a live URL under Settings.'}</div>`;
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen antialiased selection:bg-brand-500 selection:text-white">
 
-/* ============ 5. VIEWS (numbered as in the spec) ============ */
-const V={};
-// 1. Standings
-V.standings=()=>{const A=agg(D.T),lw=D.weeks[D.weeks.length-1],P=Object.fromEntries(agg(D.T.filter(t=>t.week<lw)).map(o=>[o.mgr,o.rank])),np=S.teams[0]?.num_playoff_teams||6;
- const fb=o=>S.teams.find(t=>t.team_id==o.id&&(!S.yr||t.year==S.yr))?.faab_balance??'';
- return`<h3>Standings <small>ETEW% = avg share of league outscored each week · WABL = wins − (ETEW% × games) · RABL = ETEW rank − actual rank · AVG* = trimmed avg (excl. best & worst week) · dashed line = playoff cut (${np})</small></h3>`+
- tbl('st',[{h:'#',v:o=>o.rank},
- {h:'Team',v:o=>o.mgr,f:o=>`<span class=dot style="background:${D.col(o.mgr)}"></span>${esc(o.team)} <small>${esc(o.mgr)}</small>`},{h:'W-L',v:o=>o.W+o.T/2,f:o=>`${o.W}-${o.L}${o.T?'-'+o.T:''}`},
- {h:'PF',v:o=>o.PF,f:o=>f1(o.PF)},{h:'PA',v:o=>o.PA,f:o=>f1(o.PA)},{h:'ETEW%',v:o=>o.et,f:o=>(o.et*100).toFixed(1)+'%'},{h:'WABL',v:o=>o.wabl,f:o=>`<span style="color:${o.wabl>=0?'#009E73':'#D55E00'}">${sg(o.wabl)}</span>`},{h:'RABL',v:o=>o.rE-o.rank,f:o=>(o.rE-o.rank>0?'+':'')+(o.rE-o.rank)},
- {h:'Best',v:o=>o.best,f:o=>`${f2(o.best)} (${o.bw})`},{h:'Worst',v:o=>o.worst,f:o=>`${f2(o.worst)} (${o.ww})`},{h:'AVG',v:o=>o.avg,f:o=>f2(o.avg)},{h:'AVG*',v:o=>o.avgT,f:o=>f2(o.avgT)},{h:'SDEV',v:o=>o.sd,f:o=>f2(o.sd)},{h:'FAAB',v:fb,f:o=>fb(o)===''?'':'$'+fb(o)},{h:'Trend',v:o=>o.avg,f:o=>spark(o.pfs)}],A,(o,i)=>i==np-1?'po':'')};
-// 2. Matchups + lineups
-V.matchups=()=>{const w=S.lw&&D.byW[S.lw]?+S.lw:D.weeks[D.weeks.length-1],g=D.byW[w]||[],seen=new Set(),pairs=[];
- g.forEach(t=>{const o=g.find(x=>x.id==t.opp);if(!o||seen.has(t.id)||seen.has(o.id))return;seen.add(t.id);seen.add(o.id);pairs.push([t,o])});
- const side=t=>{const st=t.pl.filter(isStart).sort((a,b)=>b.points-a.points),bn=t.pl.filter(r=>!isStart(r)&&r.selected_position=='BN').sort((a,b)=>b.points-a.points);
-  return`<div><b style="color:${D.col(t.mgr)}">${esc(t.team)}</b> <small>${esc(t.mgr)}</small><br><span style="font-size:22px">${f2(t.pf)}</span> <small>ETEW ${Math.round(t.etew*(g.length-1))}-${g.length-1-Math.round(t.etew*(g.length-1))}</small><br><small>Best starter: ${esc(st[0]?.name)} ${f1(st[0]?.points)} · Best bench: ${esc(bn[0]?.name||'–')} ${bn[0]?f1(bn[0].points):''}</small><br><small>Bench-6: ${bn.slice(0,6).map(r=>esc(r.name)+' '+f1(r.points)).join(', ')}</small>
-  <details><summary>Lineup</summary>${st.map(r=>`<div>${esc(r.selected_position)} ${esc(r.name)} <b>${f1(r.points)}</b></div>`).join('')}</details></div>`};
- return`<label>Week <select onchange="S.lw=this.value;render()">${D.weeks.map(x=>`<option ${x==w?'selected':''}>${x}</option>`).join('')}</select></label><div class=grid>`+
- pairs.map(([a,b])=>{const d=Math.abs(a.pf-b.pf),wn=a.pf>=b.pf?a:b,up=wn.etew<.4;return`<div class=card><small>Δ ${f2(d)}${d>50?' · 💥 blowout':''}${up?' · 🔔 upset':''}</small><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${side(a)}${side(b)}</div></div>`}).join('')+'</div>'};
-// 3. Wins Above Even
-V.wae=()=>`<label>Mode <select onchange="S.wae=this.value;render()"><option value=etew ${S.wae=='etew'?'selected':''}>Cumulative ETEW − 0.5/game</option><option value=wl ${S.wae=='wl'?'selected':''}>Actual (W−L)/2</option></select></label><div id=c1 class=ch></div>`;
-V.wae.post=()=>{ch('c1',{xAxis:{type:'category',data:D.weeks},yAxis:{type:'value',name:'Wins above even'},series:D.mgrs.map(m=>{let c=0;return lineS(m,D.weeks.map(w=>{const t=D.T.find(x=>x.week==w&&x.mgr==m);c+=t?(S.wae=='etew'?t.etew-.5:t.res-.5):0;return+c.toFixed(2)}))})})};
-// 4. Rank by week (bump)
-V.rank=()=>`<div id=c1 class=ch style="height:480px"></div>`;
-V.rank.post=()=>{const R=D.weeks.map(w=>Object.fromEntries(agg(D.T.filter(t=>t.week<=w)).map(o=>[o.mgr,o.rank])));
- ch('c1',{xAxis:{type:'category',data:D.weeks},yAxis:{type:'value',inverse:true,min:1,max:D.mgrs.length,interval:1,name:'Rank'},series:D.mgrs.map(m=>lineS(m,R.map(r=>r[m])))})};
-// 9. Points by position
-V.pos=()=>`<label>View <select onchange="S.pos=this.value;render()">${['stack','group','table'].map(x=>`<option ${S.pos==x?'selected':''}>${x}</option>`).join('')}</select></label> <label>Scope <select onchange="S.pw=this.value;render()"><option value=avg>Season average</option>${D.weeks.map(w=>`<option ${S.pw==w?'selected':''}>${w}</option>`).join('')}</select></label><div id=c1 class=ch style="height:460px"></div><div id=t1></div>`;
-function posData(){const A=D.mgrs.map(m=>{const R=D.T.filter(t=>t.mgr==m&&(S.pw=='avg'||t.week==S.pw));const o={mgr:m};SLOTS.forEach(s=>o[s]=mean(R.map(t=>t.slots[s])));o.TOTAL=sum(SLOTS.map(s=>o[s]));return o});return A.filter(o=>o.TOTAL>0).sort((a,b)=>b.TOTAL-a.TOTAL)}
-V.pos.post=()=>{const A=posData();if(S.pos=='table'){$('#c1').remove();const mx=Math.max(...A.flatMap(o=>SLOTS.map(s=>o[s])),1);
- $('#t1').innerHTML=tbl('pos',[{h:'Team',v:o=>o.mgr},...SLOTS.map(s=>({h:s,v:o=>o[s],f:o=>`<span style="display:block;margin:-4px -8px;padding:4px 8px;background:rgba(0,114,178,${(o[s]/mx*.7).toFixed(2)})">${f1(o[s])}</span>`})),{h:'TOTAL',v:o=>o.TOTAL,f:o=>f1(o.TOTAL)}],A);return}
- ch('c1',{tooltip:{trigger:'axis',axisPointer:{type:'shadow'},confine:true},xAxis:{type:'category',data:A.map(o=>o.mgr)},yAxis:{type:'value',name:'Points'},series:SLOTS.map((s,i)=>({name:s,type:'bar',stack:S.pos=='stack'?'x':undefined,data:A.map(o=>+o[s].toFixed(2)),color:PAL[i%PAL.length]}))})};
-// 7. Survivor: starts week (playoff start - teams + 1) so exactly one team survives the regular season; bar length = score
-V.survivor=()=>{const n=D.mgrs.length,ps=S.teams[0]?.playoff_start_week||15,s0=+S.set.svStart||ps-n+1,sv=survivor(D.T,D.weeks.filter(w=>w>=s0)),el={};sv.out.forEach(o=>el[o.mgr]=o.week);
- const tot=m=>sum(D.T.filter(t=>t.mgr==m).map(t=>t.pf)),mx=Math.max(...D.mgrs.map(tot),1),M=[...D.mgrs].sort((a,b)=>(el[b]||99)-(el[a]||99)||tot(b)-tot(a));
- return`<h3>Survivor <small>From week ${s0}, the lowest score among remaining teams is eliminated · ${sv.alive.size} remaining · green = week high, red = week low</small></h3>`+M.map(m=>`<div class=sv><b>${esc(m)}</b><div style="display:flex;flex:1">${D.weeks.map(w=>{const t=D.T.find(x=>x.week==w&&x.mgr==m);if(!t)return'';const g=D.byW[w],hi=Math.max(...g.map(x=>x.pf)),lo=Math.min(...g.map(x=>x.pf));
-  const bg=w<s0?'#bdbdbd':el[m]==w?'#9DC3E6':el[m]&&w>el[m]?'#DEEBF7':'#F4B183';
-  return`<i title="${esc(m)} wk${w}: ${f2(t.pf)}" style="flex:0 0 ${t.pf/mx*100*.93}%;background:${bg};border:1px solid #333;color:${t.pf==hi?'#0a7d2c':t.pf==lo?'#c00':'#222'};font-weight:${t.pf==hi||t.pf==lo?700:400}">${t.pf.toFixed(1)}</i>`}).join('')}</div></div>`).join('')+
- `<div class=card><b>Elimination order:</b> ${sv.out.map(o=>`wk${o.week} ${esc(o.mgr)} (${f1(o.pf)})`).join(' → ')||'–'}${sv.alive.size==1?` · <b>Survivor: ${esc([...sv.alive][0])}</b>`:''}</div>`};
-// 8. Belt
-V.belt=()=>{const B=belt(D.T,D.weeks),wk={};B.forEach(r=>wk[r.holder]=(wk[r.holder]||0)+1);
- return`<h3>Belt <small>Holder keeps belt until losing; set start holder & tie rule in Settings</small></h3>`+tbl('belt',[{h:'Wk',v:r=>r.week},{h:'Holder',v:r=>r.holder},{h:'PF',v:r=>r.pf,f:r=>f2(r.pf)},{h:'Challenger',v:r=>r.chal},{h:'PF',v:r=>r.pa,f:r=>f2(r.pa)},{h:'Result',v:r=>r.res}],B)+
- `<div class=card><b>Weeks held:</b> ${Object.entries(wk).sort((a,b)=>b[1]-a[1]).map(([m,n])=>`${esc(m)} ${n}`).join(' · ')}</div>`};
-// 11. Live win probability
-V.live=()=>{const yrs=S.scr.filter(r=>!S.yr||r.YR==S.yr),ws=[...new Set(yrs.map(r=>r.WK))].sort((a,b)=>a-b);if(!ws.length)return empty('No Scores data yet — drop W##Scores.csv or configure live polling in Settings.');
- const w=ws.includes(+S.lw)?+S.lw:ws[ws.length-1],rows=yrs.filter(r=>r.WK==w),mu=[...new Set(rows.map(r=>r.TMA+'|'+r.TMB))],m=mu.includes(S.lm)?S.lm:mu[0];
- return`<label>Week <select onchange="S.lw=this.value;S.cur=0;render()">${ws.map(x=>`<option ${x==w?'selected':''}>${x}</option>`).join('')}</select></label> <label>Matchup <select onchange="S.lm=this.value;S.cur=0;render()">${mu.map(x=>`<option value="${x}" ${x==m?'selected':''}>${esc(tname(x.split('|')[0])+' vs '+tname(x.split('|')[1]))}</option>`).join('')}</select></label>
- <button class=btn onclick="play()">▶ Replay</button> <input id=sl type=range min=1 style="width:240px" oninput="S.cur=+this.value;V.live.post()"><div id=c1 class=ch style="height:460px"></div>`};
-V.live.post=()=>{const yrs=S.scr.filter(r=>!S.yr||r.YR==S.yr),ws=[...new Set(yrs.map(r=>r.WK))].sort((a,b)=>a-b),w=ws.includes(+S.lw)?+S.lw:ws[ws.length-1];if(w==null)return;
- const mu=[...new Set(yrs.filter(r=>r.WK==w).map(r=>r.TMA+'|'+r.TMB))],m=mu.includes(S.lm)?S.lm:mu[0],[a,b]=m.split('|'),
- R=yrs.filter(r=>r.WK==w&&r.TMA==a&&r.TMB==b).sort((x,y)=>(x.RUN-y.RUN)||String(x.TIME).localeCompare(String(y.TIME))),n=R.length,sl=$('#sl');if(sl){sl.max=n;sl.value=S.cur||n}
- const X=R.slice(0,S.cur||n),A=tname(a),B=tname(b);
- ch('c1',{xAxis:{type:'category',data:X.map(r=>String(r.TIME).slice(5,16)),axisLabel:{hideOverlap:true}},yAxis:[{type:'value',min:0,max:100,name:'Win prob %'},{type:'value',name:'Points',splitLine:{show:false}}],
-  series:[{name:A+' win %',type:'line',data:X.map(r=>r.TMAWP),areaStyle:{opacity:.3},symbol:'none',color:PAL[0],markLine:{symbol:'none',data:[{yAxis:50}],lineStyle:{type:'dashed',color:'#888'}}},
-  {name:A+' pts',type:'line',yAxisIndex:1,data:X.map(r=>r.TMAPTS),symbol:'none',color:PAL[0]},{name:B+' pts',type:'line',yAxisIndex:1,data:X.map(r=>r.TMBPTS),symbol:'none',color:PAL[3]},
-  {name:A+' proj',type:'line',yAxisIndex:1,data:X.map(r=>r.TMAPROJ),symbol:'none',color:PAL[0],lineStyle:{type:'dotted'}},{name:B+' proj',type:'line',yAxisIndex:1,data:X.map(r=>r.TMBPROJ),symbol:'none',color:PAL[3],lineStyle:{type:'dotted'}}]})};
-let pt;function play(){clearInterval(pt);const mx=+$('#sl').max;S.cur=1;pt=setInterval(()=>{S.cur++;V.live.post();if(S.cur>=mx)clearInterval(pt)},60)}
-// 6. Weekly Leaders: [rank] = rank of that value among all teams' own best
-V.leaders=()=>{const A=agg(D.T),best=(arr,f)=>arr.length?arr.reduce((a,b)=>f(b)>f(a)?b:a):null,rk=(rows,k)=>[...rows].sort((a,b)=>(b[k]??-1)-(a[k]??-1)).forEach((r,i)=>r['r'+k]=i+1);
- const R=A.map(o=>{const tw=best(o.rows,t=>t.pf),tl=best(o.rows.filter(t=>t.res==0),t=>t.pf),pl=(f)=>o.rows.flatMap(t=>t.pl.filter(f).map(p=>({p,t}))),ts=best(pl(isStart),x=>x.p.points),tb=best(pl(r=>r.selected_position=='BN'),x=>x.p.points);
-  const on=tl?(D.byW[tl.week].find(x=>x.id==tl.opp)?.team||'?'):'';return{mgr:o.mgr,team:o.team,PF:o.PF,PA:o.PA,tw:tw.pf,tww:tw.week,tl:tl?.pf,tlw:tl?.week,tlo:tl?.pa,on,ts:ts?.p.points,tsn:ts?.p.name,tsw:ts?.t.week,tb:tb?.p.points,tbn:tb?.p.name,tbw:tb?.t.week}});
- ['PF','tw','tl','ts','tb'].forEach(k=>rk(R,k));R.forEach(r=>r.rPA=1+R.filter(x=>x.PA<r.PA).length);
- return`<h3>Weekly Leaders <small>[n] = rank among teams · payouts ($) and Avg Opponent Rank not built yet</small></h3>`+tbl('ld',[{h:'Team',v:r=>r.mgr,f:r=>`<span class=dot style="background:${D.col(r.mgr)}"></span>${esc(r.team)} <small>${esc(r.mgr)}</small>`},{h:'PF [rk]',v:r=>r.PF,f:r=>`${f1(r.PF)} [${r.rPF}]`},{h:'PA [rk]',v:r=>r.PA,f:r=>`${f1(r.PA)} [${r.rPA}]`},
-  {h:'Top Week',v:r=>r.tw,f:r=>`${f2(r.tw)} (${r.tww}) [${r.rtw}]`},{h:'Top Loss',v:r=>r.tl??0,f:r=>r.tl==null?'–':`${f2(r.tl)} vs ${esc(r.on)} ${f2(r.tlo)} (${r.tlw}) [${r.rtl}]`},{h:'Top Starter',v:r=>r.ts,f:r=>`${esc(r.tsn)} ${f2(r.ts)} (${r.tsw}) [${r.rts}]`},{h:'Top Bench',v:r=>r.tb??0,f:r=>r.tb==null?'–':`${esc(r.tbn)} ${f2(r.tb)} (${r.tbw}) [${r.rtb}]`}],R)};
-// Settings
-V.settings=()=>`<div class=card><h3>Settings</h3><p><label>Belt start holder (manager name; PDF starts with Mike; blank = best week-1 scorer) <input id=sb value="${esc(S.set.belt)}"></label></p>
- <p><label>Belt tie rule <select id=stie><option value=hold ${S.set.tie=='hold'?'selected':''}>Holder keeps belt</option><option value=lose ${S.set.tie=='lose'?'selected':''}>Holder loses belt</option></select></label></p>
- <p>Live CSV URLs (one per line, polled every 60s; CORS-enabled)<br><textarea id=su rows=3 style="width:100%">${esc(S.set.csvUrls)}</textarea></p>
- <p><label>Live SQLite file URL (polled every 60s) <input id=sq style="width:100%" value="${esc(S.set.sqlUrl)}"></label></p>
- <button class=btn onclick="saveSet()">Save &amp; poll now</button> <button class=btn onclick="resetAll()" style="color:#D55E00">Reset data</button></div>
- <div class=card><small>Rows: points ${S.pts.length} · scores ${S.scr.length} · teams ${S.teams.length} · transactions ${S.tx.length}</small></div>`;
-function saveSet(){S.set={belt:$('#sb').value.trim(),tie:$('#stie').value,csvUrls:$('#su').value.trim(),sqlUrl:$('#sq').value.trim()};put('set',S.set);poll()}
-async function resetAll(){if(!confirm('Delete all stored data?'))return;S.pts=[];S.scr=[];S.teams=[];S.tx=[];await save();refresh()}
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-[1700px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Primary Tabs -->
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid me-1 fa-trophy text-amber-400 text-xl"></i>
+          <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">NDL DATA HEAVEN</span>
+        </div>
 
-/* ============ 6. SHELL, ROUTING (URL hash), THEME ============ */
-const TABS=[['standings','Standings'],['matchups','Matchups'],['leaders','Weekly Leaders'],['wae','Wins Above Even'],['rank','Rank'],['pos','Points by Position'],['survivor','Survivor'],['belt','Belt'],['live','Live Win Prob'],['settings','Settings']];
-function render(){CH.forEach(c=>c.dispose());CH=[];clearInterval(pt);document.documentElement.dataset.t=S.dark?'dark':'light';
- $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${k==S.tab?'on':''}" onclick="S.tab='${k}';render()">${l}</button>`).join('')+(S.hl?` <span class=btn onclick="S.hl=null;render()">✕ ${esc(S.hl)}</span>`:'');
- location.hash=`t=${S.tab}&y=${S.yr}&w=${S.w[0]}-${S.w[1]}`;
- const noData=!S.pts.length&&S.tab!='settings'&&S.tab!='live';
- $('#main').innerHTML=noData?empty():(D.T.length||S.tab=='settings'||S.tab=='live'?V[S.tab]():empty('No rows match the current filters.'));
- if(!noData&&V[S.tab].post)try{V[S.tab].post()}catch(e){console.warn(e)}}
-function refresh(){const ys=[...new Set(S.pts.map(r=>r.year))].sort();if(!S.yr||!ys.includes(+S.yr))S.yr=ys[ys.length-1]||'';$('#fy').innerHTML=ys.map(y=>`<option ${y==S.yr?'selected':''}>${y}</option>`).join('');build();render()}
-$('#fy').onchange=e=>{S.yr=e.target.value;refresh()};
-let db;[$('#w1'),$('#w2')].forEach(i=>i.oninput=()=>{clearTimeout(db);db=setTimeout(()=>{S.w=[+$('#w1').value||1,+$('#w2').value||99];build();render()},250)});
-$('#th').onclick=()=>{S.dark=!S.dark;render()};
-(async()=>{for(const k of['pts','scr','teams','tx'])S[k]=(await get(k))||[];S.set={...S.set,...(await get('set')||{})};
- const h=new URLSearchParams(location.hash.slice(1));if(h.get('t')&&V[h.get('t')])S.tab=h.get('t');
- const w=(h.get('w')||'').split('-');if(w.length==2){S.w=[+w[0]||1,+w[1]||99];$('#w1').value=S.w[0];$('#w2').value=S.w[1]}
- refresh();if(S.set.csvUrls||S.set.sqlUrl)poll()})();
-</script></body></html>
+        <nav class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 overflow-x-auto text-xs font-semibold">
+          <button data-tab="standings" class="tab-btn active bg-brand-600 text-white px-3 py-1.5 rounded-md transition shadow">Standings</button>
+          <button data-tab="matchups" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Matchups</button>
+          <button data-tab="weekly" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Weekly Leaders</button>
+          <button data-tab="wins_above" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Wins Above Even</button>
+          <button data-tab="rank" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Rank</button>
+          <button data-tab="position" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Points by Position</button>
+          <button data-tab="survivor" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Survivor</button>
+          <button data-tab="belt" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Belt</button>
+          <button data-tab="live_prob" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Live Win Prob</button>
+          <button data-tab="settings" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition"><i class="fa-solid fa-gear"></i></button>
+        </nav>
+      </div>
+
+      <!-- Action Utilities -->
+      <div class="flex items-center gap-3 text-xs">
+        <label for="csv-upload" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md border border-slate-700 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-file-csv text-emerald-400"></i> Add CSVs / .sqlite
+          <input type="file" id="csv-upload" multiple accept=".csv,.sqlite,.db" class="hidden" />
+        </label>
+        
+        <button id="theme-toggle" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 px-2.5 rounded-md border border-slate-700 transition">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md border border-slate-700 transition flex items-center gap-1">
+          <i class="fa-solid fa-print"></i> Print
+        </button>
+
+        <div class="text-slate-400 text-[11px] flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded border border-slate-800">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          Updated <span id="last-updated-time">--:--:--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GLOBAL FILTER BAR -->
+    <div class="bg-slate-900 border-t border-slate-800/80 py-2 px-4">
+      <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-6">
+          
+          <!-- Year Selector -->
+          <div class="flex items-center gap-2">
+            <span class="text-slate-400 font-medium">Year:</span>
+            <select id="filter-year" class="bg-slate-950 border border-slate-700 text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none">
+              <!-- Dynamically Populated -->
+            </select>
+          </div>
+
+          <!-- Week Range Slider / Inputs -->
+          <div class="flex items-center gap-3">
+            <span class="text-slate-400 font-medium">Weeks:</span>
+            <input type="number" id="filter-week-min" min="1" max="17" value="1" class="w-12 bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-center text-slate-200 font-mono">
+            <span class="text-slate-500">–</span>
+            <input type="number" id="filter-week-max" min="1" max="17" value="17" class="w-12 bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-center text-slate-200 font-mono">
+          </div>
+
+          <!-- Active Manager Filter Tag -->
+          <div id="manager-filter-badge" class="hidden items-center gap-2 bg-brand-900/60 border border-brand-500/40 text-brand-200 px-2.5 py-0.5 rounded-full">
+            <span>Manager: <strong id="selected-manager-name">--</strong></span>
+            <button id="clear-manager-filter" class="hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 text-slate-400">
+          <button id="help-popover-btn" class="hover:text-slate-200 bg-slate-800 px-2 py-1 rounded border border-slate-700 flex items-center gap-1">
+            <i class="fa-solid fa-circle-question text-brand-400"></i> Glossary & Formulas
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="max-w-[1700px] mx-auto px-4 py-4">
+
+    <!-- STANDINGS TAB CONTENT -->
+    <section id="tab-standings" class="tab-content space-y-4">
+      
+      <!-- Subtitle Definition Bar matching screenshot -->
+      <div class="bg-slate-950/70 border border-slate-800/80 rounded-lg p-3 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+        <div>
+          <strong class="text-white">Standings Formula Legend:</strong>
+          <span class="ml-2 text-slate-400"><strong class="text-slate-300">ETEW%</strong> = avg share of league outscored each week · <strong class="text-slate-300">WABL</strong> = wins − (ETEW% × games) · <strong class="text-slate-300">RABL</strong> = ETEW rank − actual rank · <strong class="text-slate-300">AVG*</strong> = trimmed avg (excl. best & worst week) · <span class="border-b border-dashed border-brand-400 text-brand-300 font-semibold">dashed line</span> = playoff cut</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-export-standings-csv" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700 flex items-center gap-1">
+            <i class="fa-solid fa-download text-xs"></i> CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabulator Standings Table Container -->
+      <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+        <div id="standings-table" class="min-h-[450px]"></div>
+      </div>
+    </section>
+
+    <!-- OTHER TAB PLACEHOLDERS (WILL BE EXPANDED IN ITERATIVE STAGES) -->
+    <section id="tab-matchups" class="tab-content hidden">
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-slate-400">
+        <i class="fa-solid fa-diagram-project text-4xl mb-3 text-brand-500"></i>
+        <h3 class="text-lg font-bold text-slate-200">Matchups Matrix & Head-to-Head</h3>
+        <p class="text-xs mt-1">Coming in next iterative phase.</p>
+      </div>
+    </section>
+
+    <section id="tab-weekly" class="tab-content hidden">
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-slate-400">
+        <i class="fa-solid fa-chart-line text-4xl mb-3 text-amber-500"></i>
+        <h3 class="text-lg font-bold text-slate-200">Weekly High Scorers & Milestones</h3>
+        <p class="text-xs mt-1">Coming in next iterative phase.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- HELP GLOSSARY MODAL / POPOVER -->
+  <div id="help-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-xl w-full p-6 space-y-4 shadow-2xl text-xs">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-circle-question text-brand-400"></i> League Metric Glossary
+        </h3>
+        <button id="close-help-modal" class="text-slate-400 hover:text-white text-base"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-3 text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
+        <p><strong class="text-brand-400">ETEW% (Every Team Every Week):</strong> Calculate your win percentage if you played every other team in the league every single week. Formula: $\frac{\text{Outscored Teams}}{(N - 1) \times \text{Weeks Played}}$.</p>
+        <p><strong class="text-emerald-400">WABL (Wins Above League Level):</strong> Difference between actual matchup wins and expected ETEW wins. Positive numbers denote bad luck; negative numbers denote a lucky schedule.</p>
+        <p><strong class="text-amber-400">RABL (Rank Above League Level):</strong> Difference between ETEW Rank and Standings Rank. $+2$ means your true scoring rank is 2 spots higher than your head-to-head record shows.</p>
+        <p><strong class="text-purple-400">AVG*:</strong> Trimmed average weekly points, excluding your single highest and single lowest score of the season.</p>
+        <p><strong class="text-slate-400">SDEV:</strong> Sample standard deviation of weekly scores, measuring scoring consistency across weeks.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT -->
+  <script>
+    // ==========================================
+    // SECTION 1: GLOBAL STATE & CORE MODULES
+    // ==========================================
+    const STATE = {
+      db: null,
+      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
+      filters: { year: 2026, weekMin: 1, weekMax: 17, selectedManager: null },
+      tableInstance: null,
+      pollInterval: null
+    };
+
+    // Centralized Color Palette for Heatmaps
+    const COLOR_PALETTES = {
+      green: (val, min, max) => {
+        const norm = Math.max(0, Math.min(1, (val - min) / (max - min || 1)));
+        return `rgba(34, 197, 94, ${0.1 + norm * 0.45})`;
+      },
+      red: (val, min, max) => {
+        const norm = Math.max(0, Math.min(1, (val - min) / (max - min || 1)));
+        return `rgba(239, 68, 68, ${0.1 + norm * 0.45})`;
+      },
+      diverging: (val) => {
+        if (val > 0) return `rgba(34, 197, 94, ${Math.min(0.5, 0.15 + val * 0.1)})`;
+        if (val < 0) return `rgba(239, 68, 68, ${Math.min(0.5, 0.15 + Math.abs(val) * 0.1)})`;
+        return 'transparent';
+      }
+    };
+
+    // ==========================================
+    // SECTION 2: METRIC CALCULATION ENGINE
+    // ==========================================
+    const MetricsEngine = {
+      computeStandings(year, weekMin, weekMax) {
+        if (!STATE.data.points || STATE.data.points.length === 0) return [];
+
+        // 1. Filter points data by year and week range
+        const pointsFiltered = STATE.data.points.filter(r => 
+          Number(r.year) === Number(year) && 
+          Number(r.week) >= Number(weekMin) && 
+          Number(r.week) <= Number(weekMax)
+        );
+
+        if (pointsFiltered.length === 0) return [];
+
+        // Aggregate weekly scores per team
+        const weeklyMap = {}; // key: `${week}_${team_id}`
+        pointsFiltered.forEach(r => {
+          const key = `${r.week}_${r.team_id}`;
+          if (!weeklyMap[key]) {
+            weeklyMap[key] = {
+              week: Number(r.week),
+              team_id: Number(r.team_id),
+              manager_name: r.manager_name || '',
+              team_name: r.team_name || '',
+              team_points: Number(r.team_points) || 0,
+              opponent_points: Number(r.opponent_points) || 0
+            };
+          }
+        });
+
+        const weeklyRecords = Object.values(weeklyMap);
+
+        // Group weekly records by week to compute ETEW shares
+        const byWeek = {};
+        weeklyRecords.forEach(r => {
+          if (!byWeek[r.week]) byWeek[r.week] = [];
+          byWeek[r.week].push(r);
+        });
+
+        // Compute ETEW weekly share
+        Object.keys(byWeek).forEach(wk => {
+          const teamList = byWeek[wk];
+          const n = teamList.length;
+          teamList.forEach(t => {
+            let beats = 0, ties = 0;
+            teamList.forEach(o => {
+              if (t.team_id !== o.team_id) {
+                if (t.team_points > o.team_points) beats++;
+                else if (t.team_points === o.team_points) ties++;
+              }
+            });
+            t.etew_share = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0;
+            t.win = t.team_points > t.opponent_points ? 1 : 0;
+            t.loss = t.team_points < t.opponent_points ? 1 : 0;
+            t.tie = t.team_points === t.opponent_points ? 1 : 0;
+          });
+        });
+
+        // Group by team_id
+        const teamGroups = {};
+        weeklyRecords.forEach(r => {
+          if (!teamGroups[r.team_id]) teamGroups[r.team_id] = [];
+          teamGroups[r.team_id].push(r);
+        });
+
+        // Get Teams metadata for FAAB & playoff config
+        const teamMetaMap = {};
+        (STATE.data.teams || []).filter(t => Number(t.year) === Number(year)).forEach(t => {
+          teamMetaMap[Number(t.team_id)] = t;
+        });
+
+        const result = [];
+        Object.keys(teamGroups).forEach(team_id => {
+          const group = teamGroups[team_id];
+          const mgr = group[0].manager_name;
+          const tname = group[0].team_name;
+          const meta = teamMetaMap[team_id] || {};
+
+          const wins = group.reduce((acc, r) => acc + r.win, 0);
+          const losses = group.reduce((acc, r) => acc + r.loss, 0);
+          const ties = group.reduce((acc, r) => acc + r.tie, 0);
+          const pf = group.reduce((acc, r) => acc + r.team_points, 0);
+          const pa = group.reduce((acc, r) => acc + r.opponent_points, 0);
+          const games = group.length;
+
+          const etewSum = group.reduce((acc, r) => acc + r.etew_share, 0);
+          const etewPct = games > 0 ? etewSum / games : 0;
+          const wabl = (wins + 0.5 * ties) - (etewPct * games);
+
+          // Scores array
+          const scoresArr = group.map(r => r.team_points);
+          const sortedScores = [...scoresArr].sort((a, b) => a - b);
+          
+          let maxScore = -1, bestWk = 0;
+          let minScore = 9999, worstWk = 0;
+          group.forEach(r => {
+            if (r.team_points > maxScore) { maxScore = r.team_points; bestWk = r.week; }
+            if (r.team_points < minScore) { minScore = r.team_points; worstWk = r.week; }
+          });
+
+          const avg = games > 0 ? pf / games : 0;
+          let avgStar = avg;
+          if (games > 2) {
+            const trimmed = sortedScores.slice(1, -1);
+            avgStar = trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
+          }
+
+          // Sample Standard Deviation (ddof = 1)
+          let sdev = 0;
+          if (games > 1) {
+            const mean = avg;
+            const variance = scoresArr.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / (games - 1);
+            sdev = Math.sqrt(variance);
+          }
+
+          result.push({
+            team_id: Number(team_id),
+            manager: mgr,
+            team_name: tname,
+            W: wins,
+            L: losses,
+            T: ties,
+            PF: pf,
+            PA: pa,
+            ETEW_pct: etewPct,
+            WABL: wabl,
+            bestScore: maxScore,
+            bestWk: bestWk,
+            worstScore: minScore,
+            worstWk: worstWk,
+            AVG: avg,
+            AVG_star: avgStar,
+            SDEV: sdev,
+            faab: Number(meta.faab_balance) || 0,
+            weeklyScores: group.sort((a,b) => a.week - b.week).map(r => r.team_points),
+            playoffStartWeek: Number(meta.playoff_start_week) || 15,
+            numPlayoffTeams: Number(meta.num_playoff_teams) || 6
+          });
+        });
+
+        // Rank by Wins desc, PF desc
+        result.sort((a, b) => (b.W - a.W) || (b.PF - a.PF));
+        result.forEach((r, idx) => r.actualRank = idx + 1);
+
+        // Rank by ETEW% desc
+        const etewSorted = [...result].sort((a, b) => (b.ETEW_pct - a.ETEW_pct) || (b.PF - a.PF));
+        etewSorted.forEach((r, idx) => r.etewRank = idx + 1);
+
+        // Compute RABL & Playoff Elimination / Clinched Status
+        const totalRegWeeks = result[0] ? result[0].playoffStartWeek - 1 : 14;
+        const currentPlayedWeeks = Number(weekMax);
+        const remainingWeeks = Math.max(0, totalRegWeeks - currentPlayedWeeks);
+        const playoffCutoff = result[0] ? result[0].numPlayoffTeams : 6;
+
+        result.forEach(r => {
+          r.RABL = r.etewRank - r.actualRank;
+
+          // Clinched logic
+          const rankAtCutoff = result[playoffCutoff] ? result[playoffCutoff].W : 0;
+          const maxPossibleWins7th = rankAtCutoff + remainingWeeks;
+          r.isClinched = r.actualRank <= playoffCutoff && r.W > maxPossibleWins7th;
+
+          // Eliminated logic
+          const winsAtCutoff = result[playoffCutoff - 1] ? result[playoffCutoff - 1].W : 0;
+          r.isEliminated = (r.W + remainingWeeks) < winsAtCutoff;
+        });
+
+        return result;
+      }
+    };
+
+    // ==========================================
+    // SECTION 3: DATA FETCHING & PARSING MODULE
+    // ==========================================
+    async function initDataLoader() {
+      try {
+        const response = await fetch('https://pub-19c72385a8a14ab098f1badf7251e65b.r2.dev/live.db');
+        if (response.ok) {
+          const arrayBuffer = await response.array
