@@ -286,7 +286,8 @@
         </div>
       </div>
 
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
+      <!-- Live Win Prob Chart Outer Rounded Container -->
+      <div id="live-prob-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl transition-all duration-200">
         <div class="relative w-full h-[480px]">
           <canvas id="liveWinProbChart"></canvas>
         </div>
@@ -338,25 +339,30 @@
 
     function initTheme() {
       const themeBtn = document.getElementById('theme-toggle');
-      const icon = themeBtn.querySelector('i');
+      const icon = themeBtn ? themeBtn.querySelector('i') : null;
 
-      const savedTheme = localStorage.getItem('ndl_theme') || 'dark';
-      if (savedTheme === 'dark') {
+      // Default to 'dark' mode unless explicitly saved as 'light'
+      const savedTheme = localStorage.getItem('ndl_theme');
+      const isDark = savedTheme ? savedTheme === 'dark' : true;
+
+      if (isDark) {
         document.documentElement.classList.add('dark');
-        icon.className = 'fa-solid fa-sun';
+        if (icon) icon.className = 'fa-solid fa-sun';
       } else {
         document.documentElement.classList.remove('dark');
-        icon.className = 'fa-solid fa-moon';
+        if (icon) icon.className = 'fa-solid fa-moon';
       }
 
-      themeBtn.addEventListener('click', () => {
-        const isDark = document.documentElement.classList.toggle('dark');
-        localStorage.setItem('ndl_theme', isDark ? 'dark' : 'light');
-        icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        if (STATE.liveProb.chartInstance) {
-          updateChartThemeColors();
-        }
-      });
+      if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+          const darkNow = document.documentElement.classList.toggle('dark');
+          localStorage.setItem('ndl_theme', darkNow ? 'dark' : 'light');
+          if (icon) icon.className = darkNow ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+          if (STATE.liveProb.chartInstance) {
+            updateChartThemeColors();
+          }
+        });
+      }
     }
 
     const HEATMAPS = {
@@ -956,33 +962,9 @@
     // SECTION 5: LIVE WIN PROBABILITY ENGINE (CUSTOM PLUGIN & DYNAMIC STYLES)
     // ==========================================
 
-    // Custom Chart Plugin for Background Tinting, 50% Midline, & Active Leading Edge Markers
+    // Custom Chart Plugin for 50% Midline & Active Leading Edge Markers
     const liveReplayOverlayPlugin = {
       id: 'liveReplayOverlay',
-      beforeDraw(chart) {
-        const { ctx, chartArea } = chart;
-        if (!chartArea || !STATE.liveProb.fullSeries) return;
-
-        const idx = STATE.liveProb.currentIdx - 1;
-        const s = STATE.liveProb.fullSeries;
-        if (idx < 0 || !s.tmaWpNorm[idx]) return;
-
-        const wpA = s.tmaWpNorm[idx];
-        const wpB = s.tmbWpNorm[idx];
-
-        ctx.save();
-        // Dynamic Favorite Background Color Tinting
-        if (wpA > 50) {
-          const intensity = Math.min(1, (wpA - 50) / 50);
-          ctx.fillStyle = `rgba(14, 165, 233, ${(intensity * 0.18).toFixed(3)})`;
-          ctx.fillRect(chartArea.left, chartArea.top, chartArea.width, chartArea.height);
-        } else if (wpB > 50) {
-          const intensity = Math.min(1, (wpB - 50) / 50);
-          ctx.fillStyle = `rgba(249, 115, 22, ${(intensity * 0.18).toFixed(3)})`;
-          ctx.fillRect(chartArea.left, chartArea.top, chartArea.width, chartArea.height);
-        }
-        ctx.restore();
-      },
 
       afterDatasetsDraw(chart) {
         const { ctx, chartArea, scales } = chart;
@@ -1480,6 +1462,7 @@
       // Scorecard Name Box Dynamic Favorite Background Tinting
       const cardA = document.getElementById('scorecard-card-tma');
       const cardB = document.getElementById('scorecard-card-tmb');
+      const chartContainer = document.getElementById('live-prob-chart-container');
 
       if (wpA > 50) {
         const intensity = Math.min(1, (wpA - 50) / 50);
@@ -1487,17 +1470,31 @@
         cardA.style.borderColor = `rgba(14, 165, 233, ${(0.3 + 0.4 * intensity).toFixed(3)})`;
         cardB.style.backgroundColor = '';
         cardB.style.borderColor = '';
+
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = `rgba(14, 165, 233, ${(0.06 + 0.14 * intensity).toFixed(3)})`;
+          chartContainer.style.borderColor = `rgba(14, 165, 233, ${(0.25 + 0.35 * intensity).toFixed(3)})`;
+        }
       } else if (wpB > 50) {
         const intensity = Math.min(1, (wpB - 50) / 50);
         cardB.style.backgroundColor = `rgba(249, 115, 22, ${(0.08 + 0.22 * intensity).toFixed(3)})`;
         cardB.style.borderColor = `rgba(249, 115, 22, ${(0.3 + 0.4 * intensity).toFixed(3)})`;
         cardA.style.backgroundColor = '';
         cardA.style.borderColor = '';
+
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = `rgba(249, 115, 22, ${(0.06 + 0.14 * intensity).toFixed(3)})`;
+          chartContainer.style.borderColor = `rgba(249, 115, 22, ${(0.25 + 0.35 * intensity).toFixed(3)})`;
+        }
       } else {
         cardA.style.backgroundColor = '';
         cardA.style.borderColor = '';
         cardB.style.backgroundColor = '';
         cardB.style.borderColor = '';
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = '';
+          chartContainer.style.borderColor = '';
+        }
       }
 
       // Update Scrubber Position
