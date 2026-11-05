@@ -25,95 +25,123 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
-    /* Standings Table Styling */
+    /* Standings Table Styling - Adaptive Light & Dark Theme */
     .standings-table {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
+    
+    /* Light Mode Table Styling */
     .standings-table th {
-      background-color: #0f172a;
-      color: #94a3b8;
+      background-color: #f1f5f9;
+      color: #475569;
       font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       padding: 10px 12px;
-      border-bottom: 2px solid #334155;
-      border-right: 1px solid #1e293b;
+      border-bottom: 2px solid #cbd5e1;
+      border-right: 1px solid #e2e8f0;
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
     }
     .standings-table th:hover {
-      background-color: #1e293b;
-      color: #f8fafc;
+      background-color: #e2e8f0;
+      color: #0f172a;
     }
     .standings-table td {
       padding: 8px 12px;
       font-size: 0.8125rem;
-      border-bottom: 1px solid #1e293b;
-      border-right: 1px solid #1e293b;
+      border-bottom: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
       white-space: nowrap;
       transition: background-color 0.15s ease;
+      color: #0f172a;
     }
     .standings-table tr:hover td {
+      filter: brightness(0.95);
+    }
+
+    /* Dark Mode Table Overrides */
+    .dark .standings-table th {
+      background-color: #0f172a;
+      color: #94a3b8;
+      border-bottom: 2px solid #334155;
+      border-right: 1px solid #1e293b;
+    }
+    .dark .standings-table th:hover {
+      background-color: #1e293b;
+      color: #f8fafc;
+    }
+    .dark .standings-table td {
+      border-bottom: 1px solid #1e293b;
+      border-right: 1px solid #1e293b;
+      color: #f8fafc;
+    }
+    .dark .standings-table tr:hover td {
       filter: brightness(1.15);
     }
+
     /* Playoff Cutoff Dashed Line (Rank 6) */
     .playoff-cutoff-row td {
       border-bottom: 2px dashed #0284c7 !important;
     }
+
     /* Playoff Status Font Colors */
-    .clinched-text { color: #22c55e !important; font-weight: 700; }
-    .eliminated-text { color: #64748b !important; text-decoration: line-through; }
+    .clinched-text { color: #16a34a !important; font-weight: 700; }
+    .dark .clinched-text { color: #22c55e !important; font-weight: 700; }
+    .eliminated-text { color: #94a3b8 !important; text-decoration: line-through; }
+    .dark .eliminated-text { color: #64748b !important; text-decoration: line-through; }
     
     /* Sparkline Styling */
-    .sparkline-path { fill: none; stroke: #38bdf8; stroke-width: 2px; }
+    .sparkline-path { fill: none; stroke: #0284c7; stroke-width: 2px; }
+    .dark .sparkline-path { stroke: #38bdf8; }
   </style>
 </head>
 
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen antialiased selection:bg-brand-500 selection:text-white">
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen antialiased selection:bg-brand-500 selection:text-white transition-colors duration-200">
 
   <!-- TOP NAVIGATION HEADER -->
-  <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-40">
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur sticky top-0 z-40">
     <div class="max-w-[1700px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
       
       <div class="flex items-center gap-6">
         <div class="flex items-center gap-2">
-          <i class="fa-solid fa-trophy text-amber-400 text-xl"></i>
-          <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">NDL DATA HEAVEN</span>
+          <i class="fa-solid fa-trophy text-amber-500 dark:text-amber-400 text-xl"></i>
+          <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-500 bg-clip-text text-transparent">NDL DATA HEAVEN</span>
         </div>
 
-        <nav class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 overflow-x-auto text-xs font-semibold">
+        <nav class="flex items-center gap-1 bg-slate-200 dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-800 overflow-x-auto text-xs font-semibold">
           <button data-tab="standings" class="tab-btn active bg-brand-600 text-white px-3 py-1.5 rounded-md transition shadow">Standings</button>
-          <button data-tab="matchups" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Matchups</button>
-          <button data-tab="weekly" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Weekly Leaders</button>
-          <button data-tab="wins_above" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Wins Above Even</button>
-          <button data-tab="rank" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Rank</button>
-          <button data-tab="position" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Points by Position</button>
-          <button data-tab="survivor" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Survivor</button>
-          <button data-tab="belt" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Belt</button>
-          <button data-tab="live_prob" class="tab-btn hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-md transition">Live Win Prob</button>
+          <button data-tab="matchups" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Matchups</button>
+          <button data-tab="weekly" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Weekly Leaders</button>
+          <button data-tab="wins_above" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Wins Above Even</button>
+          <button data-tab="rank" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Rank</button>
+          <button data-tab="position" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Points by Position</button>
+          <button data-tab="survivor" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Survivor</button>
+          <button data-tab="belt" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Belt</button>
+          <button data-tab="live_prob" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Live Win Prob</button>
         </nav>
       </div>
 
       <div class="flex items-center gap-3 text-xs">
-        <label for="csv-upload" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md border border-slate-700 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-file-csv text-emerald-400"></i> Add CSVs / .sqlite
+        <label for="csv-upload" class="cursor-pointer bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-file-csv text-emerald-600 dark:text-emerald-400"></i> Add CSVs / .sqlite
           <input type="file" id="csv-upload" multiple accept=".csv,.sqlite,.db" class="hidden" />
         </label>
         
-        <button id="theme-toggle" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 px-2.5 rounded-md border border-slate-700 transition">
-          <i class="fa-solid fa-moon"></i>
+        <button id="theme-toggle" title="Toggle Dark/Light Theme" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 p-1.5 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 transition">
+          <i class="fa-solid fa-sun"></i>
         </button>
 
-        <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md border border-slate-700 transition flex items-center gap-1">
+        <button onclick="window.print()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
           <i class="fa-solid fa-print"></i> Print
         </button>
 
-        <div class="text-slate-400 text-[11px] flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded border border-slate-800">
+        <div class="text-slate-500 dark:text-slate-400 text-[11px] flex items-center gap-1.5 bg-slate-200/60 dark:bg-slate-900 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-800">
           <span id="status-indicator" class="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
           <span id="status-text">Loading Data...</span>
         </div>
@@ -121,32 +149,32 @@
     </div>
 
     <!-- GLOBAL FILTER BAR -->
-    <div class="bg-slate-900 border-t border-slate-800/80 py-2 px-4">
+    <div class="bg-slate-200/50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800/80 py-2 px-4">
       <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-6">
           
           <div class="flex items-center gap-2">
-            <span class="text-slate-400 font-medium">Year:</span>
-            <select id="filter-year" class="bg-slate-950 border border-slate-700 text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none">
+            <span class="text-slate-600 dark:text-slate-400 font-medium">Year:</span>
+            <select id="filter-year" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none">
             </select>
           </div>
 
           <div class="flex items-center gap-3">
-            <span class="text-slate-400 font-medium">Weeks:</span>
-            <input type="number" id="filter-week-min" min="1" max="17" value="1" class="w-12 bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-center text-slate-200 font-mono">
-            <span class="text-slate-500">–</span>
-            <input type="number" id="filter-week-max" min="1" max="17" value="17" class="w-12 bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-center text-slate-200 font-mono">
+            <span class="text-slate-600 dark:text-slate-400 font-medium">Weeks:</span>
+            <input type="number" id="filter-week-min" min="1" max="17" value="1" class="w-12 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-center text-slate-800 dark:text-slate-200 font-mono">
+            <span class="text-slate-400 dark:text-slate-500">–</span>
+            <input type="number" id="filter-week-max" min="1" max="17" value="8" class="w-12 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-center text-slate-800 dark:text-slate-200 font-mono">
           </div>
 
-          <div id="manager-filter-badge" class="hidden items-center gap-2 bg-brand-900/60 border border-brand-500/40 text-brand-200 px-2.5 py-0.5 rounded-full">
+          <div id="manager-filter-badge" class="hidden items-center gap-2 bg-brand-100 dark:bg-brand-900/60 border border-brand-300 dark:border-brand-500/40 text-brand-800 dark:text-brand-200 px-2.5 py-0.5 rounded-full">
             <span>Manager: <strong id="selected-manager-name">--</strong></span>
-            <button id="clear-manager-filter" class="hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            <button id="clear-manager-filter" class="hover:text-slate-900 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
           </div>
         </div>
 
-        <div class="flex items-center gap-2 text-slate-400">
-          <button id="help-popover-btn" class="hover:text-slate-200 bg-slate-800 px-2.5 py-1 rounded border border-slate-700 flex items-center gap-1">
-            <i class="fa-solid fa-circle-question text-brand-400"></i> Glossary & Formulas
+        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+          <button id="help-popover-btn" class="hover:text-slate-900 dark:hover:text-slate-200 bg-slate-200 dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 flex items-center gap-1">
+            <i class="fa-solid fa-circle-question text-brand-500 dark:text-brand-400"></i> Glossary & Formulas
           </button>
         </div>
       </div>
@@ -159,20 +187,20 @@
     <!-- STANDINGS TAB CONTENT -->
     <section id="tab-standings" class="tab-content space-y-4">
       
-      <div class="bg-slate-950/70 border border-slate-800/80 rounded-lg p-3 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+      <div class="bg-white/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 rounded-lg p-3 text-xs text-slate-700 dark:text-slate-300 flex flex-wrap items-center justify-between gap-2 shadow-sm">
         <div>
-          <strong class="text-white">Standings Formula Legend:</strong>
-          <span class="ml-2 text-slate-400"><strong class="text-slate-300">ETEW%</strong> = avg share of league outscored each week · <strong class="text-slate-300">WABL</strong> = wins − (ETEW% × games) · <strong class="text-slate-300">RABL</strong> = ETEW rank − actual rank · <strong class="text-slate-300">AVG*</strong> = trimmed avg (excl. best & worst week) · <span class="border-b border-dashed border-brand-400 text-brand-300 font-semibold">dashed line</span> = playoff cut</span>
+          <strong class="text-slate-900 dark:text-white">Standings Formula Legend:</strong>
+          <span class="ml-2 text-slate-600 dark:text-slate-400"><strong class="text-slate-800 dark:text-slate-300">ETEW%</strong> = avg share of league outscored each week · <strong class="text-slate-800 dark:text-slate-300">WABL</strong> = wins − (ETEW% × games) · <strong class="text-slate-800 dark:text-slate-300">RABL</strong> = ETEW rank − actual rank · <strong class="text-slate-800 dark:text-slate-300">AVG*</strong> = trimmed avg (excl. best & worst week) · <span class="border-b border-dashed border-brand-500 dark:border-brand-400 text-brand-600 dark:text-brand-300 font-semibold">dashed line</span> = playoff cut</span>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btn-export-standings-csv" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700 flex items-center gap-1">
+          <button id="btn-export-standings-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 flex items-center gap-1">
             <i class="fa-solid fa-download text-xs"></i> CSV
           </button>
         </div>
       </div>
 
       <!-- Standings Table Container -->
-      <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-x-auto shadow-xl">
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="standings-table" id="standings-table">
           <thead>
             <tr>
@@ -203,33 +231,53 @@
 
   <!-- HELP GLOSSARY MODAL -->
   <div id="help-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-xl w-full p-6 space-y-4 shadow-2xl text-xs">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-circle-question text-brand-400"></i> League Metric Glossary
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl max-w-xl w-full p-6 space-y-4 shadow-2xl text-xs">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-circle-question text-brand-500 dark:text-brand-400"></i> League Metric Glossary
         </h3>
-        <button id="close-help-modal" class="text-slate-400 hover:text-white text-base"><i class="fa-solid fa-xmark"></i></button>
+        <button id="close-help-modal" class="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-base"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="space-y-3 text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
-        <p><strong class="text-brand-400">ETEW% (Every Team Every Week):</strong> Win percentage if playing every team each week. Formula: $\frac{\text{Outscored Teams}}{(N - 1) \times \text{Weeks Played}}$.</p>
-        <p><strong class="text-emerald-400">WABL (Wins Above League Level):</strong> Matchup wins minus ETEW expected wins. Positive indicates tough schedule luck.</p>
-        <p><strong class="text-amber-400">RABL (Rank Above League Level):</strong> ETEW rank minus actual rank. $+2$ means true scoring strength is 2 spots higher than standings.</p>
-        <p><strong class="text-purple-400">AVG*:</strong> Trimmed average score excluding your single highest and single lowest score.</p>
-        <p><strong class="text-slate-400">SDEV:</strong> Sample standard deviation of weekly scores.</p>
+      <div class="space-y-3 text-slate-700 dark:text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
+        <p><strong class="text-brand-600 dark:text-brand-400">ETEW% (Every Team Every Week):</strong> Win percentage if playing every team each week. Formula: $\frac{\text{Outscored Teams}}{(N - 1) \times \text{Weeks Played}}$.</p>
+        <p><strong class="text-emerald-600 dark:text-emerald-400">WABL (Wins Above League Level):</strong> Matchup wins minus ETEW expected wins. Positive indicates tough schedule luck.</p>
+        <p><strong class="text-amber-600 dark:text-amber-400">RABL (Rank Above League Level):</strong> ETEW rank minus actual rank. $+2$ means true scoring strength is 2 spots higher than standings.</p>
+        <p><strong class="text-purple-600 dark:text-purple-400">AVG*:</strong> Trimmed average score excluding your single highest and single lowest score.</p>
+        <p><strong class="text-slate-600 dark:text-slate-400">SDEV:</strong> Sample standard deviation of weekly scores.</p>
       </div>
     </div>
   </div>
 
   <script>
     // ==========================================
-    // SECTION 1: GLOBAL STATE & COLOR SCALES
+    // SECTION 1: GLOBAL STATE & THEME TOGGLE
     // ==========================================
     const STATE = {
       data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
-      filters: { year: 2026, weekMin: 1, weekMax: 17, selectedManager: null },
+      filters: { year: 2026, weekMin: 1, weekMax: 8, selectedManager: null },
       sort: { field: 'actualRank', dir: 'asc' },
       computedStandings: []
     };
+
+    function initTheme() {
+      const themeBtn = document.getElementById('theme-toggle');
+      const icon = themeBtn.querySelector('i');
+
+      const savedTheme = localStorage.getItem('ndl_theme') || 'dark';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        icon.className = 'fa-solid fa-sun';
+      } else {
+        document.documentElement.classList.remove('dark');
+        icon.className = 'fa-solid fa-moon';
+      }
+
+      themeBtn.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('ndl_theme', isDark ? 'dark' : 'light');
+        icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      });
+    }
 
     // Precise Color Scale Interpolators
     const HEATMAPS = {
@@ -467,7 +515,7 @@
     };
 
     // ==========================================
-    // SECTION 3: DATA PIPELINE (SQLITE + CSV FALLBACK)
+    // SECTION 3: DATA PIPELINE & CURRENTWEEK DEFAULTS
     // ==========================================
     function parseCSVUrl(url) {
       return new Promise((resolve, reject) => {
@@ -480,6 +528,28 @@
           error: (err) => reject(err)
         });
       });
+    }
+
+    function applyDefaultFiltersFromCurrentWeek() {
+      const cw = STATE.data.currentweek;
+      if (cw && cw.length > 0 && cw[0].year && cw[0].week) {
+        const curYear = Number(cw[0].year);
+        const curWeek = Number(cw[0].week);
+
+        // Check if URL hash has parameters
+        const hash = window.location.hash.replace('#', '');
+        const params = new URLSearchParams(hash);
+
+        if (!params.has('year')) {
+          STATE.filters.year = curYear;
+        }
+        if (!params.has('wmin')) {
+          STATE.filters.weekMin = 1;
+        }
+        if (!params.has('wmax')) {
+          STATE.filters.weekMax = Math.max(1, curWeek - 1);
+        }
+      }
     }
 
     async function loadDataPipeline() {
@@ -531,7 +601,9 @@
       }
 
       if (loaded) {
+        applyDefaultFiltersFromCurrentWeek();
         populateYearSelector();
+        updateFilterUI();
         renderStandingsTable();
         updateStatus("emerald", "Live");
       } else {
@@ -558,13 +630,23 @@
       }
     }
 
+    function updateFilterUI() {
+      const yearSelect = document.getElementById('filter-year');
+      const minInput = document.getElementById('filter-week-min');
+      const maxInput = document.getElementById('filter-week-max');
+
+      if (yearSelect && STATE.filters.year) yearSelect.value = STATE.filters.year;
+      if (minInput) minInput.value = STATE.filters.weekMin;
+      if (maxInput) maxInput.value = STATE.filters.weekMax;
+    }
+
     function renderStandingsTable() {
       let data = MetricsEngine.computeStandings(STATE.filters.year, STATE.filters.weekMin, STATE.filters.weekMax);
       STATE.computedStandings = data;
 
       if (!data || data.length === 0) {
         document.getElementById('standings-tbody').innerHTML = `
-          <tr><td colspan="15" class="p-8 text-center text-slate-400">No standings data available for Year ${STATE.filters.year}.</td></tr>`;
+          <tr><td colspan="15" class="p-8 text-center text-slate-500 dark:text-slate-400">No standings data available for Year ${STATE.filters.year}.</td></tr>`;
         return;
       }
 
@@ -599,9 +681,9 @@
       const tbody = document.getElementById('standings-tbody');
       tbody.innerHTML = data.map(r => {
         const rankStr = String(r.actualRank).padStart(2, '0');
-        const rankClass = r.actualRank <= 6 ? "text-emerald-400 font-bold" : "text-slate-500 line-through";
+        const rankClass = r.actualRank <= 6 ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 dark:text-slate-500 line-through";
         
-        let teamClass = "text-slate-100 font-semibold";
+        let teamClass = "text-slate-900 dark:text-slate-100 font-semibold";
         if (r.isClinched) teamClass = "clinched-text";
         if (r.isEliminated) teamClass = "eliminated-text";
 
@@ -637,21 +719,21 @@
           <tr class="${rowClass}">
             <td class="text-center ${rankClass}">${rankStr}</td>
             <td class="text-left cursor-pointer" onclick="toggleManagerFilter('${r.manager}')">
-              <span class="text-xs text-slate-400 font-normal mr-1 border-r border-slate-700 pr-1.5">${r.manager}</span>
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-normal mr-1 border-r border-slate-300 dark:border-slate-700 pr-1.5">${r.manager}</span>
               <span class="${teamClass}">${r.team_name}</span>
             </td>
             <td class="text-center font-mono font-bold" style="background-color: ${wBg}">${r.W} - ${r.L}${r.T > 0 ? ` - ${r.T}` : ''}</td>
             <td class="text-right font-mono" style="background-color: ${pfBg}">${r.PF.toFixed(1)}</td>
             <td class="text-right font-mono" style="background-color: ${paBg}">${r.PA.toFixed(1)}</td>
             <td class="text-right font-mono font-semibold" style="background-color: ${etewBg}">${(r.ETEW_pct * 100).toFixed(1)}%</td>
-            <td class="text-right font-mono font-bold ${r.WABL > 0 ? 'text-emerald-400' : r.WABL < 0 ? 'text-rose-400' : 'text-slate-400'}" style="background-color: ${wablBg}">${r.WABL > 0 ? '+' : ''}${r.WABL.toFixed(2)}</td>
+            <td class="text-right font-mono font-bold ${r.WABL > 0 ? 'text-emerald-600 dark:text-emerald-400' : r.WABL < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}" style="background-color: ${wablBg}">${r.WABL > 0 ? '+' : ''}${r.WABL.toFixed(2)}</td>
             <td class="text-right font-mono" style="background-color: ${rablBg}">${r.RABL > 0 ? '+' : ''}${r.RABL}</td>
-            <td class="text-right font-mono text-xs" style="background-color: ${bestBg}">${r.bestScore.toFixed(2)} <span class="text-slate-400">(${String(r.bestWk).padStart(2, '0')})</span></td>
-            <td class="text-right font-mono text-xs" style="background-color: ${worstBg}">${r.worstScore.toFixed(2)} <span class="text-slate-400">(${String(r.worstWk).padStart(2, '0')})</span></td>
+            <td class="text-right font-mono text-xs" style="background-color: ${bestBg}">${r.bestScore.toFixed(2)} <span class="text-slate-500 dark:text-slate-400">(${String(r.bestWk).padStart(2, '0')})</span></td>
+            <td class="text-right font-mono text-xs" style="background-color: ${worstBg}">${r.worstScore.toFixed(2)} <span class="text-slate-500 dark:text-slate-400">(${String(r.worstWk).padStart(2, '0')})</span></td>
             <td class="text-right font-mono" style="background-color: ${avgBg}">${r.AVG.toFixed(2)}</td>
             <td class="text-right font-mono" style="background-color: ${avgStarBg}">${r.AVG_star.toFixed(2)}</td>
             <td class="text-right font-mono" style="background-color: ${sdevBg}">${r.SDEV.toFixed(2)}</td>
-            <td class="text-right font-mono text-emerald-400 font-semibold" style="background-color: ${faabBg}">$${r.faab}</td>
+            <td class="text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold" style="background-color: ${faabBg}">$${r.faab}</td>
             <td class="text-center">${generateSparklineSVG(r.weeklyScores)}</td>
           </tr>`;
       }).join('');
@@ -691,6 +773,8 @@
     // SECTION 5: INITIALIZATION & HANDLERS
     // ==========================================
     document.addEventListener('DOMContentLoaded', async () => {
+      initTheme();
+
       // Sorting Click Handlers
       document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
