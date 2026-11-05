@@ -14,7 +14,7 @@ main{padding:10px 12px;max-width:1400px;margin:auto}
 .sc{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:4px 8px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}
 th{position:sticky;top:0;background:var(--card);cursor:pointer}td:nth-child(2),th:nth-child(2){text-align:left}
 tr.po td{border-bottom:2px dashed var(--ac)}tr.hl td{background:color-mix(in srgb,var(--ac) 18%,transparent)}
-.ch{width:100%;height:480px}.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:10px;margin:8px 0}
+.ch{width:100%;height:520px}.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:10px;margin:8px 0}
 .empty{padding:40px;text-align:center;border:2px dashed var(--bd);border-radius:10px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
 .sv{display:flex;gap:2px;align-items:center;margin:2px 0}.sv b{width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
@@ -37,16 +37,16 @@ small{opacity:.75}.dot{display:inline-block;width:10px;height:10px;border-radius
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
 <script>
-/* ============ 0. STATE, STORAGE, INGEST (dedupe keys per spec) ============ */
-const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const PAL=['#0072B2','#E69F00','#009E73','#D55E00','#CC79A7','#56B4E9','#C9A800','#999999','#332288','#882255']; // Okabe-Ito-based
+/* ============ 0. STATE, STORAGE, INGEST ============ */
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);
+const PAL=['#0072B2','#E69F00','#009E73','#D55E00','#CC79A7','#56B4E9','#C9A800','#999999','#332288','#882255'];
 const S={pts:[],scr:[],teams:[],tx:[],set:{belt:'Mike',svStart:'',tie:'hold',csvUrls:'',sqlUrl:'https://pub-19c72385a8a14ab098f1badf7251e65b.r2.dev/live.db'},yr:'',lg:'',w:[1,99],po:false,ip:false,cw:null,hl:null,tab:'standings',wae:'wl',pos:'stack',pw:'avg',mw:'',lvw:'',lm:'',cur:0,dark:matchMedia('(prefers-color-scheme:dark)').matches};
 const idb=new Promise(r=>{try{const q=indexedDB.open('ndl',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)}catch(e){r(null)}});
 const put=async(k,v)=>{const d=await idb;if(d)d.transaction('kv','readwrite').objectStore('kv').put(v,k)};
 const get=async k=>{const d=await idb;return d?new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r()}):undefined};
 const KEY={pts:r=>[r.league,r.year,r.week,r.team_id,r.player_id].join('|'),scr:r=>[r.league,r.YR,r.WK,r.TIME,r.TMA,r.TMB].join('|'),teams:r=>[r.league,r.year,r.team_id].join('|'),tx:r=>[r.transaction_id,r.player_id,r.type].join('|')};
 function merge(k,rows){if(k=='cw'){const r=rows.filter(x=>x.year&&x.week).sort((a,b)=>a.year-b.year||a.week-b.week).pop();if(r)S.cw={year:+r.year,week:+r.week};return}
- rows.forEach(r=>{if(!r.league)r.league='NDL'}); // old CSVs without a league column are treated as NDL
+ rows.forEach(r=>{if(!r.league)r.league='NDL'});
  const m=new Map(S[k].map(r=>[KEY[k](r),r]));rows.forEach(r=>m.set(KEY[k](r),r));S[k]=[...m.values()]}
 const kind=f=>{const h=new Set(f);return h.has('TMAWP')?'scr':h.has('selected_position')?'pts':h.has('faab_balance')?'teams':h.has('transaction_id')?'tx':(h.size==2&&h.has('year')&&h.has('week'))?'cw':null};
 function ingestCSV(t){const p=Papa.parse(t.trim(),{header:true,dynamicTyping:true,skipEmptyLines:true,transformHeader:h=>h.trim()});const k=kind(p.meta.fields||[]);if(k)merge(k,p.data);return k}
@@ -57,55 +57,47 @@ async function files(fl){let n=0;for(const f of fl){try{if(/\.(sqlite|db)$/i.tes
 $('#file').onchange=e=>files(e.target.files);
 addEventListener('dragover',e=>e.preventDefault());addEventListener('drop',e=>{e.preventDefault();files(e.dataTransfer.files)});
 
-/* ============ 1. LIVE UPDATING (polls CSV URLs and/or a hosted .sqlite every 60s) ============ */
+/* ============ 1. LIVE UPDATING ============ */
 async function poll(){const s=S.set;try{
   for(const u of(s.csvUrls||'').split(/\s+/).filter(Boolean)){ingestCSV(await(await fetch(u,{cache:'no-store'})).text())}
   if(s.sqlUrl)await ingestSQL(await(await fetch(s.sqlUrl,{cache:'no-store'})).arrayBuffer());
   if(s.csvUrls||s.sqlUrl){await save();refresh();$('#st').textContent='Updated '+new Date().toLocaleTimeString()}}catch(e){$('#st').textContent='Poll failed: '+e.message}}
 setInterval(()=>{if(S.set.csvUrls||S.set.sqlUrl)poll()},60000);
 
-/* ============ 2. METRICS MODULE (tweak formulas here) ============ */
+/* ============ 2. METRICS MODULE ============ */
 const sum=a=>a.reduce((x,y)=>x+y,0),mean=a=>a.length?sum(a)/a.length:0,sd=a=>{if(a.length<2)return 0;const m=mean(a);return Math.sqrt(sum(a.map(x=>(x-m)**2))/(a.length-1))};
 const ALLSLOTS=['SFX1','FX3','FX2','FX1','DEF1','K1','TE1','WR2','WR1','RB2','RB1','QB1'];
 const isStart=r=>r.selected_position!=='BN'&&r.selected_position!=='IR';
-const prim=r=>String(r.position||'').split(',')[0]; // dual-eligible players ("WR,RB") count as their first-listed position (ASSUMPTION)
-// Season lineup shape: does the season have a superflex (Q/W/R/T), DEF, K, and how many flex (W/R/T, W/R) slots.
+const prim=r=>String(r.position||'').split(',')[0];
 function slotCfg(rows){const c={sf:false,def:false,k:false,fx:0},n=new Map();rows.forEach(r=>{if(!isStart(r))return;const p=prim(r);if(r.selected_position==='Q/W/R/T')c.sf=true;if(p==='DEF')c.def=true;if(p==='K')c.k=true;
  if(r.selected_position==='W/R/T'||r.selected_position==='W/R'){const k=r.team_id+'|'+r.week;n.set(k,(n.get(k)||0)+1)}});c.fx=Math.min(3,Math.max(0,...n.values()));return c}
 const slotNames=c=>ALLSLOTS.filter(s=>s==='SFX1'?c.sf:s==='DEF1'?c.def:s==='K1'?c.k:s.startsWith('FX')?+s[2]<=c.fx:true);
-// Slots follow the PDF (verified against its 2025 weeks 1-14 table): starters are ranked by PLAYER position by points -> QB1, RB1/RB2, WR1/WR2, TE1 (+DEF1/K1 in old seasons);
-// a 2nd starting QB becomes SFX1 (else the best leftover starter does, only in superflex seasons); remaining leftovers are ranked into FX1..FX3.
 function slots(pl,c){const st=pl.filter(isStart),o={},used=new Set();slotNames(c).forEach(n=>o[n]=0);let nq=0;
  const take=(p,ns)=>{const a=st.filter(r=>prim(r)===p&&!used.has(r)).sort((x,y)=>y.points-x.points);ns.forEach((n,i)=>{if(a[i]){o[n]=a[i].points;used.add(a[i])}});return Math.min(a.length,ns.length)};
  nq=take('QB',c.sf?['QB1','SFX1']:['QB1']);take('RB',['RB1','RB2']);take('WR',['WR1','WR2']);take('TE',['TE1']);if(c.def)take('DEF',['DEF1']);if(c.k)take('K',['K1']);
  const l=st.filter(r=>!used.has(r)&&!(['DEF','K'].includes(prim(r))&&!c.def&&!c.k)).map(r=>r.points).sort((a,b)=>b-a);if(c.sf&&nq<2)o.SFX1=l.shift()||0;
  for(let i=1;i<=c.fx;i++)o['FX'+i]=l[i-1]||0;return o}
-// ETEW per week = share of the other teams that team outscored (ties = 0.5). Expected wins = sum over weeks.
-// WABL = actual wins - expected wins.  AVG* ASSUMPTION = mean excluding best & worst week ("trimmed avg").
 function agg(T){const m=new Map();T.forEach(t=>{if(!m.has(t.mgr))m.set(t.mgr,{mgr:t.mgr,rows:[]});m.get(t.mgr).rows.push(t)});
  const a=[...m.values()].map(o=>{const R=o.rows.sort((x,y)=>x.week-y.week),g=R.length,pf=R.map(t=>t.pf),L=R[g-1],W=R.filter(t=>t.res==1).length,Ti=R.filter(t=>t.res==.5).length,et=mean(R.map(t=>t.etew));
   const bi=pf.indexOf(Math.max(...pf)),wi=pf.indexOf(Math.min(...pf)),s=[...pf].sort((x,y)=>x-y),tr=g>2?s.slice(1,-1):s;
   return Object.assign(o,{team:L.team,id:L.id,g,W,L:g-W-Ti,T:Ti,PF:sum(pf),PA:sum(R.map(t=>t.pa)),et,exp:et*g,wabl:W+Ti/2-et*g,best:pf[bi],bw:R[bi].week,worst:pf[wi],ww:R[wi].week,avg:mean(pf),avgT:mean(tr),sd:sd(pf),pfs:pf})});
- a.sort((x,y)=>(y.W+y.T/2)-(x.W+x.T/2)||y.PF-x.PF);a.forEach((o,i)=>o.rank=i+1);a.forEach(o=>o.rE=1+a.filter(x=>x.et>o.et+1e-9).length);return a} // RABL = ETEW rank - actual rank
-// Survivor: each week the lowest score among remaining teams is eliminated.
+ a.sort((x,y)=>(y.W+y.T/2)-(x.W+x.T/2)||y.PF-x.PF);a.forEach((o,i)=>o.rank=i+1);a.forEach(o=>o.rE=1+a.filter(x=>x.et>o.et+1e-9).length);return a}
 function survivor(T,weeks){let alive=new Set(T.map(t=>t.mgr)),out=[];for(const w of weeks){const g=T.filter(t=>t.week==w&&alive.has(t.mgr));if(g.length<2)break;const lo=g.reduce((a,b)=>b.pf<a.pf?b:a);alive.delete(lo.mgr);out.push({week:w,mgr:lo.mgr,pf:lo.pf})}return{alive,out}}
-// Belt: holder keeps it until losing (tie behaviour set in Settings); start holder = Settings or best week-1 scorer (ASSUMPTION).
 function belt(T,weeks){let h=S.set.belt&&T.some(t=>t.mgr==S.set.belt)?S.set.belt:null;const rows=[];
  for(const w of weeks){const g=T.filter(t=>t.week==w);if(!h)h=g.reduce((a,b)=>b.pf>a.pf?b:a,g[0]).mgr;const t=g.find(x=>x.mgr==h);if(!t)continue;
   rows.push({week:w,holder:h,pf:t.pf,chal:t.om,pa:t.pa,res:t.res==1?'Held':t.res==0?'Lost':'Tie'});if(t.res==0||(t.res==.5&&S.set.tie=='lose'))h=t.om}
  return rows}
 
-/* ============ 3. DERIVED DATA (matchups come from Points; no schedule file) ============ */
+/* ============ 3. DERIVED DATA ============ */
 const D={T:[],TP:[],weeks:[],pweeks:[],byW:{},mgrs:[],info:new Map(),pend:new Set(),slots:[],ps:15,np:6,reg:14,col:()=>PAL[0]};
 let NM=null;const nmap=(TM,n)=>{if(!NM){NM=new Map();S.pts.forEach(r=>{const t=TM.get(r.league+'|'+r.year+'|'+r.team_id);if(t&&!NM.has(r.manager_name))NM.set(r.manager_name,t.manager)})}return NM.get(n)||n};
-// A week is FINAL when its last live-score snapshot has every matchup at 0/50/100% win probability.
 function finalByScores(w){const R=S.scr.filter(r=>r.YR==S.yr&&r.league==S.lg&&r.WK==w);if(!R.length)return false;let m=0;R.forEach(r=>{if(r.RUN>m)m=r.RUN});const ok=v=>v==0||v==50||v==100;return R.filter(r=>r.RUN==m).every(r=>ok(r.TMAWP)&&ok(r.TMBWP))}
 function build(){NM=null;const TM=new Map(S.teams.map(t=>[t.league+'|'+t.year+'|'+t.team_id,t])),W=new Map(),rows=S.pts.filter(r=>r.year==S.yr&&r.league==S.lg),
  sr=S.teams.find(t=>t.league==S.lg&&t.year==S.yr);D.ps=sr?.playoff_start_week||15;D.np=sr?.num_playoff_teams||6;D.reg=D.ps-1;D.cfg=slotCfg(rows);D.slots=slotNames(D.cfg);D.info=new Map();
+ S.teams.filter(t=>(!S.lg||t.league==S.lg)&&(!S.yr||t.year==S.yr)).forEach(t=>{D.info.set(+t.team_id,{team:t.team_name,mgr:t.manager})});
  rows.forEach(r=>{const k=r.week+'|'+r.team_id;let t=W.get(k);if(!t){const tm=TM.get(r.league+'|'+r.year+'|'+r.team_id);
-  W.set(k,t={year:r.year,week:r.week,id:r.team_id,mgr:tm?.manager||nmap(TM,r.manager_name),team:tm?.team_name||r.team_name,opp:r.opponent_team_id,pf:0,pa:r.opponent_points,pl:[]});D.info.set(+r.team_id,{team:t.team,mgr:t.mgr})}t.pl.push(r)});
+  W.set(k,t={year:r.year,week:r.week,id:r.team_id,mgr:tm?.manager||nmap(TM,r.manager_name),team:tm?.team_name||r.team_name,opp:r.opponent_team_id,pf:0,pa:r.opponent_points,pl:[]});if(!D.info.has(+r.team_id))D.info.set(+r.team_id,{team:t.team,mgr:t.mgr})}t.pl.push(r)});
  const all=[...W.values()];all.forEach(t=>{t.pf=sum(t.pl.filter(isStart).map(r=>r.points));if(!isFinite(t.pf))t.pf=0;const o=W.get(t.week+'|'+t.opp);t.om=o?o.mgr:'?'});
- // weeks still being played (named in currentweek, not yet final by the live scores) are held out unless "In-progress wk" is ticked
  D.pend=new Set();if(S.cw&&S.cw.year==S.yr)[...new Set(all.map(t=>t.week))].forEach(w=>{if(w>=S.cw.week&&w<=D.reg&&!finalByScores(w))D.pend.add(w)});
  const inR=t=>t.week>=S.w[0]&&t.week<=S.w[1]&&(S.ip||!D.pend.has(t.week));
  const T=all.filter(t=>inR(t)&&t.week<=D.reg),TP=S.po?all.filter(inR):T;const byW={};T.forEach(t=>(byW[t.week]??=[]).push(t));
@@ -115,26 +107,30 @@ function build(){NM=null;const TM=new Map(S.teams.map(t=>[t.league+'|'+t.year+'|
  D.col=m=>PAL[Math.max(0,D.mgrs.indexOf(m))%PAL.length]}
 const tname=id=>{const t=D.info.get(+id);return t?`${t.team} (${t.mgr})`:'Team '+id};
 
-/* ============ 4. UI HELPERS (sortable table, chart wrapper) ============ */
+/* ============ 4. UI HELPERS ============ */
 const SORT={};let CH=[];
 function tbl(id,cols,rows,cls){const s=SORT[id];if(s){const c=cols[s.i];rows=[...rows].sort((a,b)=>{const x=c.v(a),y=c.v(b);return(x>y?1:x<y?-1:0)*s.d})}
  return`<div class=sc><table><thead><tr>${cols.map((c,i)=>`<th data-s="${id}|${i}">${c.h}</th>`).join('')}</tr></thead><tbody>${rows.map((r,i)=>`<tr data-m="${esc(r.mgr||'')}" class="${(cls?cls(r,i):'')+(S.hl&&S.hl==r.mgr?' hl':'')}">${cols.map(c=>`<td>${c.f?c.f(r):esc(c.v(r))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
 document.addEventListener('click',e=>{const h=e.target.closest('th[data-s]');if(h){const[id,i]=h.dataset.s.split('|');const s=SORT[id];SORT[id]={i:+i,d:s&&s.i==+i?-s.d:-1};render();return}
  const r=e.target.closest('tr[data-m]');if(r&&r.dataset.m){S.hl=S.hl==r.dataset.m?null:r.dataset.m;render()}});
 addEventListener('keydown',e=>{if(e.key=='Escape'&&S.hl){S.hl=null;render()}});
-function ch(id,opt){const el=document.getElementById(id);if(!el)return;let c=echarts.getInstanceByDom(el);
- if(!c){c=echarts.init(el,S.dark?'dark':null);CH.push(c);c.on('click',p=>{const m=D.mgrs.includes(p.seriesName)?p.seriesName:D.mgrs.includes(p.name)?p.name:null;if(m){S.hl=S.hl==m?null:m;render()}})}
- c.setOption({animation:false,backgroundColor:'transparent',tooltip:{trigger:'axis',confine:true},legend:{type:'scroll',top:0},grid:{left:48,right:48,top:40,bottom:40},toolbox:{feature:{saveAsImage:{title:'PNG'},dataZoom:{},dataView:{title:'Data',readOnly:true}}},...opt},true);
- setTimeout(()=>c.resize(),50)}
+function ch(id,opt){
+  const el=document.getElementById(id);if(!el)return;
+  requestAnimationFrame(()=>{
+    let c=echarts.getInstanceByDom(el);
+    if(!c){c=echarts.init(el,S.dark?'dark':null);CH.push(c);c.on('click',p=>{const m=D.mgrs.includes(p.seriesName)?p.seriesName:D.mgrs.includes(p.name)?p.name:null;if(m){S.hl=S.hl==m?null:m;render()}})}
+    c.setOption({animation:false,backgroundColor:'transparent',tooltip:{trigger:'axis',confine:true},legend:{type:'scroll',top:0},grid:{left:52,right:52,top:40,bottom:60},toolbox:{feature:{saveAsImage:{title:'PNG'},dataZoom:{},dataView:{title:'Data',readOnly:true}}},...opt},true);
+    setTimeout(()=>c.resize(),50);
+  });
+}
 addEventListener('resize',()=>CH.forEach(c=>c.resize()));
 const spark=a=>{if(a.length<2)return'';const mn=Math.min(...a),mx=Math.max(...a),p=a.map((v,i)=>`${i*60/(a.length-1)},${18-(v-mn)/(mx-mn||1)*16}`).join(' ');return`<svg width=62 height=20><polyline points="${p}" fill=none stroke="currentColor" stroke-width=1.5 /></svg>`};
 const f1=x=>(+x).toFixed(1),f2=x=>(+x).toFixed(2),sg=x=>(x>0?'+':'')+f2(x);
 const lineS=(m,data,extra)=>({name:m,type:'line',data,color:D.col(m),symbolSize:5,emphasis:{focus:'series'},lineStyle:{width:S.hl==m?4:2,opacity:!S.hl||S.hl==m?1:.2},...extra});
 const empty=t=>`<div class=empty>${t||'No data yet. Drop <b>W##Points.csv</b>, <b>W##Scores.csv</b>, <b>W##Teams.csv</b>, <b>W##Transactions.csv</b> (or a .sqlite file) anywhere on this page, or set a live URL under Settings.'}</div>`;
 
-/* ============ 5. VIEWS (numbered as in the spec) ============ */
+/* ============ 5. VIEWS ============ */
 const V={};
-// 1. Standings
 V.standings=()=>{const A=agg(D.T),lw=D.weeks[D.weeks.length-1],P=Object.fromEntries(agg(D.T.filter(t=>t.week<lw)).map(o=>[o.mgr,o.rank])),np=D.np;
  const fb=o=>S.teams.find(t=>t.team_id==o.id&&t.year==S.yr&&t.league==S.lg)?.faab_balance??'';
  return`<h3>Standings <small>ETEW% = avg share of league outscored each week · WABL = wins − (ETEW% × games) · RABL = ETEW rank − actual rank · AVG* = trimmed avg (excl. best & worst week) · dashed line = playoff cut (${np})</small></h3>`+
@@ -142,7 +138,7 @@ V.standings=()=>{const A=agg(D.T),lw=D.weeks[D.weeks.length-1],P=Object.fromEntr
  {h:'Team',v:o=>o.mgr,f:o=>`<span class=dot style="background:${D.col(o.mgr)}"></span>${esc(o.team)} <small>${esc(o.mgr)}</small>`},{h:'W-L',v:o=>o.W+o.T/2,f:o=>`${o.W}-${o.L}${o.T?'-'+o.T:''}`},
  {h:'PF',v:o=>o.PF,f:o=>f1(o.PF)},{h:'PA',v:o=>o.PA,f:o=>f1(o.PA)},{h:'ETEW%',v:o=>o.et,f:o=>(o.et*100).toFixed(1)+'%'},{h:'WABL',v:o=>o.wabl,f:o=>`<span style="color:${o.wabl>=0?'#009E73':'#D55E00'}">${sg(o.wabl)}</span>`},{h:'RABL',v:o=>o.rE-o.rank,f:o=>(o.rE-o.rank>0?'+':'')+(o.rE-o.rank)},
  {h:'Best',v:o=>o.best,f:o=>`${f2(o.best)} (${o.bw})`},{h:'Worst',v:o=>o.worst,f:o=>`${f2(o.worst)} (${o.ww})`},{h:'AVG',v:o=>o.avg,f:o=>f2(o.avg)},{h:'AVG*',v:o=>o.avgT,f:o=>f2(o.avgT)},{h:'SDEV',v:o=>o.sd,f:o=>f2(o.sd)},{h:'FAAB',v:fb,f:o=>fb(o)===''?'':'$'+fb(o)},{h:'Trend',v:o=>o.avg,f:o=>spark(o.pfs)}],A,(o,i)=>i==np-1?'po':'')};
-// 2. Matchups + lineups
+
 V.matchups=()=>{const w=S.mw&&D.byW[S.mw]?+S.mw:D.weeks[D.weeks.length-1],g=D.byW[w]||[],seen=new Set(),pairs=[];
  g.forEach(t=>{const o=g.find(x=>x.id==t.opp);if(!o||seen.has(t.id)||seen.has(o.id))return;seen.add(t.id);seen.add(o.id);pairs.push([t,o])});
  const side=t=>{const st=t.pl.filter(isStart).sort((a,b)=>b.points-a.points),bn=t.pl.filter(r=>!isStart(r)&&r.selected_position=='BN').sort((a,b)=>b.points-a.points);
@@ -150,7 +146,7 @@ V.matchups=()=>{const w=S.mw&&D.byW[S.mw]?+S.mw:D.weeks[D.weeks.length-1],g=D.by
   <details><summary>Lineup</summary>${st.map(r=>`<div>${esc(r.selected_position)} ${esc(r.name)} <b>${f1(r.points)}</b></div>`).join('')}</details></div>`};
  return`<label>Week <select onchange="S.mw=this.value;render()">${D.weeks.map(x=>`<option ${x==w?'selected':''}>${x}</option>`).join('')}</select></label><div class=grid>`+
  pairs.map(([a,b])=>{const d=Math.abs(a.pf-b.pf),wn=a.pf>=b.pf?a:b,up=wn.etew<.4;return`<div class=card><small>Δ ${f2(d)}${d>50?' · 💥 blowout':''}${up?' · 🔔 upset':''}</small><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${side(a)}${side(b)}</div></div>`}).join('')+'</div>'};
-// 3. Wins Above Even. DEFAULT = actual: wins - games/2 = (W-L)/2 (the PDF axis runs -5..+5, i.e. Phil 11-3 = +4, Jare 2-12 = -5). Alt = expected: cumulative ETEW - 0.5/game.
+
 V.wae=()=>`<h3>Wins Above Even <small>Regular season, weeks ${D.weeks[0]}–${D.weeks[D.weeks.length-1]} · click the legend to hide/show a manager, click a line to highlight one</small></h3>
  <label>Mode <select onchange="S.wae=this.value;render()"><option value=wl ${S.wae=='wl'?'selected':''}>Actual: wins − games/2</option><option value=etew ${S.wae=='etew'?'selected':''}>Expected: cumulative ETEW − 0.5/game</option></select></label><div id=c1 class=ch style="height:480px"></div>`;
 V.wae.post=()=>{const wk=[0,...D.weeks],R={};D.mgrs.forEach(m=>{let c=0;R[m]=[0,...D.weeks.map(w=>{const t=D.T.find(x=>x.week==w&&x.mgr==m);if(t)c+=(S.wae=='etew'?t.etew:t.res)-.5;return+c.toFixed(2)})]});
@@ -158,11 +154,11 @@ V.wae.post=()=>{const wk=[0,...D.weeks],R={};D.mgrs.forEach(m=>{let c=0;R[m]=[0,
  ch('c1',{tooltip:{trigger:'axis',confine:true,formatter:ps=>{const o=[...ps].sort((a,b)=>b.value-a.value);return`<b>After week ${ps[0].axisValue}</b><br>`+o.map((p,i)=>`${p.marker}${esc(p.seriesName)}: <b>${sg(p.value)}</b> <small>#${i+1}</small>`).join('<br>')}},
   xAxis:{type:'category',data:wk,name:'Week',boundaryGap:false},yAxis:{type:'value',name:S.wae=='etew'?'Expected wins above even':'Wins above even',scale:true},
   series:ms.map((m,i)=>lineS(m,R[m],i?{}:{markLine:{symbol:'none',silent:true,label:{show:false},lineStyle:{color:'#888',type:'solid'},data:[{yAxis:0}]}}))})};
-// 4. Rank by week (bump)
+
 V.rank=()=>`<div id=c1 class=ch style="height:480px"></div>`;
 V.rank.post=()=>{const R=D.weeks.map(w=>Object.fromEntries(agg(D.T.filter(t=>t.week<=w)).map(o=>[o.mgr,o.rank])));
  ch('c1',{xAxis:{type:'category',data:D.weeks},yAxis:{type:'value',inverse:true,min:1,max:D.mgrs.length,interval:1,name:'Rank'},series:D.mgrs.map(m=>lineS(m,R.map(r=>r[m])))})};
-// 9. Points by position. Season average = mean of each slot over the weeks shown (regular season unless "Playoff wks" ticked); or one selected week.
+
 V.pos=()=>`<h3>Points by Position <small>Slots: ${D.slots.join(' · ')} · starters ranked by player position, then flex by points · hover for each slot's points and league rank</small></h3>
  <label>View <select onchange="S.pos=this.value;render()">${[['stack','Stacked'],['group','Grouped'],['table','Heat table']].map(([k,l])=>`<option value=${k} ${S.pos==k?'selected':''}>${l}</option>`).join('')}</select></label> <label>Scope <select onchange="S.pw=this.value;render()"><option value=avg>Season average</option>${D.pweeks.map(w=>`<option value=${w} ${S.pw==w?'selected':''}>Week ${w}</option>`).join('')}</select></label><div id=c1 class=ch style="height:460px"></div><div id=t1></div>`;
 function posData(){if(S.pw!='avg'&&!D.pweeks.includes(+S.pw))S.pw='avg';const sl=D.slots,A=D.mgrs.map(m=>{const R=D.TP.filter(t=>t.mgr==m&&(S.pw=='avg'||t.week==S.pw));const o={mgr:m,team:R.length?R[R.length-1].team:m,n:R.length};
@@ -171,22 +167,22 @@ function posData(){if(S.pw!='avg'&&!D.pweeks.includes(+S.pw))S.pw='avg';const sl
 V.pos.post=()=>{const A=posData(),sl=D.slots;if(!A.length){$('#c1').remove();$('#t1').innerHTML=empty('No lineup data for this scope.');return}
  if(S.pos=='table'){$('#c1').remove();const rg={};sl.concat('TOTAL').forEach(k=>rg[k]=[Math.min(...A.map(o=>o[k])),Math.max(...A.map(o=>o[k]))]);
   $('#t1').innerHTML=tbl('pos',[{h:'Team',v:o=>o.mgr,f:o=>`<span class=dot style="background:${D.col(o.mgr)}"></span>${esc(o.team)} <small>${esc(o.mgr)}</small>`},...sl.map(k=>({h:k,v:o=>o[k],f:o=>`<span title="League rank #${o['r_'+k]}" style="display:block;margin:-4px -8px;padding:4px 8px;background:rgba(0,114,178,${(.08+.7*(o[k]-rg[k][0])/((rg[k][1]-rg[k][0])||1)).toFixed(2)})">${f1(o[k])}</span>`})),{h:'TOTAL',v:o=>o.TOTAL,f:o=>`<b>${f1(o.TOTAL)}</b>`}],A);return}
- const cl=k=>PAL[sl.indexOf(k)%PAL.length],rev=[...sl].reverse(); // QB1 at the bottom of the stack, as in the PDF
+ const cl=k=>PAL[sl.indexOf(k)%PAL.length],rev=[...sl].reverse();
  ch('c1',{legend:{type:'scroll',top:0,data:sl},tooltip:{trigger:'axis',axisPointer:{type:'shadow'},confine:true,formatter:ps=>{const o=A[ps[0].dataIndex];return`<b>${esc(o.team)}</b> <small>${esc(o.mgr)}</small><br>`+sl.map(k=>`<span class=dot style="background:${cl(k)}"></span>${k}: <b>${f1(o[k])}</b> <small>#${o['r_'+k]} · ${o[k]-A.avg[k]>=0?'+':''}${f1(o[k]-A.avg[k])} vs avg</small>`).join('<br>')+`<br><b>TOTAL ${f1(o.TOTAL)}</b> <small>#${o.r_TOTAL}</small>`}},
   xAxis:{type:'category',data:A.map(o=>o.mgr)},yAxis:{type:'value',name:'Points'},series:rev.map(k=>({name:k,type:'bar',stack:S.pos=='stack'?'x':undefined,data:A.map(o=>+o[k].toFixed(2)),color:cl(k),itemStyle:{opacity:!S.hl?1:undefined}}))})};
-// 7. Survivor: starts week (playoff start - teams + 1) so exactly one team survives the regular season; bar length = score
+
 V.survivor=()=>{const n=D.mgrs.length,ps=D.ps,s0=+S.set.svStart||ps-n+1,sv=survivor(D.T,D.weeks.filter(w=>w>=s0)),el={};sv.out.forEach(o=>el[o.mgr]=o.week);
  const tot=m=>sum(D.T.filter(t=>t.mgr==m).map(t=>t.pf)),mx=Math.max(...D.mgrs.map(tot),1),M=[...D.mgrs].sort((a,b)=>(el[b]||99)-(el[a]||99)||tot(b)-tot(a));
  return`<h3>Survivor <small>From week ${s0}, the lowest score among remaining teams is eliminated · ${sv.alive.size} remaining · green = week high, red = week low</small></h3>`+M.map(m=>`<div class=sv><b>${esc(m)}</b><div style="display:flex;flex:1">${D.weeks.map(w=>{const t=D.T.find(x=>x.week==w&&x.mgr==m);if(!t)return'';const g=D.byW[w],hi=Math.max(...g.map(x=>x.pf)),lo=Math.min(...g.map(x=>x.pf));
   const bg=w<s0?'#bdbdbd':el[m]==w?'#9DC3E6':el[m]&&w>el[m]?'#DEEBF7':'#F4B183';
   return`<i title="${esc(m)} wk${w}: ${f2(t.pf)}" style="flex:0 0 ${t.pf/mx*100*.93}%;background:${bg};border:1px solid #333;color:${t.pf==hi?'#0a7d2c':t.pf==lo?'#c00':'#222'};font-weight:${t.pf==hi||t.pf==lo?700:400}">${t.pf.toFixed(1)}</i>`}).join('')}</div></div>`).join('')+
  `<div class=card><b>Elimination order:</b> ${sv.out.map(o=>`wk${o.week} ${esc(o.mgr)} (${f1(o.pf)})`).join(' → ')||'–'}${sv.alive.size==1?` · <b>Survivor: ${esc([...sv.alive][0])}</b>`:''}</div>`};
-// 8. Belt
+
 V.belt=()=>{const B=belt(D.T,D.weeks),wk={};B.forEach(r=>wk[r.holder]=(wk[r.holder]||0)+1);
  return`<h3>Belt <small>Holder keeps belt until losing; set start holder & tie rule in Settings</small></h3>`+tbl('belt',[{h:'Wk',v:r=>r.week},{h:'Holder',v:r=>r.holder},{h:'PF',v:r=>r.pf,f:r=>f2(r.pf)},{h:'Challenger',v:r=>r.chal},{h:'PF',v:r=>r.pa,f:r=>f2(r.pa)},{h:'Result',v:r=>r.res}],B)+
  `<div class=card><b>Weeks held:</b> ${Object.entries(wk).sort((a,b)=>b[1]-a[1]).map(([m,n])=>`${esc(m)} ${n}`).join(' · ')}</div>`};
 
-/* ============ 11. LIVE WIN PROBABILITY FIXES ============ */
+/* ============ 6. LIVE WIN PROBABILITY ============ */
 const tparse = t => {
   if (!t) return new Date(NaN);
   const s = String(t).trim();
@@ -196,10 +192,19 @@ const tparse = t => {
   return isNaN(dt) ? new Date(NaN) : dt;
 };
 
-const tlab = d => isNaN(d) ? '' : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+((d.getHours()%12)||12)+':'+String(d.getMinutes()).padStart(2,'0')+(d.getHours()<12?'am':'pm');
+const tlab = d => {
+  if (isNaN(d)) return '';
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dy = days[d.getDay()];
+  const hh = (d.getHours() % 12) || 12;
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const dateStr = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+  return `${mm}\n${hh}:\n${dy}\n${dateStr}`;
+};
 
 function liveCtx() {
-  const sc = S.scr.filter(r => !S.yr || r.YR == S.yr), ws = [...new Set(sc.map(r => r.WK))].sort((a,b)=>a-b);
+  const sc = S.scr.filter(r => (!S.yr || r.YR == S.yr) && (!S.lg || r.league == S.lg));
+  const ws = [...new Set(sc.map(r => r.WK))].sort((a,b)=>a-b);
   if (!ws.length) return { ws, seasons: [...new Set(S.scr.map(r => r.league+' '+r.YR))].sort() };
   const cwk = S.cw && S.cw.year == S.yr && ws.includes(S.cw.week) ? S.cw.week : ws[ws.length-1];
   const w = ws.includes(+S.lvw) ? +S.lvw : cwk, rows = sc.filter(r => r.WK == w), seen = new Set(), mu = [];
@@ -233,15 +238,16 @@ V.live = () => {
   if (!c.ws.length || !c.R || !c.R.length) {
     return empty(`No live-score snapshots for ${S.lg || 'NDL'} ${S.yr || ''}.${c.seasons && c.seasons.length ? ' Scores exist for: ' + c.seasons.join(', ') + '.' : ''} Drop a scores CSV/.sqlite or set a live URL in Settings.`);
   }
-  return `<h3 id=lh></h3>
+  return `<h2 id=lh style="text-align:center;margin:6px 0 2px;font-size:22px"></h2>
+    <div id=lsub style="text-align:center;font-style:italic;opacity:.8;margin-bottom:12px;font-size:15px"></div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
       <label>Week <select onchange="S.lvw=this.value;S.lm='';S.cur=0;render()">${c.ws.map(x=>`<option value=${x} ${x==c.w?'selected':''}>${x}</option>`).join('')}</select></label>
       <label>Matchup <select onchange="S.lm=this.value;S.cur=0;render()">${c.mu.map(x=>`<option value="${x}" ${x==c.m?'selected':''}>${esc(tname(x.split('|')[0])+' vs '+tname(x.split('|')[1]))}</option>`).join('')}</select></label>
       <button class=btn onclick="play()">▶ Replay</button> 
-      <input id=sl type=range min=1 value=1 style="width:200px" oninput="S.cur=+this.value>=+this.max?0:+this.value;V.live.post()"> 
+      <input id=sl type=range min=1 value=1 style="width:220px" oninput="S.cur=+this.value>=+this.max?0:+this.value;V.live.post()"> 
       <small id=lt></small>
     </div>
-    <div id=c1 class=ch style="height:480px"></div>`;
+    <div id=c1 class=ch style="height:520px"></div>`;
 };
 
 V.live.post = () => {
@@ -259,18 +265,25 @@ V.live.post = () => {
   if (sl) { sl.max = n; sl.value = S.cur && S.cur <= n ? S.cur : n; }
   
   const curIdx = S.cur && S.cur <= n ? S.cur : n;
-  const X = c.R.slice(0, curIdx);
-  if (!X.length) return;
-  
-  const L = X.map(r => tlab(r.d));
-  const last = X[X.length - 1];
-  const mx = Math.max(10, ...X.flatMap(r => [r.ap, r.bp, r.aj, r.bj]));
+  const fullL = c.R.map(r => tlab(r.d));
+  const last = c.R[curIdx - 1];
+  const mx = Math.max(10, ...c.R.flatMap(r => [r.ap, r.bp, r.aj, r.bj]));
   const rm = Math.ceil(mx / 10) * 10;
   
   const lhEl = $('#lh');
-  if (lhEl) lhEl.innerHTML = `<span style="color:${cA}">${esc(A.team)}</span> <small>(${esc(A.mgr)})</small> vs <span style="color:${cB}">${esc(B.team)}</span> <small>(${esc(B.mgr)})</small> <small>· ${esc(S.lg || 'NDL')} ${esc(S.yr || '')} Week ${c.w}</small>`;
+  if (lhEl) lhEl.innerHTML = `<span style="color:${cA}">${esc(A.team)} (${esc(A.mgr || 'A')})</span> <span style="opacity:.6">vs.</span> <span style="color:${cB}">${esc(B.team)} (${esc(B.mgr || 'B')})</span>`;
+  const lsubEl = $('#lsub');
+  if (lsubEl) lsubEl.textContent = `${esc(S.lg || 'NDL')} ${esc(S.yr || '')} Week ${c.w}`;
+
   const ltEl = $('#lt');
-  if (ltEl) ltEl.textContent = `${L[L.length - 1] || ''} · ${f2(last.ap)}–${f2(last.bp)} · win ${last.aw}%/${last.bw}% · ${curIdx}/${n} snapshots` + (S.cur ? '' : ' (latest)');
+  if (ltEl) ltEl.textContent = `${fullL[curIdx - 1]?.replace(/\n/g, ' ') || ''} · ${f2(last.ap)}–${f2(last.bp)} · win ${last.aw}%/${last.bw}% · ${curIdx}/${n} snapshots` + (S.cur ? '' : ' (latest)');
+
+  const apData = c.R.map((r, i) => i < curIdx ? r.ap : null);
+  const bpData = c.R.map((r, i) => i < curIdx ? r.bp : null);
+  const ajData = c.R.map((r, i) => i < curIdx ? r.aj : null);
+  const bjData = c.R.map((r, i) => i < curIdx ? r.bj : null);
+  const awData = c.R.map((r, i) => i < curIdx ? r.aw : null);
+  const bwData = c.R.map((r, i) => i < curIdx ? r.bw : null);
 
   ch('c1', {
     tooltip: {
@@ -278,93 +291,33 @@ V.live.post = () => {
       confine: true,
       formatter: ps => {
         const idx = ps[0].dataIndex;
-        const r = X[idx];
-        if (!r) return '';
-        return `<b>${L[idx]}</b><br>` +
+        const r = c.R[idx];
+        if (!r || idx >= curIdx) return '';
+        const dtStr = fullL[idx].replace(/\n/g, ' ');
+        return `<b>${dtStr}</b><br>` +
                `<span class=dot style="background:${cA}"></span>${esc(A.team)}: <b>${r.aw}%</b> · ${f2(r.ap)} pts · proj ${f2(r.aj)}<br>` +
                `<span class=dot style="background:${cB}"></span>${esc(B.team)}: <b>${r.bw}%</b> · ${f2(r.bp)} pts · proj ${f2(r.bj)}`;
       }
     },
     animation: false,
     legend: { type: 'scroll', top: 0 },
-    grid: { left: 52, right: 52, top: 44, bottom: 56 },
+    grid: { left: 52, right: 52, top: 44, bottom: 70 },
     xAxis: {
       type: 'category',
-      data: L,
+      data: fullL,
       boundaryGap: false,
-      axisLabel: { hideOverlap: true, interval: Math.max(0, Math.floor(X.length / 9) - 1), rotate: 0 }
+      axisLabel: { 
+        hideOverlap: true, 
+        interval: Math.max(0, Math.floor(fullL.length / 10) - 1), 
+        rotate: 0,
+        fontSize: 10,
+        lineHeight: 12
+      }
     },
     yAxis: [
-      { type: 'value', min: 0, max: 100, interval: 10, name: 'Win probability', axisLabel: { formatter: '{value}%' } },
-      { type: 'value', min: 0, max: rm, interval: rm / 10, name: 'Points', splitLine: { show: false } }
+      { type: 'value', min: 0, max: 100, interval: 10, name: 'Win Probability', axisLabel: { formatter: '{value}%' } },
+      { type: 'value', min: 0, max: rm, interval: Math.max(10, Math.round(rm / 10)), name: 'Points', splitLine: { show: false } }
     ],
     series: [
-      { name: B.team + ' win %', type: 'line', stack: 'wp', symbol: 'none', data: X.map(r => r.bw), color: cB, lineStyle: { width: 0 }, areaStyle: { opacity: .35, color: cB }, markLine: { symbol: 'none', silent: true, label: { show: false }, lineStyle: { type: 'dashed', color: '#888' }, data: [{ yAxis: 50 }] } },
-      { name: A.team + ' win %', type: 'line', stack: 'wp', symbol: 'none', data: X.map(r => r.aw), color: cA, lineStyle: { width: 0 }, areaStyle: { opacity: .35, color: cA } },
-      { name: A.team + ' pts', type: 'line', yAxisIndex: 1, symbol: 'none', data: X.map(r => r.ap), color: cA, lineStyle: { width: 3 }, step: 'end' },
-      { name: B.team + ' pts', type: 'line', yAxisIndex: 1, symbol: 'none', data: X.map(r => r.bp), color: cB, lineStyle: { width: 3 }, step: 'end' },
-      { name: A.team + ' proj', type: 'line', yAxisIndex: 1, symbol: 'none', data: X.map(r => r.aj), color: cA, lineStyle: { type: 'dotted', width: 2 } },
-      { name: B.team + ' proj', type: 'line', yAxisIndex: 1, symbol: 'none', data: X.map(r => r.bj), color: cB, lineStyle: { type: 'dotted', width: 2 } }
-    ]
-  });
-};
-
-let pt;
-function play() {
-  clearInterval(pt);
-  const sl = $('#sl'); if (!sl) return;
-  const mx = +sl.max;
-  S.cur = 1;
-  pt = setInterval(() => {
-    S.cur++;
-    if (S.cur > mx) {
-      S.cur = 0;
-      clearInterval(pt);
-    }
-    V.live.post();
-  }, 60);
-}
-
-// 6. Weekly Leaders: [rank] = rank of that value among all teams' own best
-V.leaders=()=>{const A=agg(D.T),best=(arr,f)=>arr.length?arr.reduce((a,b)=>f(b)>f(a)?b:a):null,rk=(rows,k)=>[...rows].sort((a,b)=>(b[k]??-1)-(a[k]??-1)).forEach((r,i)=>r['r'+k]=i+1);
- const R=A.map(o=>{const tw=best(o.rows,t=>t.pf),tl=best(o.rows.filter(t=>t.res==0),t=>t.pf),pl=(f)=>o.rows.flatMap(t=>t.pl.filter(f).map(p=>({p,t}))),ts=best(pl(isStart),x=>x.p.points),tb=best(pl(r=>r.selected_position=='BN'),x=>x.p.points);
-  const on=tl?(D.byW[tl.week].find(x=>x.id==tl.opp)?.team||'?'):'';return{mgr:o.mgr,team:o.team,PF:o.PF,PA:o.PA,tw:tw.pf,tww:tw.week,tl:tl?.pf,tlw:tl?.week,tlo:tl?.pa,on,ts:ts?.p.points,tsn:ts?.p.name,tsw:ts?.t.week,tb:tb?.p.points,tbn:tb?.p.name,tbw:tb?.t.week}});
- ['PF','tw','tl','ts','tb'].forEach(k=>rk(R,k));R.forEach(r=>r.rPA=1+R.filter(x=>x.PA<r.PA).length);
- return`<h3>Weekly Leaders <small>[n] = rank among teams · payouts ($) and Avg Opponent Rank not built yet</small></h3>`+tbl('ld',[{h:'Team',v:r=>r.mgr,f:r=>`<span class=dot style="background:${D.col(r.mgr)}"></span>${esc(r.team)} <small>${esc(r.mgr)}</small>`},{h:'PF [rk]',v:r=>r.PF,f:r=>`${f1(r.PF)} [${r.rPF}]`},{h:'PA [rk]',v:r=>r.PA,f:r=>`${f1(r.PA)} [${r.rPA}]`},
-  {h:'Top Week',v:r=>r.tw,f:r=>`${f2(r.tw)} (${r.tww}) [${r.rtw}]`},{h:'Top Loss',v:r=>r.tl??0,f:r=>r.tl==null?'–':`${f2(r.tl)} vs ${esc(r.on)} ${f2(r.tlo)} (${r.tlw}) [${r.rtl}]`},{h:'Top Starter',v:r=>r.ts,f:r=>`${esc(r.tsn)} ${f2(r.ts)} (${r.tsw}) [${r.rts}]`},{h:'Top Bench',v:r=>r.tb??0,f:r=>r.tb==null?'–':`${esc(r.tbn)} ${f2(r.tb)} (${r.tbw}) [${r.rtb}]`}],R)};
-// Settings
-V.settings=()=>`<div class=card><h3>Settings</h3><p><label>Belt start holder (manager name; PDF starts with Mike; blank = best week-1 scorer) <input id=sb value="${esc(S.set.belt)}"></label></p>
- <p><label>Belt tie rule <select id=stie><option value=hold ${S.set.tie=='hold'?'selected':''}>Holder keeps belt</option><option value=lose ${S.set.tie=='lose'?'selected':''}>Holder loses belt</option></select></label></p>
- <p>Live CSV URLs (one per line, polled every 60s; CORS-enabled)<br><textarea id=su rows=3 style="width:100%">${esc(S.set.csvUrls)}</textarea></p>
- <p><label>Live SQLite file URL (polled every 60s) <input id=sq style="width:100%" value="${esc(S.set.sqlUrl)}"></label></p>
- <button class=btn onclick="saveSet()">Save &amp; poll now</button> <button class=btn onclick="resetAll()" style="color:#D55E00">Reset data</button></div>
- <div class=card><small>Rows: points ${S.pts.length} · scores ${S.scr.length} · teams ${S.teams.length} · transactions ${S.tx.length}</small></div>`;
-function saveSet(){S.set={belt:$('#sb').value.trim(),tie:$('#stie').value,csvUrls:$('#su').value.trim(),sqlUrl:$('#sq').value.trim()};put('set',S.set);poll()}
-async function resetAll(){if(!confirm('Delete all stored data?'))return;S.pts=[];S.scr=[];S.teams=[];S.tx=[];S.cw=null;await save();refresh()}
-
-/* ============ 6. SHELL, ROUTING (URL hash), THEME ============ */
-const TABS=[['standings','Standings'],['matchups','Matchups'],['leaders','Weekly Leaders'],['wae','Wins Above Even'],['rank','Rank'],['pos','Points by Position'],['survivor','Survivor'],['belt','Belt'],['live','Live Win Prob'],['settings','Settings']];
-function render(){CH.forEach(c=>c.dispose());CH=[];clearInterval(pt);document.documentElement.dataset.t=S.dark?'dark':'light';
- $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${k==S.tab?'on':''}" onclick="S.tab='${k}';render()">${l}</button>`).join('')+(S.hl?` <span class=btn onclick="S.hl=null;render()">✕ ${esc(S.hl)}</span>`:'');
- location.hash=`t=${S.tab}&y=${S.lg}-${S.yr}&w=${S.w[0]}-${S.w[1]}`;
- const noData=!S.pts.length&&!S.scr.length&&S.tab!='settings'&&S.tab!='live';
- const ban=D.pend.size&&!['settings','live'].includes(S.tab)?`<div class=card>⏱ Week ${[...D.pend].join(', ')} is still in progress, so it is left out of the results below (tick “In-progress wk” to include it). See the <a href="#" onclick="S.tab='live';render();return false">Live Win Prob</a> tab.</div>`:'';
- const has=S.tab=='pos'?D.TP.length:D.T.length;
- $('#main').innerHTML=noData?empty():ban+(has||S.tab=='settings'||S.tab=='live'||S.scr.length?V[S.tab]():empty('No completed regular-season rows match the current filters.'));
- if(!noData&&V[S.tab].post)try{V[S.tab].post()}catch(e){console.warn(e)}}
-function refresh(){
- const ss=[...new Map([...S.pts.map(r=>[r.league+'|'+r.year,{lg:r.league,yr:r.year}]), ...S.scr.map(r=>[r.league+'|'+r.YR,{lg:r.league,yr:r.YR}]), ...S.teams.map(r=>[r.league+'|'+r.year,{lg:r.league,yr:r.year}])].filter(x=>x[1].yr)).values()].sort((a,b)=>a.yr-b.yr||(a.lg<b.lg?-1:1));
- if(!ss.some(x=>x.yr==S.yr&&x.lg==S.lg)){const l=ss[ss.length-1];S.yr=l?l.yr:'';S.lg=l?l.lg:''}
- $('#fy').innerHTML=ss.map(x=>`<option value="${x.lg}|${x.yr}" ${x.yr==S.yr&&x.lg==S.lg?'selected':''}>${x.lg} ${x.yr}</option>`).join('');build();render()}
-$('#fy').onchange=e=>{const[l,y]=e.target.value.split('|');S.lg=l;S.yr=+y;S.lm='';S.lvw='';S.mw='';refresh()};
-$('#po').onchange=e=>{S.po=e.target.checked;build();render()};$('#ip').onchange=e=>{S.ip=e.target.checked;build();render()};
-let db;[$('#w1'),$('#w2')].forEach(i=>i.oninput=()=>{clearTimeout(db);db=setTimeout(()=>{S.w=[+$('#w1').value||1,+$('#w2').value||99];build();render()},250)});
-$('#th').onclick=()=>{S.dark=!S.dark;render()};
-(async()=>{for(const k of['pts','scr','teams','tx'])S[k]=(await get(k))||[];S.set={...S.set,...(await get('set')||{})};S.cw=(await get('cw'))||null;
- const h=new URLSearchParams(location.hash.slice(1));if(h.get('t')&&V[h.get('t')])S.tab=h.get('t');
- const y=(h.get('y')||'').split('-');if(y.length==2&&y[0]&&+y[1]){S.lg=y[0];S.yr=+y[1]}
- const w=(h.get('w')||'').split('-');if(w.length==2){S.w=[+w[0]||1,+w[1]||99];$('#w1').value=S.w[0];$('#w2').value=S.w[1]}
- refresh();
- if(S.set.csvUrls||S.set.sqlUrl){await poll()}
-})();
-</script></body></html>
+      { name: A.team + ' win %', type: 'line', stack: 'wp', symbol: 'none', data: awData, color: cA, lineStyle: { width: 0 }, areaStyle: { opacity: .45, color: cA } },
+      { name: B.team + ' win %', type: 'line', stack: 'wp', symbol: 'none', data: bwData, color: cB, lineStyle: { width: 0 }, areaStyle: { opacity: .45, color: cB }, markLine: { symbol: 'none', silent: true, label: { show: false }, lineStyle: { type: 'dashed', color: '#666', width: 1.5 }, data: [{ yAxis: 50 }] } },
