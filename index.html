@@ -1166,7 +1166,11 @@
         return;
       }
 
-      // Calculate ETEW, Win/Loss status, and extract Best Starter & Best Bench
+      // Starter & Bench Position Sets
+      const starterPositions = new Set(['QB', 'RB', 'WR', 'TE', 'W/R/T', 'W/R/T/Q', 'FLEX', 'SUPER_FLEX', 'SUPERFLEX', 'OP', 'K', 'DEF', 'D/ST', 'DL', 'LB', 'DB', 'IDP']);
+      const benchPositions = new Set(['BN', 'BE', 'BENCH', 'IR', 'IR+', 'TAXI', 'RESERVE', 'NA', 'INACTIVE']);
+
+      // Calculate ETEW, Win/Loss status, Best Starter & Best Bench
       const totalTeams = teamList.length;
       teamList.forEach(t => {
         let beats = 0, ties = 0;
@@ -1182,68 +1186,54 @@
         t.delta = t.pf - t.pa;
         t.result = t.delta > 0 ? 'W' : (t.delta === 0 ? 'T' : 'L');
 
-        // Extract Best Starter and Best Bench
         let bestStarter = { name: '--', pts: 0 };
         let bestBench = { name: '--', pts: 0 };
-        let foundPrecomputedStarter = false;
-        let foundPrecomputedBench = false;
+        let maxStarterPts = -1, maxBenchPts = -1;
 
-        // Check if pre-computed fields exist on any player row
         t.players.forEach(p => {
-          const preStarterName = getVal(p, ['best_starter_name']);
-          const preStarterPts = Number(getVal(p, ['best_starter_pts']));
-          if (preStarterName && !isNaN(preStarterPts) && preStarterPts > 0) {
-            bestStarter = { name: preStarterName, pts: preStarterPts };
-            foundPrecomputedStarter = true;
+          const pName = getVal(p, ['player_name', 'player', 'name', 'PLAYER', 'PLAYER_NAME', 'full_name']);
+          if (!pName) return;
+
+          // Retrieve player individual fantasy points (avoiding team_points overwrite)
+          let pPtsRaw = getVal(p, ['player_pts', 'player_points', 'playerpts', 'pts', 'PTS', 'player_score', 'actual_pts']);
+          if (pPtsRaw === undefined || pPtsRaw === null) {
+            pPtsRaw = (p.points !== undefined && p.points !== t.pf) ? p.points : getVal(p, ['points']);
           }
-          const preBenchName = getVal(p, ['best_bench_name']);
-          const preBenchPts = Number(getVal(p, ['best_bench_pts']));
-          if (preBenchName && !isNaN(preBenchPts) && preBenchPts > 0) {
-            bestBench = { name: preBenchName, pts: preBenchPts };
-            foundPrecomputedBench = true;
+          const pPts = Number(pPtsRaw);
+          if (isNaN(pPts)) return;
+
+          // Extract selected position slot
+          const slotRaw = getVal(p, [
+            'selected_position', 'selected_pos', 'selected_position_type',
+            'slot', 'SLOT', 'roster_slot', 'lineup_slot',
+            'status', 'STATUS', 'pos', 'POS', 'position', 'POSITION'
+          ]);
+          const slot = String(slotRaw || '').trim().toUpperCase();
+
+          const isStarterVal = getVal(p, ['is_starter', 'starter', 'STARTER']);
+
+          let isStarter = false;
+          let isBench = false;
+
+          if (starterPositions.has(slot)) {
+            isStarter = true;
+          } else if (benchPositions.has(slot)) {
+            isBench = true;
+          } else if (isStarterVal !== undefined && isStarterVal !== null) {
+            isStarter = (isStarterVal == 1 || isStarterVal === true || String(isStarterVal).toLowerCase() === 'true' || String(isStarterVal).toUpperCase() === 'STARTER');
+            isBench = !isStarter;
+          } else if (slot && !benchPositions.has(slot)) {
+            isStarter = true;
+          }
+
+          if (isStarter && pPts > maxStarterPts) {
+            maxStarterPts = pPts;
+            bestStarter = { name: pName, pts: pPts };
+          } else if (isBench && pPts > maxBenchPts) {
+            maxBenchPts = pPts;
+            bestBench = { name: pName, pts: pPts };
           }
         });
-
-        // Compute dynamically if not pre-computed
-        if (!foundPrecomputedStarter || !foundPrecomputedBench) {
-          let maxStarterPts = -1, maxBenchPts = -1;
-          let maxStarterName = '--', maxBenchName = '--';
-
-          t.players.forEach(p => {
-            const pName = getVal(p, ['player_name', 'player', 'name', 'PLAYER', 'PLAYER_NAME']);
-            const pPts = Number(getVal(p, ['player_pts', 'player_points', 'pts', 'PTS', 'playerpts', 'points']));
-            if (!pName || isNaN(pPts)) return;
-
-            const isStarterVal = getVal(p, ['is_starter', 'starter', 'STARTER']);
-            const slotVal = String(getVal(p, ['slot', 'SLOT', 'roster_slot', 'status', 'STATUS', 'lineup_slot', 'pos', 'POS']) || '').toUpperCase();
-
-            let isStarter = false;
-            let isBench = false;
-
-            if (isStarterVal !== undefined && isStarterVal !== null) {
-              isStarter = (isStarterVal == 1 || isStarterVal === true || String(isStarterVal).toLowerCase() === 'true' || String(isStarterVal).toUpperCase() === 'STARTER');
-              isBench = !isStarter;
-            } else if (slotVal) {
-              isBench = ['BN', 'BE', 'BENCH', 'IR', 'TAXI', 'RESERVE'].includes(slotVal);
-              isStarter = !isBench;
-            }
-
-            if (isStarter) {
-              if (pPts > maxStarterPts) {
-                maxStarterPts = pPts;
-                maxStarterName = pName;
-              }
-            } else if (isBench) {
-              if (pPts > maxBenchPts) {
-                maxBenchPts = pPts;
-                maxBenchName = pName;
-              }
-            }
-          });
-
-          if (!foundPrecomputedStarter && maxStarterPts >= 0) bestStarter = { name: maxStarterName, pts: maxStarterPts };
-          if (!foundPrecomputedBench && maxBenchPts >= 0) bestBench = { name: maxBenchName, pts: maxBenchPts };
-        }
 
         t.bestStarter = bestStarter;
         t.bestBench = bestBench;
