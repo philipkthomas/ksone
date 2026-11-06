@@ -537,7 +537,7 @@
       const icon = themeBtn ? themeBtn.querySelector('i') : null;
 
       const savedTheme = localStorage.getItem('ndl_theme');
-      const isDark = savedTheme ? savedTheme === 'dark' : true;
+      const isDark = savedTheme ? savedTheme === 'dark' : true; // Default explicitly to Dark Mode
 
       if (isDark) {
         document.documentElement.classList.add('dark');
@@ -1406,7 +1406,7 @@
     }
 
     // ==========================================
-    // SECTION 6: WINS ABOVE EVEN TAB ENGINE (FIXED REPLAY & ACCURATE DATA)
+    // SECTION 6: WINS ABOVE EVEN TAB ENGINE (FIXED REPLAY SCALE & OVERLAP OFFSETS)
     // ==========================================
     function initWinsAboveTab() {
       const btnMatchup = document.getElementById('btn-toggle-wae-matchup');
@@ -1472,7 +1472,6 @@
       const maxWk = rawWeeks.length > 0 ? Math.max(...rawWeeks) : 14;
       const weeks = Array.from({length: maxWk + 1}, (_, i) => i);
 
-      // Group BY team_id (NOT raw manager strings) for clean manager grounding
       const teamIds = [...new Set(ptsYr.map(r => Number(getVal(r, ['team_id', 'TMA', 'team']))))].filter(t => !isNaN(t) && t !== 0).sort((a,b) => a - b);
 
       const seriesMap = {};
@@ -1497,11 +1496,9 @@
             const pf = Number(getVal(teamRow, ['team_points', 'points', 'TMAPTS'])) || 0;
             const pa = Number(getVal(teamRow, ['opponent_points', 'TMBPTS'])) || 0;
 
-            // Matchup Wins Above .500 (1 for W, 0.5 for T, 0 for L, minus 0.5 baseline)
             const winVal = pf > pa ? 1 : (pf === pa ? 0.5 : 0);
             accMatchup += (winVal - 0.5);
 
-            // ETEW Wins Above .500 (weekly ETEW share minus 0.5)
             const n = wkPoints.length;
             let beats = 0, ties = 0;
             wkPoints.forEach(o => {
@@ -1519,19 +1516,68 @@
           cumEtew.push(accEtew);
         }
 
-        seriesMap[tId] = { cumMatchup, cumEtew };
+        seriesMap[tId] = { cumMatchup, cumEtew, cumMatchupDisplay: [], cumEtewDisplay: [] };
       });
 
-      // Sort alphabetically by manager name for clean legend order matching screenshot
       teamMetaList.sort((a, b) => a.manager.localeCompare(b.manager));
 
-      STATE.wae.fullSeries = { weeks, teamMetaList, seriesMap };
+      // Calculate micro-offsets for overlapping lines per week
+      let globalMin = 0;
+      let globalMax = 0;
 
-      initWaeChartCanvas(weeks, teamMetaList, seriesMap);
+      for (let w = 0; w <= maxWk; w++) {
+        // Matchup grouping
+        const mGroups = {};
+        teamMetaList.forEach(meta => {
+          const val = seriesMap[meta.team_id].cumMatchup[w];
+          if (val < globalMin) globalMin = val;
+          if (val > globalMax) globalMax = val;
+          const k = val.toFixed(4);
+          if (!mGroups[k]) mGroups[k] = [];
+          mGroups[k].push(meta.team_id);
+        });
+
+        Object.values(mGroups).forEach(group => {
+          const count = group.length;
+          group.forEach((tId, gIdx) => {
+            const rawVal = seriesMap[tId].cumMatchup[w];
+            const offset = count > 1 ? (gIdx - (count - 1) / 2) * 0.025 : 0;
+            seriesMap[tId].cumMatchupDisplay[w] = rawVal + offset;
+          });
+        });
+
+        // ETEW grouping
+        const eGroups = {};
+        teamMetaList.forEach(meta => {
+          const val = seriesMap[meta.team_id].cumEtew[w];
+          if (val < globalMin) globalMin = val;
+          if (val > globalMax) globalMax = val;
+          const k = val.toFixed(4);
+          if (!eGroups[k]) eGroups[k] = [];
+          eGroups[k].push(meta.team_id);
+        });
+
+        Object.values(eGroups).forEach(group => {
+          const count = group.length;
+          group.forEach((tId, gIdx) => {
+            const rawVal = seriesMap[tId].cumEtew[w];
+            const offset = count > 1 ? (gIdx - (count - 1) / 2) * 0.025 : 0;
+            seriesMap[tId].cumEtewDisplay[w] = rawVal + offset;
+          });
+        });
+      }
+
+      // Pre-calculate locked Y-axis scale bounds
+      const yMinFixed = Math.floor(globalMin - 0.5);
+      const yMaxFixed = Math.ceil(globalMax + 0.5);
+
+      STATE.wae.fullSeries = { weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed };
+
+      initWaeChartCanvas(weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed);
       restartWaeReplay();
     }
 
-    function initWaeChartCanvas(weeks, teamMetaList, seriesMap) {
+    function initWaeChartCanvas(weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed) {
       const canvas = document.getElementById('winsAboveEvenChart');
       if (!canvas) return;
 
@@ -1548,6 +1594,7 @@
         return {
           label: `- ${meta.manager}`,
           data: [...emptyArray],
+          rawValues: [...emptyArray],
           borderColor: meta.color,
           backgroundColor: meta.color,
           borderWidth: 2.5,
@@ -1606,7 +1653,11 @@
               borderWidth: 1,
               padding: 10,
               callbacks: {
-                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y > 0 ? '+' : ''}${ctx.parsed.y.toFixed(2)}`
+                label: (ctx) => {
+                  const rawVal = ctx.dataset.rawValues ? ctx.dataset.rawValues[ctx.dataIndex] : ctx.parsed.y;
+                  if (rawVal === null || rawVal === undefined) return null;
+                  return `${ctx.dataset.label}: ${rawVal > 0 ? '+' : ''}${rawVal.toFixed(2)}`;
+                }
               }
             }
           },
@@ -1617,6 +1668,8 @@
               ticks: { color: textColor, font: { size: 11, weight: '600' } }
             },
             y: {
+              min: yMinFixed,
+              max: yMaxFixed,
               title: { display: true, text: 'Wins Above Even', color: textColor, font: { size: 12, weight: '700' } },
               grid: { color: gridColor },
               ticks: { color: textColor, font: { size: 11, weight: '600' } }
@@ -1635,10 +1688,18 @@
       const chart = STATE.wae.chartInstance;
 
       s.teamMetaList.forEach((meta, mgrIdx) => {
-        const fullArr = STATE.wae.mode === 'matchup' ? s.seriesMap[meta.team_id].cumMatchup : s.seriesMap[meta.team_id].cumEtew;
-        const sliced = fullArr.slice(0, validIdx + 1);
-        const padded = sliced.concat(new Array(total - (validIdx + 1)).fill(null));
-        chart.data.datasets[mgrIdx].data = padded;
+        const isMatchup = STATE.wae.mode === 'matchup';
+        const displayArr = isMatchup ? s.seriesMap[meta.team_id].cumMatchupDisplay : s.seriesMap[meta.team_id].cumEtewDisplay;
+        const rawArr = isMatchup ? s.seriesMap[meta.team_id].cumMatchup : s.seriesMap[meta.team_id].cumEtew;
+
+        const slicedDisplay = displayArr.slice(0, validIdx + 1);
+        const paddedDisplay = slicedDisplay.concat(new Array(total - (validIdx + 1)).fill(null));
+
+        const slicedRaw = rawArr.slice(0, validIdx + 1);
+        const paddedRaw = slicedRaw.concat(new Array(total - (validIdx + 1)).fill(null));
+
+        chart.data.datasets[mgrIdx].data = paddedDisplay;
+        chart.data.datasets[mgrIdx].rawValues = paddedRaw;
       });
 
       const scrubber = document.getElementById('wae-scrubber');
