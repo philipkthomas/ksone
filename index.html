@@ -277,7 +277,7 @@
         </div>
       </div>
 
-      <!-- WINS ABOVE EVEN REPLAY CONTROLS (MOVED BELOW CHART) -->
+      <!-- WINS ABOVE EVEN REPLAY CONTROLS -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3">
           <button id="btn-wae-play-pause" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
@@ -362,14 +362,14 @@
         </div>
       </div>
 
-      <!-- Live Win Prob Chart Outer Rounded Container -->
+      <!-- Live Win Prob Chart Outer Container -->
       <div id="live-prob-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl transition-all duration-200">
         <div class="relative w-full h-[480px]">
           <canvas id="liveWinProbChart"></canvas>
         </div>
       </div>
 
-      <!-- LIVE WIN PROB REPLAY CONTROLS (MOVED BELOW CHART) -->
+      <!-- LIVE WIN PROB REPLAY CONTROLS -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3">
           <button id="btn-play-pause-replay" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
@@ -413,14 +413,14 @@
         <p><strong class="text-amber-600 dark:text-amber-400">RABL (Rank Above League Level):</strong> ETEW rank minus actual rank.</p>
         <p><strong class="text-purple-600 dark:text-purple-400">AVG*:</strong> Trimmed average score excluding highest and lowest week.</p>
         <p><strong class="text-slate-600 dark:text-slate-400">SDEV:</strong> Sample standard deviation of weekly scores.</p>
-        <p><strong class="text-sky-600 dark:text-sky-400">Wins Above Even:</strong> Head-to-head or ETEW wins accumulated above standard .500 baseline performance across weeks.</p>
+        <p><strong class="text-sky-600 dark:text-sky-400">Wins Above Even:</strong> Cumulative head-to-head or ETEW wins accumulated above standard .500 baseline performance across weeks.</p>
       </div>
     </div>
   </div>
 
   <script>
     // ==========================================
-    // SECTION 1: GLOBAL STATE & THEME TOGGLE
+    // SECTION 1: GLOBAL STATE, MANAGER LOOKUP & COLORS
     // ==========================================
     const STATE = {
       data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
@@ -446,16 +446,90 @@
       }
     };
 
+    // Manager Signature Color Palette matching XLSX reference screenshot
     const MANAGER_COLORS = {
-      'Brad': '#dc2626', 'Christian': '#16a34a', 'Cole': '#854d0e', 'Dan': '#94a3b8',
-      'Fish': '#7c3aed', 'Jare': '#0f172a', 'Ken': '#0284c7', 'Mike': '#eab308',
-      'Pax': '#84cc16', 'Phil': '#0ea5e9'
+      'Brad': '#dc2626',      // Red
+      'Christian': '#16a34a', // Green
+      'Cole': '#9a3412',      // Brown
+      'Dan': '#94a3b8',       // Silver / Light Grey
+      'Fish': '#7c3aed',      // Purple
+      'Jare': '#000000',      // Black (Light) / White (Dark)
+      'Ken': '#0284c7',       // Royal Blue
+      'Mike': '#eab308',      // Gold / Yellow
+      'Pax': '#84cc16',       // Lime Green
+      'Phil': '#0ea5e9'       // Light Blue / Cyan
     };
 
-    function getManagerColor(mgr, idx) {
-      if (MANAGER_COLORS[mgr]) return MANAGER_COLORS[mgr];
+    function getManagerName(teamId, year, defaultName = '') {
+      if (!teamId && teamId !== 0) return defaultName;
+      const tId = Number(teamId);
+      const yr = Number(year);
+      const teams = STATE.data.teams || [];
+
+      let matched = teams.find(t => Number(getVal(t, ['team_id'])) === tId && Number(getVal(t, ['year', 'YR'])) === yr);
+      if (!matched) {
+        matched = teams.find(t => Number(getVal(t, ['team_id'])) === tId);
+      }
+
+      if (matched) {
+        const mgr = getVal(matched, ['manager', 'manager_name', 'name']);
+        if (mgr) return String(mgr).trim();
+      }
+
+      return defaultName ? String(defaultName).trim() : `Team ${tId}`;
+    }
+
+    function getTeamName(teamId, year, defaultName = '') {
+      if (!teamId && teamId !== 0) return defaultName;
+      const tId = Number(teamId);
+      const yr = Number(year);
+      const teams = STATE.data.teams || [];
+
+      let matched = teams.find(t => Number(getVal(t, ['team_id'])) === tId && Number(getVal(t, ['year', 'YR'])) === yr);
+      if (!matched) {
+        matched = teams.find(t => Number(getVal(t, ['team_id'])) === tId);
+      }
+
+      if (matched) {
+        const name = getVal(matched, ['team_name', 'name']);
+        if (name) return String(name).trim();
+      }
+
+      return defaultName ? String(defaultName).trim() : `Team ${tId}`;
+    }
+
+    function getManagerColor(mgr, idx = 0) {
+      const isDark = document.documentElement.classList.contains('dark');
+      const mgrStr = String(mgr || '').trim();
+
+      if (mgrStr === 'Dan') return isDark ? '#cbd5e1' : '#94a3b8';
+      if (mgrStr === 'Jare') return isDark ? '#f8fafc' : '#000000';
+      if (MANAGER_COLORS[mgrStr]) return MANAGER_COLORS[mgrStr];
+
+      const lower = mgrStr.toLowerCase();
+      if (lower.includes('brad')) return '#dc2626';
+      if (lower.includes('christian')) return '#16a34a';
+      if (lower.includes('cole')) return '#9a3412';
+      if (lower.includes('dan')) return isDark ? '#cbd5e1' : '#94a3b8';
+      if (lower.includes('fish') || lower.includes('matt')) return '#7c3aed';
+      if (lower.includes('jare')) return isDark ? '#f8fafc' : '#000000';
+      if (lower.includes('ken')) return '#0284c7';
+      if (lower.includes('mike') || lower.includes('michael')) return '#eab308';
+      if (lower.includes('pax')) return '#84cc16';
+      if (lower.includes('phil')) return '#0ea5e9';
+
       const fallback = ['#0ea5e9', '#f97316', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4', '#6366f1', '#14b8a6', '#d97706'];
       return fallback[idx % fallback.length];
+    }
+
+    function hexToRgba(hex, alpha) {
+      if (!hex || hex === 'transparent') return `rgba(14, 165, 233, ${alpha})`;
+      if (hex.startsWith('rgba')) return hex;
+      let c = hex.replace('#', '');
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      const num = parseInt(c, 16);
+      if (isNaN(num)) return `rgba(14, 165, 233, ${alpha})`;
+      return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
     }
 
     function initTheme() {
@@ -479,7 +553,7 @@
           localStorage.setItem('ndl_theme', darkNow ? 'dark' : 'light');
           if (icon) icon.className = darkNow ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
           if (STATE.liveProb.chartInstance) updateChartThemeColors();
-          if (STATE.wae.chartInstance) updateWaeThemeColors();
+          if (STATE.wae.chartInstance) renderWinsAboveChart();
         });
       }
     }
@@ -604,8 +678,8 @@
             weeklyMap[key] = {
               week: rWeek,
               team_id: rTeamId,
-              manager_name: getVal(r, ['manager_name', 'manager']) || '',
-              team_name: getVal(r, ['team_name', 'name']) || '',
+              manager_name: getManagerName(rTeamId, year, getVal(r, ['manager_name', 'manager'])),
+              team_name: getTeamName(rTeamId, year, getVal(r, ['team_name', 'name'])),
               team_points: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
               opponent_points: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
               opponent_team_id: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0
@@ -651,10 +725,11 @@
 
         const result = [];
         Object.keys(teamGroups).forEach(team_id => {
+          const teamIdNum = Number(team_id);
           const group = teamGroups[team_id];
-          const mgr = group[0].manager_name;
-          const tname = group[0].team_name;
-          const meta = teamMetaMap[team_id] || {};
+          const mgr = getManagerName(teamIdNum, year, group[0].manager_name);
+          const tname = getTeamName(teamIdNum, year, group[0].team_name);
+          const meta = teamMetaMap[teamIdNum] || {};
 
           const wins = group.reduce((acc, r) => acc + r.win, 0);
           const losses = group.reduce((acc, r) => acc + r.loss, 0);
@@ -692,20 +767,19 @@
           }
 
           const weeklyDetails = group.sort((a,b) => a.week - b.week).map(r => {
-            const oppMeta = teamMetaMap[r.opponent_team_id] || {};
             const res = r.team_points > r.opponent_points ? 'W' : (r.team_points < r.opponent_points ? 'L' : 'T');
             return {
               week: r.week,
               pts: r.team_points,
               oppPts: r.opponent_points,
-              oppName: getVal(oppMeta, ['team_name', 'name']) || `Team ${r.opponent_team_id}`,
-              oppMgr: getVal(oppMeta, ['manager', 'manager_name']) || '',
+              oppName: getTeamName(r.opponent_team_id, year),
+              oppMgr: getManagerName(r.opponent_team_id, year),
               result: res
             };
           });
 
           result.push({
-            team_id: Number(team_id),
+            team_id: teamIdNum,
             manager: mgr,
             team_name: tname,
             W: wins, L: losses, T: ties,
@@ -1012,7 +1086,7 @@
           <tr class="${rowClass}">
             <td class="text-center ${rankClass}">${rankStr}</td>
             <td class="text-left cursor-pointer" onclick="toggleManagerFilter('${r.manager}')">
-              <span class="text-xs text-slate-500 dark:text-slate-400 font-normal mr-1 border-r border-slate-300 dark:border-slate-700 pr-1.5">${r.manager}</span>
+              <span class="text-xs font-semibold mr-1.5 border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${getManagerColor(r.manager)}">${r.manager}</span>
               <span class="${teamClass}">${r.team_name}</span>
             </td>
             <td class="text-center font-mono font-bold" style="background-color: ${wBg}">${r.W} - ${r.L}${r.T > 0 ? ` - ${r.T}` : ''}</td>
@@ -1080,7 +1154,7 @@
     }
 
     // ==========================================
-    // SECTION 5: MATCHUPS TAB ENGINE (replicating image_1f6940.png)
+    // SECTION 5: MATCHUPS TAB ENGINE
     // ==========================================
     function initMatchupsTab() {
       const weekSelect = document.getElementById('matchups-week-select');
@@ -1138,7 +1212,6 @@
         return;
       }
 
-      // Group player-level points rows by team_id
       const teamMap = {};
       ptsWk.forEach(r => {
         const teamId = Number(getVal(r, ['team_id', 'TMA', 'team']));
@@ -1147,8 +1220,8 @@
         if (!teamMap[teamId]) {
           teamMap[teamId] = {
             team_id: teamId,
-            manager: getVal(r, ['manager_name', 'manager']) || '',
-            team_name: getVal(r, ['team_name', 'name']) || `Team ${teamId}`,
+            manager: getManagerName(teamId, yr, getVal(r, ['manager_name', 'manager'])),
+            team_name: getTeamName(teamId, yr, getVal(r, ['team_name', 'name'])),
             pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
             pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
             oppTeamId: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0,
@@ -1166,11 +1239,9 @@
         return;
       }
 
-      // Starter & Bench Position Sets
       const starterPositions = new Set(['QB', 'RB', 'WR', 'TE', 'W/R/T', 'W/R/T/Q', 'FLEX', 'SUPER_FLEX', 'SUPERFLEX', 'OP', 'K', 'DEF', 'D/ST', 'DL', 'LB', 'DB', 'IDP']);
       const benchPositions = new Set(['BN', 'BE', 'BENCH', 'IR', 'IR+', 'TAXI', 'RESERVE', 'NA', 'INACTIVE']);
 
-      // Calculate ETEW, Win/Loss status, Best Starter & Best Bench
       const totalTeams = teamList.length;
       teamList.forEach(t => {
         let beats = 0, ties = 0;
@@ -1194,7 +1265,6 @@
           const pName = getVal(p, ['player_name', 'player', 'name', 'PLAYER', 'PLAYER_NAME', 'full_name']);
           if (!pName) return;
 
-          // Retrieve player individual fantasy points (avoiding team_points overwrite)
           let pPtsRaw = getVal(p, ['player_pts', 'player_points', 'playerpts', 'pts', 'PTS', 'player_score', 'actual_pts']);
           if (pPtsRaw === undefined || pPtsRaw === null) {
             pPtsRaw = (p.points !== undefined && p.points !== t.pf) ? p.points : getVal(p, ['points']);
@@ -1202,7 +1272,6 @@
           const pPts = Number(pPtsRaw);
           if (isNaN(pPts)) return;
 
-          // Extract selected position slot
           const slotRaw = getVal(p, [
             'selected_position', 'selected_pos', 'selected_position_type',
             'slot', 'SLOT', 'roster_slot', 'lineup_slot',
@@ -1239,8 +1308,6 @@
         t.bestBench = bestBench;
       });
 
-      // Sort matching xlsx screenshot:
-      // Winners (W) first sorted by PF desc, then Ties (T), then Losers (L) sorted by PF desc
       teamList.sort((a, b) => {
         const order = { 'W': 1, 'T': 2, 'L': 3 };
         if (order[a.result] !== order[b.result]) {
@@ -1249,7 +1316,6 @@
         return b.pf - a.pf;
       });
 
-      // Calculate Heatmaps
       const pfStats = getColStats(teamList, r => r.pf);
       const paStats = getColStats(teamList, r => r.pa);
       const starterStats = getColStats(teamList, r => r.bestStarter.pts);
@@ -1263,7 +1329,6 @@
         const starterBg = r.bestStarter.pts > 0 ? HEATMAPS.greenToClear(r.bestStarter.pts, starterStats.min, starterStats.max) : 'transparent';
         const benchBg = r.bestBench.pts > 0 ? HEATMAPS.greenToClear(r.bestBench.pts, benchStats.min, benchStats.max) : 'transparent';
 
-        // W/L Delta Cell Styling
         let wlBg = 'transparent';
         let wlTextClass = 'text-slate-700 dark:text-slate-300';
         if (r.result === 'W') {
@@ -1276,14 +1341,14 @@
           wlTextClass = 'text-rose-700 dark:text-rose-300 font-bold';
         }
 
-        // ETEW Cell Shading
         const etewShare = (totalTeams - 1) > 0 ? r.etewWins / (totalTeams - 1) : 0.5;
         const etewBg = HEATMAPS.greenClearRed(etewShare, 0, 0.5, 1);
+        const mgrColor = getManagerColor(r.manager);
 
         return `
           <tr>
             <td class="text-left font-medium">
-              <span class="text-xs text-slate-500 dark:text-slate-400 font-normal mr-2 inline-block min-w-[50px] border-r border-slate-300 dark:border-slate-700 pr-1.5">${escapeHTML(r.manager)}</span>
+              <span class="text-xs font-semibold mr-2 inline-block border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${mgrColor}">${escapeHTML(r.manager)}</span>
               <span class="text-slate-900 dark:text-slate-100 font-semibold">${escapeHTML(r.team_name)}</span>
             </td>
             <td class="text-right font-mono font-bold" style="background-color: ${pfBg}">${r.pf.toFixed(2)}</td>
@@ -1315,17 +1380,20 @@
       const pts = STATE.data.points || [];
       const rows = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
 
-      const csvData = rows.map(r => ({
-        Year: yr, Week: wk,
-        Manager: getVal(r, ['manager_name', 'manager']),
-        Team: getVal(r, ['team_name', 'name']),
-        PF: getVal(r, ['team_points', 'points', 'TMAPTS']),
-        PA: getVal(r, ['opponent_points', 'TMBPTS']),
-        BestStarter: getVal(r, ['best_starter_name']),
-        BestStarterPts: getVal(r, ['best_starter_pts']),
-        BestBench: getVal(r, ['best_bench_name']),
-        BestBenchPts: getVal(r, ['best_bench_pts'])
-      }));
+      const csvData = rows.map(r => {
+        const teamId = Number(getVal(r, ['team_id', 'TMA', 'team']));
+        return {
+          Year: yr, Week: wk,
+          Manager: getManagerName(teamId, yr, getVal(r, ['manager_name', 'manager'])),
+          Team: getTeamName(teamId, yr, getVal(r, ['team_name', 'name'])),
+          PF: getVal(r, ['team_points', 'points', 'TMAPTS']),
+          PA: getVal(r, ['opponent_points', 'TMBPTS']),
+          BestStarter: getVal(r, ['best_starter_name']),
+          BestStarterPts: getVal(r, ['best_starter_pts']),
+          BestBench: getVal(r, ['best_bench_name']),
+          BestBenchPts: getVal(r, ['best_bench_pts'])
+        };
+      });
 
       const csv = Papa.unparse(csvData);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1338,7 +1406,7 @@
     }
 
     // ==========================================
-    // SECTION 6: WINS ABOVE EVEN TAB ENGINE (replicating image_1f61e6.png)
+    // SECTION 6: WINS ABOVE EVEN TAB ENGINE (FIXED REPLAY & ACCURATE DATA)
     // ==========================================
     function initWinsAboveTab() {
       const btnMatchup = document.getElementById('btn-toggle-wae-matchup');
@@ -1400,63 +1468,70 @@
 
       if (ptsYr.length === 0) return;
 
-      const weeks = [0, ...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w)).sort((a,b) => a - b);
-      const teamGroups = {};
-      
-      ptsYr.forEach(r => {
-        const mgr = getVal(r, ['manager_name', 'manager']) || `Team ${getVal(r, ['team_id'])}`;
-        if (!teamGroups[mgr]) teamGroups[mgr] = [];
-        teamGroups[mgr].push(r);
-      });
+      const rawWeeks = [...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
+      const maxWk = rawWeeks.length > 0 ? Math.max(...rawWeeks) : 14;
+      const weeks = Array.from({length: maxWk + 1}, (_, i) => i);
 
-      const mgrNames = Object.keys(teamGroups).sort();
+      // Group BY team_id (NOT raw manager strings) for clean manager grounding
+      const teamIds = [...new Set(ptsYr.map(r => Number(getVal(r, ['team_id', 'TMA', 'team']))))].filter(t => !isNaN(t) && t !== 0).sort((a,b) => a - b);
+
       const seriesMap = {};
+      const teamMetaList = [];
 
-      mgrNames.forEach(mgr => {
-        const group = teamGroups[mgr].sort((a,b) => Number(getVal(a, ['week', 'WK'])) - Number(getVal(b, ['week', 'WK'])));
+      teamIds.forEach((tId, idx) => {
+        const mgrName = getManagerName(tId, yr);
+        const color = getManagerColor(mgrName, idx);
+        teamMetaList.push({ team_id: tId, manager: mgrName, color });
+
         const cumMatchup = [0];
         const cumEtew = [0];
 
         let accMatchup = 0;
         let accEtew = 0;
 
-        group.forEach(r => {
-          const pf = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
-          const pa = Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0;
-          
-          // Matchup Wins Above .500 (1 for W, 0 for L, minus 0.5 baseline)
-          const winVal = pf > pa ? 1 : (pf === pa ? 0.5 : 0);
-          accMatchup += (winVal - 0.5);
+        for (let w = 1; w <= maxWk; w++) {
+          const wkPoints = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) === w);
+          const teamRow = wkPoints.find(r => Number(getVal(r, ['team_id', 'TMA', 'team'])) === tId);
 
-          // ETEW Wins Above .500 (weekly ETEW share minus 0.5)
-          const wk = Number(getVal(r, ['week', 'WK']));
-          const weekOpponents = ptsYr.filter(o => Number(getVal(o, ['week', 'WK'])) === wk);
-          const n = weekOpponents.length;
-          let beats = 0, ties = 0;
-          weekOpponents.forEach(o => {
-            const oPf = Number(getVal(o, ['team_points', 'points', 'TMAPTS'])) || 0;
-            if (getVal(r, ['team_id']) !== getVal(o, ['team_id'])) {
-              if (pf > oPf) beats++;
-              else if (pf === oPf) ties++;
-            }
-          });
-          const etewShare = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0.5;
-          accEtew += (etewShare - 0.5);
+          if (teamRow) {
+            const pf = Number(getVal(teamRow, ['team_points', 'points', 'TMAPTS'])) || 0;
+            const pa = Number(getVal(teamRow, ['opponent_points', 'TMBPTS'])) || 0;
+
+            // Matchup Wins Above .500 (1 for W, 0.5 for T, 0 for L, minus 0.5 baseline)
+            const winVal = pf > pa ? 1 : (pf === pa ? 0.5 : 0);
+            accMatchup += (winVal - 0.5);
+
+            // ETEW Wins Above .500 (weekly ETEW share minus 0.5)
+            const n = wkPoints.length;
+            let beats = 0, ties = 0;
+            wkPoints.forEach(o => {
+              if (Number(getVal(o, ['team_id', 'TMA', 'team'])) !== tId) {
+                const oPf = Number(getVal(o, ['team_points', 'points', 'TMAPTS'])) || 0;
+                if (pf > oPf) beats++;
+                else if (pf === oPf) ties++;
+              }
+            });
+            const etewShare = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0.5;
+            accEtew += (etewShare - 0.5);
+          }
 
           cumMatchup.push(accMatchup);
           cumEtew.push(accEtew);
-        });
+        }
 
-        seriesMap[mgr] = { cumMatchup, cumEtew };
+        seriesMap[tId] = { cumMatchup, cumEtew };
       });
 
-      STATE.wae.fullSeries = { weeks, mgrNames, seriesMap };
+      // Sort alphabetically by manager name for clean legend order matching screenshot
+      teamMetaList.sort((a, b) => a.manager.localeCompare(b.manager));
 
-      initWaeChartCanvas(weeks, mgrNames, seriesMap);
+      STATE.wae.fullSeries = { weeks, teamMetaList, seriesMap };
+
+      initWaeChartCanvas(weeks, teamMetaList, seriesMap);
       restartWaeReplay();
     }
 
-    function initWaeChartCanvas(weeks, mgrNames, seriesMap) {
+    function initWaeChartCanvas(weeks, teamMetaList, seriesMap) {
       const canvas = document.getElementById('winsAboveEvenChart');
       if (!canvas) return;
 
@@ -1469,16 +1544,15 @@
       }
 
       const emptyArray = new Array(weeks.length).fill(null);
-      const datasets = mgrNames.map((mgr, idx) => {
-        const color = getManagerColor(mgr, idx);
+      const datasets = teamMetaList.map((meta) => {
         return {
-          label: `- ${mgr}`,
+          label: `- ${meta.manager}`,
           data: [...emptyArray],
-          borderColor: color,
-          backgroundColor: color,
+          borderColor: meta.color,
+          backgroundColor: meta.color,
           borderWidth: 2.5,
-          pointRadius: 4,
-          pointHoverRadius: 7,
+          pointRadius: 3.5,
+          pointHoverRadius: 6.5,
           tension: 0.1
         };
       });
@@ -1495,7 +1569,7 @@
             ctx.save();
             ctx.beginPath();
             ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+            ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.6)' : 'rgba(71, 85, 105, 0.6)';
             ctx.lineWidth = 1.5;
             ctx.moveTo(chartArea.left, y0);
             ctx.lineTo(chartArea.right, y0);
@@ -1560,8 +1634,8 @@
       const validIdx = Math.min(total - 1, Math.max(0, idx));
       const chart = STATE.wae.chartInstance;
 
-      s.mgrNames.forEach((mgr, mgrIdx) => {
-        const fullArr = STATE.wae.mode === 'matchup' ? s.seriesMap[mgr].cumMatchup : s.seriesMap[mgr].cumEtew;
+      s.teamMetaList.forEach((meta, mgrIdx) => {
+        const fullArr = STATE.wae.mode === 'matchup' ? s.seriesMap[meta.team_id].cumMatchup : s.seriesMap[meta.team_id].cumEtew;
         const sliced = fullArr.slice(0, validIdx + 1);
         const padded = sliced.concat(new Array(total - (validIdx + 1)).fill(null));
         chart.data.datasets[mgrIdx].data = padded;
@@ -1645,24 +1719,6 @@
       }
     }
 
-    function updateWaeThemeColors() {
-      const chart = STATE.wae.chartInstance;
-      if (!chart) return;
-      const isDark = document.documentElement.classList.contains('dark');
-      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-      const textColor = isDark ? '#94a3b8' : '#475569';
-
-      chart.options.scales.x.grid.color = gridColor;
-      chart.options.scales.x.ticks.color = textColor;
-      chart.options.scales.x.title.color = textColor;
-      chart.options.scales.y.grid.color = gridColor;
-      chart.options.scales.y.ticks.color = textColor;
-      chart.options.scales.y.title.color = textColor;
-      chart.options.plugins.title.color = textColor;
-      chart.options.plugins.legend.labels.color = textColor;
-      chart.update();
-    }
-
     function downloadWaePNG() {
       const chart = STATE.wae.chartInstance;
       if (!chart) return;
@@ -1678,8 +1734,8 @@
       const rows = [];
       for (let i = 0; i < s.weeks.length; i++) {
         const rowObj = { Week: s.weeks[i] };
-        s.mgrNames.forEach(mgr => {
-          rowObj[mgr] = STATE.wae.mode === 'matchup' ? s.seriesMap[mgr].cumMatchup[i] : s.seriesMap[mgr].cumEtew[i];
+        s.teamMetaList.forEach(meta => {
+          rowObj[meta.manager] = STATE.wae.mode === 'matchup' ? s.seriesMap[meta.team_id].cumMatchup[i] : s.seriesMap[meta.team_id].cumEtew[i];
         });
         rows.push(rowObj);
       }
@@ -1727,7 +1783,7 @@
         if (ptA && !ptA.skip && ptA.x && ptA.y) {
           ctx.beginPath();
           ctx.arc(ptA.x, ptA.y, 5.5, 0, 2 * Math.PI);
-          ctx.fillStyle = '#0ea5e9';
+          ctx.fillStyle = s.colorA;
           ctx.fill();
           ctx.lineWidth = 2;
           ctx.strokeStyle = '#ffffff';
@@ -1737,7 +1793,7 @@
         if (ptB && !ptB.skip && ptB.x && ptB.y) {
           ctx.beginPath();
           ctx.arc(ptB.x, ptB.y, 5.5, 0, 2 * Math.PI);
-          ctx.fillStyle = '#f97316';
+          ctx.fillStyle = s.colorB;
           ctx.fill();
           ctx.lineWidth = 2;
           ctx.strokeStyle = '#ffffff';
@@ -1753,7 +1809,7 @@
           if (diff > 0.1) dir = 'up';
           else if (diff < -0.1) dir = 'down';
 
-          const favoriteColor = wpCur >= 50 ? '#0ea5e9' : '#f97316';
+          const favoriteColor = wpCur >= 50 ? s.colorA : s.colorB;
           const caretX = ptWP.x;
           const caretY = ptWP.y;
           const size = 6.5;
@@ -1871,11 +1927,6 @@
       const sc = STATE.data.scores || [];
       const filtered = sc.filter(r => Number(getVal(r, ['YR', 'year'])) === Number(yr) && Number(getVal(r, ['WK', 'week'])) === Number(wk));
 
-      const teamMetaMap = {};
-      (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(yr)).forEach(t => {
-        teamMetaMap[Number(getVal(t, ['team_id']))] = t;
-      });
-
       const matchupsMap = {};
       filtered.forEach(r => {
         const tma = Number(getVal(r, ['TMA', 'team_id']));
@@ -1893,13 +1944,11 @@
       }
 
       matchupSelect.innerHTML = matchupList.map(m => {
-        const metaA = teamMetaMap[m.tma] || {};
-        const metaB = teamMetaMap[m.tmb] || {};
-        const nameA = getVal(metaA, ['team_name', 'name']) || `Team ${m.tma}`;
-        const mgrA = getVal(metaA, ['manager', 'manager_name']) ? ` (${getVal(metaA, ['manager', 'manager_name'])})` : '';
-        const nameB = getVal(metaB, ['team_name', 'name']) || `Team ${m.tmb}`;
-        const mgrB = getVal(metaB, ['manager', 'manager_name']) ? ` (${getVal(metaB, ['manager', 'manager_name'])})` : '';
-        return `<option value="${m.tma}_${m.tmb}">${nameA}${mgrA} vs ${nameB}${mgrB}</option>`;
+        const nameA = getTeamName(m.tma, yr);
+        const mgrA = getManagerName(m.tma, yr);
+        const nameB = getTeamName(m.tmb, yr);
+        const mgrB = getManagerName(m.tmb, yr);
+        return `<option value="${m.tma}_${m.tmb}">${nameA} (${mgrA}) vs ${nameB} (${mgrB})</option>`;
       }).join('');
 
       matchupSelect.selectedIndex = 0;
@@ -1948,13 +1997,10 @@
 
       if (rows.length === 0) return;
 
-      const teamMetaMap = {};
-      (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(yr)).forEach(t => {
-        teamMetaMap[Number(getVal(t, ['team_id']))] = t;
-      });
-
-      const metaA = teamMetaMap[tma] || {};
-      const metaB = teamMetaMap[tmb] || {};
+      const mgrA = getManagerName(tma, yr);
+      const mgrB = getManagerName(tmb, yr);
+      const colorA = getManagerColor(mgrA, 0);
+      const colorB = getManagerColor(mgrB, 1);
 
       const labels = rows.map(r => formatTimeLabel(getVal(r, ['TIME', 'time'])));
       const tmaPts = rows.map(r => Number(getVal(r, ['TMAPTS', 'team_points'])) || 0);
@@ -1983,20 +2029,20 @@
       }
 
       STATE.liveProb.fullSeries = {
-        metaA, metaB, labels,
-        tmaPts, tmbPts, tmaProj, tmbProj,
+        tma, tmb, mgrA, mgrB, colorA, colorB,
+        labels, tmaPts, tmbPts, tmaProj, tmbProj,
         tmaWpNorm, tmbWpNorm, tmaWpRaw, tmbWpRaw,
         lastRow: rows[rows.length - 1]
       };
 
-      const nameA = getVal(metaA, ['team_name', 'name']) || `Team ${tma}`;
-      const nameB = getVal(metaB, ['team_name', 'name']) || `Team ${tmb}`;
+      const nameA = getTeamName(tma, yr);
+      const nameB = getTeamName(tmb, yr);
 
-      initFixedChart(labels, nameA, nameB);
+      initFixedChart(labels, nameA, nameB, colorA, colorB);
       restartReplay();
     }
 
-    function initFixedChart(fullLabels, nameA, nameB) {
+    function initFixedChart(fullLabels, nameA, nameB, colorA, colorB) {
       const canvas = document.getElementById('liveWinProbChart');
       if (!canvas) return;
 
@@ -2020,8 +2066,8 @@
             {
               label: `${nameA} (Actual)`,
               data: [...emptyArray],
-              borderColor: '#0ea5e9',
-              backgroundColor: '#0ea5e9',
+              borderColor: colorA,
+              backgroundColor: colorA,
               borderWidth: 3,
               pointRadius: 0,
               pointHoverRadius: 6,
@@ -2032,8 +2078,8 @@
             {
               label: `${nameB} (Actual)`,
               data: [...emptyArray],
-              borderColor: '#f97316',
-              backgroundColor: '#f97316',
+              borderColor: colorB,
+              backgroundColor: colorB,
               borderWidth: 3,
               pointRadius: 0,
               pointHoverRadius: 6,
@@ -2044,7 +2090,7 @@
             {
               label: `${nameA} (Proj)`,
               data: [...emptyArray],
-              borderColor: '#38bdf8',
+              borderColor: colorA,
               borderWidth: 2,
               borderDash: [6, 4],
               pointRadius: 0,
@@ -2056,7 +2102,7 @@
             {
               label: `${nameB} (Proj)`,
               data: [...emptyArray],
-              borderColor: '#fb923c',
+              borderColor: colorB,
               borderWidth: 2,
               borderDash: [6, 4],
               pointRadius: 0,
@@ -2068,8 +2114,8 @@
             {
               label: `${nameA} Win %`,
               data: [...emptyArray],
-              borderColor: 'rgba(14, 165, 233, 0.4)',
-              backgroundColor: 'rgba(14, 165, 233, 0.25)',
+              borderColor: hexToRgba(colorA, 0.4),
+              backgroundColor: hexToRgba(colorA, 0.25),
               fill: 'origin',
               borderWidth: 1.5,
               pointRadius: 0,
@@ -2081,8 +2127,8 @@
             {
               label: `${nameB} Win %`,
               data: [...emptyArray],
-              borderColor: 'rgba(249, 115, 22, 0.4)',
-              backgroundColor: 'rgba(249, 115, 22, 0.25)',
+              borderColor: hexToRgba(colorB, 0.4),
+              backgroundColor: hexToRgba(colorB, 0.25),
               fill: '-1',
               borderWidth: 1.5,
               pointRadius: 0,
@@ -2159,10 +2205,11 @@
       const total = s.labels.length;
       const validIdx = Math.min(total, Math.max(1, idx));
 
-      const nameA = getVal(s.metaA, ['team_name', 'name']) || 'Team A';
-      const mgrA = getVal(s.metaA, ['manager', 'manager_name']);
-      const nameB = getVal(s.metaB, ['team_name', 'name']) || 'Team B';
-      const mgrB = getVal(s.metaB, ['manager', 'manager_name']);
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const mgrA = s.mgrA;
+      const nameB = getTeamName(s.tmb, yr);
+      const mgrB = s.mgrB;
 
       const idx0 = validIdx - 1;
       const wpA = s.tmaWpNorm[idx0];
@@ -2171,14 +2218,18 @@
       document.getElementById('scorecard-tma-name').innerText = nameA;
       document.getElementById('scorecard-tma-mgr').innerText = mgrA ? `Manager: ${mgrA}` : '';
       document.getElementById('scorecard-tma-pts').innerText = s.tmaPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tma-pts').style.color = s.colorA;
       document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.tmaProj[idx0].toFixed(2)}`;
       document.getElementById('scorecard-tma-wp').innerText = `${wpA.toFixed(0)}%`;
+      document.getElementById('scorecard-tma-wp').style.color = s.colorA;
 
       document.getElementById('scorecard-tmb-name').innerText = nameB;
       document.getElementById('scorecard-tmb-mgr').innerText = mgrB ? `Manager: ${mgrB}` : '';
       document.getElementById('scorecard-tmb-pts').innerText = s.tmbPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tmb-pts').style.color = s.colorB;
       document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[idx0].toFixed(2)}`;
       document.getElementById('scorecard-tmb-wp').innerText = `${wpB.toFixed(0)}%`;
+      document.getElementById('scorecard-tmb-wp').style.color = s.colorB;
 
       const cardA = document.getElementById('scorecard-card-tma');
       const cardB = document.getElementById('scorecard-card-tmb');
@@ -2186,25 +2237,25 @@
 
       if (wpA > 50) {
         const intensity = Math.min(1, (wpA - 50) / 50);
-        cardA.style.backgroundColor = `rgba(14, 165, 233, ${(0.08 + 0.22 * intensity).toFixed(3)})`;
-        cardA.style.borderColor = `rgba(14, 165, 233, ${(0.3 + 0.4 * intensity).toFixed(3)})`;
+        cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08 + 0.22 * intensity);
+        cardA.style.borderColor = hexToRgba(s.colorA, 0.3 + 0.4 * intensity);
         cardB.style.backgroundColor = '';
         cardB.style.borderColor = '';
 
         if (chartContainer) {
-          chartContainer.style.backgroundColor = `rgba(14, 165, 233, ${(0.06 + 0.14 * intensity).toFixed(3)})`;
-          chartContainer.style.borderColor = `rgba(14, 165, 233, ${(0.25 + 0.35 * intensity).toFixed(3)})`;
+          chartContainer.style.backgroundColor = hexToRgba(s.colorA, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorA, 0.25 + 0.35 * intensity);
         }
       } else if (wpB > 50) {
         const intensity = Math.min(1, (wpB - 50) / 50);
-        cardB.style.backgroundColor = `rgba(249, 115, 22, ${(0.08 + 0.22 * intensity).toFixed(3)})`;
-        cardB.style.borderColor = `rgba(249, 115, 22, ${(0.3 + 0.4 * intensity).toFixed(3)})`;
+        cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08 + 0.22 * intensity);
+        cardB.style.borderColor = hexToRgba(s.colorB, 0.3 + 0.4 * intensity);
         cardA.style.backgroundColor = '';
         cardA.style.borderColor = '';
 
         if (chartContainer) {
-          chartContainer.style.backgroundColor = `rgba(249, 115, 22, ${(0.06 + 0.14 * intensity).toFixed(3)})`;
-          chartContainer.style.borderColor = `rgba(249, 115, 22, ${(0.25 + 0.35 * intensity).toFixed(3)})`;
+          chartContainer.style.backgroundColor = hexToRgba(s.colorB, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorB, 0.25 + 0.35 * intensity);
         }
       } else {
         cardA.style.backgroundColor = ''; cardA.style.borderColor = '';
@@ -2328,8 +2379,9 @@
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
       const rows = [];
-      const nameA = getVal(s.metaA, ['team_name', 'name']) || 'Team A';
-      const nameB = getVal(s.metaB, ['team_name', 'name']) || 'Team B';
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const nameB = getTeamName(s.tmb, yr);
 
       for (let i = 0; i < s.labels.length; i++) {
         rows.push({
