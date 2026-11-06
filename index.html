@@ -25,14 +25,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
-    /* Standings Table Styling - Adaptive Light & Dark Theme */
-    .standings-table {
+    /* Table Styling - Adaptive Light & Dark Theme */
+    .standings-table, .matchup-table {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
-    .standings-table th {
+    .standings-table th, .matchup-table th {
       background-color: #f1f5f9;
       color: #475569;
       font-size: 0.75rem;
@@ -46,8 +46,8 @@
       user-select: none;
       white-space: nowrap;
     }
-    .standings-table th:hover { background-color: #e2e8f0; color: #0f172a; }
-    .standings-table td {
+    .standings-table th:hover, .matchup-table th:hover { background-color: #e2e8f0; color: #0f172a; }
+    .standings-table td, .matchup-table td {
       padding: 8px 12px;
       font-size: 0.8125rem;
       border-bottom: 1px solid #e2e8f0;
@@ -56,21 +56,21 @@
       transition: background-color 0.15s ease;
       color: #0f172a;
     }
-    .standings-table tr:hover td { filter: brightness(0.95); }
+    .standings-table tr:hover td, .matchup-table tr:hover td { filter: brightness(0.95); }
 
-    .dark .standings-table th {
+    .dark .standings-table th, .dark .matchup-table th {
       background-color: #0f172a;
       color: #94a3b8;
       border-bottom: 2px solid #334155;
       border-right: 1px solid #1e293b;
     }
-    .dark .standings-table th:hover { background-color: #1e293b; color: #f8fafc; }
-    .dark .standings-table td {
+    .dark .standings-table th:hover, .dark .matchup-table th:hover { background-color: #1e293b; color: #f8fafc; }
+    .dark .standings-table td, .dark .matchup-table td {
       border-bottom: 1px solid #1e293b;
       border-right: 1px solid #1e293b;
       color: #f8fafc;
     }
-    .dark .standings-table tr:hover td { filter: brightness(1.15); }
+    .dark .standings-table tr:hover td, .dark .matchup-table tr:hover td { filter: brightness(1.15); }
 
     .playoff-cutoff-row td { border-bottom: 2px dashed #0284c7 !important; }
     .clinched-text { color: #16a34a !important; font-weight: 700; }
@@ -204,9 +204,107 @@
       </div>
     </section>
 
+    <!-- MATCHUPS TAB CONTENT -->
+    <section id="tab-matchups" class="tab-content space-y-4 hidden">
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-4">
+          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-gamepad text-brand-500"></i> Weekly Matchup Results
+          </h2>
+          <div class="flex items-center gap-2">
+            <span class="text-slate-600 dark:text-slate-400 font-medium">Select Week:</span>
+            <select id="matchups-week-select" class="bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none">
+            </select>
+          </div>
+        </div>
+        <button id="btn-export-matchups-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
+          <i class="fa-solid fa-download text-xs"></i> CSV
+        </button>
+      </div>
+
+      <!-- MATCHUP TITLE BANNER -->
+      <div class="bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-bold text-base py-2.5 text-center rounded-xl shadow">
+        Matchup Results: NDL <span id="matchup-banner-year">2026</span> Week <span id="matchup-banner-week">1</span>
+      </div>
+
+      <!-- MATCHUP RESULTS TABLE -->
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
+        <table class="matchup-table" id="matchups-table">
+          <thead>
+            <tr>
+              <th class="text-left" style="width: 25%;">TEAM</th>
+              <th class="text-right">PF</th>
+              <th class="text-right">PA</th>
+              <th class="text-center">W/L - Δ</th>
+              <th class="text-center">ETEW</th>
+              <th class="text-left" style="width: 25%;">BEST STARTER</th>
+              <th class="text-left" style="width: 25%;">BEST BENCH</th>
+            </tr>
+          </thead>
+          <tbody id="matchups-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- WINS ABOVE EVEN TAB CONTENT -->
+    <section id="tab-wins_above" class="tab-content space-y-4 hidden">
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-4">
+          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-brand-500"></i> Wins Above Even (by Week)
+          </h2>
+          <!-- METRIC TOGGLE SWITCH -->
+          <div class="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
+            <button id="btn-toggle-wae-matchup" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Matchup Results</button>
+            <button id="btn-toggle-wae-etew" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">ETEW Wins</button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button id="btn-export-wae-png" title="Download Chart as PNG Image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
+            <i class="fa-solid fa-file-image"></i> PNG
+          </button>
+          <button id="btn-export-wae-csv" title="Download Chart Data as CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- CHART CONTAINER -->
+      <div id="wae-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
+        <div class="relative w-full h-[520px]">
+          <canvas id="winsAboveEvenChart"></canvas>
+        </div>
+      </div>
+
+      <!-- WINS ABOVE EVEN REPLAY CONTROLS (MOVED BELOW CHART) -->
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-3">
+          <button id="btn-wae-play-pause" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
+            <i id="wae-play-icon" class="fa-solid fa-play"></i> <span id="wae-play-text">Play</span>
+          </button>
+          <button id="btn-wae-restart" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate-right"></i> Restart
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
+            <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
+            <input type="range" id="wae-speed-slider" min="1" max="10" value="3" step="1" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="wae-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">3x</span>
+          </div>
+
+          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
+            <i class="fa-solid fa-clock text-slate-400"></i>
+            <input type="range" id="wae-scrubber" min="0" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- LIVE WIN PROB TAB CONTENT -->
     <section id="tab-live_prob" class="tab-content space-y-4 hidden">
-      
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex flex-wrap items-center gap-5">
           <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -226,35 +324,13 @@
           </div>
         </div>
 
-        <!-- REPLAY CONTROLS BAR -->
-        <div class="flex flex-wrap items-center gap-3">
-          <button id="btn-play-pause-replay" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i id="play-pause-icon" class="fa-solid fa-pause"></i> <span id="play-pause-text">Pause</span>
+        <div class="flex items-center gap-1 border-l border-slate-300 dark:border-slate-800 pl-2">
+          <button id="btn-export-chart-png" title="Download Chart as PNG Image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
+            <i class="fa-solid fa-file-image"></i> PNG
           </button>
-
-          <button id="btn-replay-animation" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-rotate-right"></i> Restart
+          <button id="btn-export-chart-csv" title="Download Chart Data as CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
+            <i class="fa-solid fa-file-csv"></i> CSV
           </button>
-
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="replay-speed-slider" min="1" max="10" value="3" step="1" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="replay-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">3x</span>
-          </div>
-
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <i class="fa-solid fa-clock text-slate-400"></i>
-            <input type="range" id="replay-scrubber" min="0" max="100" value="100" class="w-28 md:w-36 accent-brand-500 cursor-pointer" />
-          </div>
-
-          <div class="flex items-center gap-1 border-l border-slate-300 dark:border-slate-800 pl-2">
-            <button id="btn-export-chart-png" title="Download Chart as PNG Image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
-              <i class="fa-solid fa-file-image"></i> PNG
-            </button>
-            <button id="btn-export-chart-csv" title="Download Chart Data as CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
-              <i class="fa-solid fa-file-csv"></i> CSV
-            </button>
-          </div>
         </div>
       </div>
 
@@ -293,6 +369,30 @@
         </div>
       </div>
 
+      <!-- LIVE WIN PROB REPLAY CONTROLS (MOVED BELOW CHART) -->
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-3">
+          <button id="btn-play-pause-replay" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
+            <i id="play-pause-icon" class="fa-solid fa-pause"></i> <span id="play-pause-text">Pause</span>
+          </button>
+          <button id="btn-replay-animation" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate-right"></i> Restart
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
+            <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
+            <input type="range" id="replay-speed-slider" min="1" max="10" value="3" step="1" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="replay-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">3x</span>
+          </div>
+
+          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
+            <i class="fa-solid fa-clock text-slate-400"></i>
+            <input type="range" id="replay-scrubber" min="0" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -313,7 +413,7 @@
         <p><strong class="text-amber-600 dark:text-amber-400">RABL (Rank Above League Level):</strong> ETEW rank minus actual rank.</p>
         <p><strong class="text-purple-600 dark:text-purple-400">AVG*:</strong> Trimmed average score excluding highest and lowest week.</p>
         <p><strong class="text-slate-600 dark:text-slate-400">SDEV:</strong> Sample standard deviation of weekly scores.</p>
-        <p><strong class="text-sky-600 dark:text-sky-400">100% Stacked Area Win Prob:</strong> Percentage share of matchup win probability normalized to sum to exactly 100% at every time step.</p>
+        <p><strong class="text-sky-600 dark:text-sky-400">Wins Above Even:</strong> Head-to-head or ETEW wins accumulated above standard .500 baseline performance across weeks.</p>
       </div>
     </div>
   </div>
@@ -334,14 +434,34 @@
         isPlaying: false,
         currentIdx: 0,
         speedMultiplier: 3
+      },
+      wae: {
+        chartInstance: null,
+        mode: 'matchup', // 'matchup' or 'etew'
+        fullSeries: null,
+        animationTimer: null,
+        isPlaying: false,
+        currentIdx: 0,
+        speedMultiplier: 3
       }
     };
+
+    const MANAGER_COLORS = {
+      'Brad': '#dc2626', 'Christian': '#16a34a', 'Cole': '#854d0e', 'Dan': '#94a3b8',
+      'Fish': '#7c3aed', 'Jare': '#0f172a', 'Ken': '#0284c7', 'Mike': '#eab308',
+      'Pax': '#84cc16', 'Phil': '#0ea5e9'
+    };
+
+    function getManagerColor(mgr, idx) {
+      if (MANAGER_COLORS[mgr]) return MANAGER_COLORS[mgr];
+      const fallback = ['#0ea5e9', '#f97316', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4', '#6366f1', '#14b8a6', '#d97706'];
+      return fallback[idx % fallback.length];
+    }
 
     function initTheme() {
       const themeBtn = document.getElementById('theme-toggle');
       const icon = themeBtn ? themeBtn.querySelector('i') : null;
 
-      // Default to 'dark' mode unless explicitly saved as 'light'
       const savedTheme = localStorage.getItem('ndl_theme');
       const isDark = savedTheme ? savedTheme === 'dark' : true;
 
@@ -358,9 +478,8 @@
           const darkNow = document.documentElement.classList.toggle('dark');
           localStorage.setItem('ndl_theme', darkNow ? 'dark' : 'light');
           if (icon) icon.className = darkNow ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-          if (STATE.liveProb.chartInstance) {
-            updateChartThemeColors();
-          }
+          if (STATE.liveProb.chartInstance) updateChartThemeColors();
+          if (STATE.wae.chartInstance) updateWaeThemeColors();
         });
       }
     }
@@ -422,7 +541,6 @@
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
-    // Helper for robust property reading across sqlite/CSV case differences
     function getVal(obj, keys) {
       if (!obj) return undefined;
       for (let k of keys) {
@@ -435,7 +553,6 @@
       return undefined;
     }
 
-    // Hash sync helper
     function updateUrlHash() {
       const params = new URLSearchParams();
       const activeTab = document.querySelector('.tab-btn.active')?.getAttribute('data-tab') || 'standings';
@@ -734,6 +851,8 @@
         populateYearSelector();
         updateFilterUI();
         renderStandingsTable();
+        initMatchupsTab();
+        initWinsAboveTab();
         initLiveProbTab();
         updateStatus("emerald", "Live");
       } else {
@@ -797,9 +916,11 @@
           }
 
           const stWeeksFilter = document.getElementById('standings-weeks-filter');
-          if (tabKey === 'live_prob') {
+          if (tabKey === 'live_prob' || tabKey === 'matchups' || tabKey === 'wins_above') {
             if (stWeeksFilter) stWeeksFilter.classList.add('hidden');
-            renderLiveProbMatchup();
+            if (tabKey === 'live_prob') renderLiveProbMatchup();
+            if (tabKey === 'matchups') renderMatchupsTable();
+            if (tabKey === 'wins_above') renderWinsAboveChart();
           } else {
             if (stWeeksFilter) stWeeksFilter.classList.remove('hidden');
           }
@@ -959,13 +1080,546 @@
     }
 
     // ==========================================
-    // SECTION 5: LIVE WIN PROBABILITY ENGINE (CUSTOM PLUGIN & DYNAMIC STYLES)
+    // SECTION 5: MATCHUPS TAB ENGINE (replicating image_1f6940.png)
     // ==========================================
+    function initMatchupsTab() {
+      const weekSelect = document.getElementById('matchups-week-select');
+      if (!weekSelect) return;
 
-    // Custom Chart Plugin for 50% Midline & Active Leading Edge Markers
+      populateMatchupsWeeks();
+      weekSelect.addEventListener('change', () => {
+        renderMatchupsTable();
+      });
+
+      document.getElementById('btn-export-matchups-csv').addEventListener('click', downloadMatchupsCSV);
+    }
+
+    function populateMatchupsWeeks() {
+      const weekSelect = document.getElementById('matchups-week-select');
+      if (!weekSelect) return;
+
+      const yr = STATE.filters.year;
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
+      
+      let availableWeeks = [...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(Boolean).sort((a,b) => a - b);
+      if (availableWeeks.length === 0) availableWeeks = Array.from({length: 17}, (_, i) => i + 1);
+
+      weekSelect.innerHTML = availableWeeks.map(w => `<option value="${w}">Week ${w}</option>`).join('');
+
+      const cw = STATE.data.currentweek;
+      let defaultWk = 1;
+      if (cw && cw.length > 0 && Number(getVal(cw[0], ['year', 'YR'])) === Number(yr)) {
+        defaultWk = Math.max(1, Number(getVal(cw[0], ['week', 'WK'])) - 1);
+      } else if (availableWeeks.length > 0) {
+        defaultWk = availableWeeks[availableWeeks.length - 1];
+      }
+
+      if (availableWeeks.includes(defaultWk)) weekSelect.value = defaultWk;
+      else if (availableWeeks.length > 0) weekSelect.value = availableWeeks[0];
+    }
+
+    function renderMatchupsTable() {
+      const weekSelect = document.getElementById('matchups-week-select');
+      if (!weekSelect) return;
+
+      const yr = STATE.filters.year;
+      const wk = Number(weekSelect.value);
+
+      document.getElementById('matchup-banner-year').innerText = yr;
+      document.getElementById('matchup-banner-week').innerText = wk;
+
+      const pts = STATE.data.points || [];
+      const rows = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
+
+      if (rows.length === 0) {
+        document.getElementById('matchups-tbody').innerHTML = `
+          <tr><td colspan="7" class="p-8 text-center text-slate-500 dark:text-slate-400">No matchup records found for Week ${wk}.</td></tr>`;
+        return;
+      }
+
+      // Compute weekly ETEW records
+      const totalTeams = rows.length;
+      rows.forEach(t => {
+        const pf = Number(getVal(t, ['team_points', 'points', 'TMAPTS'])) || 0;
+        let beats = 0, ties = 0;
+        rows.forEach(o => {
+          const oPf = Number(getVal(o, ['team_points', 'points', 'TMAPTS'])) || 0;
+          if (getVal(t, ['team_id', 'TMA']) !== getVal(o, ['team_id', 'TMA'])) {
+            if (pf > oPf) beats++;
+            else if (pf === oPf) ties++;
+          }
+        });
+        t.etewWins = beats + 0.5 * ties;
+        t.etewLosses = (totalTeams - 1) - t.etewWins;
+      });
+
+      // Sort rows by Points For (PF) descending to match screenshot layout
+      rows.sort((a, b) => (Number(getVal(b, ['team_points', 'points', 'TMAPTS'])) || 0) - (Number(getVal(a, ['team_points', 'points', 'TMAPTS'])) || 0));
+
+      const pfStats = getColStats(rows, r => Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0);
+      const paStats = getColStats(rows, r => Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0);
+      const starterStats = getColStats(rows, r => Number(getVal(r, ['best_starter_pts'])) || 0);
+      const benchStats = getColStats(rows, r => Number(getVal(r, ['best_bench_pts'])) || 0);
+      const deltas = rows.map(r => (Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0) - (Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0));
+      const maxDelta = Math.max(...deltas.map(d => Math.abs(d)), 1);
+
+      const tbody = document.getElementById('matchups-tbody');
+      tbody.innerHTML = rows.map(r => {
+        const mgr = getVal(r, ['manager_name', 'manager']) || '';
+        const tname = getVal(r, ['team_name', 'name']) || `Team ${getVal(r, ['team_id'])}`;
+        const pf = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
+        const pa = Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0;
+        const delta = pf - pa;
+        const isWin = delta > 0;
+        const isTie = delta === 0;
+        const resLetter = isWin ? 'W' : (isTie ? 'T' : 'L');
+
+        const starterName = getVal(r, ['best_starter_name']) || '--';
+        const starterPts = Number(getVal(r, ['best_starter_pts'])) || 0;
+        const benchName = getVal(r, ['best_bench_name']) || '--';
+        const benchPts = Number(getVal(r, ['best_bench_pts'])) || 0;
+
+        const pfBg = HEATMAPS.greenToClear(pf, pfStats.min, pfStats.max);
+        const paBg = HEATMAPS.redToClear(pa, paStats.min, paStats.max);
+        const starterBg = starterPts > 0 ? HEATMAPS.greenToClear(starterPts, starterStats.min, starterStats.max) : 'transparent';
+        const benchBg = benchPts > 0 ? HEATMAPS.greenToClear(benchPts, benchStats.min, benchStats.max) : 'transparent';
+        
+        // W/L Delta Cell Styling
+        let wlBg = 'transparent';
+        let wlTextClass = 'text-slate-700 dark:text-slate-300';
+        if (isWin) {
+          const intensity = Math.min(1, delta / maxDelta);
+          wlBg = `rgba(34, 197, 94, ${(0.15 + 0.35 * intensity).toFixed(2)})`;
+          wlTextClass = 'text-emerald-700 dark:text-emerald-300 font-bold';
+        } else if (!isTie) {
+          const intensity = Math.min(1, Math.abs(delta) / maxDelta);
+          wlBg = `rgba(239, 68, 68, ${(0.15 + 0.35 * intensity).toFixed(2)})`;
+          wlTextClass = 'text-rose-700 dark:text-rose-300 font-bold';
+        }
+
+        // ETEW Cell Shading
+        const etewShare = (totalTeams - 1) > 0 ? r.etewWins / (totalTeams - 1) : 0.5;
+        const etewBg = HEATMAPS.greenClearRed(etewShare, 0, 0.5, 1);
+
+        return `
+          <tr>
+            <td class="text-left font-medium">
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-normal mr-1 border-r border-slate-300 dark:border-slate-700 pr-1.5">${mgr}</span>
+              <span class="text-slate-900 dark:text-slate-100 font-semibold">${tname}</span>
+            </td>
+            <td class="text-right font-mono font-bold" style="background-color: ${pfBg}">${pf.toFixed(2)}</td>
+            <td class="text-right font-mono" style="background-color: ${paBg}">${pa.toFixed(2)}</td>
+            <td class="text-center font-mono ${wlTextClass}" style="background-color: ${wlBg}">
+              <span class="inline-block w-4 font-bold text-center mr-1">${resLetter}</span>
+              <span>${delta > 0 ? '+' : ''}${delta.toFixed(2)}</span>
+            </td>
+            <td class="text-center font-mono font-semibold" style="background-color: ${etewBg}">
+              ${r.etewWins} - ${r.etewLosses}
+            </td>
+            <td class="text-left font-sans text-xs" style="background-color: ${starterBg}">
+              <span class="font-medium text-slate-800 dark:text-slate-200">${starterName}</span>
+              ${starterPts > 0 ? `<span class="float-right font-mono font-bold">${starterPts.toFixed(2)}</span>` : ''}
+            </td>
+            <td class="text-left font-sans text-xs" style="background-color: ${benchBg}">
+              <span class="font-medium text-slate-800 dark:text-slate-200">${benchName}</span>
+              ${benchPts > 0 ? `<span class="float-right font-mono font-bold">${benchPts.toFixed(2)}</span>` : ''}
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function downloadMatchupsCSV() {
+      const weekSelect = document.getElementById('matchups-week-select');
+      if (!weekSelect) return;
+      const yr = STATE.filters.year;
+      const wk = Number(weekSelect.value);
+      const pts = STATE.data.points || [];
+      const rows = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
+
+      const csvData = rows.map(r => ({
+        Year: yr, Week: wk,
+        Manager: getVal(r, ['manager_name', 'manager']),
+        Team: getVal(r, ['team_name', 'name']),
+        PF: getVal(r, ['team_points', 'points', 'TMAPTS']),
+        PA: getVal(r, ['opponent_points', 'TMBPTS']),
+        BestStarter: getVal(r, ['best_starter_name']),
+        BestStarterPts: getVal(r, ['best_starter_pts']),
+        BestBench: getVal(r, ['best_bench_name']),
+        BestBenchPts: getVal(r, ['best_bench_pts'])
+      }));
+
+      const csv = Papa.unparse(csvData);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", `NDL_Matchups_${yr}_Week_${wk}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ==========================================
+    // SECTION 6: WINS ABOVE EVEN TAB ENGINE (replicating image_1f61e6.png)
+    // ==========================================
+    function initWinsAboveTab() {
+      const btnMatchup = document.getElementById('btn-toggle-wae-matchup');
+      const btnEtew = document.getElementById('btn-toggle-wae-etew');
+      const playPauseBtn = document.getElementById('btn-wae-play-pause');
+      const restartBtn = document.getElementById('btn-wae-restart');
+      const speedSlider = document.getElementById('wae-speed-slider');
+      const scrubber = document.getElementById('wae-scrubber');
+      const pngBtn = document.getElementById('btn-export-wae-png');
+      const csvBtn = document.getElementById('btn-export-wae-csv');
+
+      if (btnMatchup && btnEtew) {
+        btnMatchup.addEventListener('click', () => {
+          STATE.wae.mode = 'matchup';
+          btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+          btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+          renderWinsAboveChart();
+        });
+
+        btnEtew.addEventListener('click', () => {
+          STATE.wae.mode = 'etew';
+          btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+          btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+          renderWinsAboveChart();
+        });
+      }
+
+      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleWaePlayPause);
+      if (restartBtn) restartBtn.addEventListener('click', restartWaeReplay);
+
+      if (speedSlider) {
+        speedSlider.addEventListener('input', (e) => {
+          const mult = Number(e.target.value);
+          STATE.wae.speedMultiplier = mult;
+          document.getElementById('wae-speed-val').innerText = `${mult}x`;
+          if (STATE.wae.isPlaying) restartWaeIntervalTimer();
+        });
+      }
+
+      if (scrubber) {
+        scrubber.addEventListener('input', (e) => {
+          const pct = Number(e.target.value);
+          const total = STATE.wae.fullSeries ? STATE.wae.fullSeries.weeks.length : 0;
+          if (total === 0) return;
+          const targetIdx = Math.round((pct / 100) * (total - 1));
+          STATE.wae.currentIdx = targetIdx;
+          renderWaeFrameAtIdx(targetIdx);
+        });
+      }
+
+      if (pngBtn) pngBtn.addEventListener('click', downloadWaePNG);
+      if (csvBtn) csvBtn.addEventListener('click', downloadWaeCSV);
+    }
+
+    function renderWinsAboveChart() {
+      const yr = STATE.filters.year;
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
+
+      if (ptsYr.length === 0) return;
+
+      const weeks = [0, ...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w)).sort((a,b) => a - b);
+      const teamGroups = {};
+      
+      ptsYr.forEach(r => {
+        const mgr = getVal(r, ['manager_name', 'manager']) || `Team ${getVal(r, ['team_id'])}`;
+        if (!teamGroups[mgr]) teamGroups[mgr] = [];
+        teamGroups[mgr].push(r);
+      });
+
+      const mgrNames = Object.keys(teamGroups).sort();
+      const seriesMap = {};
+
+      mgrNames.forEach(mgr => {
+        const group = teamGroups[mgr].sort((a,b) => Number(getVal(a, ['week', 'WK'])) - Number(getVal(b, ['week', 'WK'])));
+        const cumMatchup = [0];
+        const cumEtew = [0];
+
+        let accMatchup = 0;
+        let accEtew = 0;
+
+        group.forEach(r => {
+          const pf = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
+          const pa = Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0;
+          
+          // Matchup Wins Above .500 (1 for W, 0 for L, minus 0.5 baseline)
+          const winVal = pf > pa ? 1 : (pf === pa ? 0.5 : 0);
+          accMatchup += (winVal - 0.5);
+
+          // ETEW Wins Above .500 (weekly ETEW share minus 0.5)
+          const wk = Number(getVal(r, ['week', 'WK']));
+          const weekOpponents = ptsYr.filter(o => Number(getVal(o, ['week', 'WK'])) === wk);
+          const n = weekOpponents.length;
+          let beats = 0, ties = 0;
+          weekOpponents.forEach(o => {
+            const oPf = Number(getVal(o, ['team_points', 'points', 'TMAPTS'])) || 0;
+            if (getVal(r, ['team_id']) !== getVal(o, ['team_id'])) {
+              if (pf > oPf) beats++;
+              else if (pf === oPf) ties++;
+            }
+          });
+          const etewShare = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0.5;
+          accEtew += (etewShare - 0.5);
+
+          cumMatchup.push(accMatchup);
+          cumEtew.push(accEtew);
+        });
+
+        seriesMap[mgr] = { cumMatchup, cumEtew };
+      });
+
+      STATE.wae.fullSeries = { weeks, mgrNames, seriesMap };
+
+      initWaeChartCanvas(weeks, mgrNames, seriesMap);
+      restartWaeReplay();
+    }
+
+    function initWaeChartCanvas(weeks, mgrNames, seriesMap) {
+      const canvas = document.getElementById('winsAboveEvenChart');
+      if (!canvas) return;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+
+      if (STATE.wae.chartInstance) {
+        STATE.wae.chartInstance.destroy();
+      }
+
+      const emptyArray = new Array(weeks.length).fill(null);
+      const datasets = mgrNames.map((mgr, idx) => {
+        const color = getManagerColor(mgr, idx);
+        return {
+          label: `- ${mgr}`,
+          data: [...emptyArray],
+          borderColor: color,
+          backgroundColor: color,
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          tension: 0.1
+        };
+      });
+
+      const ctx = canvas.getContext('2d');
+      STATE.wae.chartInstance = new Chart(ctx, {
+        type: 'line',
+        plugins: [{
+          id: 'zeroMidlinePlugin',
+          afterDraw(chart) {
+            const { ctx, chartArea, scales } = chart;
+            if (!chartArea || !scales.y) return;
+            const y0 = scales.y.getPixelForValue(0);
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.moveTo(chartArea.left, y0);
+            ctx.lineTo(chartArea.right, y0);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }],
+        data: {
+          labels: weeks,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            title: {
+              display: true,
+              text: `Wins Above Even (by Week) - ${STATE.wae.mode === 'matchup' ? 'Matchup Results' : 'ETEW Expected Wins'}`,
+              color: textColor,
+              font: { size: 16, weight: '700' },
+              padding: { bottom: 15 }
+            },
+            legend: {
+              position: 'right',
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 12 }
+            },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+              titleColor: isDark ? '#f8fafc' : '#0f172a',
+              bodyColor: isDark ? '#cbd5e1' : '#334155',
+              borderColor: isDark ? '#334155' : '#cbd5e1',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y > 0 ? '+' : ''}${ctx.parsed.y.toFixed(2)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Week', color: textColor, font: { size: 12, weight: '700' } },
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 11, weight: '600' } }
+            },
+            y: {
+              title: { display: true, text: 'Wins Above Even', color: textColor, font: { size: 12, weight: '700' } },
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 11, weight: '600' } }
+            }
+          }
+        }
+      });
+    }
+
+    function renderWaeFrameAtIdx(idx) {
+      const s = STATE.wae.fullSeries;
+      if (!s || !STATE.wae.chartInstance) return;
+
+      const total = s.weeks.length;
+      const validIdx = Math.min(total - 1, Math.max(0, idx));
+      const chart = STATE.wae.chartInstance;
+
+      s.mgrNames.forEach((mgr, mgrIdx) => {
+        const fullArr = STATE.wae.mode === 'matchup' ? s.seriesMap[mgr].cumMatchup : s.seriesMap[mgr].cumEtew;
+        const sliced = fullArr.slice(0, validIdx + 1);
+        const padded = sliced.concat(new Array(total - (validIdx + 1)).fill(null));
+        chart.data.datasets[mgrIdx].data = padded;
+      });
+
+      const scrubber = document.getElementById('wae-scrubber');
+      if (scrubber && total > 1) {
+        scrubber.value = Math.round((validIdx / (total - 1)) * 100);
+      }
+
+      chart.update('none');
+    }
+
+    function toggleWaePlayPause() {
+      if (STATE.wae.isPlaying) {
+        pauseWaeReplay();
+      } else {
+        const s = STATE.wae.fullSeries;
+        if (s && STATE.wae.currentIdx >= s.weeks.length - 1) {
+          STATE.wae.currentIdx = 0;
+        }
+        startWaeReplay();
+      }
+    }
+
+    function startWaeReplay() {
+      STATE.wae.isPlaying = true;
+      updateWaePlayPauseUI();
+      restartWaeIntervalTimer();
+    }
+
+    function pauseWaeReplay() {
+      STATE.wae.isPlaying = false;
+      if (STATE.wae.animationTimer) {
+        clearInterval(STATE.wae.animationTimer);
+        STATE.wae.animationTimer = null;
+      }
+      updateWaePlayPauseUI();
+    }
+
+    function restartWaeReplay() {
+      STATE.wae.currentIdx = 0;
+      renderWaeFrameAtIdx(0);
+      startWaeReplay();
+    }
+
+    function restartWaeIntervalTimer() {
+      if (STATE.wae.animationTimer) clearInterval(STATE.wae.animationTimer);
+
+      const mult = STATE.wae.speedMultiplier || 3;
+      const intervalMs = Math.max(40, Math.round(300 / mult));
+
+      STATE.wae.animationTimer = setInterval(() => {
+        const s = STATE.wae.fullSeries;
+        if (!s) return;
+
+        STATE.wae.currentIdx += 1;
+        if (STATE.wae.currentIdx >= s.weeks.length - 1) {
+          STATE.wae.currentIdx = s.weeks.length - 1;
+          renderWaeFrameAtIdx(STATE.wae.currentIdx);
+          pauseWaeReplay();
+        } else {
+          renderWaeFrameAtIdx(STATE.wae.currentIdx);
+        }
+      }, intervalMs);
+    }
+
+    function updateWaePlayPauseUI() {
+      const icon = document.getElementById('wae-play-icon');
+      const text = document.getElementById('wae-play-text');
+      const btn = document.getElementById('btn-wae-play-pause');
+
+      if (STATE.wae.isPlaying) {
+        icon.className = 'fa-solid fa-pause';
+        text.innerText = 'Pause';
+        btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
+      } else {
+        icon.className = 'fa-solid fa-play';
+        text.innerText = 'Play';
+        btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
+      }
+    }
+
+    function updateWaeThemeColors() {
+      const chart = STATE.wae.chartInstance;
+      if (!chart) return;
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+
+      chart.options.scales.x.grid.color = gridColor;
+      chart.options.scales.x.ticks.color = textColor;
+      chart.options.scales.x.title.color = textColor;
+      chart.options.scales.y.grid.color = gridColor;
+      chart.options.scales.y.ticks.color = textColor;
+      chart.options.scales.y.title.color = textColor;
+      chart.options.plugins.title.color = textColor;
+      chart.options.plugins.legend.labels.color = textColor;
+      chart.update();
+    }
+
+    function downloadWaePNG() {
+      const chart = STATE.wae.chartInstance;
+      if (!chart) return;
+      const link = document.createElement('a');
+      link.download = `Wins_Above_Even_${STATE.filters.year}.png`;
+      link.href = chart.toBase64Image();
+      link.click();
+    }
+
+    function downloadWaeCSV() {
+      const s = STATE.wae.fullSeries;
+      if (!s) return;
+      const rows = [];
+      for (let i = 0; i < s.weeks.length; i++) {
+        const rowObj = { Week: s.weeks[i] };
+        s.mgrNames.forEach(mgr => {
+          rowObj[mgr] = STATE.wae.mode === 'matchup' ? s.seriesMap[mgr].cumMatchup[i] : s.seriesMap[mgr].cumEtew[i];
+        });
+        rows.push(rowObj);
+      }
+      const csv = Papa.unparse(rows);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", `Wins_Above_Even_${STATE.filters.year}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ==========================================
+    // SECTION 7: LIVE WIN PROBABILITY REPLAY ENGINE
+    // ==========================================
     const liveReplayOverlayPlugin = {
       id: 'liveReplayOverlay',
-
       afterDatasetsDraw(chart) {
         const { ctx, chartArea, scales } = chart;
         if (!chartArea || !scales.y1 || !STATE.liveProb.fullSeries) return;
@@ -975,8 +1629,6 @@
         if (curIdx0 < 0) return;
 
         ctx.save();
-
-        // 1. Render Persistent 50% Midline Across Width
         const y50 = scales.y1.getPixelForValue(50);
         ctx.beginPath();
         ctx.setLineDash([4, 4]);
@@ -986,16 +1638,14 @@
         ctx.lineTo(chartArea.right, y50);
         ctx.stroke();
 
-        // 2. Render Leading Edge Data Markers (Solid Circles) & Moving Caret
-        const meta0 = chart.getDatasetMeta(0); // Team A Actual
-        const meta1 = chart.getDatasetMeta(1); // Team B Actual
-        const meta4 = chart.getDatasetMeta(4); // Team A Win Prob Area
+        const meta0 = chart.getDatasetMeta(0);
+        const meta1 = chart.getDatasetMeta(1);
+        const meta4 = chart.getDatasetMeta(4);
 
         const ptA = meta0?.data[curIdx0];
         const ptB = meta1?.data[curIdx0];
         const ptWP = meta4?.data[curIdx0];
 
-        // Solid Circles for Actual Points
         if (ptA && !ptA.skip && ptA.x && ptA.y) {
           ctx.beginPath();
           ctx.arc(ptA.x, ptA.y, 5.5, 0, 2 * Math.PI);
@@ -1016,7 +1666,6 @@
           ctx.stroke();
         }
 
-        // Win Probability Trend Direction Caret
         if (ptWP && ptWP.x && ptWP.y) {
           const wpCur = s.tmaWpNorm[curIdx0];
           const wpPrev = curIdx0 > 0 ? s.tmaWpNorm[curIdx0 - 1] : wpCur;
@@ -1052,7 +1701,6 @@
           ctx.strokeStyle = '#ffffff';
           ctx.stroke();
         }
-
         ctx.restore();
       }
     };
@@ -1116,9 +1764,7 @@
       const scoresYr = sc.filter(r => Number(getVal(r, ['YR', 'year'])) === Number(yr));
       
       let availableWeeks = [...new Set(scoresYr.map(r => Number(getVal(r, ['WK', 'week']))))].filter(Boolean).sort((a,b) => a - b);
-      if (availableWeeks.length === 0) {
-        availableWeeks = Array.from({length: 17}, (_, i) => i + 1);
-      }
+      if (availableWeeks.length === 0) availableWeeks = Array.from({length: 17}, (_, i) => i + 1);
 
       weekSelect.innerHTML = availableWeeks.map(w => `<option value="${w}">Week ${w}</option>`).join('');
 
@@ -1130,11 +1776,8 @@
         defaultWk = availableWeeks[availableWeeks.length - 1];
       }
 
-      if (availableWeeks.includes(defaultWk)) {
-        weekSelect.value = defaultWk;
-      } else if (availableWeeks.length > 0) {
-        weekSelect.value = availableWeeks[0];
-      }
+      if (availableWeeks.includes(defaultWk)) weekSelect.value = defaultWk;
+      else if (availableWeeks.length > 0) weekSelect.value = availableWeeks[0];
 
       populateLiveProbMatchups();
     }
@@ -1459,7 +2102,6 @@
       document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[idx0].toFixed(2)}`;
       document.getElementById('scorecard-tmb-wp').innerText = `${wpB.toFixed(0)}%`;
 
-      // Scorecard Name Box Dynamic Favorite Background Tinting
       const cardA = document.getElementById('scorecard-card-tma');
       const cardB = document.getElementById('scorecard-card-tmb');
       const chartContainer = document.getElementById('live-prob-chart-container');
@@ -1487,25 +2129,14 @@
           chartContainer.style.borderColor = `rgba(249, 115, 22, ${(0.25 + 0.35 * intensity).toFixed(3)})`;
         }
       } else {
-        cardA.style.backgroundColor = '';
-        cardA.style.borderColor = '';
-        cardB.style.backgroundColor = '';
-        cardB.style.borderColor = '';
-        if (chartContainer) {
-          chartContainer.style.backgroundColor = '';
-          chartContainer.style.borderColor = '';
-        }
+        cardA.style.backgroundColor = ''; cardA.style.borderColor = '';
+        cardB.style.backgroundColor = ''; cardB.style.borderColor = '';
+        if (chartContainer) { chartContainer.style.backgroundColor = ''; chartContainer.style.borderColor = ''; }
       }
 
-      // Update Scrubber Position
       const scrubber = document.getElementById('replay-scrubber');
-      if (scrubber) {
-        scrubber.value = Math.round((validIdx / total) * 100);
-      }
+      if (scrubber) scrubber.value = Math.round((validIdx / total) * 100);
 
-      // Populate dataset slices.
-      // For actual points & WP: Pad unreached time steps with null.
-      // For projected lines: Extend the current rightmost value horizontally all the way to the right edge.
       const padNull = (arr) => arr.slice(0, validIdx).concat(new Array(total - validIdx).fill(null));
       const extendRight = (arr) => {
         const sliced = arr.slice(0, validIdx);
@@ -1525,13 +2156,10 @@
     }
 
     function togglePlayPause() {
-      if (STATE.liveProb.isPlaying) {
-        pauseReplay();
-      } else {
+      if (STATE.liveProb.isPlaying) pauseReplay();
+      else {
         const s = STATE.liveProb.fullSeries;
-        if (s && STATE.liveProb.currentIdx >= s.labels.length) {
-          STATE.liveProb.currentIdx = 1;
-        }
+        if (s && STATE.liveProb.currentIdx >= s.labels.length) STATE.liveProb.currentIdx = 1;
         startReplay();
       }
     }
@@ -1558,10 +2186,7 @@
     }
 
     function restartIntervalTimer() {
-      if (STATE.liveProb.animationTimer) {
-        clearInterval(STATE.liveProb.animationTimer);
-      }
-
+      if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
       const mult = STATE.liveProb.speedMultiplier || 3;
       const intervalMs = Math.max(10, Math.round(120 / mult));
 
@@ -1586,12 +2211,10 @@
       const btn = document.getElementById('btn-play-pause-replay');
 
       if (STATE.liveProb.isPlaying) {
-        icon.className = 'fa-solid fa-pause';
-        text.innerText = 'Pause';
+        icon.className = 'fa-solid fa-pause'; text.innerText = 'Pause';
         btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       } else {
-        icon.className = 'fa-solid fa-play';
-        text.innerText = 'Play';
+        icon.className = 'fa-solid fa-play'; text.innerText = 'Play';
         btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       }
     }
@@ -1599,7 +2222,6 @@
     function updateChartThemeColors() {
       const chart = STATE.liveProb.chartInstance;
       if (!chart) return;
-
       const isDark = document.documentElement.classList.contains('dark');
       const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const textColor = isDark ? '#94a3b8' : '#475569';
@@ -1654,23 +2276,18 @@
     }
 
     // ==========================================
-    // SECTION 6: INITIALIZATION & KEYBOARD LISTENERS
+    // SECTION 8: INITIALIZATION & KEYBOARD LISTENERS
     // ==========================================
     document.addEventListener('DOMContentLoaded', async () => {
       initTheme();
       setupTabNavigation();
       parseUrlHash();
 
-      // Keyboard Esc Listener to clear manager cross-filters
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-          if (STATE.filters.selectedManager) {
-            toggleManagerFilter(null);
-          }
+          if (STATE.filters.selectedManager) toggleManagerFilter(null);
           const helpModal = document.getElementById('help-modal');
-          if (helpModal && !helpModal.classList.contains('hidden')) {
-            helpModal.classList.add('hidden');
-          }
+          if (helpModal && !helpModal.classList.contains('hidden')) helpModal.classList.add('hidden');
         }
       });
 
@@ -1678,10 +2295,7 @@
       document.addEventListener('mouseover', (e) => {
         if (e.target.classList.contains('sparkline-dot')) {
           const info = e.target.getAttribute('data-info');
-          if (info) {
-            tooltip.innerHTML = info;
-            tooltip.classList.remove('hidden');
-          }
+          if (info) { tooltip.innerHTML = info; tooltip.classList.remove('hidden'); }
         }
       });
 
@@ -1693,20 +2307,14 @@
       });
 
       document.addEventListener('mouseout', (e) => {
-        if (e.target.classList.contains('sparkline-dot')) {
-          tooltip.classList.add('hidden');
-        }
+        if (e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden');
       });
 
       document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
           const field = th.getAttribute('data-sort');
-          if (STATE.sort.field === field) {
-            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
-          } else {
-            STATE.sort.field = field;
-            STATE.sort.dir = field === 'actualRank' ? 'asc' : 'desc';
-          }
+          if (STATE.sort.field === field) STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          else { STATE.sort.field = field; STATE.sort.dir = field === 'actualRank' ? 'asc' : 'desc'; }
           renderStandingsTable();
         });
       });
@@ -1718,6 +2326,9 @@
       document.getElementById('filter-year').addEventListener('change', (e) => { 
         STATE.filters.year = Number(e.target.value); 
         renderStandingsTable(); 
+        populateMatchupsWeeks();
+        renderMatchupsTable();
+        renderWinsAboveChart();
         populateLiveProbWeeks();
         renderLiveProbMatchup();
         updateUrlHash();
@@ -1738,13 +2349,10 @@
         document.body.removeChild(link);
       });
 
-      // Flexible File Upload supporting both .csv files and .sqlite/.db database files
       document.getElementById('csv-upload').addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
-
         files.forEach(file => {
           const fileName = file.name.toLowerCase();
-
           if (fileName.endsWith('.sqlite') || fileName.endsWith('.db')) {
             const reader = new FileReader();
             reader.onload = async () => {
@@ -1769,12 +2377,12 @@
                   applyDefaultFiltersFromCurrentWeek();
                   populateYearSelector();
                   renderStandingsTable();
+                  initMatchupsTab();
+                  initWinsAboveTab();
                   initLiveProbTab();
                   updateStatus("emerald", "Live");
                 }
-              } catch (err) {
-                console.error("Failed to parse loaded SQLite DB", err);
-              }
+              } catch (err) { console.error("Failed to parse loaded SQLite DB", err); }
             };
             reader.readAsArrayBuffer(file);
           } else if (fileName.endsWith('.csv')) {
@@ -1786,6 +2394,9 @@
                 applyDefaultFiltersFromCurrentWeek();
                 populateYearSelector(); 
                 renderStandingsTable(); 
+                populateMatchupsWeeks();
+                renderMatchupsTable();
+                renderWinsAboveChart();
                 populateLiveProbWeeks();
                 renderLiveProbMatchup();
                 updateStatus("emerald", "Live");
