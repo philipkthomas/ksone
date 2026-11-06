@@ -1683,10 +1683,11 @@
         const tbPfBg = HEATMAPS.greenToClear(r.topBench.pf, topBenchPFStats.min, topBenchPFStats.max);
         const avgRankBg = HEATMAPS.redClearGreen(r.avgRank, avgRankStats.min, avgRankStats.mid, avgRankStats.max);
 
-        const twClass = r.rankTopWeek === 1 ? 'prop-winner-highlight font-extrabold' : '';
-        const tlClass = r.rankTopLoss === 1 ? 'prop-winner-highlight font-extrabold' : '';
-        const tsClass = r.rankTopStarter === 1 ? 'prop-winner-highlight font-extrabold' : '';
-        const tbClass = r.rankTopBench === 1 ? 'prop-winner-highlight font-extrabold' : '';
+        // Yellow highlight applied ONLY to non-PA, non-PF, non-RANK winner indicator cells
+        const twHighlightClass = r.rankTopWeek === 1 ? 'prop-winner-highlight' : '';
+        const tlHighlightClass = r.rankTopLoss === 1 ? 'prop-winner-highlight' : '';
+        const tsHighlightClass = r.rankTopStarter === 1 ? 'prop-winner-highlight' : '';
+        const tbHighlightClass = r.rankTopBench === 1 ? 'prop-winner-highlight' : '';
 
         return `
           <tr>
@@ -1698,28 +1699,28 @@
             </td>
 
             <!-- TOP WEEK -->
-            <td class="text-right font-mono font-bold ${twClass}" style="${twClass ? '' : 'background-color:' + twPfBg}">${r.topWeek.pf.toFixed(2)}</td>
-            <td class="text-center font-mono text-xs ${twClass}">( ${String(r.topWeek.wk).padStart(2, ' ')} )</td>
-            <td class="text-center font-mono text-xs font-bold ${twClass}" style="${twClass ? '' : 'background-color:' + HEATMAPS.rankHeatmap(r.rankTopWeek)}">[ ${String(r.rankTopWeek).padStart(2, '0')} ]</td>
+            <td class="text-right font-mono font-bold" style="background-color: ${twPfBg}">${r.topWeek.pf.toFixed(2)}</td>
+            <td class="text-center font-mono text-xs ${twHighlightClass}">( ${String(r.topWeek.wk).padStart(2, ' ')} )</td>
+            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopWeek)}">[ ${String(r.rankTopWeek).padStart(2, '0')} ]</td>
 
             <!-- TOP LOSS -->
-            <td class="text-right font-mono ${tlClass}" style="${tlClass ? '' : 'background-color:' + tlPfBg}">${r.topLoss.pf.toFixed(2)}</td>
-            <td class="text-left text-xs ${tlClass}">${escapeHTML(r.topLoss.oppName)}</td>
-            <td class="text-right font-mono font-bold ${tlClass}" style="${tlClass ? '' : 'background-color:' + tlPaBg}">${r.topLoss.pa.toFixed(2)}</td>
-            <td class="text-center font-mono text-xs ${tlClass}">( ${String(r.topLoss.wk).padStart(2, ' ')} )</td>
-            <td class="text-center font-mono text-xs font-bold ${tlClass}" style="${tlClass ? '' : 'background-color:' + HEATMAPS.rankHeatmap(r.rankTopLoss)}">[ ${String(r.rankTopLoss).padStart(2, '0')} ]</td>
+            <td class="text-right font-mono font-bold" style="background-color: ${tlPfBg}">${r.topLoss.pf.toFixed(2)}</td>
+            <td class="text-left text-xs ${tlHighlightClass}">${escapeHTML(r.topLoss.oppName)}</td>
+            <td class="text-right font-mono font-bold" style="background-color: ${tlPaBg}">${r.topLoss.pa.toFixed(2)}</td>
+            <td class="text-center font-mono text-xs ${tlHighlightClass}">( ${String(r.topLoss.wk).padStart(2, ' ')} )</td>
+            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopLoss)}">[ ${String(r.rankTopLoss).padStart(2, '0')} ]</td>
 
             <!-- TOP STARTER -->
-            <td class="text-left text-xs ${tsClass}">${escapeHTML(r.topStarter.player)}</td>
-            <td class="text-right font-mono font-bold ${tsClass}" style="${tsClass ? '' : 'background-color:' + tsPfBg}">${r.topStarter.pf.toFixed(2)}</td>
-            <td class="text-center font-mono text-xs ${tsClass}">( ${String(r.topStarter.wk).padStart(2, ' ')} )</td>
-            <td class="text-center font-mono text-xs font-bold ${tsClass}" style="${tsClass ? '' : 'background-color:' + HEATMAPS.rankHeatmap(r.rankTopStarter)}">[ ${String(r.rankTopStarter).padStart(2, '0')} ]</td>
+            <td class="text-left text-xs ${tsHighlightClass}">${escapeHTML(r.topStarter.player)}</td>
+            <td class="text-right font-mono font-bold" style="background-color: ${tsPfBg}">${r.topStarter.pf.toFixed(2)}</td>
+            <td class="text-center font-mono text-xs ${tsHighlightClass}">( ${String(r.topStarter.wk).padStart(2, ' ')} )</td>
+            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopStarter)}">[ ${String(r.rankTopStarter).padStart(2, '0')} ]</td>
 
             <!-- TOP BENCH -->
-            <td class="text-left text-xs ${tbClass}">${escapeHTML(r.topBench.player)}</td>
-            <td class="text-right font-mono font-bold ${tbClass}" style="${tbClass ? '' : 'background-color:' + tbPfBg}">${r.topBench.pf.toFixed(2)}</td>
-            <td class="text-center font-mono text-xs ${tbClass}">( ${String(r.topBench.wk).padStart(2, ' ')} )</td>
-            <td class="text-center font-mono text-xs font-bold ${tbClass}" style="${tbClass ? '' : 'background-color:' + HEATMAPS.rankHeatmap(r.rankTopBench)}">[ ${String(r.rankTopBench).padStart(2, '0')} ]</td>
+            <td class="text-left text-xs ${tbHighlightClass}">${escapeHTML(r.topBench.player)}</td>
+            <td class="text-right font-mono font-bold" style="background-color: ${tbPfBg}">${r.topBench.pf.toFixed(2)}</td>
+            <td class="text-center font-mono text-xs ${tbHighlightClass}">( ${String(r.topBench.wk).padStart(2, ' ')} )</td>
+            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopBench)}">[ ${String(r.rankTopBench).padStart(2, '0')} ]</td>
 
             <!-- AVERAGE RANK -->
             <td class="text-right font-mono font-bold" style="background-color: ${avgRankBg}">${r.avgRank.toFixed(1)}</td>
@@ -1783,24 +1784,44 @@
 
       for (let w = 1; w <= maxWk; w++) {
         const wkPoints = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) === w);
-        const winnersMap = {};
+        const processedMatchups = new Set();
+        const div1Wins = [];
+        const div2Wins = [];
 
         wkPoints.forEach(r => {
           const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
-          const pf = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
-          const pa = Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0;
-          if (pf > pa) {
-            winnersMap[tId] = {
-              team_id: tId,
-              manager: getManagerName(tId, yr),
-              pts: pf
-            };
+          const oppId = Number(getVal(r, ['opponent_team_id', 'TMB', 'opponent']));
+          if (!tId || !oppId) return;
+
+          const matchupKey = [tId, oppId].sort((a, b) => a - b).join('_');
+          if (processedMatchups.has(matchupKey)) return;
+          processedMatchups.add(matchupKey);
+
+          const mgrA = getManagerName(tId, yr);
+          const mgrB = getManagerName(oppId, yr);
+          const mgrALower = mgrA.toLowerCase();
+          const mgrBLower = mgrB.toLowerCase();
+
+          // FILTER: Only include cross-divisional matchups (Div 1 vs Div 2)
+          const isCrossDiv = (div1Set.has(mgrALower) && div2Set.has(mgrBLower)) || (div2Set.has(mgrALower) && div1Set.has(mgrBLower));
+          if (!isCrossDiv) return;
+
+          const pfA = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
+          const paA = Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0;
+
+          if (pfA !== paA) {
+            const winnerTId = pfA > paA ? tId : oppId;
+            const winnerMgr = getManagerName(winnerTId, yr);
+            const winnerMgrLower = winnerMgr.toLowerCase();
+            const winnerPts = pfA > paA ? pfA : paA;
+
+            if (div1Set.has(winnerMgrLower)) {
+              div1Wins.push({ team_id: winnerTId, manager: winnerMgr, pts: winnerPts });
+            } else if (div2Set.has(winnerMgrLower)) {
+              div2Wins.push({ team_id: winnerTId, manager: winnerMgr, pts: winnerPts });
+            }
           }
         });
-
-        const winners = Object.values(winnersMap);
-        const div1Wins = winners.filter(w => div1Set.has(w.manager.toLowerCase()));
-        const div2Wins = winners.filter(w => div2Set.has(w.manager.toLowerCase()));
 
         div1WeeklyWinners[w] = div1Wins;
         div2WeeklyWinners[w] = div2Wins;
@@ -1903,6 +1924,7 @@
           },
           scales: {
             x: {
+              stacked: true, // Horizontally align Division 1 & Division 2 stacked bars on the same week position
               title: { display: true, text: 'Week', color: textColor, font: { size: 13, weight: '700' } },
               grid: { color: gridColor },
               ticks: { color: textColor, font: { size: 12, weight: '700' } }
