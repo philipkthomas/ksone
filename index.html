@@ -72,6 +72,13 @@
     }
     .dark .standings-table tr:hover td, .dark .matchup-table tr:hover td, .dark .props-table tr:hover td { filter: brightness(1.15); }
 
+    .prop-border-right {
+      border-right: 3px solid #64748b !important;
+    }
+    .dark .prop-border-right {
+      border-right: 3px solid #475569 !important;
+    }
+
     .props-header-group {
       text-align: center !important;
       font-weight: 800 !important;
@@ -269,37 +276,37 @@
             <tr>
               <th rowspan="2" class="text-center" style="width: 4%;">#</th>
               <th rowspan="2" class="text-center" style="width: 4%;">$</th>
-              <th rowspan="2" class="text-left" style="width: 16%;">TEAM</th>
-              <th colspan="3" class="props-header-group">TOP WEEK</th>
-              <th colspan="5" class="props-header-group">TOP LOSS</th>
-              <th colspan="4" class="props-header-group">TOP STARTER</th>
-              <th colspan="4" class="props-header-group">TOP BENCH</th>
-              <th colspan="2" class="props-header-group">AVERAGE RANK</th>
+              <th rowspan="2" class="text-left prop-border-right" style="width: 16%;">TEAM</th>
+              <th colspan="3" class="props-header-group prop-border-right">TOP WEEK</th>
+              <th colspan="5" class="props-header-group prop-border-right">TOP LOSS</th>
+              <th colspan="4" class="props-header-group prop-border-right">TOP STARTER</th>
+              <th colspan="4" class="props-header-group prop-border-right">TOP BENCH</th>
+              <th colspan="2" class="props-header-group prop-border-right">AVERAGE RANK</th>
             </tr>
             <tr>
               <!-- TOP WEEK -->
               <th class="text-right">PF</th>
               <th class="text-center">(WK)</th>
-              <th class="text-center">[RANK]</th>
+              <th class="text-center prop-border-right">[RANK]</th>
               <!-- TOP LOSS -->
               <th class="text-right">PF</th>
               <th class="text-left">OPPONENT</th>
               <th class="text-right">PA</th>
               <th class="text-center">(WK)</th>
-              <th class="text-center">[RANK]</th>
+              <th class="text-center prop-border-right">[RANK]</th>
               <!-- TOP STARTER -->
               <th class="text-left">PLAYER</th>
               <th class="text-right">PF</th>
               <th class="text-center">(WK)</th>
-              <th class="text-center">[RANK]</th>
+              <th class="text-center prop-border-right">[RANK]</th>
               <!-- TOP BENCH -->
               <th class="text-left">PLAYER</th>
               <th class="text-right">PF</th>
               <th class="text-center">(WK)</th>
-              <th class="text-center">[RANK]</th>
+              <th class="text-center prop-border-right">[RANK]</th>
               <!-- AVERAGE RANK -->
               <th class="text-right">AVG</th>
-              <th class="text-center">[RANK]</th>
+              <th class="text-center prop-border-right">[RANK]</th>
             </tr>
           </thead>
           <tbody id="props-tbody"></tbody>
@@ -1693,7 +1700,7 @@
           <tr>
             <td class="text-center text-slate-400 font-mono text-xs">${String(idx + 1).padStart(2, '0')}</td>
             <td class="text-center font-mono text-xs ${earningsText}" style="background-color: ${earningsBg}">$${r.earnings}</td>
-            <td class="text-left font-medium">
+            <td class="text-left font-medium prop-border-right">
               <span class="text-xs font-semibold mr-2 inline-block border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${mgrColor}">${escapeHTML(r.manager)}</span>
               <span class="text-slate-900 dark:text-slate-100 font-semibold">${escapeHTML(r.team_name)}</span>
             </td>
@@ -1701,30 +1708,30 @@
             <!-- TOP WEEK -->
             <td class="text-right font-mono font-bold" style="background-color: ${twPfBg}">${r.topWeek.pf.toFixed(2)}</td>
             <td class="text-center font-mono text-xs ${twHighlightClass}">( ${String(r.topWeek.wk).padStart(2, ' ')} )</td>
-            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopWeek)}">[ ${String(r.rankTopWeek).padStart(2, '0')} ]</td>
+            <td class="text-center font-mono text-xs font-bold prop-border-right" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopWeek)}">[ ${String(r.rankTopWeek).padStart(2, '0')} ]</td>
 
             <!-- TOP LOSS -->
             <td class="text-right font-mono font-bold" style="background-color: ${tlPfBg}">${r.topLoss.pf.toFixed(2)}</td>
             <td class="text-left text-xs ${tlHighlightClass}">${escapeHTML(r.topLoss.oppName)}</td>
             <td class="text-right font-mono font-bold" style="background-color: ${tlPaBg}">${r.topLoss.pa.toFixed(2)}</td>
             <td class="text-center font-mono text-xs ${tlHighlightClass}">( ${String(r.topLoss.wk).padStart(2, ' ')} )</td>
-            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopLoss)}">[ ${String(r.rankTopLoss).padStart(2, '0')} ]</td>
+            <td class="text-center font-mono text-xs font-bold prop-border-right" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopLoss)}">[ ${String(r.rankTopLoss).padStart(2, '0')} ]</td>
 
             <!-- TOP STARTER -->
             <td class="text-left text-xs ${tsHighlightClass}">${escapeHTML(r.topStarter.player)}</td>
             <td class="text-right font-mono font-bold" style="background-color: ${tsPfBg}">${r.topStarter.pf.toFixed(2)}</td>
             <td class="text-center font-mono text-xs ${tsHighlightClass}">( ${String(r.topStarter.wk).padStart(2, ' ')} )</td>
-            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopStarter)}">[ ${String(r.rankTopStarter).padStart(2, '0')} ]</td>
+            <td class="text-center font-mono text-xs font-bold prop-border-right" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopStarter)}">[ ${String(r.rankTopStarter).padStart(2, '0')} ]</td>
 
             <!-- TOP BENCH -->
             <td class="text-left text-xs ${tbHighlightClass}">${escapeHTML(r.topBench.player)}</td>
             <td class="text-right font-mono font-bold" style="background-color: ${tbPfBg}">${r.topBench.pf.toFixed(2)}</td>
             <td class="text-center font-mono text-xs ${tbHighlightClass}">( ${String(r.topBench.wk).padStart(2, ' ')} )</td>
-            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopBench)}">[ ${String(r.rankTopBench).padStart(2, '0')} ]</td>
+            <td class="text-center font-mono text-xs font-bold prop-border-right" style="background-color: ${HEATMAPS.rankHeatmap(r.rankTopBench)}">[ ${String(r.rankTopBench).padStart(2, '0')} ]</td>
 
             <!-- AVERAGE RANK -->
             <td class="text-right font-mono font-bold" style="background-color: ${avgRankBg}">${r.avgRank.toFixed(1)}</td>
-            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankAvgRank)}">[ ${String(r.rankAvgRank).padStart(2, '0')} ]</td>
+            <td class="text-center font-mono text-xs font-bold prop-border-right" style="background-color: ${HEATMAPS.rankHeatmap(r.rankAvgRank)}">[ ${String(r.rankAvgRank).padStart(2, '0')} ]</td>
           </tr>`;
       }).join('');
     }
@@ -1771,8 +1778,21 @@
 
       if (ptsYr.length === 0) return;
 
-      const rawWeeks = [...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
-      const maxWk = rawWeeks.length > 0 ? Math.max(...rawWeeks) : 14;
+      const cw = STATE.data.currentweek;
+      let maxWk = 14;
+
+      if (cw && cw.length > 0) {
+        const curWkVal = Number(getVal(cw[0], ['week', 'WK']));
+        if (curWkVal && curWkVal > 1) {
+          maxWk = curWkVal - 1;
+        } else if (curWkVal === 1) {
+          maxWk = 1;
+        }
+      } else {
+        const rawWeeks = [...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
+        if (rawWeeks.length > 0) maxWk = Math.max(...rawWeeks);
+      }
+
       const weeks = Array.from({length: maxWk + 1}, (_, i) => i);
 
       const div1Set = new Set(DIVISIONS[1].map(m => m.toLowerCase()));
@@ -1869,7 +1889,8 @@
           backgroundColor: mgrColor,
           borderColor: isDark ? '#0f172a' : '#ffffff',
           borderWidth: meta.manager === 'Dan' ? 1.5 : 0.5,
-          stack: isDiv1 ? 'div1' : 'div2',
+          stack: 'div',
+          order: 2,
           barPercentage: 0.55
         });
       });
@@ -1884,7 +1905,8 @@
         pointStyle: 'rect',
         pointRadius: 6,
         pointHoverRadius: 8,
-        tension: 0.1
+        tension: 0.1,
+        order: 1
       });
 
       const ctx = canvas.getContext('2d');
