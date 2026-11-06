@@ -246,17 +246,27 @@
       </div>
     </section>
 
-    <!-- WINS ABOVE EVEN TAB CONTENT -->
+    <!-- WINS ABOVE EVEN & RANK TAB CONTENT -->
     <section id="tab-wins_above" class="tab-content space-y-4 hidden">
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div class="flex items-center gap-4">
-          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-brand-500"></i> Wins Above Even (by Week)
+        <div class="flex flex-wrap items-center gap-5">
+          <h2 id="wae-chart-header-title" class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-brand-500"></i> Standings & Performance Trends
           </h2>
-          <!-- METRIC TOGGLE SWITCH -->
-          <div class="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
-            <button id="btn-toggle-wae-matchup" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Matchup Results</button>
-            <button id="btn-toggle-wae-etew" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">ETEW Wins</button>
+
+          <!-- DUAL METRIC & BASELINE TOGGLE SWITCHES -->
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- METRIC TOGGLE (WAE vs RANK) -->
+            <div class="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
+              <button id="btn-toggle-metric-wae" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Wins Above Even</button>
+              <button id="btn-toggle-metric-rank" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Rank</button>
+            </div>
+
+            <!-- BASELINE TOGGLE (MATCHUP vs ETEW) -->
+            <div class="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
+              <button id="btn-toggle-wae-matchup" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Matchup Results</button>
+              <button id="btn-toggle-wae-etew" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">ETEW Wins</button>
+            </div>
           </div>
         </div>
 
@@ -277,7 +287,7 @@
         </div>
       </div>
 
-      <!-- WINS ABOVE EVEN REPLAY CONTROLS -->
+      <!-- REPLAY CONTROLS -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3">
           <button id="btn-wae-play-pause" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
@@ -291,8 +301,8 @@
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="wae-speed-slider" min="1" max="10" value="3" step="1" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="wae-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">3x</span>
+            <input type="range" id="wae-speed-slider" min="0.5" max="5" value="1" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="wae-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -437,12 +447,13 @@
       },
       wae: {
         chartInstance: null,
+        metric: 'wae', // 'wae' or 'rank'
         mode: 'matchup', // 'matchup' or 'etew'
         fullSeries: null,
         animationTimer: null,
         isPlaying: false,
         currentIdx: 0,
-        speedMultiplier: 3
+        speedMultiplier: 1.0
       }
     };
 
@@ -984,17 +995,28 @@
 
           document.querySelectorAll('.tab-content').forEach(sec => sec.classList.add('hidden'));
 
-          const activeSec = document.getElementById(`tab-${tabKey}`);
+          // Route both 'wins_above' and 'rank' tabs to unified section
+          let targetSecKey = tabKey;
+          if (tabKey === 'rank') {
+            targetSecKey = 'wins_above';
+            STATE.wae.metric = 'rank';
+            updateMetricToggleUI();
+          } else if (tabKey === 'wins_above') {
+            STATE.wae.metric = 'wae';
+            updateMetricToggleUI();
+          }
+
+          const activeSec = document.getElementById(`tab-${targetSecKey}`);
           if (activeSec) {
             activeSec.classList.remove('hidden');
           }
 
           const stWeeksFilter = document.getElementById('standings-weeks-filter');
-          if (tabKey === 'live_prob' || tabKey === 'matchups' || tabKey === 'wins_above') {
+          if (tabKey === 'live_prob' || tabKey === 'matchups' || tabKey === 'wins_above' || tabKey === 'rank') {
             if (stWeeksFilter) stWeeksFilter.classList.add('hidden');
             if (tabKey === 'live_prob') renderLiveProbMatchup();
             if (tabKey === 'matchups') renderMatchupsTable();
-            if (tabKey === 'wins_above') renderWinsAboveChart();
+            if (tabKey === 'wins_above' || tabKey === 'rank') renderWinsAboveChart();
           } else {
             if (stWeeksFilter) stWeeksFilter.classList.remove('hidden');
           }
@@ -1406,11 +1428,15 @@
     }
 
     // ==========================================
-    // SECTION 6: WINS ABOVE EVEN TAB ENGINE (FIXED REPLAY SCALE & OVERLAP OFFSETS)
+    // SECTION 6: UNIFIED WINS ABOVE EVEN & RANK TAB ENGINE
     // ==========================================
     function initWinsAboveTab() {
+      const btnMetricWae = document.getElementById('btn-toggle-metric-wae');
+      const btnMetricRank = document.getElementById('btn-toggle-metric-rank');
+
       const btnMatchup = document.getElementById('btn-toggle-wae-matchup');
       const btnEtew = document.getElementById('btn-toggle-wae-etew');
+
       const playPauseBtn = document.getElementById('btn-wae-play-pause');
       const restartBtn = document.getElementById('btn-wae-restart');
       const speedSlider = document.getElementById('wae-speed-slider');
@@ -1418,18 +1444,30 @@
       const pngBtn = document.getElementById('btn-export-wae-png');
       const csvBtn = document.getElementById('btn-export-wae-csv');
 
+      if (btnMetricWae && btnMetricRank) {
+        btnMetricWae.addEventListener('click', () => {
+          STATE.wae.metric = 'wae';
+          updateMetricToggleUI();
+          renderWinsAboveChart();
+        });
+
+        btnMetricRank.addEventListener('click', () => {
+          STATE.wae.metric = 'rank';
+          updateMetricToggleUI();
+          renderWinsAboveChart();
+        });
+      }
+
       if (btnMatchup && btnEtew) {
         btnMatchup.addEventListener('click', () => {
           STATE.wae.mode = 'matchup';
-          btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
-          btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+          updateBaselineToggleUI();
           renderWinsAboveChart();
         });
 
         btnEtew.addEventListener('click', () => {
           STATE.wae.mode = 'etew';
-          btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
-          btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+          updateBaselineToggleUI();
           renderWinsAboveChart();
         });
       }
@@ -1461,6 +1499,36 @@
       if (csvBtn) csvBtn.addEventListener('click', downloadWaeCSV);
     }
 
+    function updateMetricToggleUI() {
+      const btnWae = document.getElementById('btn-toggle-metric-wae');
+      const btnRank = document.getElementById('btn-toggle-metric-rank');
+
+      if (!btnWae || !btnRank) return;
+
+      if (STATE.wae.metric === 'wae') {
+        btnWae.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+        btnRank.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+      } else {
+        btnRank.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+        btnWae.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+      }
+    }
+
+    function updateBaselineToggleUI() {
+      const btnMatchup = document.getElementById('btn-toggle-wae-matchup');
+      const btnEtew = document.getElementById('btn-toggle-wae-etew');
+
+      if (!btnMatchup || !btnEtew) return;
+
+      if (STATE.wae.mode === 'matchup') {
+        btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+        btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+      } else {
+        btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+        btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+      }
+    }
+
     function renderWinsAboveChart() {
       const yr = STATE.filters.year;
       const pts = STATE.data.points || [];
@@ -1473,6 +1541,7 @@
       const weeks = Array.from({length: maxWk + 1}, (_, i) => i);
 
       const teamIds = [...new Set(ptsYr.map(r => Number(getVal(r, ['team_id', 'TMA', 'team']))))].filter(t => !isNaN(t) && t !== 0).sort((a,b) => a - b);
+      const numTeams = teamIds.length || 10;
 
       const seriesMap = {};
       const teamMetaList = [];
@@ -1482,14 +1551,29 @@
         const color = getManagerColor(mgrName, idx);
         teamMetaList.push({ team_id: tId, manager: mgrName, color });
 
-        const cumMatchup = [0];
-        const cumEtew = [0];
+        seriesMap[tId] = {
+          cumMatchup: [0],
+          cumEtew: [0],
+          cumMatchupDisplay: [],
+          cumEtewDisplay: [],
+          matchupRank: [numTeams], // Week 0 starts tied at bottom rank (Rank 10)
+          etewRank: [numTeams]
+        };
+      });
 
-        let accMatchup = 0;
-        let accEtew = 0;
+      teamMetaList.sort((a, b) => a.manager.localeCompare(b.manager));
 
-        for (let w = 1; w <= maxWk; w++) {
-          const wkPoints = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) === w);
+      // 1. Calculate weekly cumulative stats
+      for (let w = 1; w <= maxWk; w++) {
+        const wkPoints = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) === w);
+        const n = wkPoints.length;
+
+        teamMetaList.forEach(meta => {
+          const tId = meta.team_id;
+          const s = seriesMap[tId];
+          const prevMatchup = s.cumMatchup[w - 1];
+          const prevEtew = s.cumEtew[w - 1];
+
           const teamRow = wkPoints.find(r => Number(getVal(r, ['team_id', 'TMA', 'team'])) === tId);
 
           if (teamRow) {
@@ -1497,9 +1581,8 @@
             const pa = Number(getVal(teamRow, ['opponent_points', 'TMBPTS'])) || 0;
 
             const winVal = pf > pa ? 1 : (pf === pa ? 0.5 : 0);
-            accMatchup += (winVal - 0.5);
+            s.cumMatchup.push(prevMatchup + (winVal - 0.5));
 
-            const n = wkPoints.length;
             let beats = 0, ties = 0;
             wkPoints.forEach(o => {
               if (Number(getVal(o, ['team_id', 'TMA', 'team'])) !== tId) {
@@ -1509,19 +1592,42 @@
               }
             });
             const etewShare = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0.5;
-            accEtew += (etewShare - 0.5);
+            s.cumEtew.push(prevEtew + (etewShare - 0.5));
+          } else {
+            s.cumMatchup.push(prevMatchup);
+            s.cumEtew.push(prevEtew);
           }
+        });
+      }
 
-          cumMatchup.push(accMatchup);
-          cumEtew.push(accEtew);
-        }
+      // 2. Compute weekly standings ranks (1 to numTeams) based on cumulative W and PF through week w
+      for (let w = 1; w <= maxWk; w++) {
+        const wkStandings = teamMetaList.map(meta => {
+          const tId = meta.team_id;
+          const group = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) <= w && Number(getVal(r, ['team_id', 'TMA', 'team'])) === tId);
+          const pfSum = group.reduce((acc, r) => acc + (Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0), 0);
+          return {
+            team_id: tId,
+            matchupVal: seriesMap[tId].cumMatchup[w],
+            etewVal: seriesMap[tId].cumEtew[w],
+            pf: pfSum
+          };
+        });
 
-        seriesMap[tId] = { cumMatchup, cumEtew, cumMatchupDisplay: [], cumEtewDisplay: [] };
-      });
+        // Matchup rank sorting: highest cumulative wins, then PF
+        const matchupSorted = [...wkStandings].sort((a, b) => (b.matchupVal - a.matchupVal) || (b.pf - a.pf));
+        matchupSorted.forEach((item, rIdx) => {
+          seriesMap[item.team_id].matchupRank[w] = rIdx + 1;
+        });
 
-      teamMetaList.sort((a, b) => a.manager.localeCompare(b.manager));
+        // ETEW rank sorting: highest ETEW wins, then PF
+        const etewSorted = [...wkStandings].sort((a, b) => (b.etewVal - a.etewVal) || (b.pf - a.pf));
+        etewSorted.forEach((item, rIdx) => {
+          seriesMap[item.team_id].etewRank[w] = rIdx + 1;
+        });
+      }
 
-      // Calculate micro-offsets for overlapping lines per week
+      // 3. Calculate micro-offsets for overlapping lines per week for WAE mode
       let globalMin = 0;
       let globalMax = 0;
 
@@ -1567,17 +1673,17 @@
         });
       }
 
-      // Pre-calculate locked Y-axis scale bounds
+      // Pre-calculate locked Y-axis scale bounds for WAE
       const yMinFixed = Math.floor(globalMin - 0.5);
       const yMaxFixed = Math.ceil(globalMax + 0.5);
 
-      STATE.wae.fullSeries = { weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed };
+      STATE.wae.fullSeries = { weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed, numTeams };
 
-      initWaeChartCanvas(weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed);
+      initWaeChartCanvas(weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed, numTeams);
       restartWaeReplay();
     }
 
-    function initWaeChartCanvas(weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed) {
+    function initWaeChartCanvas(weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed, numTeams) {
       const canvas = document.getElementById('winsAboveEvenChart');
       if (!canvas) return;
 
@@ -1589,10 +1695,17 @@
         STATE.wae.chartInstance.destroy();
       }
 
+      const isRank = STATE.wae.metric === 'rank';
+      const isMatchup = STATE.wae.mode === 'matchup';
+
+      const chartTitle = isRank 
+        ? `Rank (by Week) - NDL ${STATE.filters.year} (${isMatchup ? 'Matchup Results' : 'ETEW Standings'})` 
+        : `Wins Above Even (by Week) - ${isMatchup ? 'Matchup Results' : 'ETEW Expected Wins'}`;
+
       const emptyArray = new Array(weeks.length).fill(null);
       const datasets = teamMetaList.map((meta) => {
         return {
-          label: `- ${meta.manager}`,
+          label: `${meta.manager}`,
           data: [...emptyArray],
           rawValues: [...emptyArray],
           borderColor: meta.color,
@@ -1610,6 +1723,7 @@
         plugins: [{
           id: 'zeroMidlinePlugin',
           afterDraw(chart) {
+            if (STATE.wae.metric !== 'wae') return;
             const { ctx, chartArea, scales } = chart;
             if (!chartArea || !scales.y) return;
             const y0 = scales.y.getPixelForValue(0);
@@ -1636,7 +1750,7 @@
           plugins: {
             title: {
               display: true,
-              text: `Wins Above Even (by Week) - ${STATE.wae.mode === 'matchup' ? 'Matchup Results' : 'ETEW Expected Wins'}`,
+              text: chartTitle,
               color: textColor,
               font: { size: 16, weight: '700' },
               padding: { bottom: 15 }
@@ -1656,6 +1770,9 @@
                 label: (ctx) => {
                   const rawVal = ctx.dataset.rawValues ? ctx.dataset.rawValues[ctx.dataIndex] : ctx.parsed.y;
                   if (rawVal === null || rawVal === undefined) return null;
+                  if (STATE.wae.metric === 'rank') {
+                    return `${ctx.dataset.label}: Rank ${rawVal}`;
+                  }
                   return `${ctx.dataset.label}: ${rawVal > 0 ? '+' : ''}${rawVal.toFixed(2)}`;
                 }
               }
@@ -1668,11 +1785,17 @@
               ticks: { color: textColor, font: { size: 11, weight: '600' } }
             },
             y: {
-              min: yMinFixed,
-              max: yMaxFixed,
-              title: { display: true, text: 'Wins Above Even', color: textColor, font: { size: 12, weight: '700' } },
+              reverse: isRank, // Invert Y-axis so Rank 1 is at the top
+              min: isRank ? 1 : yMinFixed,
+              max: isRank ? numTeams : yMaxFixed,
+              title: { display: true, text: isRank ? 'Rank' : 'Wins Above Even', color: textColor, font: { size: 12, weight: '700' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 11, weight: '600' } }
+              ticks: {
+                color: textColor,
+                font: { size: 11, weight: '600' },
+                stepSize: isRank ? 1 : undefined,
+                precision: isRank ? 0 : undefined
+              }
             }
           }
         }
@@ -1687,10 +1810,21 @@
       const validIdx = Math.min(total - 1, Math.max(0, idx));
       const chart = STATE.wae.chartInstance;
 
+      const isRank = STATE.wae.metric === 'rank';
+      const isMatchup = STATE.wae.mode === 'matchup';
+
       s.teamMetaList.forEach((meta, mgrIdx) => {
-        const isMatchup = STATE.wae.mode === 'matchup';
-        const displayArr = isMatchup ? s.seriesMap[meta.team_id].cumMatchupDisplay : s.seriesMap[meta.team_id].cumEtewDisplay;
-        const rawArr = isMatchup ? s.seriesMap[meta.team_id].cumMatchup : s.seriesMap[meta.team_id].cumEtew;
+        let displayArr = [];
+        let rawArr = [];
+
+        if (isRank) {
+          const rankData = isMatchup ? s.seriesMap[meta.team_id].matchupRank : s.seriesMap[meta.team_id].etewRank;
+          displayArr = rankData;
+          rawArr = rankData;
+        } else {
+          displayArr = isMatchup ? s.seriesMap[meta.team_id].cumMatchupDisplay : s.seriesMap[meta.team_id].cumEtewDisplay;
+          rawArr = isMatchup ? s.seriesMap[meta.team_id].cumMatchup : s.seriesMap[meta.team_id].cumEtew;
+        }
 
         const slicedDisplay = displayArr.slice(0, validIdx + 1);
         const paddedDisplay = slicedDisplay.concat(new Array(total - (validIdx + 1)).fill(null));
@@ -1746,7 +1880,7 @@
     function restartWaeIntervalTimer() {
       if (STATE.wae.animationTimer) clearInterval(STATE.wae.animationTimer);
 
-      const mult = STATE.wae.speedMultiplier || 3;
+      const mult = STATE.wae.speedMultiplier || 1.0;
       const intervalMs = Math.max(40, Math.round(300 / mult));
 
       STATE.wae.animationTimer = setInterval(() => {
@@ -1783,8 +1917,9 @@
     function downloadWaePNG() {
       const chart = STATE.wae.chartInstance;
       if (!chart) return;
+      const isRank = STATE.wae.metric === 'rank';
       const link = document.createElement('a');
-      link.download = `Wins_Above_Even_${STATE.filters.year}.png`;
+      link.download = `${isRank ? 'Rank' : 'Wins_Above_Even'}_${STATE.filters.year}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
@@ -1792,11 +1927,18 @@
     function downloadWaeCSV() {
       const s = STATE.wae.fullSeries;
       if (!s) return;
+      const isRank = STATE.wae.metric === 'rank';
+      const isMatchup = STATE.wae.mode === 'matchup';
+
       const rows = [];
       for (let i = 0; i < s.weeks.length; i++) {
         const rowObj = { Week: s.weeks[i] };
         s.teamMetaList.forEach(meta => {
-          rowObj[meta.manager] = STATE.wae.mode === 'matchup' ? s.seriesMap[meta.team_id].cumMatchup[i] : s.seriesMap[meta.team_id].cumEtew[i];
+          if (isRank) {
+            rowObj[meta.manager] = isMatchup ? s.seriesMap[meta.team_id].matchupRank[i] : s.seriesMap[meta.team_id].etewRank[i];
+          } else {
+            rowObj[meta.manager] = isMatchup ? s.seriesMap[meta.team_id].cumMatchup[i] : s.seriesMap[meta.team_id].cumEtew[i];
+          }
         });
         rows.push(rowObj);
       }
@@ -1804,7 +1946,7 @@
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `Wins_Above_Even_${STATE.filters.year}.csv`);
+      link.setAttribute("download", `${isRank ? 'Rank' : 'Wins_Above_Even'}_${STATE.filters.year}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
