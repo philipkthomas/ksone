@@ -26,29 +26,29 @@
 
   <style>
     /* Table Styling - Adaptive Light & Dark Theme */
-    .standings-table, .matchup-table {
+    .standings-table, .matchup-table, .props-table {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
-    .standings-table th, .matchup-table th {
+    .standings-table th, .matchup-table th, .props-table th {
       background-color: #f1f5f9;
       color: #475569;
       font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: 10px 12px;
+      padding: 8px 10px;
       border-bottom: 2px solid #cbd5e1;
       border-right: 1px solid #e2e8f0;
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
     }
-    .standings-table th:hover, .matchup-table th:hover { background-color: #e2e8f0; color: #0f172a; }
-    .standings-table td, .matchup-table td {
-      padding: 8px 12px;
+    .standings-table th:hover, .matchup-table th:hover, .props-table th:hover { background-color: #e2e8f0; color: #0f172a; }
+    .standings-table td, .matchup-table td, .props-table td {
+      padding: 7px 10px;
       font-size: 0.8125rem;
       border-bottom: 1px solid #e2e8f0;
       border-right: 1px solid #e2e8f0;
@@ -56,21 +56,39 @@
       transition: background-color 0.15s ease;
       color: #0f172a;
     }
-    .standings-table tr:hover td, .matchup-table tr:hover td { filter: brightness(0.95); }
+    .standings-table tr:hover td, .matchup-table tr:hover td, .props-table tr:hover td { filter: brightness(0.95); }
 
-    .dark .standings-table th, .dark .matchup-table th {
+    .dark .standings-table th, .dark .matchup-table th, .dark .props-table th {
       background-color: #0f172a;
       color: #94a3b8;
       border-bottom: 2px solid #334155;
       border-right: 1px solid #1e293b;
     }
-    .dark .standings-table th:hover, .dark .matchup-table th:hover { background-color: #1e293b; color: #f8fafc; }
-    .dark .standings-table td, .dark .matchup-table td {
+    .dark .standings-table th:hover, .dark .matchup-table th:hover, .dark .props-table th:hover { background-color: #1e293b; color: #f8fafc; }
+    .dark .standings-table td, .dark .matchup-table td, .dark .props-table td {
       border-bottom: 1px solid #1e293b;
       border-right: 1px solid #1e293b;
       color: #f8fafc;
     }
-    .dark .standings-table tr:hover td, .dark .matchup-table tr:hover td { filter: brightness(1.15); }
+    .dark .standings-table tr:hover td, .dark .matchup-table tr:hover td, .dark .props-table tr:hover td { filter: brightness(1.15); }
+
+    .props-header-group {
+      text-align: center !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.08em;
+      border-bottom: 2px solid #94a3b8 !important;
+    }
+
+    .prop-winner-highlight {
+      background-color: #fef08a !important;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+    }
+    .dark .prop-winner-highlight {
+      background-color: #facc15 !important;
+      color: #020617 !important;
+      font-weight: 800 !important;
+    }
 
     .playoff-cutoff-row td { border-bottom: 2px dashed #0284c7 !important; }
     .clinched-text { color: #16a34a !important; font-weight: 700; }
@@ -91,7 +109,7 @@
   <header class="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur sticky top-0 z-40">
     <div class="max-w-[1700px] mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-4">
       
-      <!-- LOGO AREA WITH STATUS & THEME TOGGLE TUCKED UNDERNEATH -->
+      <!-- LOGO AREA WITH STATUS & THEME TOGGLE -->
       <div class="flex flex-col justify-center">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-trophy text-amber-500 dark:text-amber-400 text-xl"></i>
@@ -114,6 +132,7 @@
       <nav class="flex items-center gap-1 bg-slate-200 dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs font-semibold">
         <button data-tab="standings" class="tab-btn active bg-brand-600 text-white px-3 py-1.5 rounded-md transition shadow">Standings</button>
         <button data-tab="matchups" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Matchups</button>
+        <button data-tab="props" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Props</button>
         <button data-tab="wins_above" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Wins Above Even</button>
         <button data-tab="live_prob" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Live Win Prob</button>
       </nav>
@@ -124,7 +143,6 @@
     <div class="bg-slate-200/50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800/80 py-1.5 px-4">
       <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-6">
-          
           <div class="flex items-center gap-2">
             <span class="text-slate-600 dark:text-slate-400 font-medium">Year:</span>
             <select id="filter-year" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none">
@@ -165,21 +183,21 @@
         <table class="standings-table" id="standings-table">
           <thead>
             <tr>
-              <th data-sort="actualRank" class="text-center" title="Standings rank based on Wins, then Points For (PF)">RANK</th>
-              <th data-sort="team_name" class="text-left" title="Team Name & Manager">TEAM</th>
-              <th data-sort="W" class="text-center" title="Head-to-head record (Wins - Losses - Ties)">W-L-T</th>
-              <th data-sort="PF" class="text-right" title="Points For: Total points scored">PF</th>
-              <th data-sort="PA" class="text-right" title="Points Allowed: Total points scored by opponents">PA</th>
-              <th data-sort="ETEW_pct" class="text-right" title="Every Team Every Week %: Average share of league outscored">ETEW%</th>
-              <th data-sort="WABL" class="text-right" title="Wins Above League Level: Wins minus ETEW Expected Wins">WABL</th>
-              <th data-sort="RABL" class="text-right" title="Rank Above League Level: ETEW Rank minus Standings Rank">RABL</th>
-              <th data-sort="bestScore" class="text-right" title="Single highest weekly score">BEST_WK</th>
-              <th data-sort="worstScore" class="text-right" title="Single lowest weekly score">WORST_WK</th>
-              <th data-sort="AVG" class="text-right" title="Average points scored per week">AVG</th>
-              <th data-sort="AVG_star" class="text-right" title="Trimmed average excluding best & worst week">AVG*</th>
-              <th data-sort="SDEV" class="text-right" title="Standard deviation of weekly scores">SDEV</th>
-              <th data-sort="faab" class="text-right" title="Free Agent Acquisition Budget remaining">FAAB</th>
-              <th class="text-center" title="Weekly scoring trend. Hover over dots for match details">TREND</th>
+              <th data-sort="actualRank" class="text-center">RANK</th>
+              <th data-sort="team_name" class="text-left">TEAM</th>
+              <th data-sort="W" class="text-center">W-L-T</th>
+              <th data-sort="PF" class="text-right">PF</th>
+              <th data-sort="PA" class="text-right">PA</th>
+              <th data-sort="ETEW_pct" class="text-right">ETEW%</th>
+              <th data-sort="WABL" class="text-right">WABL</th>
+              <th data-sort="RABL" class="text-right">RABL</th>
+              <th data-sort="bestScore" class="text-right">BEST_WK</th>
+              <th data-sort="worstScore" class="text-right">WORST_WK</th>
+              <th data-sort="AVG" class="text-right">AVG</th>
+              <th data-sort="AVG_star" class="text-right">AVG*</th>
+              <th data-sort="SDEV" class="text-right">SDEV</th>
+              <th data-sort="faab" class="text-right">FAAB</th>
+              <th class="text-center">TREND</th>
             </tr>
           </thead>
           <tbody id="standings-tbody"></tbody>
@@ -205,12 +223,10 @@
         </button>
       </div>
 
-      <!-- MATCHUP TITLE BANNER -->
       <div class="bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-bold text-base py-2.5 text-center rounded-xl shadow">
         Matchup Results: NDL <span id="matchup-banner-year">2026</span> Week <span id="matchup-banner-week">1</span>
       </div>
 
-      <!-- MATCHUP RESULTS TABLE -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="matchup-table" id="matchups-table">
           <thead>
@@ -229,6 +245,100 @@
       </div>
     </section>
 
+    <!-- PROPS TAB CONTENT -->
+    <section id="tab-props" class="tab-content space-y-6 hidden">
+      <!-- TOP CONTROL & EXPORT HEADER -->
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
+        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-sack-dollar text-emerald-500"></i> Season Prop Bets & Divisional Competition ($15 per Prop)
+        </h2>
+        <div class="flex items-center gap-2">
+          <button id="btn-export-props-csv" title="Download Props Table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
+            <i class="fa-solid fa-file-csv"></i> Table CSV
+          </button>
+          <button id="btn-export-div-png" title="Download Divisional Chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
+            <i class="fa-solid fa-file-image"></i> Chart PNG
+          </button>
+        </div>
+      </div>
+
+      <!-- PROPS SUMMARY TABLE CONTAINER -->
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
+        <table class="props-table" id="props-table">
+          <thead>
+            <tr>
+              <th rowspan="2" class="text-center" style="width: 4%;">#</th>
+              <th rowspan="2" class="text-center" style="width: 4%;">$</th>
+              <th rowspan="2" class="text-left" style="width: 16%;">TEAM</th>
+              <th colspan="3" class="props-header-group">TOP WEEK</th>
+              <th colspan="5" class="props-header-group">TOP LOSS</th>
+              <th colspan="4" class="props-header-group">TOP STARTER</th>
+              <th colspan="4" class="props-header-group">TOP BENCH</th>
+              <th colspan="2" class="props-header-group">AVERAGE RANK</th>
+            </tr>
+            <tr>
+              <!-- TOP WEEK -->
+              <th class="text-right">PF</th>
+              <th class="text-center">(WK)</th>
+              <th class="text-center">[RANK]</th>
+              <!-- TOP LOSS -->
+              <th class="text-right">PF</th>
+              <th class="text-left">OPPONENT</th>
+              <th class="text-right">PA</th>
+              <th class="text-center">(WK)</th>
+              <th class="text-center">[RANK]</th>
+              <!-- TOP STARTER -->
+              <th class="text-left">PLAYER</th>
+              <th class="text-right">PF</th>
+              <th class="text-center">(WK)</th>
+              <th class="text-center">[RANK]</th>
+              <!-- TOP BENCH -->
+              <th class="text-left">PLAYER</th>
+              <th class="text-right">PF</th>
+              <th class="text-center">(WK)</th>
+              <th class="text-center">[RANK]</th>
+              <!-- AVERAGE RANK -->
+              <th class="text-right">AVG</th>
+              <th class="text-center">[RANK]</th>
+            </tr>
+          </thead>
+          <tbody id="props-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- DIVISIONAL PROP BET CHART CONTAINER -->
+      <div id="div-prop-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xl">
+        <div class="relative w-full h-[520px]">
+          <canvas id="divisionalPropChart"></canvas>
+        </div>
+      </div>
+
+      <!-- DIVISIONAL CHART REPLAY CONTROLS -->
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-3">
+          <button id="btn-div-play-pause" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
+            <i id="div-play-icon" class="fa-solid fa-play"></i> <span id="div-play-text">Play</span>
+          </button>
+          <button id="btn-div-restart" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate-right"></i> Restart
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
+            <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
+            <input type="range" id="div-speed-slider" min="0.5" max="5" value="1" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="div-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
+          </div>
+
+          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
+            <i class="fa-solid fa-clock text-slate-400"></i>
+            <input type="range" id="div-scrubber" min="0" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- WINS ABOVE EVEN & RANK TAB CONTENT -->
     <section id="tab-wins_above" class="tab-content space-y-4 hidden">
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
@@ -237,15 +347,12 @@
             <i class="fa-solid fa-chart-line text-brand-500"></i> Standings & Performance Trends
           </h2>
 
-          <!-- DUAL METRIC & BASELINE TOGGLE SWITCHES -->
           <div class="flex flex-wrap items-center gap-3">
-            <!-- METRIC TOGGLE (WAE vs RANK) -->
             <div class="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
               <button id="btn-toggle-metric-wae" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Wins Above Even</button>
               <button id="btn-toggle-metric-rank" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Rank</button>
             </div>
 
-            <!-- BASELINE TOGGLE (MATCHUP vs ETEW) -->
             <div class="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
               <button id="btn-toggle-wae-matchup" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Matchup Results</button>
               <button id="btn-toggle-wae-etew" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">ETEW Wins</button>
@@ -263,14 +370,12 @@
         </div>
       </div>
 
-      <!-- CHART CONTAINER -->
       <div id="wae-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
         <div class="relative w-full h-[520px]">
           <canvas id="winsAboveEvenChart"></canvas>
         </div>
       </div>
 
-      <!-- REPLAY CONTROLS -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3">
           <button id="btn-wae-play-pause" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
@@ -355,14 +460,12 @@
         </div>
       </div>
 
-      <!-- Live Win Prob Chart Outer Container -->
       <div id="live-prob-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl transition-all duration-200">
         <div class="relative w-full h-[480px]">
           <canvas id="liveWinProbChart"></canvas>
         </div>
       </div>
 
-      <!-- LIVE WIN PROB REPLAY CONTROLS -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3">
           <button id="btn-play-pause-replay" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
@@ -401,22 +504,17 @@
       sort: { field: 'actualRank', dir: 'asc' },
       computedStandings: [],
       liveProb: {
-        chartInstance: null,
-        fullSeries: null,
-        animationTimer: null,
-        isPlaying: false,
-        currentIdx: 0,
-        speedMultiplier: 3
+        chartInstance: null, fullSeries: null, animationTimer: null,
+        isPlaying: false, currentIdx: 0, speedMultiplier: 3
       },
       wae: {
-        chartInstance: null,
-        metric: 'wae', // 'wae' or 'rank'
-        mode: 'matchup', // 'matchup' or 'etew'
-        fullSeries: null,
-        animationTimer: null,
-        isPlaying: false,
-        currentIdx: 0,
-        speedMultiplier: 1.0
+        chartInstance: null, metric: 'wae', mode: 'matchup',
+        fullSeries: null, animationTimer: null, isPlaying: false,
+        currentIdx: 0, speedMultiplier: 1.0
+      },
+      props: {
+        chartInstance: null, fullSeries: null, computedProps: [],
+        animationTimer: null, isPlaying: false, currentIdx: 0, speedMultiplier: 1.0
       }
     };
 
@@ -432,6 +530,11 @@
       'Mike': '#eab308',      // Gold / Yellow
       'Pax': '#84cc16',       // Lime Green
       'Phil': '#0ea5e9'       // Light Blue / Cyan
+    };
+
+    const DIVISIONS = {
+      1: ['Fish', 'Mike', 'Christian', 'Pax', 'Cole'],
+      2: ['Dan', 'Ken', 'Jare', 'Phil', 'Brad']
     };
 
     function getManagerName(teamId, year, defaultName = '') {
@@ -476,7 +579,7 @@
       const isDark = document.documentElement.classList.contains('dark');
       const mgrStr = String(mgr || '').trim();
 
-      if (mgrStr === 'Dan') return isDark ? '#cbd5e1' : '#94a3b8';
+      if (mgrStr === 'Dan') return isDark ? '#e2e8f0' : '#94a3b8';
       if (mgrStr === 'Jare') return isDark ? '#f8fafc' : '#000000';
       if (MANAGER_COLORS[mgrStr]) return MANAGER_COLORS[mgrStr];
 
@@ -484,7 +587,7 @@
       if (lower.includes('brad')) return '#dc2626';
       if (lower.includes('christian')) return '#16a34a';
       if (lower.includes('cole')) return '#9a3412';
-      if (lower.includes('dan')) return isDark ? '#cbd5e1' : '#94a3b8';
+      if (lower.includes('dan')) return isDark ? '#e2e8f0' : '#94a3b8';
       if (lower.includes('fish') || lower.includes('matt')) return '#7c3aed';
       if (lower.includes('jare')) return isDark ? '#f8fafc' : '#000000';
       if (lower.includes('ken')) return '#0284c7';
@@ -511,7 +614,7 @@
       const icon = themeBtn ? themeBtn.querySelector('i') : null;
 
       const savedTheme = localStorage.getItem('ndl_theme');
-      const isDark = savedTheme ? savedTheme === 'dark' : true; // Default explicitly to Dark Mode
+      const isDark = savedTheme ? savedTheme === 'dark' : true;
 
       if (isDark) {
         document.documentElement.classList.add('dark');
@@ -528,6 +631,7 @@
           if (icon) icon.className = darkNow ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
           if (STATE.liveProb.chartInstance) updateChartThemeColors();
           if (STATE.wae.chartInstance) renderWinsAboveChart();
+          if (STATE.props.chartInstance) renderDivisionalChart();
         });
       }
     }
@@ -543,6 +647,20 @@
           return norm <= 0.05 ? 'transparent' : `rgba(239, 68, 68, ${(norm * 0.45 + 0.05).toFixed(2)})`;
         }
         return 'transparent';
+      },
+      rankHeatmap: (rank, maxRank = 10) => {
+        if (!rank) return 'transparent';
+        if (rank <= 3) {
+          const intensity = (4 - rank) / 3;
+          return `rgba(34, 197, 94, ${(0.15 + 0.3 * intensity).toFixed(2)})`;
+        } else if (rank >= 8) {
+          const intensity = (rank - 7) / 3;
+          return `rgba(239, 68, 68, ${(0.15 + 0.3 * intensity).toFixed(2)})`;
+        } else if (rank <= 5) {
+          return `rgba(254, 240, 138, 0.25)`;
+        } else {
+          return `rgba(253, 186, 116, 0.25)`;
+        }
       },
       redClearGreen: (val, min, mid, max) => {
         if (max <= min) return 'transparent';
@@ -839,7 +957,6 @@
       updateStatus("amber", "Loading data...");
       let loaded = false;
 
-      // 1. Primary Engine: Remote SQLite live.db with timeout
       try {
         const response = await fetchWithTimeout('https://pub-19c72385a8a14ab098f1badf7251e65b.r2.dev/live.db', 5000);
         if (response.ok) {
@@ -873,7 +990,6 @@
         console.warn("Remote SQLite fetch timed out or failed. Attempting CSV fallback...", err);
       }
 
-      // 2. Secondary Engine: Repository CSV Fallback
       if (!loaded) {
         try {
           const [points, teams, scores, transactions, currentweek] = await Promise.all([
@@ -893,13 +1009,13 @@
         }
       }
 
-      // 3. UI Update State
       if (loaded) {
         applyDefaultFiltersFromCurrentWeek();
         populateYearSelector();
         updateFilterUI();
         renderStandingsTable();
         initMatchupsTab();
+        initPropsTab();
         initWinsAboveTab();
         initLiveProbTab();
         updateStatus("emerald", "Live");
@@ -945,10 +1061,11 @@
           }
 
           const stWeeksFilter = document.getElementById('standings-weeks-filter');
-          if (tabKey === 'live_prob' || tabKey === 'matchups' || tabKey === 'wins_above') {
+          if (tabKey === 'live_prob' || tabKey === 'matchups' || tabKey === 'wins_above' || tabKey === 'props') {
             if (stWeeksFilter) stWeeksFilter.classList.add('hidden');
             if (tabKey === 'live_prob') renderLiveProbMatchup();
             if (tabKey === 'matchups') renderMatchupsTable();
+            if (tabKey === 'props') renderPropsTab();
             if (tabKey === 'wins_above') renderWinsAboveChart();
           } else {
             if (stWeeksFilter) stWeeksFilter.classList.remove('hidden');
@@ -1233,7 +1350,6 @@
             'status', 'STATUS', 'pos', 'POS', 'position', 'POSITION'
           ]);
           const slot = String(slotRaw || '').trim().toUpperCase();
-
           const isStarterVal = getVal(p, ['is_starter', 'starter', 'STARTER']);
 
           let isStarter = false;
@@ -1361,7 +1477,592 @@
     }
 
     // ==========================================
-    // SECTION 6: UNIFIED WINS ABOVE EVEN & RANK TAB ENGINE
+    // SECTION 6: PROPS TAB & DIVISIONAL CHART ENGINE
+    // ==========================================
+    function initPropsTab() {
+      const playPauseBtn = document.getElementById('btn-div-play-pause');
+      const restartBtn = document.getElementById('btn-div-restart');
+      const speedSlider = document.getElementById('div-speed-slider');
+      const scrubber = document.getElementById('div-scrubber');
+      const csvBtn = document.getElementById('btn-export-props-csv');
+      const pngBtn = document.getElementById('btn-export-div-png');
+
+      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleDivPlayPause);
+      if (restartBtn) restartBtn.addEventListener('click', restartDivReplay);
+
+      if (speedSlider) {
+        speedSlider.addEventListener('input', (e) => {
+          const mult = Number(e.target.value);
+          STATE.props.speedMultiplier = mult;
+          document.getElementById('div-speed-val').innerText = `${mult}x`;
+          if (STATE.props.isPlaying) restartDivIntervalTimer();
+        });
+      }
+
+      if (scrubber) {
+        scrubber.addEventListener('input', (e) => {
+          const pct = Number(e.target.value);
+          const total = STATE.props.fullSeries ? STATE.props.fullSeries.weeks.length : 0;
+          if (total === 0) return;
+          const targetIdx = Math.round((pct / 100) * (total - 1));
+          STATE.props.currentIdx = targetIdx;
+          renderDivFrameAtIdx(targetIdx);
+        });
+      }
+
+      if (csvBtn) csvBtn.addEventListener('click', downloadPropsCSV);
+      if (pngBtn) pngBtn.addEventListener('click', downloadDivChartPNG);
+    }
+
+    function renderPropsTab() {
+      renderPropsTable();
+      renderDivisionalChart();
+    }
+
+    function computePropsData() {
+      const yr = STATE.filters.year;
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
+
+      if (ptsYr.length === 0) return [];
+
+      const starterPositions = new Set(['QB', 'RB', 'WR', 'TE', 'W/R/T', 'W/R/T/Q', 'FLEX', 'SUPER_FLEX', 'SUPERFLEX', 'OP', 'K', 'DEF', 'D/ST', 'DL', 'LB', 'DB', 'IDP']);
+      const benchPositions = new Set(['BN', 'BE', 'BENCH', 'IR', 'IR+', 'TAXI', 'RESERVE', 'NA', 'INACTIVE']);
+
+      const teamIds = [...new Set(ptsYr.map(r => Number(getVal(r, ['team_id', 'TMA', 'team']))))].filter(t => !isNaN(t) && t !== 0);
+
+      const managerPropsMap = {};
+      teamIds.forEach(tId => {
+        const mgr = getManagerName(tId, yr);
+        const tName = getTeamName(tId, yr);
+        managerPropsMap[tId] = {
+          team_id: tId, manager: mgr, team_name: tName,
+          topWeek: { pf: 0, wk: 0 },
+          topLoss: { pf: 0, oppName: '--', pa: 0, wk: 0 },
+          topStarter: { player: '--', pf: 0, wk: 0 },
+          topBench: { player: '--', pf: 0, wk: 0 }
+        };
+      });
+
+      const weeklyTeamMap = {};
+      ptsYr.forEach(r => {
+        const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
+        const wk = Number(getVal(r, ['week', 'WK']));
+        const key = `${wk}_${tId}`;
+        if (!weeklyTeamMap[key]) {
+          weeklyTeamMap[key] = {
+            week: wk, team_id: tId,
+            pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
+            pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
+            oppTeamId: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0
+          };
+        }
+      });
+
+      Object.values(weeklyTeamMap).forEach(w => {
+        const prop = managerPropsMap[w.team_id];
+        if (!prop) return;
+
+        if (w.pf > prop.topWeek.pf) {
+          prop.topWeek = { pf: w.pf, wk: w.week };
+        }
+
+        if (w.pf < w.pa) {
+          if (w.pf > prop.topLoss.pf) {
+            const oppMgr = getManagerName(w.oppTeamId, yr);
+            const oppTeam = getTeamName(w.oppTeamId, yr);
+            prop.topLoss = { pf: w.pf, oppName: oppTeam || oppMgr, pa: w.pa, wk: w.week };
+          }
+        }
+      });
+
+      ptsYr.forEach(r => {
+        const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
+        const wk = Number(getVal(r, ['week', 'WK']));
+        const prop = managerPropsMap[tId];
+        if (!prop) return;
+
+        const pName = getVal(r, ['player_name', 'player', 'name', 'PLAYER', 'PLAYER_NAME', 'full_name']);
+        if (!pName) return;
+
+        let pPtsRaw = getVal(r, ['player_pts', 'player_points', 'playerpts', 'pts', 'PTS', 'player_score', 'actual_pts']);
+        if (pPtsRaw === undefined || pPtsRaw === null) {
+          const tPf = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
+          pPtsRaw = (r.points !== undefined && r.points !== tPf) ? r.points : getVal(r, ['points']);
+        }
+        const pPts = Number(pPtsRaw);
+        if (isNaN(pPts)) return;
+
+        const slotRaw = getVal(r, [
+          'selected_position', 'selected_pos', 'selected_position_type',
+          'slot', 'SLOT', 'roster_slot', 'lineup_slot',
+          'status', 'STATUS', 'pos', 'POS', 'position', 'POSITION'
+        ]);
+        const slot = String(slotRaw || '').trim().toUpperCase();
+        const isStarterVal = getVal(r, ['is_starter', 'starter', 'STARTER']);
+
+        let isStarter = false;
+        let isBench = false;
+
+        if (starterPositions.has(slot)) isStarter = true;
+        else if (benchPositions.has(slot)) isBench = true;
+        else if (isStarterVal !== undefined && isStarterVal !== null) {
+          isStarter = (isStarterVal == 1 || isStarterVal === true || String(isStarterVal).toLowerCase() === 'true');
+          isBench = !isStarter;
+        } else if (slot && !benchPositions.has(slot)) isStarter = true;
+
+        if (isStarter && pPts > prop.topStarter.pf) {
+          prop.topStarter = { player: pName, pf: pPts, wk: wk };
+        } else if (isBench && pPts > prop.topBench.pf) {
+          prop.topBench = { player: pName, pf: pPts, wk: wk };
+        }
+      });
+
+      const list = Object.values(managerPropsMap);
+
+      const topWeekSorted = [...list].sort((a,b) => b.topWeek.pf - a.topWeek.pf);
+      topWeekSorted.forEach((r, idx) => r.rankTopWeek = idx + 1);
+
+      const topLossSorted = [...list].sort((a,b) => b.topLoss.pf - a.topLoss.pf);
+      topLossSorted.forEach((r, idx) => r.rankTopLoss = idx + 1);
+
+      const topStarterSorted = [...list].sort((a,b) => b.topStarter.pf - a.topStarter.pf);
+      topStarterSorted.forEach((r, idx) => r.rankTopStarter = idx + 1);
+
+      const topBenchSorted = [...list].sort((a,b) => b.topBench.pf - a.topBench.pf);
+      topBenchSorted.forEach((r, idx) => r.rankTopBench = idx + 1);
+
+      list.forEach(r => {
+        let wins = 0;
+        if (r.rankTopWeek === 1) wins++;
+        if (r.rankTopLoss === 1) wins++;
+        if (r.rankTopStarter === 1) wins++;
+        if (r.rankTopBench === 1) wins++;
+
+        r.earnings = wins * 15;
+        r.avgRank = (r.rankTopWeek + r.rankTopLoss + r.rankTopStarter + r.rankTopBench) / 4;
+      });
+
+      list.sort((a,b) => (b.earnings - a.earnings) || (a.avgRank - b.avgRank));
+      
+      const avgRankSorted = [...list].sort((a,b) => a.avgRank - b.avgRank);
+      avgRankSorted.forEach((r, idx) => r.rankAvgRank = idx + 1);
+
+      return list;
+    }
+
+    function renderPropsTable() {
+      const data = computePropsData();
+      STATE.props.computedProps = data;
+
+      const tbody = document.getElementById('props-tbody');
+      if (!tbody) return;
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="19" class="p-8 text-center text-slate-500">No prop bet data available for Year ${STATE.filters.year}.</td></tr>`;
+        return;
+      }
+
+      const topWeekPFStats = getColStats(data, d => d.topWeek.pf);
+      const topLossPFStats = getColStats(data, d => d.topLoss.pf);
+      const topLossPAStats = getColStats(data, d => d.topLoss.pa);
+      const topStarterPFStats = getColStats(data, d => d.topStarter.pf);
+      const topBenchPFStats = getColStats(data, d => d.topBench.pf);
+      const avgRankStats = getColStats(data, d => d.avgRank);
+
+      tbody.innerHTML = data.map((r, idx) => {
+        const mgrColor = getManagerColor(r.manager);
+        
+        const earningsBg = r.earnings >= 30 ? 'rgba(34, 197, 94, 0.4)' : (r.earnings === 15 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(254, 240, 138, 0.25)');
+        const earningsText = r.earnings >= 30 ? 'text-emerald-700 dark:text-emerald-300 font-extrabold' : (r.earnings === 15 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500');
+
+        const twPfBg = HEATMAPS.greenToClear(r.topWeek.pf, topWeekPFStats.min, topWeekPFStats.max);
+        const tlPfBg = HEATMAPS.greenToClear(r.topLoss.pf, topLossPFStats.min, topLossPFStats.max);
+        const tlPaBg = HEATMAPS.redToClear(r.topLoss.pa, topLossPAStats.min, topLossPAStats.max);
+        const tsPfBg = HEATMAPS.greenToClear(r.topStarter.pf, topStarterPFStats.min, topStarterPFStats.max);
+        const tbPfBg = HEATMAPS.greenToClear(r.topBench.pf, topBenchPFStats.min, topBenchPFStats.max);
+        const avgRankBg = HEATMAPS.redClearGreen(r.avgRank, avgRankStats.min, avgRankStats.mid, avgRankStats.max);
+
+        const twClass = r.rankTopWeek === 1 ? 'prop-winner-highlight font-extrabold' : '';
+        const tlClass = r.rankTopLoss === 1 ? 'prop-winner-highlight font-extrabold' : '';
+        const tsClass = r.rankTopStarter === 1 ? 'prop-winner-highlight font-extrabold' : '';
+        const tbClass = r.rankTopBench === 1 ? 'prop-winner-highlight font-extrabold' : '';
+
+        return `
+          <tr>
+            <td class="text-center text-slate-400 font-mono text-xs">${String(idx + 1).padStart(2, '0')}</td>
+            <td class="text-center font-mono text-xs ${earningsText}" style="background-color: ${earningsBg}">$${r.earnings}</td>
+            <td class="text-left font-medium">
+              <span class="text-xs font-semibold mr-2 inline-block border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${mgrColor}">${escapeHTML(r.manager)}</span>
+              <span class="text-slate-900 dark:text-slate-100 font-semibold">${escapeHTML(r.team_name)}</span>
+            </td>
+
+            <!-- TOP WEEK -->
+            <td class="text-right font-mono font-bold ${twClass}" style="${twClass ? '' : 'background-color:' + twPfBg}">${r.topWeek.pf.toFixed(2)}</td>
+            <td class="text-center font-mono text-xs ${twClass}">( ${String(r.topWeek.wk).padStart(2, ' ')} )</td>
+            <td class="text-center font-mono text-xs font-bold ${twClass}" style="${twClass ? '' : 'background-color:' + HEATMAPS.rankHeatmap(r.rankTopWeek)}">[ ${String(r.rankTopWeek).padStart(2, '0')} ]</td>
+
+            <!-- TOP LOSS -->
+            <td class="text-right font-mono ${tlClass}" style="${tlClass ? '' : 'background-color:' + tlPfBg}">${r.topLoss.pf.toFixed(2)}</td>
+            <td class="text-left text-xs ${tlClass}">${escapeHTML(r.topLoss.oppName)}</td>
+            <td class="text-right font-mono font-bold ${tlClass}" style="${tlClass ? '' : 'background-color:' + tlPaBg}">${r.topLoss.pa.toFixed(2)}</td>
+            <td class="text-center font-mono text-xs ${tlClass}">( ${String(r.topLoss.wk).padStart(2, ' ')} )</td>
+            <td class="text-center font-mono text-xs font-bold ${tlClass}" style="${tlClass ? '' : 'background-color:' + HEATMAPS.rankHeatmap(r.rankTopLoss)}">[ ${String(r.rankTopLoss).padStart(2, '0')} ]</td>
+
+            <!-- TOP STARTER -->
+            <td class="text-left text-xs ${tsClass}">${escapeHTML(r.topStarter.player)}</td>
+            <td class="text-right font-mono font-bold ${tsClass}" style="${tsClass ? '' : 'background-color:' + tsPfBg}">${r.topStarter.pf.toFixed(2)}</td>
+            <td class="text-center font-mono text-xs ${tsClass}">( ${String(r.topStarter.wk).padStart(2, ' ')} )</td>
+            <td class="text-center font-mono text-xs font-bold ${tsClass}" style="${tsClass ? '' : 'background-color:' + HEATMAPS.rankHeatmap(r.rankTopStarter)}">[ ${String(r.rankTopStarter).padStart(2, '0')} ]</td>
+
+            <!-- TOP BENCH -->
+            <td class="text-left text-xs ${tbClass}">${escapeHTML(r.topBench.player)}</td>
+            <td class="text-right font-mono font-bold ${tbClass}" style="${tbClass ? '' : 'background-color:' + tbPfBg}">${r.topBench.pf.toFixed(2)}</td>
+            <td class="text-center font-mono text-xs ${tbClass}">( ${String(r.topBench.wk).padStart(2, ' ')} )</td>
+            <td class="text-center font-mono text-xs font-bold ${tbClass}" style="${tbClass ? '' : 'background-color:' + HEATMAPS.rankHeatmap(r.rankTopBench)}">[ ${String(r.rankTopBench).padStart(2, '0')} ]</td>
+
+            <!-- AVERAGE RANK -->
+            <td class="text-right font-mono font-bold" style="background-color: ${avgRankBg}">${r.avgRank.toFixed(1)}</td>
+            <td class="text-center font-mono text-xs font-bold" style="background-color: ${HEATMAPS.rankHeatmap(r.rankAvgRank)}">[ ${String(r.rankAvgRank).padStart(2, '0')} ]</td>
+          </tr>`;
+      }).join('');
+    }
+
+    const divisionalBackgroundPlugin = {
+      id: 'divisionalBackground',
+      beforeDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea || !scales.y) return;
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const y0 = scales.y.getPixelForValue(0);
+
+        ctx.save();
+        ctx.fillStyle = isDark ? 'rgba(249, 115, 22, 0.08)' : 'rgba(255, 237, 213, 0.55)';
+        ctx.fillRect(chartArea.left, chartArea.top, chartArea.width, y0 - chartArea.top);
+
+        ctx.fillStyle = isDark ? 'rgba(139, 92, 246, 0.08)' : 'rgba(238, 242, 255, 0.65)';
+        ctx.fillRect(chartArea.left, y0, chartArea.width, chartArea.bottom - y0);
+
+        ctx.beginPath();
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.6)' : 'rgba(100, 116, 139, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(chartArea.left, y0);
+        ctx.lineTo(chartArea.right, y0);
+        ctx.stroke();
+
+        ctx.font = 'bold 15px ui-sans-serif, system-ui';
+        ctx.fillStyle = isDark ? '#fb923c' : '#ea580c';
+        ctx.fillText('Division 1', chartArea.left - 75, chartArea.top + 30);
+
+        ctx.fillStyle = isDark ? '#a78bfa' : '#6d28d9';
+        ctx.fillText('Division 2', chartArea.left - 75, chartArea.bottom - 30);
+
+        ctx.restore();
+      }
+    };
+
+    function renderDivisionalChart() {
+      const yr = STATE.filters.year;
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
+
+      if (ptsYr.length === 0) return;
+
+      const rawWeeks = [...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
+      const maxWk = rawWeeks.length > 0 ? Math.max(...rawWeeks) : 14;
+      const weeks = Array.from({length: maxWk + 1}, (_, i) => i);
+
+      const div1Set = new Set(DIVISIONS[1].map(m => m.toLowerCase()));
+      const div2Set = new Set(DIVISIONS[2].map(m => m.toLowerCase()));
+
+      const div1WeeklyWinners = [];
+      const div2WeeklyWinners = [];
+      const netCumDiff = [0];
+
+      for (let w = 1; w <= maxWk; w++) {
+        const wkPoints = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) === w);
+        const winnersMap = {};
+
+        wkPoints.forEach(r => {
+          const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
+          const pf = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
+          const pa = Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0;
+          if (pf > pa) {
+            winnersMap[tId] = {
+              team_id: tId,
+              manager: getManagerName(tId, yr),
+              pts: pf
+            };
+          }
+        });
+
+        const winners = Object.values(winnersMap);
+        const div1Wins = winners.filter(w => div1Set.has(w.manager.toLowerCase()));
+        const div2Wins = winners.filter(w => div2Set.has(w.manager.toLowerCase()));
+
+        div1WeeklyWinners[w] = div1Wins;
+        div2WeeklyWinners[w] = div2Wins;
+
+        const prevCum = netCumDiff[w - 1];
+        const diff = div1Wins.length - div2Wins.length;
+        netCumDiff.push(prevCum + diff);
+      }
+
+      const managerList = [
+        ...DIVISIONS[1].map(m => ({ manager: m, div: 1 })),
+        ...DIVISIONS[2].map(m => ({ manager: m, div: 2 }))
+      ];
+
+      STATE.props.fullSeries = { weeks, managerList, div1WeeklyWinners, div2WeeklyWinners, netCumDiff };
+
+      initDivisionalChartCanvas(weeks, managerList, div1WeeklyWinners, div2WeeklyWinners, netCumDiff);
+      restartDivReplay();
+    }
+
+    function initDivisionalChartCanvas(weeks, managerList, div1Winners, div2Winners, netCumDiff) {
+      const canvas = document.getElementById('divisionalPropChart');
+      if (!canvas) return;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+
+      if (STATE.props.chartInstance) {
+        STATE.props.chartInstance.destroy();
+      }
+
+      const emptyArray = new Array(weeks.length).fill(null);
+
+      const datasets = [];
+
+      managerList.forEach((meta) => {
+        const mgrColor = getManagerColor(meta.manager);
+        const isDiv1 = meta.div === 1;
+
+        datasets.push({
+          type: 'bar',
+          label: `${meta.div === 1 ? '- 1 - ' : '- 2 - '}${meta.manager}`,
+          data: [...emptyArray],
+          backgroundColor: mgrColor,
+          borderColor: isDark ? '#0f172a' : '#ffffff',
+          borderWidth: meta.manager === 'Dan' ? 1.5 : 0.5,
+          stack: isDiv1 ? 'div1' : 'div2',
+          barPercentage: 0.55
+        });
+      });
+
+      datasets.push({
+        type: 'line',
+        label: 'Win Differential',
+        data: [...emptyArray],
+        borderColor: isDark ? '#f8fafc' : '#000000',
+        backgroundColor: isDark ? '#f8fafc' : '#000000',
+        borderWidth: 3.5,
+        pointStyle: 'rect',
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        tension: 0.1
+      });
+
+      const ctx = canvas.getContext('2d');
+      STATE.props.chartInstance = new Chart(ctx, {
+        type: 'bar',
+        plugins: [divisionalBackgroundPlugin],
+        data: {
+          labels: weeks,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          layout: { padding: { left: 80 } },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            title: {
+              display: true,
+              text: `Divisional Prop Bet - NDL ${STATE.filters.year}`,
+              color: textColor,
+              font: { size: 18, weight: '800' },
+              padding: { bottom: 15 }
+            },
+            legend: {
+              position: 'right',
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 12 }
+            },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+              titleColor: isDark ? '#f8fafc' : '#0f172a',
+              bodyColor: isDark ? '#cbd5e1' : '#334155',
+              borderColor: isDark ? '#334155' : '#cbd5e1',
+              borderWidth: 1,
+              padding: 10
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Week', color: textColor, font: { size: 13, weight: '700' } },
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 12, weight: '700' } }
+            },
+            y: {
+              stacked: true,
+              min: -5,
+              max: 5,
+              grid: { color: gridColor },
+              ticks: {
+                color: textColor,
+                font: { size: 12, weight: '700' },
+                stepSize: 1,
+                callback: v => Math.abs(v)
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderDivFrameAtIdx(idx) {
+      const s = STATE.props.fullSeries;
+      if (!s || !STATE.props.chartInstance) return;
+
+      const total = s.weeks.length;
+      const validIdx = Math.min(total - 1, Math.max(0, idx));
+      const chart = STATE.props.chartInstance;
+
+      s.managerList.forEach((meta, mIdx) => {
+        const isDiv1 = meta.div === 1;
+        const valArr = [];
+
+        for (let w = 0; w < total; w++) {
+          if (w > validIdx || w === 0) {
+            valArr.push(null);
+          } else {
+            const winners = isDiv1 ? s.div1WeeklyWinners[w] : s.div2WeeklyWinners[w];
+            const hasWon = winners && winners.some(win => win.manager.toLowerCase() === meta.manager.toLowerCase());
+            valArr.push(hasWon ? (isDiv1 ? 1 : -1) : null);
+          }
+        }
+        chart.data.datasets[mIdx].data = valArr;
+      });
+
+      const lineIdx = chart.data.datasets.length - 1;
+      const slicedLine = s.netCumDiff.slice(0, validIdx + 1);
+      const paddedLine = slicedLine.concat(new Array(total - (validIdx + 1)).fill(null));
+      chart.data.datasets[lineIdx].data = paddedLine;
+
+      const scrubber = document.getElementById('div-scrubber');
+      if (scrubber && total > 1) {
+        scrubber.value = Math.round((validIdx / (total - 1)) * 100);
+      }
+
+      chart.update('none');
+    }
+
+    function toggleDivPlayPause() {
+      if (STATE.props.isPlaying) {
+        pauseDivReplay();
+      } else {
+        const s = STATE.props.fullSeries;
+        if (s && STATE.props.currentIdx >= s.weeks.length - 1) {
+          STATE.props.currentIdx = 0;
+        }
+        startDivReplay();
+      }
+    }
+
+    function startDivReplay() {
+      STATE.props.isPlaying = true;
+      updateDivPlayPauseUI();
+      restartDivIntervalTimer();
+    }
+
+    function pauseDivReplay() {
+      STATE.props.isPlaying = false;
+      if (STATE.props.animationTimer) {
+        clearInterval(STATE.props.animationTimer);
+        STATE.props.animationTimer = null;
+      }
+      updateDivPlayPauseUI();
+    }
+
+    function restartDivReplay() {
+      STATE.props.currentIdx = 0;
+      renderDivFrameAtIdx(0);
+      startDivReplay();
+    }
+
+    function restartDivIntervalTimer() {
+      if (STATE.props.animationTimer) clearInterval(STATE.props.animationTimer);
+
+      const mult = STATE.props.speedMultiplier || 1.0;
+      const intervalMs = Math.max(40, Math.round(350 / mult));
+
+      STATE.props.animationTimer = setInterval(() => {
+        const s = STATE.props.fullSeries;
+        if (!s) return;
+
+        STATE.props.currentIdx += 1;
+        if (STATE.props.currentIdx >= s.weeks.length - 1) {
+          STATE.props.currentIdx = s.weeks.length - 1;
+          renderDivFrameAtIdx(STATE.props.currentIdx);
+          pauseDivReplay();
+        } else {
+          renderDivFrameAtIdx(STATE.props.currentIdx);
+        }
+      }, intervalMs);
+    }
+
+    function updateDivPlayPauseUI() {
+      const icon = document.getElementById('div-play-icon');
+      const text = document.getElementById('div-play-text');
+      const btn = document.getElementById('btn-div-play-pause');
+
+      if (STATE.props.isPlaying) {
+        icon.className = 'fa-solid fa-pause'; text.innerText = 'Pause';
+        btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
+      } else {
+        icon.className = 'fa-solid fa-play'; text.innerText = 'Play';
+        btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
+      }
+    }
+
+    function downloadPropsCSV() {
+      const data = STATE.props.computedProps;
+      if (!data || data.length === 0) return;
+      
+      const rows = data.map(r => ({
+        Earnings: r.earnings, Manager: r.manager, Team: r.team_name,
+        TopWeek_PF: r.topWeek.pf, TopWeek_WK: r.topWeek.wk, TopWeek_Rank: r.rankTopWeek,
+        TopLoss_PF: r.topLoss.pf, TopLoss_Opponent: r.topLoss.oppName, TopLoss_PA: r.topLoss.pa, TopLoss_WK: r.topLoss.wk, TopLoss_Rank: r.rankTopLoss,
+        TopStarter_Player: r.topStarter.player, TopStarter_PF: r.topStarter.pf, TopStarter_WK: r.topStarter.wk, TopStarter_Rank: r.rankTopStarter,
+        TopBench_Player: r.topBench.player, TopBench_PF: r.topBench.pf, TopBench_WK: r.topBench.wk, TopBench_Rank: r.rankTopBench,
+        AvgRank: r.avgRank, OverallRank: r.rankAvgRank
+      }));
+
+      const csv = Papa.unparse(rows);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", `NDL_Prop_Bets_${STATE.filters.year}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function downloadDivChartPNG() {
+      const chart = STATE.props.chartInstance;
+      if (!chart) return;
+      const link = document.createElement('a');
+      link.download = `Divisional_Prop_Bet_${STATE.filters.year}.png`;
+      link.href = chart.toBase64Image();
+      link.click();
+    }
+
+    // ==========================================
+    // SECTION 7: UNIFIED WINS ABOVE EVEN & RANK TAB ENGINE
     // ==========================================
     function initWinsAboveTab() {
       const btnMetricWae = document.getElementById('btn-toggle-metric-wae');
@@ -1379,29 +2080,21 @@
 
       if (btnMetricWae && btnMetricRank) {
         btnMetricWae.addEventListener('click', () => {
-          STATE.wae.metric = 'wae';
-          updateMetricToggleUI();
-          renderWinsAboveChart();
+          STATE.wae.metric = 'wae'; updateMetricToggleUI(); renderWinsAboveChart();
         });
 
         btnMetricRank.addEventListener('click', () => {
-          STATE.wae.metric = 'rank';
-          updateMetricToggleUI();
-          renderWinsAboveChart();
+          STATE.wae.metric = 'rank'; updateMetricToggleUI(); renderWinsAboveChart();
         });
       }
 
       if (btnMatchup && btnEtew) {
         btnMatchup.addEventListener('click', () => {
-          STATE.wae.mode = 'matchup';
-          updateBaselineToggleUI();
-          renderWinsAboveChart();
+          STATE.wae.mode = 'matchup'; updateBaselineToggleUI(); renderWinsAboveChart();
         });
 
         btnEtew.addEventListener('click', () => {
-          STATE.wae.mode = 'etew';
-          updateBaselineToggleUI();
-          renderWinsAboveChart();
+          STATE.wae.mode = 'etew'; updateBaselineToggleUI(); renderWinsAboveChart();
         });
       }
 
@@ -1485,12 +2178,9 @@
         teamMetaList.push({ team_id: tId, manager: mgrName, color });
 
         seriesMap[tId] = {
-          cumMatchup: [0],
-          cumEtew: [0],
-          cumMatchupDisplay: [],
-          cumEtewDisplay: [],
-          matchupRank: [numTeams],
-          etewRank: [numTeams]
+          cumMatchup: [0], cumEtew: [0],
+          cumMatchupDisplay: [], cumEtewDisplay: [],
+          matchupRank: [numTeams], etewRank: [numTeams]
         };
       });
 
@@ -1829,12 +2519,10 @@
       const btn = document.getElementById('btn-wae-play-pause');
 
       if (STATE.wae.isPlaying) {
-        icon.className = 'fa-solid fa-pause';
-        text.innerText = 'Pause';
+        icon.className = 'fa-solid fa-pause'; text.innerText = 'Pause';
         btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       } else {
-        icon.className = 'fa-solid fa-play';
-        text.innerText = 'Play';
+        icon.className = 'fa-solid fa-play'; text.innerText = 'Play';
         btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       }
     }
@@ -1878,7 +2566,7 @@
     }
 
     // ==========================================
-    // SECTION 7: LIVE WIN PROBABILITY REPLAY ENGINE
+    // SECTION 8: LIVE WIN PROBABILITY REPLAY ENGINE
     // ==========================================
     const liveReplayOverlayPlugin = {
       id: 'liveReplayOverlay',
@@ -2534,7 +3222,7 @@
     }
 
     // ==========================================
-    // SECTION 8: INITIALIZATION & KEYBOARD LISTENERS
+    // SECTION 9: INITIALIZATION & LISTENERS
     // ==========================================
     document.addEventListener('DOMContentLoaded', async () => {
       initTheme();
@@ -2583,6 +3271,7 @@
         renderStandingsTable(); 
         populateMatchupsWeeks();
         renderMatchupsTable();
+        renderPropsTab();
         renderWinsAboveChart();
         populateLiveProbWeeks();
         renderLiveProbMatchup();
