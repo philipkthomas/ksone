@@ -544,6 +544,30 @@
       2: ['Dan', 'Ken', 'Jare', 'Phil', 'Brad']
     };
 
+    function getCurrentYearAndWeek() {
+      const cw = STATE.data.currentweek;
+      if (cw && cw.length > 0) {
+        const curYear = Number(getVal(cw[0], ['year', 'YR']));
+        const curWeek = Number(getVal(cw[0], ['week', 'WK']));
+        if (curYear && curWeek) return { curYear, curWeek };
+      }
+      return null;
+    }
+
+    function getMaxWeekForYear(yr) {
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
+      const rawWeeks = [...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
+      if (rawWeeks.length > 0) return Math.max(...rawWeeks);
+      
+      const sc = STATE.data.scores || [];
+      const scYr = sc.filter(r => Number(getVal(r, ['year', 'YR', 'YR'])) === Number(yr));
+      const scWeeks = [...new Set(scYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
+      if (scWeeks.length > 0) return Math.max(...scWeeks);
+      
+      return 17;
+    }
+
     function getManagerName(teamId, year, defaultName = '') {
       if (!teamId && teamId !== 0) return defaultName;
       const tId = Number(teamId);
@@ -930,20 +954,21 @@
     }
 
     function applyDefaultFiltersFromCurrentWeek() {
-      const cw = STATE.data.currentweek;
-      if (cw && cw.length > 0) {
-        const first = cw[0];
-        const curYear = Number(getVal(first, ['year', 'YR']));
-        const curWeek = Number(getVal(first, ['week', 'WK']));
+      const cwInfo = getCurrentYearAndWeek();
+      const hash = window.location.hash.replace('#', '');
+      const params = new URLSearchParams(hash);
 
-        if (curYear && curWeek) {
-          const hash = window.location.hash.replace('#', '');
-          const params = new URLSearchParams(hash);
+      if (cwInfo && !params.has('year')) {
+        STATE.filters.year = cwInfo.curYear;
+      }
 
-          if (!params.has('year')) STATE.filters.year = curYear;
-          if (!params.has('wmin')) STATE.filters.weekMin = 1;
-          if (!params.has('wmax')) STATE.filters.weekMax = Math.max(1, curWeek - 1);
-        }
+      const targetYear = STATE.filters.year;
+      if (cwInfo && Number(targetYear) === Number(cwInfo.curYear)) {
+        if (!params.has('wmin')) STATE.filters.weekMin = 1;
+        if (!params.has('wmax')) STATE.filters.weekMax = Math.max(1, cwInfo.curWeek - 1);
+      } else {
+        if (!params.has('wmin')) STATE.filters.weekMin = 1;
+        if (!params.has('wmax')) STATE.filters.weekMax = getMaxWeekForYear(targetYear);
       }
     }
 
@@ -1260,10 +1285,11 @@
 
       weekSelect.innerHTML = availableWeeks.map(w => `<option value="${w}">Week ${w}</option>`).join('');
 
-      const cw = STATE.data.currentweek;
+      const cwInfo = getCurrentYearAndWeek();
       let defaultWk = 1;
-      if (cw && cw.length > 0 && Number(getVal(cw[0], ['year', 'YR'])) === Number(yr)) {
-        defaultWk = Math.max(1, Number(getVal(cw[0], ['week', 'WK'])) - 1);
+
+      if (cwInfo && Number(cwInfo.curYear) === Number(yr)) {
+        defaultWk = Math.max(1, cwInfo.curWeek - 1);
       } else if (availableWeeks.length > 0) {
         defaultWk = availableWeeks[availableWeeks.length - 1];
       }
@@ -1778,16 +1804,11 @@
 
       if (ptsYr.length === 0) return;
 
-      const cw = STATE.data.currentweek;
-      let maxWk = 14;
+      const cwInfo = getCurrentYearAndWeek();
+      let maxWk = 17;
 
-      if (cw && cw.length > 0) {
-        const curWkVal = Number(getVal(cw[0], ['week', 'WK']));
-        if (curWkVal && curWkVal > 1) {
-          maxWk = curWkVal - 1;
-        } else if (curWkVal === 1) {
-          maxWk = 1;
-        }
+      if (cwInfo && Number(yr) === Number(cwInfo.curYear)) {
+        maxWk = Math.max(1, cwInfo.curWeek - 1);
       } else {
         const rawWeeks = [...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
         if (rawWeeks.length > 0) maxWk = Math.max(...rawWeeks);
@@ -1880,7 +1901,6 @@
 
       managerList.forEach((meta) => {
         const mgrColor = getManagerColor(meta.manager);
-        const isDiv1 = meta.div === 1;
 
         datasets.push({
           type: 'bar',
@@ -1946,7 +1966,7 @@
           },
           scales: {
             x: {
-              stacked: true, // Horizontally align Division 1 & Division 2 stacked bars on the same week position
+              stacked: true,
               title: { display: true, text: 'Week', color: textColor, font: { size: 13, weight: '700' } },
               grid: { color: gridColor },
               ticks: { color: textColor, font: { size: 12, weight: '700' } }
@@ -2762,10 +2782,10 @@
 
       weekSelect.innerHTML = availableWeeks.map(w => `<option value="${w}">Week ${w}</option>`).join('');
 
-      const cw = STATE.data.currentweek;
+      const cwInfo = getCurrentYearAndWeek();
       let defaultWk = 8;
-      if (cw && cw.length > 0 && Number(getVal(cw[0], ['year', 'YR'])) === Number(yr)) {
-        defaultWk = Math.max(1, Number(getVal(cw[0], ['week', 'WK'])) - 1);
+      if (cwInfo && Number(cwInfo.curYear) === Number(yr)) {
+        defaultWk = Math.max(1, cwInfo.curWeek - 1);
       } else if (availableWeeks.length > 0) {
         defaultWk = availableWeeks[availableWeeks.length - 1];
       }
@@ -3311,7 +3331,19 @@
       if (clearMgrBtn) clearMgrBtn.addEventListener('click', () => toggleManagerFilter(null));
 
       document.getElementById('filter-year').addEventListener('change', (e) => { 
-        STATE.filters.year = Number(e.target.value); 
+        const newYear = Number(e.target.value);
+        STATE.filters.year = newYear; 
+
+        const cwInfo = getCurrentYearAndWeek();
+        if (cwInfo && Number(newYear) === Number(cwInfo.curYear)) {
+          STATE.filters.weekMin = 1;
+          STATE.filters.weekMax = Math.max(1, cwInfo.curWeek - 1);
+        } else {
+          STATE.filters.weekMin = 1;
+          STATE.filters.weekMax = getMaxWeekForYear(newYear);
+        }
+
+        updateFilterUI();
         renderStandingsTable(); 
         populateMatchupsWeeks();
         renderMatchupsTable();
