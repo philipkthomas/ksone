@@ -1130,70 +1130,158 @@
       document.getElementById('matchup-banner-week').innerText = wk;
 
       const pts = STATE.data.points || [];
-      const rows = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
+      const ptsWk = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
 
-      if (rows.length === 0) {
+      if (ptsWk.length === 0) {
         document.getElementById('matchups-tbody').innerHTML = `
           <tr><td colspan="7" class="p-8 text-center text-slate-500 dark:text-slate-400">No matchup records found for Week ${wk}.</td></tr>`;
         return;
       }
 
-      // Compute weekly ETEW records
-      const totalTeams = rows.length;
-      rows.forEach(t => {
-        const pf = Number(getVal(t, ['team_points', 'points', 'TMAPTS'])) || 0;
-        let beats = 0, ties = 0;
-        rows.forEach(o => {
-          const oPf = Number(getVal(o, ['team_points', 'points', 'TMAPTS'])) || 0;
-          if (getVal(t, ['team_id', 'TMA']) !== getVal(o, ['team_id', 'TMA'])) {
-            if (pf > oPf) beats++;
-            else if (pf === oPf) ties++;
-          }
-        });
-        t.etewWins = beats + 0.5 * ties;
-        t.etewLosses = (totalTeams - 1) - t.etewWins;
+      // Group player-level points rows by team_id
+      const teamMap = {};
+      ptsWk.forEach(r => {
+        const teamId = Number(getVal(r, ['team_id', 'TMA', 'team']));
+        if (!teamId && teamId !== 0) return;
+
+        if (!teamMap[teamId]) {
+          teamMap[teamId] = {
+            team_id: teamId,
+            manager: getVal(r, ['manager_name', 'manager']) || '',
+            team_name: getVal(r, ['team_name', 'name']) || `Team ${teamId}`,
+            pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
+            pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
+            oppTeamId: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0,
+            players: []
+          };
+        }
+        teamMap[teamId].players.push(r);
       });
 
-      // Sort rows by Points For (PF) descending to match screenshot layout
-      rows.sort((a, b) => (Number(getVal(b, ['team_points', 'points', 'TMAPTS'])) || 0) - (Number(getVal(a, ['team_points', 'points', 'TMAPTS'])) || 0));
+      const teamList = Object.values(teamMap);
 
-      const pfStats = getColStats(rows, r => Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0);
-      const paStats = getColStats(rows, r => Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0);
-      const starterStats = getColStats(rows, r => Number(getVal(r, ['best_starter_pts'])) || 0);
-      const benchStats = getColStats(rows, r => Number(getVal(r, ['best_bench_pts'])) || 0);
-      const deltas = rows.map(r => (Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0) - (Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0));
-      const maxDelta = Math.max(...deltas.map(d => Math.abs(d)), 1);
+      if (teamList.length === 0) {
+        document.getElementById('matchups-tbody').innerHTML = `
+          <tr><td colspan="7" class="p-8 text-center text-slate-500 dark:text-slate-400">No team matchup data available for Week ${wk}.</td></tr>`;
+        return;
+      }
+
+      // Calculate ETEW, Win/Loss status, and extract Best Starter & Best Bench
+      const totalTeams = teamList.length;
+      teamList.forEach(t => {
+        let beats = 0, ties = 0;
+        teamList.forEach(o => {
+          if (t.team_id !== o.team_id) {
+            if (t.pf > o.pf) beats++;
+            else if (t.pf === o.pf) ties++;
+          }
+        });
+
+        t.etewWins = beats + 0.5 * ties;
+        t.etewLosses = (totalTeams - 1) - t.etewWins;
+        t.delta = t.pf - t.pa;
+        t.result = t.delta > 0 ? 'W' : (t.delta === 0 ? 'T' : 'L');
+
+        // Extract Best Starter and Best Bench
+        let bestStarter = { name: '--', pts: 0 };
+        let bestBench = { name: '--', pts: 0 };
+        let foundPrecomputedStarter = false;
+        let foundPrecomputedBench = false;
+
+        // Check if pre-computed fields exist on any player row
+        t.players.forEach(p => {
+          const preStarterName = getVal(p, ['best_starter_name']);
+          const preStarterPts = Number(getVal(p, ['best_starter_pts']));
+          if (preStarterName && !isNaN(preStarterPts) && preStarterPts > 0) {
+            bestStarter = { name: preStarterName, pts: preStarterPts };
+            foundPrecomputedStarter = true;
+          }
+          const preBenchName = getVal(p, ['best_bench_name']);
+          const preBenchPts = Number(getVal(p, ['best_bench_pts']));
+          if (preBenchName && !isNaN(preBenchPts) && preBenchPts > 0) {
+            bestBench = { name: preBenchName, pts: preBenchPts };
+            foundPrecomputedBench = true;
+          }
+        });
+
+        // Compute dynamically if not pre-computed
+        if (!foundPrecomputedStarter || !foundPrecomputedBench) {
+          let maxStarterPts = -1, maxBenchPts = -1;
+          let maxStarterName = '--', maxBenchName = '--';
+
+          t.players.forEach(p => {
+            const pName = getVal(p, ['player_name', 'player', 'name', 'PLAYER', 'PLAYER_NAME']);
+            const pPts = Number(getVal(p, ['player_pts', 'player_points', 'pts', 'PTS', 'playerpts', 'points']));
+            if (!pName || isNaN(pPts)) return;
+
+            const isStarterVal = getVal(p, ['is_starter', 'starter', 'STARTER']);
+            const slotVal = String(getVal(p, ['slot', 'SLOT', 'roster_slot', 'status', 'STATUS', 'lineup_slot', 'pos', 'POS']) || '').toUpperCase();
+
+            let isStarter = false;
+            let isBench = false;
+
+            if (isStarterVal !== undefined && isStarterVal !== null) {
+              isStarter = (isStarterVal == 1 || isStarterVal === true || String(isStarterVal).toLowerCase() === 'true' || String(isStarterVal).toUpperCase() === 'STARTER');
+              isBench = !isStarter;
+            } else if (slotVal) {
+              isBench = ['BN', 'BE', 'BENCH', 'IR', 'TAXI', 'RESERVE'].includes(slotVal);
+              isStarter = !isBench;
+            }
+
+            if (isStarter) {
+              if (pPts > maxStarterPts) {
+                maxStarterPts = pPts;
+                maxStarterName = pName;
+              }
+            } else if (isBench) {
+              if (pPts > maxBenchPts) {
+                maxBenchPts = pPts;
+                maxBenchName = pName;
+              }
+            }
+          });
+
+          if (!foundPrecomputedStarter && maxStarterPts >= 0) bestStarter = { name: maxStarterName, pts: maxStarterPts };
+          if (!foundPrecomputedBench && maxBenchPts >= 0) bestBench = { name: maxBenchName, pts: maxBenchPts };
+        }
+
+        t.bestStarter = bestStarter;
+        t.bestBench = bestBench;
+      });
+
+      // Sort matching xlsx screenshot:
+      // Winners (W) first sorted by PF desc, then Ties (T), then Losers (L) sorted by PF desc
+      teamList.sort((a, b) => {
+        const order = { 'W': 1, 'T': 2, 'L': 3 };
+        if (order[a.result] !== order[b.result]) {
+          return order[a.result] - order[b.result];
+        }
+        return b.pf - a.pf;
+      });
+
+      // Calculate Heatmaps
+      const pfStats = getColStats(teamList, r => r.pf);
+      const paStats = getColStats(teamList, r => r.pa);
+      const starterStats = getColStats(teamList, r => r.bestStarter.pts);
+      const benchStats = getColStats(teamList, r => r.bestBench.pts);
+      const maxDelta = Math.max(...teamList.map(t => Math.abs(t.delta)), 1);
 
       const tbody = document.getElementById('matchups-tbody');
-      tbody.innerHTML = rows.map(r => {
-        const mgr = getVal(r, ['manager_name', 'manager']) || '';
-        const tname = getVal(r, ['team_name', 'name']) || `Team ${getVal(r, ['team_id'])}`;
-        const pf = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
-        const pa = Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0;
-        const delta = pf - pa;
-        const isWin = delta > 0;
-        const isTie = delta === 0;
-        const resLetter = isWin ? 'W' : (isTie ? 'T' : 'L');
+      tbody.innerHTML = teamList.map(r => {
+        const pfBg = HEATMAPS.greenToClear(r.pf, pfStats.min, pfStats.max);
+        const paBg = HEATMAPS.redToClear(r.pa, paStats.min, paStats.max);
+        const starterBg = r.bestStarter.pts > 0 ? HEATMAPS.greenToClear(r.bestStarter.pts, starterStats.min, starterStats.max) : 'transparent';
+        const benchBg = r.bestBench.pts > 0 ? HEATMAPS.greenToClear(r.bestBench.pts, benchStats.min, benchStats.max) : 'transparent';
 
-        const starterName = getVal(r, ['best_starter_name']) || '--';
-        const starterPts = Number(getVal(r, ['best_starter_pts'])) || 0;
-        const benchName = getVal(r, ['best_bench_name']) || '--';
-        const benchPts = Number(getVal(r, ['best_bench_pts'])) || 0;
-
-        const pfBg = HEATMAPS.greenToClear(pf, pfStats.min, pfStats.max);
-        const paBg = HEATMAPS.redToClear(pa, paStats.min, paStats.max);
-        const starterBg = starterPts > 0 ? HEATMAPS.greenToClear(starterPts, starterStats.min, starterStats.max) : 'transparent';
-        const benchBg = benchPts > 0 ? HEATMAPS.greenToClear(benchPts, benchStats.min, benchStats.max) : 'transparent';
-        
         // W/L Delta Cell Styling
         let wlBg = 'transparent';
         let wlTextClass = 'text-slate-700 dark:text-slate-300';
-        if (isWin) {
-          const intensity = Math.min(1, delta / maxDelta);
+        if (r.result === 'W') {
+          const intensity = Math.min(1, r.delta / maxDelta);
           wlBg = `rgba(34, 197, 94, ${(0.15 + 0.35 * intensity).toFixed(2)})`;
           wlTextClass = 'text-emerald-700 dark:text-emerald-300 font-bold';
-        } else if (!isTie) {
-          const intensity = Math.min(1, Math.abs(delta) / maxDelta);
+        } else if (r.result === 'L') {
+          const intensity = Math.min(1, Math.abs(r.delta) / maxDelta);
           wlBg = `rgba(239, 68, 68, ${(0.15 + 0.35 * intensity).toFixed(2)})`;
           wlTextClass = 'text-rose-700 dark:text-rose-300 font-bold';
         }
@@ -1205,25 +1293,25 @@
         return `
           <tr>
             <td class="text-left font-medium">
-              <span class="text-xs text-slate-500 dark:text-slate-400 font-normal mr-1 border-r border-slate-300 dark:border-slate-700 pr-1.5">${mgr}</span>
-              <span class="text-slate-900 dark:text-slate-100 font-semibold">${tname}</span>
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-normal mr-2 inline-block min-w-[50px] border-r border-slate-300 dark:border-slate-700 pr-1.5">${escapeHTML(r.manager)}</span>
+              <span class="text-slate-900 dark:text-slate-100 font-semibold">${escapeHTML(r.team_name)}</span>
             </td>
-            <td class="text-right font-mono font-bold" style="background-color: ${pfBg}">${pf.toFixed(2)}</td>
-            <td class="text-right font-mono" style="background-color: ${paBg}">${pa.toFixed(2)}</td>
+            <td class="text-right font-mono font-bold" style="background-color: ${pfBg}">${r.pf.toFixed(2)}</td>
+            <td class="text-right font-mono" style="background-color: ${paBg}">${r.pa.toFixed(2)}</td>
             <td class="text-center font-mono ${wlTextClass}" style="background-color: ${wlBg}">
-              <span class="inline-block w-4 font-bold text-center mr-1">${resLetter}</span>
-              <span>${delta > 0 ? '+' : ''}${delta.toFixed(2)}</span>
+              <span class="inline-block w-4 font-bold text-center mr-1">${r.result}</span>
+              <span>${r.delta > 0 ? '+' : ''}${r.delta.toFixed(2)}</span>
             </td>
             <td class="text-center font-mono font-semibold" style="background-color: ${etewBg}">
               ${r.etewWins} - ${r.etewLosses}
             </td>
             <td class="text-left font-sans text-xs" style="background-color: ${starterBg}">
-              <span class="font-medium text-slate-800 dark:text-slate-200">${starterName}</span>
-              ${starterPts > 0 ? `<span class="float-right font-mono font-bold">${starterPts.toFixed(2)}</span>` : ''}
+              <span class="font-medium text-slate-800 dark:text-slate-200">${escapeHTML(r.bestStarter.name)}</span>
+              ${r.bestStarter.pts > 0 ? `<span class="float-right font-mono font-bold ml-2">${r.bestStarter.pts.toFixed(2)}</span>` : ''}
             </td>
             <td class="text-left font-sans text-xs" style="background-color: ${benchBg}">
-              <span class="font-medium text-slate-800 dark:text-slate-200">${benchName}</span>
-              ${benchPts > 0 ? `<span class="float-right font-mono font-bold">${benchPts.toFixed(2)}</span>` : ''}
+              <span class="font-medium text-slate-800 dark:text-slate-200">${escapeHTML(r.bestBench.name)}</span>
+              ${r.bestBench.pts > 0 ? `<span class="float-right font-mono font-bold ml-2">${r.bestBench.pts.toFixed(2)}</span>` : ''}
             </td>
           </tr>`;
       }).join('');
