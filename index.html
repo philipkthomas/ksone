@@ -199,7 +199,7 @@
         <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
 
           <div class="flex items-center gap-2">
-            <span class="text-slate-600 dark:text-slate-400 font-medium">Year:</span>
+            <span class="text-slate-600 dark:text-slate-400 font-medium">Y:</span>
             <div class="wk-stepper">
               <button type="button" id="yr-prev" class="wk-arrow" title="Previous year" aria-label="Previous year"><i class="fa-solid fa-chevron-left"></i></button>
               <select id="filter-year" class="wk-select yr-select" aria-label="Year"></select>
@@ -208,7 +208,7 @@
           </div>
 
           <div id="week-filter-group" class="flex items-center gap-2">
-            <span id="wk-label" class="text-slate-600 dark:text-slate-400 font-medium">Weeks:</span>
+            <span id="wk-label" class="text-slate-600 dark:text-slate-400 font-medium">W:</span>
 
             <div id="wk-from-wrap" class="flex items-center gap-2">
               <div class="wk-stepper">
@@ -640,6 +640,7 @@
       // weekMax doubles as THE selected week on the single-week tabs (Matchups, Live Win Prob)
       filters: { year: 2026, weekMin: 1, weekMax: 8, hideCW: false, selectedManager: null, matchup: null },
       hcwUserOverride: false,
+      weekUserOverride: false,
       loaded: false, loading: false, dataVersion: 0, dbSig: null, SQL: null, _selfHash: null,
       sort: { field: 'actualRank', dir: 'asc' },
       computedStandings: [],
@@ -690,6 +691,13 @@
         if (curYear && curWeek) return { curYear, curWeek };
       }
       return null;
+    }
+
+    function getPlayoffStartWeek(year) {
+      const teams = STATE.data.teams || [];
+      const match = teams.find(t => Number(getVal(t, ['year', 'YR'])) === Number(year) && getVal(t, ['playoff_start_week']) !== undefined);
+      const val = match ? Number(getVal(match, ['playoff_start_week'])) : NaN;
+      return (!isNaN(val) && val > 1) ? val : 15;
     }
 
     function getMaxWeekForYear(yr) {
@@ -905,15 +913,16 @@
     //    overridden by URL or user toggle; it is hidden on Matchups / Live Win Prob.
     //  * Standings & Props use the full [wmin, wmax] range. Survivor, Wins Above Even and the Props divisional chart are
     //    cumulative from week 1, so on those tabs only wmax ("through week N") applies and the From control is hidden.
-    //  * Defaults when the URL has no wmax: current week for the current year, last week with data for past years.
+    //  * Defaults when the URL has no wmax: current week for the current year; for past/non-current years, the week
+    //    before playoff_start_week on Standings, Props, and Survivor, and the last week with data on other tabs.
     // ==========================================
     const TAB_FILTER_MODE = {
-      standings:  { from: true,  hcw: true,  defaultHcw: false, label: 'Weeks' },
-      props:      { from: true,  hcw: true,  defaultHcw: true,  label: 'Weeks' },
-      survivor:   { from: false, hcw: true,  defaultHcw: false, label: 'Through week' },
-      wins_above: { from: false, hcw: true,  defaultHcw: true,  label: 'Through week' },
-      matchups:   { from: false, hcw: false, defaultHcw: false, label: 'Week' },
-      live_prob:  { from: false, hcw: false, defaultHcw: false, label: 'Week' }
+      standings:  { from: true,  hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
+      props:      { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: true,  label: 'W' },
+      survivor:   { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
+      wins_above: { from: false, hcw: true,  defaultHcw: true,  regularSeasonDefault: false, label: 'W' },
+      matchups:   { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
+      live_prob:  { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' }
     };
 
     const FilterEngine = {
@@ -965,10 +974,15 @@
         return weeks.reduce((best, x) => Math.abs(x - w) < Math.abs(best - w) ? x : best, weeks[0]);
       },
 
-      defaultWeekMax(year) {
+      defaultWeekMax(year, tabKey = this.activeTab()) {
         const cw = getCurrentYearAndWeek();
         const weeks = this.weeksForYear(year);
         if (cw && Number(cw.curYear) === Number(year)) return cw.curWeek;
+        const m = TAB_FILTER_MODE[tabKey] || TAB_FILTER_MODE.standings;
+        if (m.regularSeasonDefault) {
+          const prePlayoffWeek = Math.max(1, getPlayoffStartWeek(year) - 1);
+          return this.snap(weeks, prePlayoffWeek);
+        }
         return weeks[weeks.length - 1];
       },
 
@@ -1055,12 +1069,15 @@
 
       const weeks = FilterEngine.weeksForYear(yr);
       let wmax = toInt(p.get('wmax'), 1, 40);
-      wmax = wmax === null ? FilterEngine.defaultWeekMax(yr) : FilterEngine.snap(weeks, wmax);
+      const hasUrlWmax = wmax !== null;
+      wmax = hasUrlWmax ? FilterEngine.snap(weeks, wmax) : FilterEngine.defaultWeekMax(yr, activeTab);
       let wmin = toInt(p.get('wmin'), 1, 40);
-      wmin = wmin === null ? weeks[0] : FilterEngine.snap(weeks, wmin);
+      const hasUrlWmin = wmin !== null;
+      wmin = hasUrlWmin ? FilterEngine.snap(weeks, wmin) : weeks[0];
       if (wmin > wmax) wmin = wmax;
       f.weekMin = wmin;
       f.weekMax = wmax;
+      STATE.weekUserOverride = hasUrlWmax || hasUrlWmin;
 
       if (p.has('hcw')) {
         f.hideCW = !['0', 'false', 'off'].includes(String(p.get('hcw')).toLowerCase());
@@ -1422,6 +1439,19 @@
         STATE.filters.hideCW = FilterEngine.defaultHcwForTab(tabKey);
       }
 
+      // On non-current years, default wmax according to the active tab's rule unless manually overridden
+      if (STATE.loaded && !STATE.weekUserOverride) {
+        const cw = getCurrentYearAndWeek();
+        const isCurrentYear = cw && Number(cw.curYear) === Number(STATE.filters.year);
+        if (!isCurrentYear) {
+          const weeks = FilterEngine.weeksForYear(STATE.filters.year);
+          STATE.filters.weekMax = FilterEngine.defaultWeekMax(STATE.filters.year, tabKey);
+          if (STATE.filters.weekMin > STATE.filters.weekMax) {
+            STATE.filters.weekMin = weeks[0];
+          }
+        }
+      }
+
       applyTabFilterVisibility(tabKey);
       if (STATE.loaded && render) {
         syncFilterUI();
@@ -1514,9 +1544,10 @@
       const yr = Number(value);
       if (!yr || yr === Number(f.year)) return;
       f.year = yr;
+      STATE.weekUserOverride = false;
       const weeks = FilterEngine.weeksForYear(f.year);
       f.weekMin = weeks[0];
-      f.weekMax = FilterEngine.defaultWeekMax(f.year);
+      f.weekMax = FilterEngine.defaultWeekMax(f.year, FilterEngine.activeTab());
       f.matchup = null;
       onFiltersChanged();
     }
@@ -1537,6 +1568,7 @@
       const f = STATE.filters;
       const v = Number(value);
       if (!v) return;
+      STATE.weekUserOverride = true;
       if (which === 'min') { f.weekMin = v; if (f.weekMin > f.weekMax) f.weekMax = f.weekMin; }
       else { f.weekMax = v; if (f.weekMax < f.weekMin) f.weekMin = f.weekMax; }
       onFiltersChanged();
