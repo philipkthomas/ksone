@@ -56,7 +56,7 @@
       transition: background-color 0.15s ease;
       color: #0f172a;
     }
-    .standings-table tr:hover td, .matchup-table tr:hover td, .props-table tr:hover td, .survivor-table tr:hover td { filter: brightness(0.95); }
+    .standings-table tr:hover td, .matchup-table tr:hover td, .props-table tr:hover td, .survivor-table tr:hover td { filter: brightness(0.97); }
 
     .dark .standings-table th, .dark .matchup-table th, .dark .props-table th, .dark .survivor-table th {
       background-color: #0f172a;
@@ -70,7 +70,7 @@
       border-right: 1px solid #1e293b;
       color: #f8fafc;
     }
-    .dark .standings-table tr:hover td, .dark .matchup-table tr:hover td, .dark .props-table tr:hover td, .dark .survivor-table tr:hover td { filter: brightness(1.15); }
+    .dark .standings-table tr:hover td, .dark .matchup-table tr:hover td, .dark .props-table tr:hover td, .dark .survivor-table tr:hover td { filter: brightness(1.08); }
 
     .prop-border-right {
       border-right: 3px solid #64748b !important;
@@ -108,24 +108,169 @@
     .sparkline-dot { transition: r 0.15s ease, filter 0.15s ease; }
     .sparkline-dot:hover { r: 5.5; filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.8)); }
 
-    /* Survivor Tab Specific Bar Styles */
+    /* ============================================================
+       SURVIVOR TAB: FIXED LEFT-TO-RIGHT GRID, CURRENT WEEK & ICE BLOCKS
+       ============================================================ */
+    .survivor-table {
+      table-layout: fixed;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    @keyframes survivorBarReveal {
+      0% {
+        opacity: 0;
+        transform: translateX(-8px) scaleX(0.88);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0) scaleX(1);
+      }
+    }
+
+    @keyframes freezeSolidify {
+      0% {
+        opacity: 0.35;
+        transform: scale(0.92);
+        filter: brightness(1.35) blur(1.5px);
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.85), inset 0 0 12px rgba(255, 255, 255, 0.9);
+      }
+      45% {
+        opacity: 1;
+        transform: scale(1.04);
+        filter: brightness(1.18) blur(0px);
+        box-shadow: 0 0 14px 2px rgba(56, 189, 248, 0.75), inset 0 0 14px rgba(224, 242, 254, 0.95);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: 0 2px 6px rgba(14, 165, 233, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -2px 6px rgba(2, 132, 199, 0.35);
+      }
+    }
+
+    @keyframes iceSheenSweep {
+      0% {
+        transform: translateX(-140%) skewX(-22deg);
+        opacity: 0;
+      }
+      35% {
+        opacity: 0.85;
+      }
+      100% {
+        transform: translateX(220%) skewX(-22deg);
+        opacity: 0;
+      }
+    }
+
     .survivor-cell-box {
+      position: relative;
+      overflow: hidden;
       border: 1.5px solid #1e293b;
-      border-radius: 4px;
+      border-radius: 5px;
       padding: 4px 6px;
       font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
       font-size: 0.8125rem;
       font-weight: 800;
       white-space: nowrap;
       text-align: center;
-      transition: width 0.3s ease, background-color 0.2s ease;
       box-shadow: 0 1px 2px rgba(0,0,0,0.08);
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 4px;
+      transform-origin: left center;
     }
     .dark .survivor-cell-box {
       border-color: #475569;
+    }
+
+    .survivor-bar-newly-revealed {
+      animation: survivorBarReveal 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* Solidified Ice Block (locked-in frozen state on subsequent ticks & post-elimination weeks) */
+    .survivor-ice-solid {
+      background: linear-gradient(135deg, rgba(224, 242, 254, 0.95) 0%, rgba(125, 211, 252, 0.88) 50%, rgba(186, 230, 253, 0.95) 100%) !important;
+      border: 1.5px solid #0284c7 !important;
+      color: #0c4a6e !important;
+      box-shadow:
+        0 2px 5px rgba(2, 132, 199, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -3px 6px rgba(14, 165, 233, 0.28) !important;
+    }
+    .dark .survivor-ice-solid {
+      background: linear-gradient(135deg, rgba(14, 116, 144, 0.88) 0%, rgba(3, 105, 161, 0.92) 52%, rgba(2, 132, 199, 0.86) 100%) !important;
+      border: 1.5px solid #38bdf8 !important;
+      color: #f0f9ff !important;
+      box-shadow:
+        0 2px 8px rgba(56, 189, 248, 0.35),
+        inset 0 1px 0 rgba(186, 230, 253, 0.65),
+        inset 0 -3px 8px rgba(12, 74, 110, 0.65) !important;
+    }
+
+    /* Crystalline frost facet diagonal pattern inside ice blocks */
+    .survivor-ice-solid::before,
+    .survivor-ice-freezing::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(125deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.08) 38%, transparent 39%),
+        linear-gradient(305deg, rgba(255,255,255,0.28) 0%, transparent 45%);
+      pointer-events: none;
+    }
+
+    /* Active Freezing Animation on the exact elimination tick */
+    .survivor-ice-freezing {
+      background: linear-gradient(135deg, rgba(240, 249, 255, 0.98) 0%, rgba(125, 211, 252, 0.92) 48%, rgba(56, 189, 248, 0.9) 100%) !important;
+      border: 1.5px solid #0ea5e9 !important;
+      color: #082f49 !important;
+      animation: freezeSolidify 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .dark .survivor-ice-freezing {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.92) 0%, rgba(2, 132, 199, 0.95) 50%, rgba(12, 74, 110, 0.96) 100%) !important;
+      border: 1.5px solid #bae6fd !important;
+      color: #ffffff !important;
+      animation: freezeSolidify 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .survivor-ice-freezing::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 55%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+      animation: iceSheenSweep 0.7s ease-out forwards;
+      pointer-events: none;
+    }
+
+    /* Current Week Column Highlighting in Survivor Table */
+    .survivor-th-current {
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.08) 100%) !important;
+      color: #b45309 !important;
+      border-top: 2.5px solid #f59e0b !important;
+      border-bottom: 2px solid #f59e0b !important;
+      border-left: 1.5px solid rgba(245, 158, 11, 0.45) !important;
+      border-right: 1.5px solid rgba(245, 158, 11, 0.45) !important;
+    }
+    .dark .survivor-th-current {
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.22) 0%, rgba(245, 158, 11, 0.09) 100%) !important;
+      color: #fbbf24 !important;
+      border-top: 2.5px solid #fbbf24 !important;
+      border-bottom: 2px solid #f59e0b !important;
+      border-left: 1.5px solid rgba(251, 191, 36, 0.4) !important;
+      border-right: 1.5px solid rgba(251, 191, 36, 0.4) !important;
+    }
+    .survivor-td-current {
+      background-color: rgba(245, 158, 11, 0.06) !important;
+      border-left: 1.5px solid rgba(245, 158, 11, 0.32) !important;
+      border-right: 1.5px solid rgba(245, 158, 11, 0.32) !important;
+    }
+    .dark .survivor-td-current {
+      background-color: rgba(245, 158, 11, 0.08) !important;
+      border-left: 1.5px solid rgba(251, 191, 36, 0.28) !important;
+      border-right: 1.5px solid rgba(251, 191, 36, 0.28) !important;
     }
 
     /* ---- Global filter bar: year & week steppers (select + prev/next arrows) ---- */
@@ -323,12 +468,29 @@
             <button id="btn-toggle-survivor-chart" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Graph View</button>
           </div>
         </div>
+
+        <!-- LEGEND / STATUS PILLS -->
+        <div class="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-sm bg-slate-300 dark:bg-slate-700 border border-slate-500"></span> Warmup (W1–W5)
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-sm bg-orange-300 dark:bg-orange-600 border border-slate-600"></span> Active
+          </span>
+          <span class="inline-flex items-center gap-1.5 text-sky-700 dark:text-sky-300">
+            <i class="fa-solid fa-snowflake text-sky-500"></i> Frozen / Eliminated
+          </span>
+          <span id="survivor-cw-legend" class="hidden inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Current Week
+          </span>
+        </div>
       </div>
 
       <!-- SURVIVOR TABULAR VIEW -->
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xl overflow-x-auto" id="survivor-table-container">
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xl overflow-x-auto" id="survivor-table-container">
         <div class="overflow-x-auto">
-          <table class="survivor-table min-w-full" id="survivor-table">
+          <table class="survivor-table" id="survivor-table">
+            <colgroup id="survivor-colgroup"></colgroup>
             <thead id="survivor-thead"></thead>
             <tbody id="survivor-tbody"></tbody>
           </table>
@@ -351,6 +513,9 @@
           <button id="btn-survivor-restart" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
             <i class="fa-solid fa-rotate-right"></i> Restart
           </button>
+          <span id="survivor-tick-label" class="font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
+            Week -- / --
+          </span>
         </div>
 
         <div class="flex flex-wrap items-center gap-4">
@@ -626,7 +791,6 @@
     // ==========================================
     const STATE = {
       data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
-      // weekMax doubles as THE selected week on the single-week tabs (Matchups, Live Win Prob)
       filters: { year: 2026, weekMin: 1, weekMax: 8, hideCW: false, selectedManager: null, matchup: null },
       hcwUserOverride: false,
       weekUserOverride: false,
@@ -649,11 +813,11 @@
       survivor: {
         viewMode: 'table', // 'table' or 'chart'
         chartInstance: null, fullSeries: null, animationTimer: null,
-        isPlaying: false, currentIdx: 0, speedMultiplier: 1.0
+        isPlaying: false, currentIdx: 0, prevIdx: 0, speedMultiplier: 1.0
       }
     };
 
-    // Manager Signature Color Palette matching XLSX reference screenshot
+    // Manager Signature Color Palette
     const MANAGER_COLORS = {
       'Brad': '#dc2626',      // Red
       'Christian': '#16a34a', // Green
@@ -696,7 +860,7 @@
       if (rawWeeks.length > 0) return Math.max(...rawWeeks);
       
       const sc = STATE.data.scores || [];
-      const scYr = sc.filter(r => Number(getVal(r, ['year', 'YR', 'YR'])) === Number(yr));
+      const scYr = sc.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
       const scWeeks = [...new Set(scYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
       if (scWeeks.length > 0) return Math.max(...scWeeks);
       
@@ -887,7 +1051,7 @@
     }
 
     // ==========================================
-    // SECTION 1B: FILTER ENGINE  (shared year & week filters, "Hide current week" gate, URL <-> state sync)
+    // SECTION 1B: FILTER ENGINE
     // ==========================================
     const TAB_FILTER_MODE = {
       standings:  { from: true,  hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
@@ -1727,7 +1891,7 @@
       if (csvBtn) csvBtn.addEventListener('click', downloadMatchupsCSV);
     }
 
-    function populateMatchupsWeeks() { /* kept for compatibility: week select moved to the global filter bar */ }
+    function populateMatchupsWeeks() { }
 
     function renderMatchupsTable() {
       const yr = STATE.filters.year;
@@ -1935,6 +2099,14 @@
     // ==========================================
     // SECTION 6: SURVIVOR TAB ENGINE (TABLE & GRAPH VIEWS)
     // ==========================================
+    function getSurvivorCurrentWeek() {
+      const cw = getCurrentYearAndWeek();
+      if (cw && Number(cw.curYear) === Number(STATE.filters.year)) {
+        return Number(cw.curWeek);
+      }
+      return null;
+    }
+
     const survivorBackgroundPlugin = {
       id: 'survivorBackgroundPlugin',
       beforeDraw(chart) {
@@ -1942,18 +2114,25 @@
         if (!chartArea || !scales.x) return;
 
         const isDark = document.documentElement.classList.contains('dark');
-        
+        const s = STATE.survivor.fullSeries;
+        const maxWk = s ? s.maxWeek : 17;
+
         const x0 = scales.x.getPixelForValue(0);
-        const x5 = scales.x.getPixelForValue(5);
+        const x5 = scales.x.getPixelForValue(Math.min(5, maxWk));
 
         ctx.save();
+        // Warmup Zone (Weeks 0..5)
         ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.08)' : 'rgba(241, 245, 249, 0.75)';
         ctx.fillRect(x0, chartArea.top, x5 - x0, chartArea.height);
 
+        // Elimination Zone (Weeks 5..maxWk)
         const xRight = chartArea.right;
-        ctx.fillStyle = isDark ? 'rgba(234, 88, 12, 0.08)' : 'rgba(255, 237, 213, 0.55)';
-        ctx.fillRect(x5, chartArea.top, xRight - x5, chartArea.height);
+        if (xRight > x5) {
+          ctx.fillStyle = isDark ? 'rgba(234, 88, 12, 0.08)' : 'rgba(255, 237, 213, 0.55)';
+          ctx.fillRect(x5, chartArea.top, xRight - x5, chartArea.height);
+        }
 
+        // Elimination start divider line at W5
         ctx.beginPath();
         ctx.setLineDash([4, 4]);
         ctx.strokeStyle = isDark ? 'rgba(203, 213, 225, 0.4)' : 'rgba(148, 163, 184, 0.6)';
@@ -1962,31 +2141,82 @@
         ctx.lineTo(x5, chartArea.bottom);
         ctx.stroke();
 
+        // Current Week Highlight Band & Marker Line
+        const curWk = getSurvivorCurrentWeek();
+        if (curWk && curWk >= 1 && curWk <= maxWk) {
+          const xCur = scales.x.getPixelForValue(curWk);
+          const xPrev = scales.x.getPixelForValue(curWk - 1);
+          const halfStep = Math.abs(xCur - xPrev) * 0.45;
+          const bandLeft = Math.max(chartArea.left, xCur - halfStep);
+          const bandRight = Math.min(chartArea.right, xCur + halfStep);
+
+          ctx.fillStyle = isDark ? 'rgba(251, 191, 36, 0.12)' : 'rgba(245, 158, 11, 0.14)';
+          ctx.fillRect(bandLeft, chartArea.top, bandRight - bandLeft, chartArea.height);
+
+          ctx.beginPath();
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = isDark ? '#fbbf24' : '#d97706';
+          ctx.lineWidth = 2;
+          ctx.moveTo(xCur, chartArea.top);
+          ctx.lineTo(xCur, chartArea.bottom);
+          ctx.stroke();
+
+          // Current Week Pill Label at top of line
+          ctx.setLineDash([]);
+          const labelText = `NOW • W${curWk}`;
+          ctx.font = 'bold 10px ui-sans-serif, system-ui, sans-serif';
+          const textW = ctx.measureText(labelText).width;
+          const pillW = textW + 12;
+          const pillH = 18;
+          const pillX = Math.min(chartArea.right - pillW - 4, Math.max(chartArea.left + 4, xCur - pillW / 2));
+          const pillY = chartArea.top + 6;
+
+          ctx.fillStyle = isDark ? '#f59e0b' : '#d97706';
+          ctx.beginPath();
+          ctx.roundRect(pillX, pillY, pillW, pillH, 4);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(labelText, pillX + pillW / 2, pillY + pillH / 2 + 0.5);
+        }
+
         ctx.restore();
       }
     };
 
-    function drawProhibitedCircleMarker(ctx, x, y, size, color) {
-      const radius = size;
+    function drawIceEliminationMarker(ctx, x, y, size, color) {
       ctx.save();
+      // Outer icy halo ring
       ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 2 * Math.PI);
-      ctx.fillStyle = '#ffffff';
+      ctx.arc(x, y, size + 3.5, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
       ctx.fill();
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#38bdf8';
       ctx.stroke();
 
-      const angle = Math.PI / 4;
-      const dx = radius * Math.cos(angle);
-      const dy = radius * Math.sin(angle);
-
+      // Core ice crystal circle
       ctx.beginPath();
-      ctx.moveTo(x - dx, y - dy);
-      ctx.lineTo(x + dx, y + dy);
-      ctx.lineWidth = 2.5;
+      ctx.arc(x, y, size, 0, 2 * Math.PI);
+      ctx.fillStyle = '#e0f2fe';
+      ctx.fill();
+      ctx.lineWidth = 2;
       ctx.strokeStyle = color;
       ctx.stroke();
+
+      // Snowflake / Frost Crosshairs inside marker
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 1.6;
+      const r = size * 0.62;
+      for (let i = 0; i < 3; i++) {
+        const ang = (i * Math.PI) / 3;
+        ctx.beginPath();
+        ctx.moveTo(x - r * Math.cos(ang), y - r * Math.sin(ang));
+        ctx.lineTo(x + r * Math.cos(ang), y + r * Math.sin(ang));
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -2007,7 +2237,7 @@
             const pointIdx = elimWk;
             const pt = meta.data[pointIdx];
             if (pt && !pt.skip && pt.x !== undefined && pt.y !== undefined) {
-              drawProhibitedCircleMarker(ctx, pt.x, pt.y, 7, ds.borderColor);
+              drawIceEliminationMarker(ctx, pt.x, pt.y, 7, ds.borderColor);
             }
           }
         });
@@ -2053,8 +2283,9 @@
           const total = STATE.survivor.fullSeries ? STATE.survivor.fullSeries.maxWeek : 0;
           if (total === 0) return;
           const targetIdx = Math.max(1, Math.round((pct / 100) * total));
+          STATE.survivor.prevIdx = STATE.survivor.currentIdx;
           STATE.survivor.currentIdx = targetIdx;
-          renderSurvivorFrameAtIdx(targetIdx);
+          renderSurvivorFrameAtIdx(targetIdx, false);
         });
       }
 
@@ -2081,7 +2312,41 @@
         if (tableContainer) tableContainer.classList.add('hidden');
         if (chartContainer) chartContainer.classList.remove('hidden');
       }
-      renderSurvivorFrameAtIdx(STATE.survivor.currentIdx);
+      renderSurvivorFrameAtIdx(STATE.survivor.currentIdx, false);
+    }
+
+    function buildSurvivorFixedTableScaffold(s) {
+      const colgroup = document.getElementById('survivor-colgroup');
+      const thead = document.getElementById('survivor-thead');
+      if (!colgroup || !thead) return;
+
+      const curWk = getSurvivorCurrentWeek();
+      const cwLegend = document.getElementById('survivor-cw-legend');
+      if (cwLegend) {
+        if (curWk && curWk >= 1 && curWk <= s.maxWeek) cwLegend.classList.remove('hidden');
+        else cwLegend.classList.add('hidden');
+      }
+
+      // Fixed column widths so the grid NEVER stretches or shifts during left-to-right animation
+      let colHtml = `<col style="width: 195px;">`;
+      for (let w = 1; w <= s.maxWeek; w++) {
+        colHtml += `<col style="width: 112px;">`;
+      }
+      colgroup.innerHTML = colHtml;
+
+      let headHtml = `<tr><th class="text-left font-extrabold px-3 py-2.5 text-slate-700 dark:text-slate-300 sticky left-0 z-10 bg-slate-100 dark:bg-slate-900">TEAM</th>`;
+      for (let w = 1; w <= s.maxWeek; w++) {
+        const isCurrent = curWk !== null && w === curWk;
+        const thClass = isCurrent
+          ? 'survivor-th-current text-center font-extrabold px-2 py-2'
+          : 'text-center font-bold px-2 py-2 text-slate-600 dark:text-slate-400';
+        const badgeHtml = isCurrent
+          ? `<span class="ml-1 inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>NOW</span>`
+          : '';
+        headHtml += `<th class="${thClass}">WK ${w}${badgeHtml}</th>`;
+      }
+      headHtml += '</tr>';
+      thead.innerHTML = headHtml;
     }
 
     function renderSurvivorTab() {
@@ -2089,15 +2354,20 @@
       if (!s) { renderSurvivorEmpty(emptyScopeMessage('survivor data')); return; }
       STATE.survivor.fullSeries = s;
 
+      buildSurvivorFixedTableScaffold(s);
       initSurvivorChartCanvas(s);
+
+      STATE.survivor.prevIdx = s.maxWeek;
       STATE.survivor.currentIdx = s.maxWeek;
-      renderSurvivorFrameAtIdx(s.maxWeek);
+      renderSurvivorFrameAtIdx(s.maxWeek, false);
     }
 
     function renderSurvivorEmpty(msg) {
       clearChartState(STATE.survivor);
+      const colgroup = document.getElementById('survivor-colgroup');
       const thead = document.getElementById('survivor-thead');
       const tbody = document.getElementById('survivor-tbody');
+      if (colgroup) colgroup.innerHTML = '';
       if (thead) thead.innerHTML = '';
       if (tbody) tbody.innerHTML = `<tr><td class="p-8 text-center text-slate-500 dark:text-slate-400">${msg}</td></tr>`;
       setChartEmpty('survivorPFChart', msg);
@@ -2264,7 +2534,7 @@
                   if (ctx.parsed.y === null || ctx.parsed.y === undefined) return null;
                   const elimWk = ctx.dataset.eliminatedWeek;
                   const isElim = elimWk && ctx.dataIndex === elimWk;
-                  return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} PF${isElim ? ' (ELIMINATED)' : ''}`;
+                  return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} PF${isElim ? ' ❄️ (FROZEN / ELIMINATED)' : ''}`;
                 }
               }
             }
@@ -2289,73 +2559,117 @@
       });
     }
 
-    function renderSurvivorFrameAtIdx(currentWk) {
+    function renderSurvivorFrameAtIdx(currentWk, isAnimatingStep = false) {
       const s = STATE.survivor.fullSeries;
       if (!s) return;
 
       const validWk = Math.min(s.maxWeek, Math.max(1, currentWk));
+      const curRealWk = getSurvivorCurrentWeek();
 
-      // Render Table View Frame
-      const thead = document.getElementById('survivor-thead');
+      const tickLbl = document.getElementById('survivor-tick-label');
+      if (tickLbl) {
+        tickLbl.innerText = `Week ${validWk} / ${s.maxWeek}`;
+      }
+
+      // Render Fixed-Layout Table View Frame (Always renders all 1..maxWeek columns so nothing stretches!)
       const tbody = document.getElementById('survivor-tbody');
-      if (thead && tbody) {
-        let headHtml = '<tr><th class="text-left font-extrabold px-3 py-2 text-slate-700 dark:text-slate-300" style="min-width: 180px;">TEAM</th>';
-        for (let w = 1; w <= validWk; w++) {
-          headHtml += `<th class="text-center font-bold px-2 py-2 text-slate-600 dark:text-slate-400" style="min-width: 105px;">WK ${w}</th>`;
-        }
-        headHtml += '</tr>';
-        thead.innerHTML = headHtml;
-
+      if (tbody) {
         const isDark = document.documentElement.classList.contains('dark');
 
         tbody.innerHTML = s.orderedTeams.map(t => {
           const mgrColor = getManagerColor(t.manager);
+          const isEliminatedByNow = t.eliminatedWeek !== null && t.eliminatedWeek <= validWk;
+          const teamNameClass = isEliminatedByNow
+            ? 'text-slate-400 dark:text-slate-500 font-semibold text-xs'
+            : 'text-slate-900 dark:text-slate-100 font-semibold text-xs';
+
           let rowHtml = `<tr>
-            <td class="text-left font-medium px-3 py-2 border-r border-slate-200 dark:border-slate-800">
+            <td class="text-left font-medium px-3 py-2 border-r border-slate-200 dark:border-slate-800 sticky left-0 z-10 bg-white dark:bg-slate-950 truncate">
               <span class="text-xs font-semibold mr-1.5 inline-block border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${mgrColor}">${escapeHTML(t.manager)}</span>
-              <span class="text-slate-900 dark:text-slate-100 font-semibold text-xs">${escapeHTML(t.teamName)}</span>
+              <span class="${teamNameClass}">${escapeHTML(t.teamName)}</span>
             </td>`;
 
-          for (let w = 1; w <= validWk; w++) {
+          // Loop through ALL weeks 1..s.maxWeek so columns remain fixed in place and fill left-to-right
+          for (let w = 1; w <= s.maxWeek; w++) {
+            const isCurrentCol = curRealWk !== null && w === curRealWk;
+            const tdCurrentClass = isCurrentCol ? 'survivor-td-current' : '';
+
+            // Future weeks beyond current replay tick: render blank unrevealed slot
+            if (w > validWk) {
+              rowHtml += `
+                <td class="text-left px-1.5 py-1.5 ${tdCurrentClass}">
+                  <div class="h-[26px] rounded border border-dashed border-slate-200/70 dark:border-slate-800/70 bg-slate-50/40 dark:bg-slate-900/30"></div>
+                </td>`;
+              continue;
+            }
+
             const score = s.teamScores[t.teamId]?.[w];
             if (score === undefined || score === null) {
-              rowHtml += `<td class="text-center px-1 py-1.5 text-slate-400 font-mono text-xs">--</td>`;
+              rowHtml += `<td class="text-center px-1 py-1.5 text-slate-400 font-mono text-xs ${tdCurrentClass}">--</td>`;
               continue;
             }
 
             const isGrayedOut = w <= 5;
-            const isEliminatedCell = w >= 6 && t.eliminatedWeek !== null && w >= t.eliminatedWeek;
+            const isEliminationWeek = w >= 6 && t.eliminatedWeek !== null && w === t.eliminatedWeek;
+            const isPostEliminationFrozen = w >= 6 && t.eliminatedWeek !== null && w > t.eliminatedWeek;
+            const isFrozenCell = isEliminationWeek || isPostEliminationFrozen;
+
+            // Newly revealed cell on the advancing tick gets entrance / freeze-solidify animation
+            const isNewlyRevealed = isAnimatingStep && w === validWk;
 
             let bgColor = '';
             let textColorClass = 'text-slate-900 dark:text-slate-100 font-bold';
             let borderColor = isDark ? '#475569' : '#1e293b';
+            let extraBoxClasses = '';
+            let iconHtml = '';
 
-            if (isGrayedOut) {
+            if (isFrozenCell) {
+              // Ice block styling: animates solidifying on the elimination tick, stays locked-in solid ice afterward
+              if (isNewlyRevealed && isEliminationWeek) {
+                extraBoxClasses = 'survivor-ice-freezing';
+              } else {
+                extraBoxClasses = 'survivor-ice-solid';
+                if (isNewlyRevealed) extraBoxClasses += ' survivor-bar-newly-revealed';
+              }
+
+              if (isEliminationWeek) {
+                iconHtml = `<i class="fa-solid fa-snowflake text-[11px] ${isDark ? 'text-sky-200' : 'text-sky-700'} shrink-0"></i>`;
+              } else {
+                iconHtml = `<i class="fa-regular fa-snowflake text-[10px] opacity-75 shrink-0"></i>`;
+              }
+            } else if (isGrayedOut) {
               bgColor = isDark ? '#334155' : '#e2e8f0';
-            } else if (isEliminatedCell) {
-              bgColor = isDark ? '#0284c7' : '#bae6fd';
-              textColorClass = isDark ? 'text-white font-bold' : 'text-slate-900 font-bold';
+              if (isNewlyRevealed) extraBoxClasses = 'survivor-bar-newly-revealed';
             } else {
               bgColor = isDark ? '#ea580c' : '#fdba74';
               textColorClass = isDark ? 'text-white font-bold' : 'text-slate-900 font-bold';
+              if (isNewlyRevealed) extraBoxClasses = 'survivor-bar-newly-revealed';
             }
 
             const maxWkScore = s.maxScoresPerWeek[w];
             const minWkScore = s.minScoresPerWeek[w];
 
-            if (score === minWkScore) {
-              textColorClass = 'text-red-600 dark:text-red-400 font-black';
-            } else if (score === maxWkScore) {
-              textColorClass = 'text-emerald-600 dark:text-emerald-400 font-black';
+            if (!isFrozenCell) {
+              if (score === minWkScore) {
+                textColorClass = 'text-red-600 dark:text-red-400 font-black';
+              } else if (score === maxWkScore) {
+                textColorClass = 'text-emerald-600 dark:text-emerald-400 font-black';
+              }
+            } else if (isEliminationWeek) {
+              // Highlight the elimination score cleanly inside the ice block
+              textColorClass = isDark ? 'text-white font-black' : 'text-sky-950 font-black';
             }
 
             const maxScoreInWeek = maxWkScore > 0 ? maxWkScore : 230;
-            const widthPct = Math.max(38, Math.min(100, Math.round((score / maxScoreInWeek) * 100)));
+            const widthPct = Math.max(46, Math.min(100, Math.round((score / maxScoreInWeek) * 100)));
+            const inlineStyle = isFrozenCell
+              ? `width: ${widthPct}%;`
+              : `width: ${widthPct}%; background-color: ${bgColor}; border-color: ${borderColor};`;
 
             rowHtml += `
-              <td class="text-left px-1.5 py-1.5">
-                <div class="survivor-cell-box ${textColorClass}" style="width: ${widthPct}%; background-color: ${bgColor}; border-color: ${borderColor};">
-                  ${score.toFixed(2)}
+              <td class="text-left px-1.5 py-1.5 ${tdCurrentClass}">
+                <div class="survivor-cell-box ${textColorClass} ${extraBoxClasses}" style="${inlineStyle}" title="${isEliminationWeek ? `Eliminated & Frozen in Week ${w}` : (isPostEliminationFrozen ? `Frozen (Eliminated W${t.eliminatedWeek})` : `Week ${w}: ${score.toFixed(2)} PF`)}">
+                  ${iconHtml}<span>${score.toFixed(2)}</span>
                 </div>
               </td>`;
           }
@@ -2397,7 +2711,9 @@
       } else {
         const s = STATE.survivor.fullSeries;
         if (s && STATE.survivor.currentIdx >= s.maxWeek) {
+          STATE.survivor.prevIdx = 0;
           STATE.survivor.currentIdx = 1;
+          renderSurvivorFrameAtIdx(1, true);
         }
         startSurvivorReplay();
       }
@@ -2419,27 +2735,29 @@
     }
 
     function restartSurvivorReplay() {
+      STATE.survivor.prevIdx = 0;
       STATE.survivor.currentIdx = 1;
-      renderSurvivorFrameAtIdx(1);
+      renderSurvivorFrameAtIdx(1, true);
       startSurvivorReplay();
     }
 
     function restartSurvivorIntervalTimer() {
       if (STATE.survivor.animationTimer) clearInterval(STATE.survivor.animationTimer);
       const mult = STATE.survivor.speedMultiplier || 1.0;
-      const intervalMs = Math.max(100, Math.round(800 / mult));
+      const intervalMs = Math.max(120, Math.round(750 / mult));
 
       STATE.survivor.animationTimer = setInterval(() => {
         const s = STATE.survivor.fullSeries;
         if (!s) return;
 
+        STATE.survivor.prevIdx = STATE.survivor.currentIdx;
         STATE.survivor.currentIdx += 1;
         if (STATE.survivor.currentIdx >= s.maxWeek) {
           STATE.survivor.currentIdx = s.maxWeek;
-          renderSurvivorFrameAtIdx(STATE.survivor.currentIdx);
+          renderSurvivorFrameAtIdx(STATE.survivor.currentIdx, true);
           pauseSurvivorReplay();
         } else {
-          renderSurvivorFrameAtIdx(STATE.survivor.currentIdx);
+          renderSurvivorFrameAtIdx(STATE.survivor.currentIdx, true);
         }
       }, intervalMs);
     }
@@ -4225,14 +4543,14 @@
       chart.options.scales.y1.ticks.color = textColor;
       chart.options.scales.y1.title.color = textColor;
       chart.options.plugins.legend.labels.color = textColor;
-      chart.update();
+      chart.update('none');
     }
 
     function downloadChartPNG() {
       const chart = STATE.liveProb.chartInstance;
       if (!chart) return;
       const link = document.createElement('a');
-      link.download = `Live_Win_Prob_Week_${STATE.filters.weekMax}.png`;
+      link.download = `NDL_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
@@ -4240,104 +4558,100 @@
     function downloadChartCSV() {
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
-      const rows = [];
       const yr = STATE.filters.year;
       const nameA = getTeamName(s.tma, yr);
       const nameB = getTeamName(s.tmb, yr);
 
-      for (let i = 0; i < s.labels.length; i++) {
-        rows.push({
-          Timestamp: s.labels[i],
-          [`${nameA}_Pts`]: s.tmaPts[i],
-          [`${nameB}_Pts`]: s.tmbPts[i],
-          [`${nameA}_Proj`]: s.tmaProj[i],
-          [`${nameB}_Proj`]: s.tmbProj[i],
-          [`${nameA}_WinProb%`]: s.tmaWpNorm[i].toFixed(2),
-          [`${nameB}_WinProb%`]: s.tmbWpNorm[i].toFixed(2)
-        });
-      }
+      const rows = s.labels.map((lbl, i) => ({
+        Time: lbl,
+        [`${nameA}_Actual`]: s.tmaPts[i],
+        [`${nameB}_Actual`]: s.tmbPts[i],
+        [`${nameA}_Proj`]: s.tmaProj[i],
+        [`${nameB}_Proj`]: s.tmbProj[i],
+        [`${nameA}_WinProb_Pct`]: s.tmaWpNorm[i].toFixed(2),
+        [`${nameB}_WinProb_Pct`]: s.tmbWpNorm[i].toFixed(2)
+      }));
 
       const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `Matchup_WinProb_Data_Week_${STATE.filters.weekMax}.csv`);
+      link.setAttribute("download", `NDL_Matchup_Data_${yr}_Wk${STATE.filters.weekMax}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
     // ==========================================
-    // SECTION 10: INITIALIZATION & LISTENERS
+    // SECTION 10: EVENT HANDLERS & INITIALIZATION
     // ==========================================
-    function onHashChange() {
-      if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
-      if (!STATE.loaded) return;
-      applyUrlToState();
-      applyTabFilterVisibility(FilterEngine.activeTab());
-      syncFilterUI();
-      renderActiveTab();
-      updateUrlHash();
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener('DOMContentLoaded', () => {
       initTheme();
       setupTabNavigation();
       setupFilterControls();
       parseUrlHash();
-      window.addEventListener('hashchange', onHashChange);
+      applyTabFilterVisibility(FilterEngine.activeTab());
 
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          if (STATE.filters.selectedManager) toggleManagerFilter(null);
-        }
+      window.addEventListener('hashchange', () => {
+        if (window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
+        if (!STATE.loaded) return;
+        applyUrlToState();
+        applyTabFilterVisibility(FilterEngine.activeTab());
+        syncFilterUI();
+        renderActiveTab();
       });
 
-      const tooltip = document.getElementById('sparkline-tooltip');
-      document.addEventListener('mouseover', (e) => {
-        if (e.target.classList && e.target.classList.contains('sparkline-dot')) {
-          const info = e.target.getAttribute('data-info');
-          if (info) { tooltip.innerHTML = info; tooltip.classList.remove('hidden'); }
-        }
-      });
-
-      document.addEventListener('mousemove', (e) => {
-        if (!tooltip.classList.contains('hidden')) {
-          tooltip.style.left = (e.clientX + 12) + 'px';
-          tooltip.style.top = (e.clientY + 12) + 'px';
-        }
-      });
-
-      document.addEventListener('mouseout', (e) => {
-        if (e.target.classList && e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden');
+      document.getElementById('clear-manager-filter').addEventListener('click', () => {
+        STATE.filters.selectedManager = null;
+        renderStandingsTable();
+        updateFilterBadge();
+        updateUrlHash();
       });
 
       document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
           const field = th.getAttribute('data-sort');
           if (STATE.sort.field === field) STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
-          else { STATE.sort.field = field; STATE.sort.dir = field === 'actualRank' ? 'asc' : 'desc'; }
+          else { STATE.sort.field = field; STATE.sort.dir = 'desc'; }
           renderStandingsTable();
         });
       });
 
-      const clearMgrBtn = document.getElementById('clear-manager-filter');
-      if (clearMgrBtn) clearMgrBtn.addEventListener('click', () => toggleManagerFilter(null));
-
       document.getElementById('btn-export-standings-csv').addEventListener('click', () => {
         if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
-        const csv = Papa.unparse(STATE.computedStandings);
+        const csv = Papa.unparse(STATE.computedStandings.map(r => ({
+          Rank: r.actualRank, Manager: r.manager, Team: r.team_name, W: r.W, L: r.L,
+          PF: r.PF.toFixed(1), PA: r.PA.toFixed(1), ETEW_Pct: (r.ETEW_pct * 100).toFixed(1),
+          WABL: r.WABL.toFixed(2), RABL: r.RABL, Best_Wk: r.bestScore.toFixed(2),
+          Worst_Wk: r.worstScore.toFixed(2), AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2),
+          SDEV: r.SDEV.toFixed(2), FAAB: r.faab
+        })));
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_W${STATE.filters.weekMin}_W${STATE.filters.weekMax}.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
       });
 
-      await loadDataPipeline();
-      startLivePolling();
+      const tooltip = document.getElementById('sparkline-tooltip');
+      document.addEventListener('mouseover', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          tooltip.innerHTML = e.target.getAttribute('data-info');
+          tooltip.classList.remove('hidden');
+        }
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!tooltip.classList.contains('hidden')) {
+          tooltip.style.left = `${e.clientX + 12}px`; tooltip.style.top = `${e.clientY - 28}px`;
+        }
+      });
+      document.addEventListener('mouseout', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden');
+      });
+
+      loadDataPipeline().then(() => {
+        startLivePolling();
+      });
     });
   </script>
 </body>
