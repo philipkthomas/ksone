@@ -128,7 +128,7 @@
       border-color: #475569;
     }
 
-    /* ---- Global filter bar: week steppers (select + prev/next arrows) ---- */
+    /* ---- Global filter bar: year & week steppers (select + prev/next arrows) ---- */
     .wk-stepper { display: inline-flex; align-items: stretch; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: #ffffff; box-shadow: 0 1px 2px rgba(15,23,42,0.06); }
     .dark .wk-stepper { border-color: #334155; background: #020617; }
     .wk-arrow { display: inline-flex; align-items: center; justify-content: center; width: 24px; color: #64748b; background: transparent; border: 0; cursor: pointer; font-size: 10px; transition: background-color .15s ease, color .15s ease; }
@@ -137,17 +137,18 @@
     .wk-arrow:active:not(:disabled) { background: #0369a1; }
     .wk-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
     .wk-select { -webkit-appearance: none; appearance: none; border: 0; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; background: transparent; color: #0f172a; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; text-align: center; text-align-last: center; min-width: 44px; padding: 3px 6px; cursor: pointer; }
+    .yr-select { min-width: 58px; }
     .dark .wk-select { color: #f1f5f9; border-color: #1e293b; }
     .dark .wk-select option { background: #0f172a; color: #f1f5f9; }
     .wk-arrow:focus-visible, .wk-select:focus-visible { outline: 2px solid #0ea5e9; outline-offset: -2px; }
 
-    /* ---- "Respect current week" switch ---- */
-    .rcw-track { position: relative; display: inline-block; width: 30px; height: 16px; border-radius: 9999px; background: #cbd5e1; transition: background-color .15s ease; flex-shrink: 0; }
-    .dark .rcw-track { background: #334155; }
-    .rcw-thumb { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 9999px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s ease; }
-    #filter-rcw:checked + .rcw-track { background: #0284c7; }
-    #filter-rcw:checked + .rcw-track .rcw-thumb { transform: translateX(14px); }
-    #filter-rcw:focus-visible + .rcw-track { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+    /* ---- "Hide current week" switch ---- */
+    .hcw-track { position: relative; display: inline-block; width: 30px; height: 16px; border-radius: 9999px; background: #cbd5e1; transition: background-color .15s ease; flex-shrink: 0; }
+    .dark .hcw-track { background: #334155; }
+    .hcw-thumb { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 9999px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s ease; }
+    #filter-hcw:checked + .hcw-track { background: #0284c7; }
+    #filter-hcw:checked + .hcw-track .hcw-thumb { transform: translateX(14px); }
+    #filter-hcw:focus-visible + .hcw-track { outline: 2px solid #0ea5e9; outline-offset: 2px; }
 
     /* ---- Empty-state overlay for charts ---- */
     .chart-empty-overlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 24px; color: #64748b; font-size: 0.875rem; }
@@ -199,8 +200,11 @@
 
           <div class="flex items-center gap-2">
             <span class="text-slate-600 dark:text-slate-400 font-medium">Year:</span>
-            <select id="filter-year" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none">
-            </select>
+            <div class="wk-stepper">
+              <button type="button" id="yr-prev" class="wk-arrow" title="Previous year" aria-label="Previous year"><i class="fa-solid fa-chevron-left"></i></button>
+              <select id="filter-year" class="wk-select yr-select" aria-label="Year"></select>
+              <button type="button" id="yr-next" class="wk-arrow" title="Next year" aria-label="Next year"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
           </div>
 
           <div id="week-filter-group" class="flex items-center gap-2">
@@ -222,10 +226,10 @@
             </div>
           </div>
 
-          <label id="rcw-wrap" class="flex items-center gap-2 cursor-pointer select-none" title="On: hide the in-progress week and anything after it (keeps rows where year &lt; current year OR week &lt; current week, using the currentweek table).">
-            <input type="checkbox" id="filter-rcw" class="sr-only" checked>
-            <span class="rcw-track"><span class="rcw-thumb"></span></span>
-            <span class="text-slate-600 dark:text-slate-400 font-medium">Respect current week</span>
+          <label id="hcw-wrap" class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="filter-hcw" class="sr-only">
+            <span class="hcw-track"><span class="hcw-thumb"></span></span>
+            <span class="text-slate-600 dark:text-slate-400 font-medium">Hide current week</span>
           </label>
 
           <div id="manager-filter-badge" class="hidden items-center gap-2 bg-brand-100 dark:bg-brand-900/60 border border-brand-300 dark:border-brand-500/40 text-brand-800 dark:text-brand-200 px-2.5 py-0.5 rounded-full">
@@ -233,8 +237,6 @@
             <button id="clear-manager-filter" class="hover:text-slate-900 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
           </div>
         </div>
-
-        <span id="scope-hint" class="text-[11px] text-slate-500 dark:text-slate-400 italic"></span>
       </div>
     </div>
   </header>
@@ -636,7 +638,8 @@
     const STATE = {
       data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
       // weekMax doubles as THE selected week on the single-week tabs (Matchups, Live Win Prob)
-      filters: { year: 2026, weekMin: 1, weekMax: 8, respectCW: true, selectedManager: null, matchup: null },
+      filters: { year: 2026, weekMin: 1, weekMax: 8, hideCW: false, selectedManager: null, matchup: null },
+      hcwUserOverride: false,
       loaded: false, loading: false, dataVersion: 0, dbSig: null, SQL: null, _selfHash: null,
       sort: { field: 'actualRank', dir: 'asc' },
       computedStandings: [],
@@ -887,29 +890,30 @@
     }
 
     // ==========================================
-    // SECTION 1B: FILTER ENGINE  (shared week filters, "Respect current week" gate, URL <-> state sync)
+    // SECTION 1B: FILTER ENGINE  (shared year & week filters, "Hide current week" gate, URL <-> state sync)
     // ------------------------------------------------------------
-    // URL params (hash form: #tab=props&year=2026&wmin=1&wmax=10&rcw=1 — a plain ?query string also works on load):
+    // URL params (hash form: #tab=props&year=2026&wmin=1&wmax=10&hcw=1 — a plain ?query string also works on load):
     //   tab   active tab key                    year  season
     //   wmin  first week                        wmax  last week  (= the single selected week on Matchups / Live Win Prob)
-    //   rcw   1|0 respect current week          mgr   cross-filtered manager
+    //   hcw   1|0 hide current week             mgr   cross-filtered manager
     //   mu    selected matchup "tmA_tmB" (Live Win Prob only)
     // Editing any of these in the address bar updates the matching control immediately (hashchange listener, Section 10).
     //
     // ASSUMPTIONS
-    //  * "Respect current week" keeps a row only if (year < currentYear OR week < currentWeek), using the currentweek table.
-    //    It applies to Standings, Props, Survivor and Wins Above Even; it is hidden on Matchups / Live Win Prob.
+    //  * "Hide current week" keeps a row only if (year < currentYear OR week < currentWeek), using the currentweek table.
+    //    It defaults to OFF (false) for Standings and Survivor, and ON (true) for Props and Wins Above Even when not
+    //    overridden by URL or user toggle; it is hidden on Matchups / Live Win Prob.
     //  * Standings & Props use the full [wmin, wmax] range. Survivor, Wins Above Even and the Props divisional chart are
     //    cumulative from week 1, so on those tabs only wmax ("through week N") applies and the From control is hidden.
     //  * Defaults when the URL has no wmax: current week for the current year, last week with data for past years.
     // ==========================================
     const TAB_FILTER_MODE = {
-      standings:  { from: true,  rcw: true,  label: 'Weeks' },
-      props:      { from: true,  rcw: true,  label: 'Weeks' },
-      survivor:   { from: false, rcw: true,  label: 'Through week' },
-      wins_above: { from: false, rcw: true,  label: 'Through week' },
-      matchups:   { from: false, rcw: false, label: 'Week' },
-      live_prob:  { from: false, rcw: false, label: 'Week' }
+      standings:  { from: true,  hcw: true,  defaultHcw: false, label: 'Weeks' },
+      props:      { from: true,  hcw: true,  defaultHcw: true,  label: 'Weeks' },
+      survivor:   { from: false, hcw: true,  defaultHcw: false, label: 'Through week' },
+      wins_above: { from: false, hcw: true,  defaultHcw: true,  label: 'Through week' },
+      matchups:   { from: false, hcw: false, defaultHcw: false, label: 'Week' },
+      live_prob:  { from: false, hcw: false, defaultHcw: false, label: 'Week' }
     };
 
     const FilterEngine = {
@@ -917,6 +921,11 @@
 
       activeTab() {
         return document.querySelector('.tab-btn.active')?.getAttribute('data-tab') || 'standings';
+      },
+
+      defaultHcwForTab(tabKey) {
+        const m = TAB_FILTER_MODE[tabKey] || TAB_FILTER_MODE.standings;
+        return !!m.defaultHcw;
       },
 
       years() {
@@ -963,9 +972,9 @@
         return weeks[weeks.length - 1];
       },
 
-      // The "Respect current week" rule, exactly as specified.
+      // The "Hide current week" rule: keeps rows where year < currentYear OR week < currentWeek.
       gate(year, week) {
-        if (!STATE.filters.respectCW) return true;
+        if (!STATE.filters.hideCW) return true;
         const cw = getCurrentYearAndWeek();
         if (!cw) return true;
         return Number(year) < cw.curYear || Number(week) < cw.curWeek;
@@ -982,20 +991,6 @@
       effectiveMin(year) {
         const max = this.effectiveMax(year);
         return Math.max(1, Math.min(Number(STATE.filters.weekMin) || 1, Math.max(1, max)));
-      },
-
-      scopeText(tab) {
-        const f = STATE.filters, m = TAB_FILTER_MODE[tab] || TAB_FILTER_MODE.standings;
-        const cw = getCurrentYearAndWeek();
-        const isCurYear = cw && Number(cw.curYear) === Number(f.year);
-        if (!m.rcw) {
-          return `Week ${f.weekMax}${isCurYear && Number(f.weekMax) === cw.curWeek ? ' (current week)' : ''}`;
-        }
-        const max = this.effectiveMax(f.year);
-        let txt = max < 1 ? 'No weeks in scope'
-          : (m.from ? `Showing weeks ${this.effectiveMin(f.year)}–${max}` : `Showing weeks 1–${max}`);
-        if (f.respectCW && isCurYear && Number(f.weekMax) >= cw.curWeek) txt += ` · week ${cw.curWeek} (in progress) hidden`;
-        return txt;
       }
     };
 
@@ -1011,14 +1006,6 @@
       return isNaN(n) ? null : Math.min(hi, Math.max(lo, n));
     }
 
-    function loadStoredRcw() {
-      try { const v = localStorage.getItem('ndl_rcw'); if (v !== null) return v !== '0'; } catch (e) { /* storage blocked */ }
-      return true;   // default ON
-    }
-    function storeRcw(on) {
-      try { localStorage.setItem('ndl_rcw', on ? '1' : '0'); } catch (e) { /* storage blocked */ }
-    }
-
     // State -> URL. Uses replaceState so it never echoes a hashchange back at us.
     function updateUrlHash() {
       if (!STATE.loaded) return;   // never overwrite a shared link before data has resolved it
@@ -1029,7 +1016,7 @@
       p.set('year', f.year);
       p.set('wmin', f.weekMin);
       p.set('wmax', f.weekMax);
-      p.set('rcw', f.respectCW ? 1 : 0);
+      p.set('hcw', f.hideCW ? 1 : 0);
       if (f.selectedManager) p.set('mgr', f.selectedManager);
       if (tab === 'live_prob' && f.matchup) p.set('mu', f.matchup);
       const next = '#' + p.toString();
@@ -1055,6 +1042,12 @@
       const cw = getCurrentYearAndWeek();
       const years = FilterEngine.years();
 
+      const tabParam = p.get('tab');
+      if (tabParam && TAB_FILTER_MODE[tabParam] && tabParam !== FilterEngine.activeTab()) {
+        activateTab(tabParam, { render: false });
+      }
+      const activeTab = FilterEngine.activeTab();
+
       let yr = toInt(p.get('year'), 1990, 2100);
       if (yr === null) yr = cw ? cw.curYear : (years[0] || f.year);
       if (years.length && !years.includes(yr)) yr = years[0];
@@ -1069,12 +1062,16 @@
       f.weekMin = wmin;
       f.weekMax = wmax;
 
-      f.respectCW = p.has('rcw') ? !['0', 'false', 'off'].includes(String(p.get('rcw')).toLowerCase()) : loadStoredRcw();
+      if (p.has('hcw')) {
+        f.hideCW = !['0', 'false', 'off'].includes(String(p.get('hcw')).toLowerCase());
+        STATE.hcwUserOverride = true;
+      } else {
+        f.hideCW = FilterEngine.defaultHcwForTab(activeTab);
+        STATE.hcwUserOverride = false;
+      }
+
       f.selectedManager = p.get('mgr') || null;
       f.matchup = p.get('mu') || null;
-
-      const tab = p.get('tab');
-      if (tab && TAB_FILTER_MODE[tab] && tab !== FilterEngine.activeTab()) activateTab(tab, { render: false });
     }
 
     // Keep filters valid after a poll brings new data (never resets what the user chose).
@@ -1378,7 +1375,6 @@
           reconcileFiltersWithData();
         }
 
-        populateYearSelector();
         syncFilterUI();
         renderActiveTab();
         updateUrlHash();
@@ -1421,6 +1417,11 @@
       const activeSec = document.getElementById(`tab-${tabKey}`);
       if (activeSec) activeSec.classList.remove('hidden');
 
+      // Apply per-tab default for Hide current week unless explicitly overridden by user or URL
+      if (!STATE.hcwUserOverride) {
+        STATE.filters.hideCW = FilterEngine.defaultHcwForTab(tabKey);
+      }
+
       applyTabFilterVisibility(tabKey);
       if (STATE.loaded && render) {
         syncFilterUI();
@@ -1434,29 +1435,35 @@
       const m = TAB_FILTER_MODE[tabKey] || TAB_FILTER_MODE.standings;
       const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
       show('wk-from-wrap', m.from);
-      show('rcw-wrap', m.rcw);
+      show('hcw-wrap', m.hcw);
       const lbl = document.getElementById('wk-label');
       if (lbl) lbl.textContent = `${m.label}:`;
     }
 
-    function populateYearSelector() {
-      const yearSelect = document.getElementById('filter-year');
-      const years = FilterEngine.years();
-      if (years.length > 0) {
-        yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-        if (!years.includes(STATE.filters.year)) STATE.filters.year = years[0];
-        yearSelect.value = STATE.filters.year;
-      }
-    }
-
-    // Push STATE.filters into every control (year, week steppers, switch, badge, scope hint).
+    // Push STATE.filters into every control (year stepper, week steppers, switch, badge).
     function syncFilterUI() {
       const f = STATE.filters;
       const $ = id => document.getElementById(id);
+
+      // Populate and sync Year stepper (years() is descending: [2026, 2025, ...], so left/prev = older/higher index, right/next = newer/lower index)
+      const years = FilterEngine.years();
+      const yearSelect = $('filter-year');
+      if (yearSelect) {
+        if (years.length > 0) {
+          yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+          if (!years.includes(Number(f.year))) f.year = years[0];
+          yearSelect.value = String(f.year);
+        } else if (f.year) {
+          yearSelect.innerHTML = `<option value="${f.year}">${f.year}</option>`;
+          yearSelect.value = String(f.year);
+        }
+        const yIdx = years.indexOf(Number(f.year));
+        if ($('yr-prev')) $('yr-prev').disabled = years.length <= 1 || yIdx < 0 || yIdx >= years.length - 1;
+        if ($('yr-next')) $('yr-next').disabled = years.length <= 1 || yIdx <= 0;
+      }
+
       const weeks = FilterEngine.weeksForYear(f.year);
       const opts = weeks.map(w => `<option value="${w}">${w}</option>`).join('');
-
-      if ($('filter-year') && f.year) $('filter-year').value = f.year;
 
       [['filter-week-min', f.weekMin, 'wk-min-prev', 'wk-min-next'], ['filter-week-max', f.weekMax, 'wk-max-prev', 'wk-max-next']].forEach(([selId, val, prevId, nextId]) => {
         const sel = $(selId);
@@ -1468,10 +1475,8 @@
         $(nextId).disabled = idx < 0 || idx >= weeks.length - 1;
       });
 
-      const rcw = $('filter-rcw');
-      if (rcw) rcw.checked = !!f.respectCW;
-      const hint = $('scope-hint');
-      if (hint) hint.textContent = FilterEngine.scopeText(FilterEngine.activeTab());
+      const hcw = $('filter-hcw');
+      if (hcw) hcw.checked = !!f.hideCW;
       updateFilterBadge();
     }
     function updateFilterUI() { syncFilterUI(); }
@@ -1504,6 +1509,30 @@
       scheduleRender();
     }
 
+    function setYear(value) {
+      const f = STATE.filters;
+      const yr = Number(value);
+      if (!yr || yr === Number(f.year)) return;
+      f.year = yr;
+      const weeks = FilterEngine.weeksForYear(f.year);
+      f.weekMin = weeks[0];
+      f.weekMax = FilterEngine.defaultWeekMax(f.year);
+      f.matchup = null;
+      onFiltersChanged();
+    }
+
+    // years() is sorted descending (e.g. [2026, 2025, 2024]):
+    // dir = -1 (left arrow) steps to older year (idx + 1); dir = +1 (right arrow) steps to newer year (idx - 1).
+    function stepYear(dir) {
+      const years = FilterEngine.years();
+      if (years.length <= 1) return;
+      const cur = Number(STATE.filters.year);
+      const idx = years.indexOf(cur);
+      if (idx < 0) return;
+      const ni = Math.min(years.length - 1, Math.max(0, idx - dir));
+      if (years[ni] !== cur) setYear(years[ni]);
+    }
+
     function setWeek(which, value) {
       const f = STATE.filters;
       const v = Number(value);
@@ -1527,24 +1556,18 @@
     function setupFilterControls() {
       const $ = id => document.getElementById(id);
 
-      $('filter-year').addEventListener('change', e => {
-        const f = STATE.filters;
-        f.year = Number(e.target.value);
-        const weeks = FilterEngine.weeksForYear(f.year);
-        f.weekMin = weeks[0];
-        f.weekMax = FilterEngine.defaultWeekMax(f.year);
-        f.matchup = null;
-        onFiltersChanged();
-      });
+      $('filter-year').addEventListener('change', e => setYear(e.target.value));
+      $('yr-prev').addEventListener('click', () => stepYear(-1));
+      $('yr-next').addEventListener('click', () => stepYear(1));
       $('filter-week-min').addEventListener('change', e => setWeek('min', e.target.value));
       $('filter-week-max').addEventListener('change', e => setWeek('max', e.target.value));
       $('wk-min-prev').addEventListener('click', () => stepWeek('min', -1));
       $('wk-min-next').addEventListener('click', () => stepWeek('min', 1));
       $('wk-max-prev').addEventListener('click', () => stepWeek('max', -1));
       $('wk-max-next').addEventListener('click', () => stepWeek('max', 1));
-      $('filter-rcw').addEventListener('change', e => {
-        STATE.filters.respectCW = e.target.checked;
-        storeRcw(e.target.checked);   // sticky until toggled back
+      $('filter-hcw').addEventListener('change', e => {
+        STATE.filters.hideCW = e.target.checked;
+        STATE.hcwUserOverride = true;
         onFiltersChanged();
       });
     }
@@ -1576,12 +1599,12 @@
     function emptyScopeMessage(what) {
       const f = STATE.filters;
       const cw = getCurrentYearAndWeek();
-      const hiding = f.respectCW && cw && Number(cw.curYear) === Number(f.year);
-      return `No ${what} for NDL ${f.year} through week ${f.weekMax}.` + (hiding ? ` "Respect current week" is on, so week ${cw.curWeek} (in progress) is hidden — turn it off or pick a later year.` : ' Try a different year or week.');
+      const hiding = f.hideCW && cw && Number(cw.curYear) === Number(f.year);
+      return `No ${what} for NDL ${f.year} through week ${f.weekMax}.` + (hiding ? ` "Hide current week" is on, so week ${cw.curWeek} (in progress) is hidden — turn it off or pick a later year.` : ' Try a different year or week.');
     }
 
     function renderStandingsTable() {
-      // Week range = wmin..wmax, clipped by the "Respect current week" gate (see FilterEngine)
+      // Week range = wmin..wmax, clipped by the "Hide current week" gate (see FilterEngine)
       let data = MetricsEngine.computeStandings(STATE.filters.year, FilterEngine.effectiveMin(STATE.filters.year), FilterEngine.effectiveMax(STATE.filters.year));
       STATE.computedStandings = data;
 
@@ -2113,7 +2136,7 @@
 
       if (ptsYr.length === 0) return null;
 
-      // Week cap = wmax clipped by "Respect current week" and by the weeks that actually have data
+      // Week cap = wmax clipped by "Hide current week" and by the weeks that actually have data
       const maxWeek = Math.min(FilterEngine.effectiveMax(year), getMaxWeekForYear(year));
       if (maxWeek < 1) return null;
 
@@ -2551,7 +2574,7 @@
     function computePropsData() {
       const yr = STATE.filters.year;
       const pts = STATE.data.points || [];
-      // Props table honours the full week range (wmin..wmax) plus the "Respect current week" gate
+      // Props table honours the full week range (wmin..wmax) plus the "Hide current week" gate
       const wkMax = FilterEngine.effectiveMax(yr), wkMin = FilterEngine.effectiveMin(yr);
       const ptsYr = pts.filter(r => {
         if (Number(getVal(r, ['year', 'YR'])) !== Number(yr)) return false;
