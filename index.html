@@ -534,257 +534,258 @@
           <i class="fa-solid fa-sack-dollar text-emerald-500"></i> Season Prop Bets
         </h2>
         <div class="flex items-center gap-2 text-xs">
-          <button id="btn-export-props-csv" title="Download Props Table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
-            <i class="fa-solid fa-file-csv"></i> Table CSV
-          </button>
-          <button id="btn-export-div-png" title="Download Divisional Chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
-            <i class="fa-solid fa-file-image"></i> Chart PNG
-          </button>
-        </div>
-      </div>
+    /**
+     * Compute final post-season rankings (final_rank 1..N) directly from actual
+     * head-to-head playoff matchups in `points` / `scores` tables for weeks >= playoff_start_week.
+     * Supports both 6-team playoffs (3 weeks: Quarterfinals, Semifinals + 5th Place, Finals + 3rd + Consolation Finals)
+     * and 4-team playoffs (2 weeks: Semifinals + Consolation Semis, Finals + 3rd + 5th + 7th).
+     */
+    computeFinalRanks(year) {
+      const league = DB.getLeague(year) || {};
+      const playoffStart = Number(league.playoff_start_week) || 15;
+      const numPlayoffTeams = Number(league.num_playoff_teams) || 6;
+      const teams = DB.getTeams(year);
+      const totalTeams = teams.length;
+      if (!totalTeams) return new Map();
 
-      <!-- PROPS SUMMARY TABLE CONTAINER -->
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
-        <table class="props-table" id="props-table">
-          <thead>
-            <tr>
-              <th rowspan="2" class="text-center" style="width: 4%;">#</th>
-              <th rowspan="2" class="text-center" style="width: 4%;">$</th>
-              <th rowspan="2" class="text-left prop-border-right" style="width: 16%;">TEAM</th>
-              <th colspan="3" class="props-header-group prop-border-right">TOP WEEK</th>
-              <th colspan="5" class="props-header-group prop-border-right">TOP LOSS</th>
-              <th colspan="4" class="props-header-group prop-border-right">TOP STARTER</th>
-              <th colspan="4" class="props-header-group prop-border-right">TOP BENCH</th>
-              <th colspan="2" class="props-header-group prop-border-right">AVERAGE RANK</th>
-            </tr>
-            <tr>
-              <!-- TOP WEEK -->
-              <th class="text-right">PF</th>
-              <th class="text-center">(WK)</th>
-              <th class="text-center prop-border-right">[RANK]</th>
-              <!-- TOP LOSS -->
-              <th class="text-right">PF</th>
-              <th class="text-left">OPPONENT</th>
-              <th class="text-right">PA</th>
-              <th class="text-center">(WK)</th>
-              <th class="text-center prop-border-right">[RANK]</th>
-              <!-- TOP STARTER -->
-              <th class="text-left">PLAYER</th>
-              <th class="text-right">PF</th>
-              <th class="text-center">(WK)</th>
-              <th class="text-center prop-border-right">[RANK]</th>
-              <!-- TOP BENCH -->
-              <th class="text-left">PLAYER</th>
-              <th class="text-right">PF</th>
-              <th class="text-center">(WK)</th>
-              <th class="text-center prop-border-right">[RANK]</th>
-              <!-- AVERAGE RANK -->
-              <th class="text-right">AVG</th>
-              <th class="text-center prop-border-right">[RANK]</th>
-            </tr>
-          </thead>
-          <tbody id="props-tbody"></tbody>
-        </table>
-      </div>
+      // Build regular-season records strictly BEFORE playoffStart (weeks 1 .. playoffStart - 1)
+      const regWeeks = [];
+      for (let w = 1; w < playoffStart; w++) regWeeks.push(w);
+      const regStats = new Map();
+      teams.forEach(t => {
+        regStats.set(t.team_id, {
+          team_id: t.team_id,
+          w: 0,
+          l: 0,
+          t: 0,
+          pf: 0,
+          seedHint: Number(t.playoff_seed ?? t.seed ?? t.rank ?? 0) || 0
+        });
+      });
 
-      <!-- DIVISIONAL PROP BET CHART CONTAINER -->
-      <div id="div-prop-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xl">
-        <div class="relative w-full h-[520px]">
-          <canvas id="divisionalPropChart"></canvas>
-        </div>
-      </div>
+      regWeeks.forEach(w => {
+        const matchups = this.getWeekMatchups(year, w);
+        matchups.forEach(m => {
+          const a = regStats.get(m.teamA.team_id);
+          const b = regStats.get(m.teamB.team_id);
+          if (a) a.pf += m.teamA.pts;
+          if (b) b.pf += m.teamB.pts;
+          if (a && b) {
+            if (m.teamA.pts > m.teamB.pts) { a.w++; b.l++; }
+            else if (m.teamB.pts > m.teamA.pts) { b.w++; a.l++; }
+            else { a.t++; b.t++; }
+          }
+        });
+      });
 
-      <!-- DIVISIONAL CHART REPLAY CONTROLS -->
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div class="flex items-center gap-3">
-          <button id="btn-div-play-pause" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i id="div-play-icon" class="fa-solid fa-play"></i> <span id="div-play-text">Play</span>
-          </button>
-          <button id="btn-div-restart" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-rotate-right"></i> Restart
-          </button>
-        </div>
+      // Fallback regular-season seeding order (prefer explicit seed column if present, then W-L-T + PF)
+      const regOrdered = [...regStats.values()].sort((a, b) => {
+        if (a.seedHint > 0 && b.seedHint > 0 && a.seedHint !== b.seedHint) return a.seedHint - b.seedHint;
+        const winPctA = (a.w + 0.5 * a.t) / Math.max(1, a.w + a.l + a.t);
+        const winPctB = (b.w + 0.5 * b.t) / Math.max(1, b.w + b.l + b.t);
+        if (Math.abs(winPctB - winPctA) > 1e-6) return winPctB - winPctA;
+        if (b.w !== a.w) return b.w - a.w;
+        return b.pf - a.pf;
+      });
 
-        <div class="flex flex-wrap items-center gap-4">
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="div-speed-slider" min="0.5" max="5" value="1" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="div-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
-          </div>
+      const regSeedMap = new Map();
+      regOrdered.forEach((row, idx) => regSeedMap.set(row.team_id, idx + 1));
 
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <i class="fa-solid fa-clock text-slate-400"></i>
-            <input type="range" id="div-scrubber" min="0" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
-          </div>
-        </div>
-      </div>
-    </section>
+      // Helper to read actual playoff week matchups from points/scores tables
+      const getPlayoffWeekResults = (week) => {
+        const matchups = this.getWeekMatchups(year, week);
+        const byTeam = new Map();
+        const games = [];
+        matchups.forEach(m => {
+          const idA = m.teamA.team_id;
+          const idB = m.teamB.team_id;
+          const ptsA = Number(m.teamA.pts) || 0;
+          const ptsB = Number(m.teamB.pts) || 0;
+          if (!idA || !idB || idA === idB) return;
 
-    <!-- WINS ABOVE EVEN & RANK TAB CONTENT -->
-    <section id="tab-wins_above" class="tab-content space-y-3 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-        <div class="flex flex-wrap items-center gap-4">
-          <h2 id="wae-chart-header-title" class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-brand-500"></i> Standings & Performance Trends
-          </h2>
+          // Break ties by higher regular-season seed (lower seed number)
+          const seedA = regSeedMap.get(idA) || 99;
+          const seedB = regSeedMap.get(idB) || 99;
+          const aWins = ptsA > ptsB || (ptsA === ptsB && seedA < seedB);
+          const winner = aWins ? idA : idB;
+          const loser = aWins ? idB : idA;
+          const game = { winner, loser, ptsW: aWins ? ptsA : ptsB, ptsL: aWins ? ptsB : ptsA };
+          games.push(game);
+          byTeam.set(idA, { opponent: idB, won: aWins, pts: ptsA, oppPts: ptsB, game });
+          byTeam.set(idB, { opponent: idA, won: !aWins, pts: ptsB, oppPts: ptsA, game });
+        });
+        return { games, byTeam };
+      };
 
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
-              <button id="btn-toggle-metric-wae" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Wins Above Even</button>
-              <button id="btn-toggle-metric-rank" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Rank</button>
-            </div>
+      const finalRankMap = new Map();
+      const assignRank = (teamId, rank) => {
+        if (teamId && !finalRankMap.has(teamId)) {
+          finalRankMap.set(teamId, rank);
+        }
+      };
 
-            <div class="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
-              <button id="btn-toggle-wae-matchup" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Matchup Results</button>
-              <button id="btn-toggle-wae-etew" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">ETEW Wins</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      const w1 = playoffStart;
+      const w2 = playoffStart + 1;
+      const w3 = playoffStart + 2;
 
-      <div id="wae-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
-        <div class="relative w-full h-[520px]">
-          <canvas id="winsAboveEvenChart"></canvas>
-        </div>
-      </div>
+      const r1 = getPlayoffWeekResults(w1);
+      const r2 = getPlayoffWeekResults(w2);
+      const r3 = getPlayoffWeekResults(w3);
 
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div class="flex items-center gap-3">
-          <button id="btn-wae-play-pause" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i id="wae-play-icon" class="fa-solid fa-play"></i> <span id="wae-play-text">Play</span>
-          </button>
-          <button id="btn-wae-restart" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-rotate-right"></i> Restart
-          </button>
-        </div>
+      // CASE A: 6-Team Playoff Bracket (3 playoff weeks: w1 = QF, w2 = SF & 5th, w3 = Finals, 3rd, 7th, 9th)
+      if (numPlayoffTeams === 6 && r1.games.length >= 2) {
+        // 1. Identify the 4 Quarterfinalists (played in w1) and the 2 BYE teams (top seeds not playing in w1)
+        const qfWinners = new Set();
+        const qfLosers = new Set();
+        r1.games.forEach(g => {
+          qfWinners.add(g.winner);
+          qfLosers.add(g.loser);
+        });
 
-        <div class="flex flex-wrap items-center gap-4">
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="wae-speed-slider" min="0.5" max="5" value="1" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="wae-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
-          </div>
+        // 5th Place Game in w2: the matchup between the two w1 Quarterfinal losers
+        const fifthGame = r2.games.find(g => qfLosers.has(g.winner) && qfLosers.has(g.loser));
+        if (fifthGame) {
+          assignRank(fifthGame.winner, 5);
+          assignRank(fifthGame.loser, 6);
+        }
 
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <i class="fa-solid fa-clock text-slate-400"></i>
-            <input type="range" id="wae-scrubber" min="0" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
-          </div>
+        // Semifinals in w2: the 2 matchups involving the w1 Quarterfinal winners (vs the 2 BYE teams)
+        const semiGames = r2.games.filter(g => qfWinners.has(g.winner) || qfWinners.has(g.loser));
+        const semiWinners = new Set();
+        const semiLosers = new Set();
+        semiGames.forEach(g => {
+          semiWinners.add(g.winner);
+          semiLosers.add(g.loser);
+        });
 
-          <div class="flex items-center gap-1.5">
-            <button id="btn-export-wae-png" title="Download Chart as PNG Image" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-file-image"></i> PNG
-            </button>
-            <button id="btn-export-wae-csv" title="Download Chart Data as CSV" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-file-csv"></i> CSV
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
+        // Championship Game in w3: matchup between the two w2 Semifinal winners
+        const champGame = r3.games.find(g => semiWinners.has(g.winner) && semiWinners.has(g.loser));
+        if (champGame) {
+          assignRank(champGame.winner, 1);
+          assignRank(champGame.loser, 2);
+        } else if (semiWinners.size === 2) {
+          // If w3 hasn't been played yet, sort semifinal winners by regular-season seed
+          const [s1, s2] = [...semiWinners].sort((a, b) => (regSeedMap.get(a) || 99) - (regSeedMap.get(b) || 99));
+          assignRank(s1, 1);
+          assignRank(s2, 2);
+        }
 
-    <!-- LIVE WIN PROB TAB CONTENT -->
-    <section id="tab-live_prob" class="tab-content space-y-3 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-        <div class="flex flex-wrap items-center gap-4">
-          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-brand-500"></i> Matchup Win Probability Replay
-          </h2>
+        // 3rd Place Game in w3: matchup between the two w2 Semifinal losers
+        const thirdGame = r3.games.find(g => semiLosers.has(g.winner) && semiLosers.has(g.loser));
+        if (thirdGame) {
+          assignRank(thirdGame.winner, 3);
+          assignRank(thirdGame.loser, 4);
+        } else if (semiLosers.size === 2) {
+          const [s3, s4] = [...semiLosers].sort((a, b) => (regSeedMap.get(a) || 99) - (regSeedMap.get(b) || 99));
+          assignRank(s3, 3);
+          assignRank(s4, 4);
+        }
 
-          <div class="flex items-center gap-2 text-xs">
-            <span class="text-slate-600 dark:text-slate-400 font-medium">Select Matchup:</span>
-            <select id="live-prob-matchup" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none min-w-[280px]">
-            </select>
-          </div>
-        </div>
-      </div>
+        // Consolation Bracket (Seeds 7..10): teams that did NOT play in w1 and were NOT in the Championship semis
+        const champBracketTeams = new Set([
+          ...qfWinners,
+          ...qfLosers,
+          ...semiWinners,
+          ...semiLosers
+        ]);
+        const consolationGamesW2 = r2.games.filter(
+          g => !champBracketTeams.has(g.winner) && !champBracketTeams.has(g.loser)
+        );
 
-      <div id="live-prob-scorecard" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-          <div id="scorecard-card-tma" class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition-all duration-200">
-            <div>
-              <span id="scorecard-tma-mgr" class="text-xs text-slate-500 dark:text-slate-400 block font-normal">--</span>
-              <h3 id="scorecard-tma-name" class="text-base font-bold text-slate-900 dark:text-slate-100">Team A</h3>
-              <span id="scorecard-tma-proj" class="text-xs text-slate-500 dark:text-slate-400">Proj: --</span>
-            </div>
-            <div class="text-right">
-              <span id="scorecard-tma-pts" class="text-2xl font-mono font-bold text-sky-500">0.00</span>
-              <div class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-0.5">Win Prob: <span id="scorecard-tma-wp" class="text-sky-500">--%</span></div>
-            </div>
-          </div>
+        if (consolationGamesW2.length >= 2) {
+          const consolWinners = new Set();
+          const consolLosers = new Set();
+          consolationGamesW2.forEach(g => {
+            consolWinners.add(g.winner);
+            consolLosers.add(g.loser);
+          });
 
-          <div id="scorecard-card-tmb" class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition-all duration-200">
-            <div>
-              <span id="scorecard-tmb-mgr" class="text-xs text-slate-500 dark:text-slate-400 block font-normal">--</span>
-              <h3 id="scorecard-tmb-name" class="text-base font-bold text-slate-900 dark:text-slate-100">Team B</h3>
-              <span id="scorecard-tmb-proj" class="text-xs text-slate-500 dark:text-slate-400">Proj: --</span>
-            </div>
-            <div class="text-right">
-              <span id="scorecard-tmb-pts" class="text-2xl font-mono font-bold text-orange-500">0.00</span>
-              <div class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-0.5">Win Prob: <span id="scorecard-tmb-wp" class="text-orange-500">--%</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
+          // 7th Place Game in w3: matchup between the two w2 Consolation winners
+          const seventhGame = r3.games.find(g => consolWinners.has(g.winner) && consolWinners.has(g.loser));
+          if (seventhGame) {
+            assignRank(seventhGame.winner, 7);
+            assignRank(seventhGame.loser, 8);
+          } else if (consolWinners.size === 2) {
+            const [c7, c8] = [...consolWinners].sort((a, b) => (regSeedMap.get(a) || 99) - (regSeedMap.get(b) || 99));
+            assignRank(c7, 7);
+            assignRank(c8, 8);
+          }
 
-      <div id="live-prob-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl transition-all duration-200">
-        <div class="relative w-full h-[480px]">
-          <canvas id="liveWinProbChart"></canvas>
-        </div>
-      </div>
+          // 9th Place Game in w3: matchup between the two w2 Consolation losers
+          const ninthGame = r3.games.find(g => consolLosers.has(g.winner) && consolLosers.has(g.loser));
+          if (ninthGame) {
+            assignRank(ninthGame.winner, 9);
+            assignRank(ninthGame.loser, 10);
+          } else if (consolLosers.size === 2) {
+            const [c9, c10] = [...consolLosers].sort((a, b) => (regSeedMap.get(a) || 99) - (regSeedMap.get(b) || 99));
+            assignRank(c9, 9);
+            assignRank(c10, 10);
+          }
+        }
+      }
+      // CASE B: 4-Team Playoff Bracket (2 playoff weeks: w1 = Semifinals + Consolation Semis, w2 = Finals, 3rd, 5th, 7th)
+      else if (numPlayoffTeams === 4 && r1.games.length >= 2) {
+        const top4Seeds = new Set(regOrdered.slice(0, 4).map(t => t.team_id));
+        const semiGames = r1.games.filter(g => top4Seeds.has(g.winner) || top4Seeds.has(g.loser));
+        const semiWinners = new Set();
+        const semiLosers = new Set();
+        semiGames.forEach(g => {
+          semiWinners.add(g.winner);
+          semiLosers.add(g.loser);
+        });
 
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div class="flex items-center gap-3">
-          <button id="btn-play-pause-replay" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i id="play-pause-icon" class="fa-solid fa-pause"></i> <span id="play-pause-text">Pause</span>
-          </button>
-          <button id="btn-replay-animation" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-rotate-right"></i> Restart
-          </button>
-        </div>
+        // Championship Game in w2
+        const champGame = r2.games.find(g => semiWinners.has(g.winner) && semiWinners.has(g.loser));
+        if (champGame) {
+          assignRank(champGame.winner, 1);
+          assignRank(champGame.loser, 2);
+        }
 
-        <div class="flex flex-wrap items-center gap-4">
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="replay-speed-slider" min="1" max="10" value="3" step="1" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="replay-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">3x</span>
-          </div>
+        // 3rd Place Game in w2
+        const thirdGame = r2.games.find(g => semiLosers.has(g.winner) && semiLosers.has(g.loser));
+        if (thirdGame) {
+          assignRank(thirdGame.winner, 3);
+          assignRank(thirdGame.loser, 4);
+        }
 
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <i class="fa-solid fa-clock text-slate-400"></i>
-            <input type="range" id="replay-scrubber" min="0" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
-          </div>
+        // Consolation Bracket (Seeds 5..8)
+        const consolGamesW1 = r1.games.filter(g => !top4Seeds.has(g.winner) && !top4Seeds.has(g.loser));
+        if (consolGamesW1.length >= 2) {
+          const consolWinners = new Set();
+          const consolLosers = new Set();
+          consolGamesW1.forEach(g => {
+            consolWinners.add(g.winner);
+            consolLosers.add(g.loser);
+          });
 
-          <div class="flex items-center gap-1.5">
-            <button id="btn-export-chart-png" title="Download Chart as PNG Image" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-file-image"></i> PNG
-            </button>
-            <button id="btn-export-chart-csv" title="Download Chart Data as CSV" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-file-csv"></i> CSV
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+          const fifthGame = r2.games.find(g => consolWinners.has(g.winner) && consolWinners.has(g.loser));
+          if (fifthGame) {
+            assignRank(fifthGame.winner, 5);
+            assignRank(fifthGame.loser, 6);
+          }
 
-  <div id="sparkline-tooltip" class="fixed hidden pointer-events-none z-50 bg-slate-900/95 text-white text-xs px-3 py-2 rounded-lg shadow-2xl border border-slate-700 backdrop-blur font-sans"></div>
+          const seventhGame = r2.games.find(g => consolLosers.has(g.winner) && consolLosers.has(g.loser));
+          if (seventhGame) {
+            assignRank(seventhGame.winner, 7);
+            assignRank(seventhGame.loser, 8);
+          }
+        }
+      }
 
-  <script>
-    // ==========================================
-    // SECTION 1: GLOBAL STATE, MANAGER LOOKUP & COLORS
-    // ==========================================
-    const STATE = {
-      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
-      filters: { year: 2026, weekMin: 1, weekMax: 8, hideCW: false, selectedManager: null, matchup: null },
-      hcwUserOverride: false,
-      weekUserOverride: false,
-      loaded: false, loading: false, dataVersion: 0, dbSig: null, SQL: null, _selfHash: null,
-      sort: { field: 'displayRank', dir: 'asc' },
-      computedStandings: [],
-      liveProb: {
-        chartInstance: null, fullSeries: null, animationTimer: null,
-        isPlaying: false, currentIdx: 0, speedMultiplier: 3
-      },
+      // Fill any remaining unassigned teams (e.g., 9th/10th in a 4-team playoff or incomplete playoff weeks)
+      // in regular-season seed order
+      let nextRank = 1;
+      const usedRanks = new Set(finalRankMap.values());
+      regOrdered.forEach(row => {
+        if (!finalRankMap.has(row.team_id)) {
+          while (usedRanks.has(nextRank)) nextRank++;
+          finalRankMap.set(row.team_id, nextRank);
+          usedRanks.add(nextRank);
+        }
+      });
+
+      return finalRankMap;
+    },
       wae: {
         chartInstance: null, metric: 'wae', mode: 'matchup',
         fullSeries: null, animationTimer: null, isPlaying: false,
