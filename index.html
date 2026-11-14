@@ -468,22 +468,6 @@
             <button id="btn-toggle-survivor-chart" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Graph View</button>
           </div>
         </div>
-
-        <!-- LEGEND / STATUS PILLS -->
-        <div class="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-          <span class="inline-flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-sm bg-slate-300 dark:bg-slate-700 border border-slate-500"></span> Warmup (W1–W5)
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-sm bg-orange-300 dark:bg-orange-600 border border-slate-600"></span> Active
-          </span>
-          <span class="inline-flex items-center gap-1.5 text-sky-700 dark:text-sky-300">
-            <i class="fa-solid fa-snowflake text-sky-500"></i> Frozen / Eliminated
-          </span>
-          <span id="survivor-cw-legend" class="hidden inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Current Week
-          </span>
-        </div>
       </div>
 
       <!-- SURVIVOR TABULAR VIEW -->
@@ -1553,6 +1537,10 @@
       const { render = true } = opts;
       if (!TAB_FILTER_MODE[tabKey]) return;
 
+      if (tabKey !== 'survivor') {
+        pauseSurvivorReplay();
+      }
+
       document.querySelectorAll('.tab-btn').forEach(b => {
         const on = b.getAttribute('data-tab') === tabKey;
         ['bg-brand-600', 'text-white', 'shadow', 'active'].forEach(c => b.classList.toggle(c, on));
@@ -2311,8 +2299,11 @@
         btnTable.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
         if (tableContainer) tableContainer.classList.add('hidden');
         if (chartContainer) chartContainer.classList.remove('hidden');
+        if (STATE.survivor.chartInstance) {
+          STATE.survivor.chartInstance.resize();
+        }
       }
-      renderSurvivorFrameAtIdx(STATE.survivor.currentIdx, false);
+      restartSurvivorReplay();
     }
 
     function buildSurvivorFixedTableScaffold(s) {
@@ -2321,11 +2312,6 @@
       if (!colgroup || !thead) return;
 
       const curWk = getSurvivorCurrentWeek();
-      const cwLegend = document.getElementById('survivor-cw-legend');
-      if (cwLegend) {
-        if (curWk && curWk >= 1 && curWk <= s.maxWeek) cwLegend.classList.remove('hidden');
-        else cwLegend.classList.add('hidden');
-      }
 
       // Fixed column widths so the grid NEVER stretches or shifts during left-to-right animation
       let colHtml = `<col style="width: 195px;">`;
@@ -2357,9 +2343,7 @@
       buildSurvivorFixedTableScaffold(s);
       initSurvivorChartCanvas(s);
 
-      STATE.survivor.prevIdx = s.maxWeek;
-      STATE.survivor.currentIdx = s.maxWeek;
-      renderSurvivorFrameAtIdx(s.maxWeek, false);
+      restartSurvivorReplay();
     }
 
     function renderSurvivorEmpty(msg) {
@@ -2549,10 +2533,10 @@
             },
             y: {
               min: 0,
-              max: 250,
+              max: 275,
               title: { display: true, text: 'Weekly PF', color: textColor, font: { size: 13, weight: '700' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 12, weight: '700' }, stepSize: 50 }
+              ticks: { color: textColor, font: { size: 12, weight: '700' }, stepSize: 25 }
             }
           }
         }
@@ -2649,15 +2633,10 @@
             const maxWkScore = s.maxScoresPerWeek[w];
             const minWkScore = s.minScoresPerWeek[w];
 
-            if (!isFrozenCell) {
-              if (score === minWkScore) {
-                textColorClass = 'text-red-600 dark:text-red-400 font-black';
-              } else if (score === maxWkScore) {
-                textColorClass = 'text-emerald-600 dark:text-emerald-400 font-black';
-              }
-            } else if (isEliminationWeek) {
-              // Highlight the elimination score cleanly inside the ice block
-              textColorClass = isDark ? 'text-white font-black' : 'text-sky-950 font-black';
+            if (!isPostEliminationFrozen && score === minWkScore) {
+              textColorClass = 'text-red-600 dark:text-red-400 font-black';
+            } else if (!isFrozenCell && score === maxWkScore) {
+              textColorClass = 'text-emerald-600 dark:text-emerald-400 font-black';
             }
 
             const maxScoreInWeek = maxWkScore > 0 ? maxWkScore : 230;
@@ -4583,75 +4562,98 @@
     }
 
     // ==========================================
-    // SECTION 10: EVENT HANDLERS & INITIALIZATION
+    // SECTION 10: EVENT LISTENERS & BOOTSTRAP
     // ==========================================
-    document.addEventListener('DOMContentLoaded', () => {
-      initTheme();
-      setupTabNavigation();
-      setupFilterControls();
-      parseUrlHash();
-      applyTabFilterVisibility(FilterEngine.activeTab());
-
-      window.addEventListener('hashchange', () => {
-        if (window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
-        if (!STATE.loaded) return;
-        applyUrlToState();
-        applyTabFilterVisibility(FilterEngine.activeTab());
-        syncFilterUI();
-        renderActiveTab();
-      });
-
-      document.getElementById('clear-manager-filter').addEventListener('click', () => {
-        STATE.filters.selectedManager = null;
-        renderStandingsTable();
-        updateFilterBadge();
-        updateUrlHash();
-      });
-
-      document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
+    function setupTableSorting() {
+      document.querySelectorAll('.standings-table th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
           const field = th.getAttribute('data-sort');
-          if (STATE.sort.field === field) STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
-          else { STATE.sort.field = field; STATE.sort.dir = 'desc'; }
+          if (STATE.sort.field === field) {
+            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            STATE.sort.field = field;
+            STATE.sort.dir = field === 'actualRank' || field === 'team_name' ? 'asc' : 'desc';
+          }
           renderStandingsTable();
         });
       });
+    }
 
-      document.getElementById('btn-export-standings-csv').addEventListener('click', () => {
-        if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
-        const csv = Papa.unparse(STATE.computedStandings.map(r => ({
-          Rank: r.actualRank, Manager: r.manager, Team: r.team_name, W: r.W, L: r.L,
-          PF: r.PF.toFixed(1), PA: r.PA.toFixed(1), ETEW_Pct: (r.ETEW_pct * 100).toFixed(1),
-          WABL: r.WABL.toFixed(2), RABL: r.RABL, Best_Wk: r.bestScore.toFixed(2),
-          Worst_Wk: r.worstScore.toFixed(2), AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2),
-          SDEV: r.SDEV.toFixed(2), FAAB: r.faab
-        })));
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_W${STATE.filters.weekMin}_W${STATE.filters.weekMax}.csv`);
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
-      });
-
+    function setupSparklineTooltips() {
       const tooltip = document.getElementById('sparkline-tooltip');
       document.addEventListener('mouseover', (e) => {
         if (e.target.classList.contains('sparkline-dot')) {
-          tooltip.innerHTML = e.target.getAttribute('data-info');
-          tooltip.classList.remove('hidden');
+          const info = e.target.getAttribute('data-info');
+          if (info) {
+            tooltip.innerHTML = info;
+            tooltip.classList.remove('hidden');
+          }
         }
       });
       document.addEventListener('mousemove', (e) => {
         if (!tooltip.classList.contains('hidden')) {
-          tooltip.style.left = `${e.clientX + 12}px`; tooltip.style.top = `${e.clientY - 28}px`;
+          const leftPos = Math.min(window.innerWidth - 260, e.clientX + 12);
+          tooltip.style.left = `${leftPos}px`;
+          tooltip.style.top = `${e.clientY - 48}px`;
         }
       });
       document.addEventListener('mouseout', (e) => {
-        if (e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden');
+        if (e.target.classList.contains('sparkline-dot')) {
+          tooltip.classList.add('hidden');
+        }
+      });
+    }
+
+    function downloadCSV() {
+      const data = STATE.computedStandings;
+      if (!data || data.length === 0) return;
+      const rows = data.map(r => ({
+        Rank: r.actualRank, Manager: r.manager, Team: r.team_name,
+        W: r.W, L: r.L, T: r.T, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
+        ETEW_Pct: (r.ETEW_pct * 100).toFixed(2) + '%', WABL: r.WABL.toFixed(2), RABL: r.RABL,
+        Best_Wk: `${r.bestScore.toFixed(2)} (Wk ${r.bestWk})`,
+        Worst_Wk: `${r.worstScore.toFixed(2)} (Wk ${r.worstWk})`,
+        AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
+      }));
+      const csv = Papa.unparse(rows);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_Wk${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    window.addEventListener('hashchange', () => {
+      if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
+      STATE._selfHash = null;
+      if (!STATE.loaded) { parseUrlHash(); return; }
+      applyUrlToState();
+      syncFilterUI();
+      renderActiveTab();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      setupTabNavigation();
+      setupFilterControls();
+      setupTableSorting();
+      setupSparklineTooltips();
+
+      document.getElementById('clear-manager-filter').addEventListener('click', () => {
+        STATE.filters.selectedManager = null;
+        updateFilterBadge();
+        renderStandingsTable();
+        updateUrlHash();
       });
 
-      loadDataPipeline().then(() => {
-        startLivePolling();
-      });
+      document.getElementById('btn-export-standings-csv').addEventListener('click', downloadCSV);
+
+      parseUrlHash();
+      applyTabFilterVisibility(FilterEngine.activeTab());
+      loadDataPipeline();
+      startLivePolling();
     });
   </script>
 </body>
