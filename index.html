@@ -103,32 +103,6 @@
     .eliminated-text { color: #94a3b8 !important; text-decoration: line-through; }
     .dark .eliminated-text { color: #64748b !important; text-decoration: line-through; }
 
-    /* Podium Trophy Badges (Gold, Silver, Bronze) */
-    .trophy-gold {
-      color: #eab308;
-      filter: drop-shadow(0 1px 1.5px rgba(234, 179, 8, 0.45));
-    }
-    .dark .trophy-gold {
-      color: #facc15;
-      filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.5));
-    }
-    .trophy-silver {
-      color: #64748b;
-      filter: drop-shadow(0 1px 1px rgba(100, 116, 139, 0.35));
-    }
-    .dark .trophy-silver {
-      color: #cbd5e1;
-      filter: drop-shadow(0 0 3px rgba(203, 213, 225, 0.45));
-    }
-    .trophy-bronze {
-      color: #b45309;
-      filter: drop-shadow(0 1px 1px rgba(180, 83, 9, 0.35));
-    }
-    .dark .trophy-bronze {
-      color: #d97706;
-      filter: drop-shadow(0 0 3px rgba(217, 119, 6, 0.45));
-    }
-
     .sparkline-path { fill: none; stroke: #64748b; stroke-width: 1.5px; opacity: 0.6; }
     .dark .sparkline-path { stroke: #94a3b8; opacity: 0.6; }
     .sparkline-dot { transition: r 0.15s ease, filter 0.15s ease; }
@@ -430,7 +404,7 @@
         <table class="standings-table" id="standings-table">
           <thead>
             <tr>
-              <th data-sort="effectiveRank" class="text-center">RANK</th>
+              <th data-sort="displayRank" class="text-center">RANK</th>
               <th data-sort="team_name" class="text-left">TEAM</th>
               <th data-sort="W" class="text-center">W-L-T</th>
               <th data-sort="PF" class="text-right">PF</th>
@@ -805,9 +779,8 @@
       hcwUserOverride: false,
       weekUserOverride: false,
       loaded: false, loading: false, dataVersion: 0, dbSig: null, SQL: null, _selfHash: null,
-      sort: { field: 'effectiveRank', dir: 'asc' },
+      sort: { field: 'displayRank', dir: 'asc' },
       computedStandings: [],
-      finalRanksCache: {},
       liveProb: {
         chartInstance: null, fullSeries: null, animationTimer: null,
         isPlaying: false, currentIdx: 0, speedMultiplier: 3
@@ -857,16 +830,18 @@
       return null;
     }
 
-    function getCurrentYear() {
-      const cw = getCurrentYearAndWeek();
-      return cw && cw.curYear ? cw.curYear : 2026;
-    }
-
     function getPlayoffStartWeek(year) {
       const teams = STATE.data.teams || [];
       const match = teams.find(t => Number(getVal(t, ['year', 'YR'])) === Number(year) && getVal(t, ['playoff_start_week']) !== undefined);
       const val = match ? Number(getVal(match, ['playoff_start_week'])) : NaN;
       return (!isNaN(val) && val > 1) ? val : 15;
+    }
+
+    function getNumPlayoffTeams(year) {
+      const teams = STATE.data.teams || [];
+      const match = teams.find(t => Number(getVal(t, ['year', 'YR'])) === Number(year) && getVal(t, ['num_playoff_teams']) !== undefined);
+      const val = match ? Number(getVal(match, ['num_playoff_teams'])) : NaN;
+      return (!isNaN(val) && val > 0) ? val : 6;
     }
 
     function getMaxWeekForYear(yr) {
@@ -1248,187 +1223,181 @@
     }
 
     // ==========================================
-    // SECTION 2: STANDINGS METRIC & PRIOR-YEAR FINAL RANK ENGINE
+    // SECTION 2: STANDINGS & PLAYOFF BRACKET ENGINE
     // ==========================================
     const MetricsEngine = {
-      computePriorYearFinalRanks(year) {
-        const yr = Number(year);
-        const curYear = getCurrentYear();
-        if (yr >= curYear) return null;
+      computeFinalRanks(year) {
+        const cw = getCurrentYearAndWeek();
+        const curYear = cw ? Number(cw.curYear) : new Date().getFullYear();
+        if (Number(year) >= curYear) return null;
 
-        const cacheKey = `${STATE.dataVersion}_${yr}`;
-        if (STATE.finalRanksCache[cacheKey]) return STATE.finalRanksCache[cacheKey];
+        const ptsAll = (STATE.data.points || []).filter(r => Number(getVal(r, ['year', 'YR'])) === Number(year));
+        if (ptsAll.length === 0) return null;
 
-        const ptsAll = STATE.data.points || [];
-        const ptsYr = ptsAll.filter(r => Number(getVal(r, ['year', 'YR'])) === yr);
-        if (ptsYr.length === 0) return null;
+        const pStart = getPlayoffStartWeek(year);
+        const numPlayoffTeams = getNumPlayoffTeams(year);
 
-        const metaRow = (STATE.data.teams || []).find(t => Number(getVal(t, ['year', 'YR'])) === yr);
-        const playoffStartWeek = metaRow && getVal(metaRow, ['playoff_start_week']) !== undefined
-          ? Number(getVal(metaRow, ['playoff_start_week']))
-          : 15;
-        const numPlayoffTeams = metaRow && getVal(metaRow, ['num_playoff_teams']) !== undefined
-          ? Number(getVal(metaRow, ['num_playoff_teams']))
-          : 6;
-
-        const regEndWeek = Math.max(1, playoffStartWeek - 1);
-
-        // Build deduplicated weekly team points map across the entire year (regular season + playoffs)
-        const weeklyTeamPoints = {}; // weeklyTeamPoints[week][teamId] = points
-        const allTeamIdsSet = new Set();
-
-        ptsYr.forEach(r => {
+        // Deduplicate weekly team scores across the entire season
+        const weeklyTeamScores = {}; // weeklyTeamScores[week][teamId] = { pf, pa }
+        ptsAll.forEach(r => {
           const wk = Number(getVal(r, ['week', 'WK']));
           const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
           if (!wk || (!tId && tId !== 0)) return;
-          allTeamIdsSet.add(tId);
-          if (!weeklyTeamPoints[wk]) weeklyTeamPoints[wk] = {};
-          if (weeklyTeamPoints[wk][tId] === undefined) {
-            weeklyTeamPoints[wk][tId] = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
+          if (!weeklyTeamScores[wk]) weeklyTeamScores[wk] = {};
+          if (!weeklyTeamScores[wk][tId]) {
+            weeklyTeamScores[wk][tId] = {
+              pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
+              pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0
+            };
           }
         });
 
-        // Compute regular-season standings (weeks 1 through playoff_start_week - 1) to assign seeds
-        const regRecords = {};
-        allTeamIdsSet.forEach(tId => {
-          regRecords[tId] = { team_id: tId, W: 0, PF: 0 };
+        // Collect all team IDs for this year
+        const teamIdSet = new Set();
+        Object.values(weeklyTeamScores).forEach(wkMap => {
+          Object.keys(wkMap).forEach(id => teamIdSet.add(Number(id)));
+        });
+        const allTeamIds = [...teamIdSet];
+        const totalTeams = allTeamIds.length;
+        if (totalTeams === 0) return null;
+
+        // Calculate regular season seeding (weeks 1 through playoff_start_week - 1)
+        const regStats = allTeamIds.map(tId => {
+          let wins = 0, ties = 0, pf = 0;
+          for (let w = 1; w < pStart; w++) {
+            const rec = weeklyTeamScores[w]?.[tId];
+            if (rec) {
+              pf += rec.pf;
+              if (rec.pf > rec.pa) wins += 1;
+              else if (rec.pf === rec.pa) ties += 1;
+            }
+          }
+          return { team_id: tId, regWins: wins + 0.5 * ties, regPF: pf };
         });
 
-        const seenRegTeamWeek = new Set();
-        ptsYr.forEach(r => {
-          const wk = Number(getVal(r, ['week', 'WK']));
-          const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
-          if (wk < 1 || wk > regEndWeek || (!tId && tId !== 0)) return;
-          const key = `${wk}_${tId}`;
-          if (seenRegTeamWeek.has(key)) return;
-          seenRegTeamWeek.add(key);
+        regStats.sort((a, b) => (b.regWins - a.regWins) || (b.regPF - a.regPF));
 
-          const pf = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
-          const pa = Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0;
-          if (pf > pa) regRecords[tId].W += 1;
-          else if (pf === pa) regRecords[tId].W += 0.5;
-          regRecords[tId].PF += pf;
-        });
-
-        const seededList = Object.values(regRecords).sort((a, b) => (b.W - a.W) || (b.PF - a.PF));
-        const totalTeams = seededList.length;
-
-        const seedToTeam = {};
-        const teamToSeed = {};
-        seededList.forEach((rec, idx) => {
+        const seedToTeam = {}; // 1-based seed -> team_id
+        const teamToSeed = {}; // team_id -> 1-based seed
+        regStats.forEach((s, idx) => {
           const seed = idx + 1;
-          seedToTeam[seed] = rec.team_id;
-          teamToSeed[rec.team_id] = seed;
+          seedToTeam[seed] = s.team_id;
+          teamToSeed[s.team_id] = seed;
         });
 
-        // Helper: resolve a head-to-head matchup in a given playoff week; ties/missing scores go to higher seed (lower seed number)
-        const playMatch = (weekNum, teamA, teamB) => {
-          if (teamA === undefined || teamA === null) return { winner: teamB, loser: teamA };
-          if (teamB === undefined || teamB === null) return { winner: teamA, loser: teamB };
-          const ptsA = weeklyTeamPoints[weekNum]?.[teamA];
-          const ptsB = weeklyTeamPoints[weekNum]?.[teamB];
-          const scoreA = (ptsA !== undefined && !isNaN(ptsA)) ? ptsA : -1;
-          const scoreB = (ptsB !== undefined && !isNaN(ptsB)) ? ptsB : -1;
+        const resolveMatchup = (teamAId, teamBId, week) => {
+          if (!teamAId && !teamBId) return { winner: null, loser: null };
+          if (!teamBId) return { winner: teamAId, loser: null };
+          if (!teamAId) return { winner: teamBId, loser: null };
 
-          if (scoreA > scoreB) return { winner: teamA, loser: teamB };
-          if (scoreB > scoreA) return { winner: teamB, loser: teamA };
-          // Tie-breaker: higher seed (lower seed number) advances
-          return (teamToSeed[teamA] < teamToSeed[teamB])
-            ? { winner: teamA, loser: teamB }
-            : { winner: teamB, loser: teamA };
+          const ptsA = weeklyTeamScores[week]?.[teamAId]?.pf ?? -1;
+          const ptsB = weeklyTeamScores[week]?.[teamBId]?.pf ?? -1;
+
+          if (ptsA > ptsB) return { winner: teamAId, loser: teamBId };
+          if (ptsB > ptsA) return { winner: teamBId, loser: teamAId };
+
+          // Tiebreaker: higher regular-season seed (lower seed number)
+          const seedA = teamToSeed[teamAId] || 999;
+          const seedB = teamToSeed[teamBId] || 999;
+          return seedA <= seedB ? { winner: teamAId, loser: teamBId } : { winner: teamBId, loser: teamAId };
         };
 
-        const p1 = playoffStartWeek;
-        const p2 = playoffStartWeek + 1;
-        const p3 = playoffStartWeek + 2;
+        const finalRankMap = {}; // team_id -> final_rank
+        const assignRank = (teamId, rank) => {
+          if (teamId !== null && teamId !== undefined) {
+            finalRankMap[teamId] = rank;
+          }
+        };
 
-        const teamToFinalRank = {};
+        // 1. Championship Bracket
+        if (numPlayoffTeams === 4 && totalTeams >= 4) {
+          // Week pStart: seed 1 vs seed 4 (match 1), seed 2 vs seed 3 (match 2)
+          const m1 = resolveMatchup(seedToTeam[1], seedToTeam[4], pStart);
+          const m2 = resolveMatchup(seedToTeam[2], seedToTeam[3], pStart);
 
-        // 1. Playoff Bracket Resolution
-        if (numPlayoffTeams === 4) {
-          // First playoff week (p1): seed 1 vs seed 4 (match 1), seed 2 vs seed 3 (match 2)
-          const m1 = playMatch(p1, seedToTeam[1], seedToTeam[4]);
-          const m2 = playMatch(p1, seedToTeam[2], seedToTeam[3]);
+          // Week pStart + 1: Championship & 3rd Place
+          const champ = resolveMatchup(m1.winner, m2.winner, pStart + 1);
+          const third = resolveMatchup(m1.loser, m2.loser, pStart + 1);
 
-          // Second playoff week (p2): Championship & 3rd place match
-          const champ = playMatch(p2, m1.winner, m2.winner);
-          const third = playMatch(p2, m1.loser, m2.loser);
+          assignRank(champ.winner, 1);
+          assignRank(champ.loser, 2);
+          assignRank(third.winner, 3);
+          assignRank(third.loser, 4);
+        } else if (numPlayoffTeams === 6 && totalTeams >= 6) {
+          // Week pStart: seeds 1 & 2 BYE; seed 4 vs seed 5 (match 1), seed 3 vs seed 6 (match 2)
+          const m1 = resolveMatchup(seedToTeam[4], seedToTeam[5], pStart);
+          const m2 = resolveMatchup(seedToTeam[3], seedToTeam[6], pStart);
 
-          if (champ.winner !== undefined) teamToFinalRank[champ.winner] = 1;
-          if (champ.loser !== undefined)  teamToFinalRank[champ.loser]  = 2;
-          if (third.winner !== undefined) teamToFinalRank[third.winner] = 3;
-          if (third.loser !== undefined)  teamToFinalRank[third.loser]  = 4;
-        } else if (numPlayoffTeams === 6) {
-          // First playoff week (p1): seed 1 & 2 on BYE; seed 4 vs seed 5 (match 1), seed 3 vs seed 6 (match 2)
-          const m1 = playMatch(p1, seedToTeam[4], seedToTeam[5]);
-          const m2 = playMatch(p1, seedToTeam[3], seedToTeam[6]);
+          // Week pStart + 1: Semifinal 1 (seed 1 vs m1 winner), Semifinal 2 (seed 2 vs m2 winner), 5th place (m1 loser vs m2 loser)
+          const sf1 = resolveMatchup(seedToTeam[1], m1.winner, pStart + 1);
+          const sf2 = resolveMatchup(seedToTeam[2], m2.winner, pStart + 1);
+          const fifth = resolveMatchup(m1.loser, m2.loser, pStart + 1);
 
-          // Second playoff week (p2): Semifinal 1 (seed 1 vs m1 winner), Semifinal 2 (seed 2 vs m2 winner), 5th place (m1 loser vs m2 loser)
-          const sf1   = playMatch(p2, seedToTeam[1], m1.winner);
-          const sf2   = playMatch(p2, seedToTeam[2], m2.winner);
-          const fifth = playMatch(p2, m1.loser, m2.loser);
+          assignRank(fifth.winner, 5);
+          assignRank(fifth.loser, 6);
 
-          if (fifth.winner !== undefined) teamToFinalRank[fifth.winner] = 5;
-          if (fifth.loser !== undefined)  teamToFinalRank[fifth.loser]  = 6;
+          // Week pStart + 2: Championship & 3rd Place
+          const champ = resolveMatchup(sf1.winner, sf2.winner, pStart + 2);
+          const third = resolveMatchup(sf1.loser, sf2.loser, pStart + 2);
 
-          // Third playoff week (p3): Championship & 3rd place match
-          const champ = playMatch(p3, sf1.winner, sf2.winner);
-          const third = playMatch(p3, sf1.loser, sf2.loser);
-
-          if (champ.winner !== undefined) teamToFinalRank[champ.winner] = 1;
-          if (champ.loser !== undefined)  teamToFinalRank[champ.loser]  = 2;
-          if (third.winner !== undefined) teamToFinalRank[third.winner] = 3;
-          if (third.loser !== undefined)  teamToFinalRank[third.loser]  = 4;
+          assignRank(champ.winner, 1);
+          assignRank(champ.loser, 2);
+          assignRank(third.winner, 3);
+          assignRank(third.loser, 4);
         }
 
-        // 2. Non-Playoff / Consolation Bracket Resolution
+        // 2. Consolation Bracket
         if (totalTeams === 10 && numPlayoffTeams === 6) {
-          // First playoff week (p1): seeds 7, 8, 9, 10 on BYE
-          // Second playoff week (p2): seed 7 vs seed 10 (consolation 1), seed 8 vs seed 9 (consolation 2)
-          const c1 = playMatch(p2, seedToTeam[7], seedToTeam[10]);
-          const c2 = playMatch(p2, seedToTeam[8], seedToTeam[9]);
+          // Week pStart: seeds 7, 8, 9, 10 on BYE
+          // Week pStart + 1: seed 7 vs seed 10 (c1), seed 8 vs seed 9 (c2)
+          const c1 = resolveMatchup(seedToTeam[7], seedToTeam[10], pStart + 1);
+          const c2 = resolveMatchup(seedToTeam[8], seedToTeam[9], pStart + 1);
 
-          // Third playoff week (p3): 7th place match & 9th place match
-          const seventh = playMatch(p3, c1.winner, c2.winner);
-          const ninth   = playMatch(p3, c1.loser, c2.loser);
+          // Week pStart + 2: 7th place match (c1 winner vs c2 winner), 9th place match (c1 loser vs c2 loser)
+          const seventh = resolveMatchup(c1.winner, c2.winner, pStart + 2);
+          const ninth = resolveMatchup(c1.loser, c2.loser, pStart + 2);
 
-          if (seventh.winner !== undefined) teamToFinalRank[seventh.winner] = 7;
-          if (seventh.loser !== undefined)  teamToFinalRank[seventh.loser]  = 8;
-          if (ninth.winner !== undefined)   teamToFinalRank[ninth.winner]   = 9;
-          if (ninth.loser !== undefined)    teamToFinalRank[ninth.loser]    = 10;
+          assignRank(seventh.winner, 7);
+          assignRank(seventh.loser, 8);
+          assignRank(ninth.winner, 9);
+          assignRank(ninth.loser, 10);
         } else if (totalTeams === 10 && numPlayoffTeams === 4) {
-          // Seeds 9 and 10 retain their regular-season seed as final_rank
-          if (seedToTeam[9] !== undefined)  teamToFinalRank[seedToTeam[9]]  = 9;
-          if (seedToTeam[10] !== undefined) teamToFinalRank[seedToTeam[10]] = 10;
+          // Seeds 9 and 10 retain 9 and 10
+          assignRank(seedToTeam[9], 9);
+          assignRank(seedToTeam[10], 10);
 
-          // First playoff week (p1): seed 5 vs seed 8 (consolation 1), seed 6 vs seed 7 (consolation 2)
-          const c1 = playMatch(p1, seedToTeam[5], seedToTeam[8]);
-          const c2 = playMatch(p1, seedToTeam[6], seedToTeam[7]);
+          // Week pStart: seed 5 vs seed 8 (c1), seed 6 vs seed 7 (c2)
+          const c1 = resolveMatchup(seedToTeam[5], seedToTeam[8], pStart);
+          const c2 = resolveMatchup(seedToTeam[6], seedToTeam[7], pStart);
 
-          // Second playoff week (p2): 5th place match & 7th place match
-          const fifth   = playMatch(p2, c1.winner, c2.winner);
-          const seventh = playMatch(p2, c1.loser, c2.loser);
+          // Week pStart + 1: 5th place match (c1 winner vs c2 winner), 7th place match (c1 loser vs c2 loser)
+          const fifth = resolveMatchup(c1.winner, c2.winner, pStart + 1);
+          const seventh = resolveMatchup(c1.loser, c2.loser, pStart + 1);
 
-          if (fifth.winner !== undefined)   teamToFinalRank[fifth.winner]   = 5;
-          if (fifth.loser !== undefined)    teamToFinalRank[fifth.loser]    = 6;
-          if (seventh.winner !== undefined) teamToFinalRank[seventh.winner] = 7;
-          if (seventh.loser !== undefined)  teamToFinalRank[seventh.loser]  = 8;
+          assignRank(fifth.winner, 5);
+          assignRank(fifth.loser, 6);
+          assignRank(seventh.winner, 7);
+          assignRank(seventh.loser, 8);
         }
 
-        // Fallback for any unassigned teams: preserve regular-season seed
-        seededList.forEach(rec => {
-          if (teamToFinalRank[rec.team_id] === undefined) {
-            teamToFinalRank[rec.team_id] = teamToSeed[rec.team_id];
+        // Fallback for any unassigned seeds (e.g. non-10 team leagues)
+        regStats.forEach((s, idx) => {
+          if (finalRankMap[s.team_id] === undefined) {
+            finalRankMap[s.team_id] = idx + 1;
           }
         });
 
-        const payload = { teamToSeed, teamToFinalRank, playoffStartWeek, numPlayoffTeams, totalTeams };
-        STATE.finalRanksCache[cacheKey] = payload;
-        return payload;
+        return finalRankMap;
       },
 
       computeStandings(year, weekMin, weekMax) {
         if (!STATE.data.points || STATE.data.points.length === 0) return [];
+
+        const cw = getCurrentYearAndWeek();
+        const curYear = cw ? Number(cw.curYear) : new Date().getFullYear();
+        const isPriorYear = Number(year) < curYear;
+        const pStart = getPlayoffStartWeek(year);
+        const finalRankMap = isPriorYear ? this.computeFinalRanks(year) : null;
 
         const pointsFiltered = STATE.data.points.filter(r => {
           const rYear = Number(getVal(r, ['year', 'YR']));
@@ -1464,6 +1433,8 @@
         });
 
         Object.keys(byWeek).forEach(wk => {
+          const wkNum = Number(wk);
+          const isPlayoffWeek = wkNum >= pStart;
           const teamList = byWeek[wk];
           const n = teamList.length;
           teamList.forEach(t => {
@@ -1475,9 +1446,16 @@
               }
             });
             t.etew_share = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0;
-            t.win = t.team_points > t.opponent_points ? 1 : 0;
-            t.loss = t.team_points < t.opponent_points ? 1 : 0;
-            t.tie = t.team_points === t.opponent_points ? 1 : 0;
+            // Ignore W-L-T from matchups for all weeks >= playoff_start_week
+            if (isPlayoffWeek) {
+              t.win = 0;
+              t.loss = 0;
+              t.tie = 0;
+            } else {
+              t.win = t.team_points > t.opponent_points ? 1 : 0;
+              t.loss = t.team_points < t.opponent_points ? 1 : 0;
+              t.tie = t.team_points === t.opponent_points ? 1 : 0;
+            }
           });
         });
 
@@ -1492,10 +1470,6 @@
           teamMetaMap[Number(getVal(t, ['team_id']))] = t;
         });
 
-        const priorYearFinal = this.computePriorYearFinalRanks(year);
-        const curYear = getCurrentYear();
-        const isPriorYear = Number(year) < curYear;
-
         const result = [];
         Object.keys(teamGroups).forEach(team_id => {
           const teamIdNum = Number(team_id);
@@ -1507,13 +1481,19 @@
           const wins = group.reduce((acc, r) => acc + r.win, 0);
           const losses = group.reduce((acc, r) => acc + r.loss, 0);
           const ties = group.reduce((acc, r) => acc + r.tie, 0);
+          const regGames = wins + losses + ties;
+
           const pf = group.reduce((acc, r) => acc + r.team_points, 0);
           const pa = group.reduce((acc, r) => acc + r.opponent_points, 0);
           const games = group.length;
 
           const etewSum = group.reduce((acc, r) => acc + r.etew_share, 0);
           const etewPct = games > 0 ? etewSum / games : 0;
-          const wabl = (wins + 0.5 * ties) - (etewPct * games);
+
+          // WABL compares actual regular-season wins against expected regular-season wins
+          const regGroup = group.filter(r => r.week < pStart);
+          const regEtewSum = regGroup.reduce((acc, r) => acc + r.etew_share, 0);
+          const wabl = regGames > 0 ? (wins + 0.5 * ties) - regEtewSum : 0;
 
           const scoresArr = group.map(r => r.team_points);
           const sortedScores = [...scoresArr].sort((a, b) => a - b);
@@ -1540,26 +1520,25 @@
           }
 
           const weeklyDetails = group.sort((a,b) => a.week - b.week).map(r => {
-            const res = r.team_points > r.opponent_points ? 'W' : (r.team_points < r.opponent_points ? 'L' : 'T');
+            const isPlayoff = r.week >= pStart;
+            const res = isPlayoff ? 'PO' : (r.team_points > r.opponent_points ? 'W' : (r.team_points < r.opponent_points ? 'L' : 'T'));
             return {
               week: r.week,
               pts: r.team_points,
               oppPts: r.opponent_points,
               oppName: getTeamName(r.opponent_team_id, year),
               oppMgr: getManagerName(r.opponent_team_id, year),
-              result: res
+              result: res,
+              isPlayoff
             };
           });
-
-          const playoffStartWeek = Number(getVal(meta, ['playoff_start_week'])) || 15;
-          const numPlayoffTeams = Number(getVal(meta, ['num_playoff_teams'])) || 6;
 
           result.push({
             team_id: teamIdNum,
             manager: mgr,
             team_name: tname,
             W: wins, L: losses, T: ties,
-            winPct: games > 0 ? (wins + 0.5 * ties) / games : 0,
+            winPct: regGames > 0 ? (wins + 0.5 * ties) / regGames : 0,
             PF: pf, PA: pa,
             ETEW_pct: etewPct, WABL: wabl,
             bestScore: maxScore, bestWk: bestWk,
@@ -1567,35 +1546,33 @@
             AVG: avg, AVG_star: avgStar, SDEV: sdev,
             faab: Number(getVal(meta, ['faab_balance', 'faab'])) || 0,
             weeklyDetails: weeklyDetails,
-            playoffStartWeek: playoffStartWeek,
-            numPlayoffTeams: numPlayoffTeams,
-            seed: priorYearFinal ? priorYearFinal.teamToSeed[teamIdNum] : null,
-            final_rank: priorYearFinal ? priorYearFinal.teamToFinalRank[teamIdNum] : null
+            playoffStartWeek: pStart,
+            numPlayoffTeams: getNumPlayoffTeams(year),
+            final_rank: finalRankMap ? (finalRankMap[teamIdNum] ?? null) : null
           });
         });
 
         result.sort((a, b) => (b.W - a.W) || (b.PF - a.PF));
         result.forEach((r, idx) => r.actualRank = idx + 1);
 
+        const useFinalRank = isPriorYear && Number(weekMax) >= pStart;
+        result.forEach(r => {
+          r.displayRank = (useFinalRank && r.final_rank !== null) ? r.final_rank : r.actualRank;
+        });
+
         const etewSorted = [...result].sort((a, b) => (b.ETEW_pct - a.ETEW_pct) || (b.PF - a.PF));
         etewSorted.forEach((r, idx) => r.etewRank = idx + 1);
 
-        const playoffStartWk = result[0] ? result[0].playoffStartWeek : 15;
-        const totalRegWeeks = playoffStartWk - 1;
+        const totalRegWeeks = pStart - 1;
         const remainingWeeks = Math.max(0, totalRegWeeks - Number(weekMax));
         const playoffCutoff = result[0] ? result[0].numPlayoffTeams : 6;
-        const useFinalRank = isPriorYear && Number(weekMax) >= playoffStartWk;
 
         result.forEach(r => {
-          if (r.seed === null || r.seed === undefined) r.seed = r.actualRank;
-          r.effectiveRank = (useFinalRank && r.final_rank !== null && r.final_rank !== undefined)
-            ? r.final_rank
-            : r.actualRank;
           r.RABL = r.etewRank - r.actualRank;
-          const winsAtCutoffNext = result[playoffCutoff] ? result[playoffCutoff].W : 0;
-          r.isClinched = r.actualRank <= playoffCutoff && r.W > (winsAtCutoffNext + remainingWeeks);
-          const winsAtCutoffLast = result[playoffCutoff - 1] ? result[playoffCutoff - 1].W : 0;
-          r.isEliminated = (r.W + remainingWeeks) < winsAtCutoffLast;
+          const winsAtCutoff7th = result[playoffCutoff] ? result[playoffCutoff].W : 0;
+          r.isClinched = r.actualRank <= playoffCutoff && r.W > (winsAtCutoff7th + remainingWeeks);
+          const winsAtCutoff6th = result[playoffCutoff - 1] ? result[playoffCutoff - 1].W : 0;
+          r.isEliminated = (r.W + remainingWeeks) < winsAtCutoff6th;
         });
 
         return result;
@@ -1964,16 +1941,16 @@
       return `No ${what} for NDL ${f.year} through week ${f.weekMax}.` + (hiding ? ` "Hide current week" is on, so week ${cw.curWeek} (in progress) is hidden — turn it off or pick a later year.` : ' Try a different year or week.');
     }
 
-    function getPodiumTrophyHTML(isPriorYear, finalRank) {
+    function getTrophyBadgeHTML(finalRank, isPriorYear) {
       if (!isPriorYear || !finalRank) return '';
       if (finalRank === 1) {
-        return `<i class="fa-solid fa-trophy trophy-gold ml-1.5 text-xs" title="1st Place Champion"></i>`;
+        return `<i class="fa-solid fa-trophy ml-1.5 text-amber-400 drop-shadow-sm" title="1st Place Champion"></i>`;
       }
       if (finalRank === 2) {
-        return `<i class="fa-solid fa-trophy trophy-silver ml-1.5 text-xs" title="2nd Place Runner-Up"></i>`;
+        return `<i class="fa-solid fa-trophy ml-1.5 text-slate-400 dark:text-slate-300 drop-shadow-sm" title="2nd Place Runner-Up"></i>`;
       }
       if (finalRank === 3) {
-        return `<i class="fa-solid fa-trophy trophy-bronze ml-1.5 text-xs" title="3rd Place"></i>`;
+        return `<i class="fa-solid fa-trophy ml-1.5 text-amber-700 dark:text-amber-600 drop-shadow-sm" title="3rd Place"></i>`;
       }
       return '';
     }
@@ -1994,14 +1971,11 @@
         data = data.filter(r => r.manager === STATE.filters.selectedManager);
       }
 
-      const curYear = getCurrentYear();
+      const cw = getCurrentYearAndWeek();
+      const curYear = cw ? Number(cw.curYear) : new Date().getFullYear();
       const isPriorYear = Number(STATE.filters.year) < curYear;
-      const playoffStartWk = data[0] ? data[0].playoffStartWeek : getPlayoffStartWeek(STATE.filters.year);
-      const playoffCutoff = data[0] ? data[0].numPlayoffTeams : 6;
-      const isPostseasonFinalView = isPriorYear && Number(effMax) >= playoffStartWk;
 
-      let field = STATE.sort.field;
-      if (field === 'actualRank') field = 'effectiveRank';
+      const field = STATE.sort.field;
       const dir = STATE.sort.dir === 'asc' ? 1 : -1;
       data.sort((a, b) => {
         if (typeof a[field] === 'string') return dir * a[field].localeCompare(b[field]);
@@ -2024,18 +1998,18 @@
 
       const tbody = document.getElementById('standings-tbody');
       tbody.innerHTML = data.map(r => {
-        const displayRank = isPostseasonFinalView && r.final_rank ? r.final_rank : r.actualRank;
-        const rankStr = String(displayRank).padStart(2, '0');
-        const rankClass = displayRank <= playoffCutoff ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 dark:text-slate-500 line-through";
+        const shownRank = r.displayRank;
+        const rankStr = String(shownRank).padStart(2, '0');
+        const cutoff = r.numPlayoffTeams || 6;
+        const rankClass = shownRank <= cutoff ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 dark:text-slate-500 line-through";
         let teamClass = "text-slate-900 dark:text-slate-100 font-semibold";
-        if (!isPostseasonFinalView) {
-          if (r.isClinched) teamClass = "clinched-text";
-          if (r.isEliminated) teamClass = "eliminated-text";
-        }
+        if (r.isClinched) teamClass = "clinched-text";
+        if (r.isEliminated) teamClass = "eliminated-text";
 
-        const isCutoff = displayRank === playoffCutoff;
+        const isCutoff = shownRank === cutoff;
         const rowClass = isCutoff ? "playoff-cutoff-row" : "";
-        const trophyHtml = getPodiumTrophyHTML(isPriorYear, r.final_rank);
+
+        const trophyHTML = getTrophyBadgeHTML(r.final_rank, isPriorYear);
 
         const wBg = HEATMAPS.greenClearRed(r.winPct, wStats.min, wStats.mid, wStats.max);
         const etewBg = HEATMAPS.greenClearRed(r.ETEW_pct, etewStats.min, 0.50, etewStats.max);
@@ -2050,16 +2024,12 @@
         const avgStarBg = HEATMAPS.greenToClear(r.AVG_star, avgStarStats.min, avgStarStats.max);
         const worstBg = HEATMAPS.clearToRed(r.worstScore, worstStats.min, worstStats.max);
 
-        const rankTitle = isPostseasonFinalView
-          ? `Final Rank: #${r.final_rank} (Regular Season Seed: #${r.seed})`
-          : (isPriorYear && r.final_rank ? `Regular Season Rank: #${r.actualRank} (Final Rank: #${r.final_rank})` : '');
-
         return `
           <tr class="${rowClass}">
-            <td class="text-center ${rankClass}" title="${escapeHTML(rankTitle)}">${rankStr}</td>
+            <td class="text-center ${rankClass}">${rankStr}</td>
             <td class="text-left cursor-pointer" onclick="toggleManagerFilter('${r.manager}')">
               <span class="text-xs font-semibold mr-1.5 border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${getManagerColor(r.manager)}">${r.manager}</span>
-              <span class="${teamClass}">${r.team_name}</span>${trophyHtml}
+              <span class="${teamClass}">${r.team_name}</span>${trophyHTML}
             </td>
             <td class="text-center font-mono font-bold" style="background-color: ${wBg}">${r.W} - ${r.L}${r.T > 0 ? ` - ${r.T}` : ''}</td>
             <td class="text-right font-mono" style="background-color: ${pfBg}">${r.PF.toFixed(1)}</td>
@@ -2094,9 +2064,10 @@
       const dots = weeklyDetails.map((d, i) => {
         const x = (pad + (i / Math.max(1, weeklyDetails.length - 1)) * (w - 2 * pad)).toFixed(1);
         const y = (h - pad - ((d.pts - min) / r) * (h - 2 * pad)).toFixed(1);
-        const color = d.result === 'W' ? '#22c55e' : (d.result === 'L' ? '#ef4444' : '#f59e0b');
-        const resColorClass = d.result === 'W' ? 'text-emerald-400 font-bold' : (d.result === 'L' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
-        const tooltipInfo = `<div class="font-bold text-slate-100">Week ${d.week} vs ${escapeHTML(d.oppName)}${d.oppMgr ? ' <span class="text-slate-400 font-normal">(' + escapeHTML(d.oppMgr) + ')</span>' : ''}</div><div class="mt-0.5 flex items-center gap-1.5 font-mono"><span class="${resColorClass}">${d.result}</span> <span>${d.pts.toFixed(2)} - ${d.oppPts.toFixed(2)}</span></div>`;
+        const color = d.isPlayoff ? '#0ea5e9' : (d.result === 'W' ? '#22c55e' : (d.result === 'L' ? '#ef4444' : '#f59e0b'));
+        const resColorClass = d.isPlayoff ? 'text-sky-400 font-bold' : (d.result === 'W' ? 'text-emerald-400 font-bold' : (d.result === 'L' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold'));
+        const wkPrefix = d.isPlayoff ? `Playoff Week ${d.week}` : `Week ${d.week}`;
+        const tooltipInfo = `<div class="font-bold text-slate-100">${wkPrefix} vs ${escapeHTML(d.oppName)}${d.oppMgr ? ' <span class="text-slate-400 font-normal">(' + escapeHTML(d.oppMgr) + ')</span>' : ''}</div><div class="mt-0.5 flex items-center gap-1.5 font-mono"><span class="${resColorClass}">${d.result}</span> <span>${d.pts.toFixed(2)} - ${d.oppPts.toFixed(2)}</span></div>`;
 
         return `<circle cx="${x}" cy="${y}" r="3" fill="${color}" class="sparkline-dot cursor-pointer" data-info="${escapeHTML(tooltipInfo)}"/>`;
       }).join('');
@@ -4505,8 +4476,9 @@
               data: [...emptyArray],
               borderColor: colorA,
               borderWidth: 2,
-              borderDash: [6, 6],
+              borderDash: [6, 4],
               pointRadius: 0,
+              pointHoverRadius: 4,
               yAxisID: 'y',
               tension: 0.15,
               spanGaps: false
@@ -4516,33 +4488,37 @@
               data: [...emptyArray],
               borderColor: colorB,
               borderWidth: 2,
-              borderDash: [6, 6],
+              borderDash: [6, 4],
               pointRadius: 0,
+              pointHoverRadius: 4,
               yAxisID: 'y',
               tension: 0.15,
               spanGaps: false
             },
             {
-              label: `Win Prob % (${nameA} vs ${nameB})`,
+              label: `${nameA} Win %`,
               data: [...emptyArray],
-              borderWidth: 3,
-              segment: {
-                borderColor: ctx => {
-                  const y0 = ctx.p0.parsed.y;
-                  const y1 = ctx.p1.parsed.y;
-                  return (y0 + y1) / 2 >= 50 ? colorA : colorB;
-                },
-                backgroundColor: ctx => {
-                  const y0 = ctx.p0.parsed.y;
-                  const y1 = ctx.p1.parsed.y;
-                  return (y0 + y1) / 2 >= 50 ? hexToRgba(colorA, 0.14) : hexToRgba(colorB, 0.14);
-                }
-              },
-              fill: { value: 50 },
+              borderColor: hexToRgba(colorA, 0.4),
+              backgroundColor: hexToRgba(colorA, 0.25),
+              fill: 'origin',
+              borderWidth: 1.5,
               pointRadius: 0,
-              pointHoverRadius: 6,
               yAxisID: 'y1',
-              tension: 0.25,
+              stack: 'winprob',
+              tension: 0.2,
+              spanGaps: false
+            },
+            {
+              label: `${nameB} Win %`,
+              data: [...emptyArray],
+              borderColor: hexToRgba(colorB, 0.4),
+              backgroundColor: hexToRgba(colorB, 0.25),
+              fill: '-1',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              yAxisID: 'y1',
+              stack: 'winprob',
+              tension: 0.2,
               spanGaps: false
             }
           ]
@@ -4555,7 +4531,7 @@
           plugins: {
             legend: {
               position: 'top',
-              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 16, padding: 14 }
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14 }
             },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
@@ -4565,21 +4541,13 @@
               borderWidth: 1,
               padding: 10,
               callbacks: {
-                label: (ctx) => {
-                  const val = ctx.parsed.y;
-                  if (val === null || val === undefined) return null;
-                  const idx = ctx.dataIndex;
-                  const s = STATE.liveProb.fullSeries;
-                  if (ctx.datasetIndex === 4 && s) {
-                    const wpA = s.tmaWpNorm[idx];
-                    const wpB = s.tmbWpNorm[idx];
-                    if (wpA >= wpB) {
-                      return `Win Prob: ${nameA} ${wpA.toFixed(1)}% (${nameB} ${wpB.toFixed(1)}%)`;
-                    } else {
-                      return `Win Prob: ${nameB} ${wpB.toFixed(1)}% (${nameA} ${wpA.toFixed(1)}%)`;
-                    }
+                label: function(ctx) {
+                  let label = ctx.dataset.label || '';
+                  if (ctx.parsed.y === null) return null;
+                  if (ctx.dataset.yAxisID === 'y1') {
+                    return `${label}: ${ctx.parsed.y.toFixed(1)}%`;
                   }
-                  return `${ctx.dataset.label}: ${val.toFixed(2)} pts`;
+                  return `${label}: ${ctx.parsed.y.toFixed(2)} pts`;
                 }
               }
             }
@@ -4587,29 +4555,26 @@
           scales: {
             x: {
               grid: { color: gridColor },
-              ticks: { color: textColor, maxTicksLimit: 12, font: { size: 10, weight: '600' } }
+              ticks: { color: textColor, maxTicksLimit: 12, font: { size: 10 } }
             },
             y: {
               type: 'linear',
               position: 'left',
-              beginAtZero: true,
-              suggestedMax: 180,
-              title: { display: true, text: 'Points', color: textColor, font: { size: 11, weight: '700' } },
+              min: 0,
+              max: 240,
+              title: { display: true, text: 'Fantasy Points', color: textColor, font: { size: 11, weight: '600' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 11 } }
+              ticks: { color: textColor, font: { size: 11 }, stepSize: 30 }
             },
             y1: {
               type: 'linear',
               position: 'right',
+              stacked: true,
               min: 0,
               max: 100,
-              title: { display: true, text: `Win Probability % (50% Midline)`, color: textColor, font: { size: 11, weight: '700' } },
+              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '600' } },
               grid: { drawOnChartArea: false },
-              ticks: {
-                color: textColor,
-                font: { size: 11 },
-                callback: v => v + '%'
-              }
+              ticks: { color: textColor, font: { size: 11 }, callback: v => v + '%' }
             }
           }
         }
@@ -4617,12 +4582,12 @@
     }
 
     function updateChartThemeColors() {
-      const chart = STATE.liveProb.chartInstance;
-      if (!chart) return;
+      if (!STATE.liveProb.chartInstance) return;
       const isDark = document.documentElement.classList.contains('dark');
       const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const textColor = isDark ? '#94a3b8' : '#475569';
 
+      const chart = STATE.liveProb.chartInstance;
       chart.options.plugins.legend.labels.color = textColor;
       chart.options.scales.x.grid.color = gridColor;
       chart.options.scales.x.ticks.color = textColor;
@@ -4634,85 +4599,93 @@
       chart.update('none');
     }
 
+    function updateScorecardDisplay(idx0) {
+      const s = STATE.liveProb.fullSeries;
+      if (!s || idx0 < 0 || idx0 >= s.labels.length) return;
+
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const nameB = getTeamName(s.tmb, yr);
+
+      document.getElementById('scorecard-tma-name').innerText = nameA;
+      document.getElementById('scorecard-tma-mgr').innerText = s.mgrA;
+      document.getElementById('scorecard-tmb-name').innerText = nameB;
+      document.getElementById('scorecard-tmb-mgr').innerText = s.mgrB;
+
+      const ptsA = s.tmaPts[idx0] || 0;
+      const ptsB = s.tmbPts[idx0] || 0;
+      const projA = s.tmaProj[idx0] || 0;
+      const projB = s.tmbProj[idx0] || 0;
+
+      const wpANorm = s.tmaWpNorm[idx0];
+      const wpBNorm = s.tmbWpNorm[idx0];
+
+      const ptsAEl = document.getElementById('scorecard-tma-pts');
+      const ptsBEl = document.getElementById('scorecard-tmb-pts');
+      const wpAEl = document.getElementById('scorecard-tma-wp');
+      const wpBEl = document.getElementById('scorecard-tmb-wp');
+
+      ptsAEl.innerText = ptsA.toFixed(2);
+      ptsAEl.style.color = s.colorA;
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${projA.toFixed(2)}`;
+      wpAEl.innerText = `${wpANorm.toFixed(1)}%`;
+      wpAEl.style.color = s.colorA;
+
+      ptsBEl.innerText = ptsB.toFixed(2);
+      ptsBEl.style.color = s.colorB;
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${projB.toFixed(2)}`;
+      wpBEl.innerText = `${wpBNorm.toFixed(1)}%`;
+      wpBEl.style.color = s.colorB;
+
+      const cardA = document.getElementById('scorecard-card-tma');
+      const cardB = document.getElementById('scorecard-card-tmb');
+      const chartBox = document.getElementById('live-prob-chart-container');
+
+      const favoriteColor = wpANorm >= 50 ? s.colorA : s.colorB;
+      if (chartBox) {
+        chartBox.style.borderColor = favoriteColor;
+        chartBox.style.boxShadow = `0 10px 25px -5px ${hexToRgba(favoriteColor, 0.28)}`;
+      }
+
+      if (cardA && cardB) {
+        if (wpANorm >= 50) {
+          cardA.style.borderColor = s.colorA;
+          cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08);
+          cardB.style.borderColor = '';
+          cardB.style.backgroundColor = '';
+        } else {
+          cardB.style.borderColor = s.colorB;
+          cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08);
+          cardA.style.borderColor = '';
+          cardA.style.backgroundColor = '';
+        }
+      }
+    }
+
     function renderFrameAtIdx(idx) {
       const s = STATE.liveProb.fullSeries;
       if (!s || !STATE.liveProb.chartInstance) return;
 
       const total = s.labels.length;
       const validIdx = Math.min(total, Math.max(1, idx));
-      const padCount = total - validIdx;
+      const padLen = total - validIdx;
+      const nulls = padLen > 0 ? new Array(padLen).fill(null) : [];
 
       const chart = STATE.liveProb.chartInstance;
-      chart.data.datasets[0].data = s.tmaPts.slice(0, validIdx).concat(new Array(padCount).fill(null));
-      chart.data.datasets[1].data = s.tmbPts.slice(0, validIdx).concat(new Array(padCount).fill(null));
-      chart.data.datasets[2].data = s.tmaProj.slice(0, validIdx).concat(new Array(padCount).fill(null));
-      chart.data.datasets[3].data = s.tmbProj.slice(0, validIdx).concat(new Array(padCount).fill(null));
-      chart.data.datasets[4].data = s.tmaWpNorm.slice(0, validIdx).concat(new Array(padCount).fill(null));
+      chart.data.datasets[0].data = s.tmaPts.slice(0, validIdx).concat(nulls);
+      chart.data.datasets[1].data = s.tmbPts.slice(0, validIdx).concat(nulls);
+      chart.data.datasets[2].data = s.tmaProj.slice(0, validIdx).concat(nulls);
+      chart.data.datasets[3].data = s.tmbProj.slice(0, validIdx).concat(nulls);
+      chart.data.datasets[4].data = s.tmaWpNorm.slice(0, validIdx).concat(nulls);
+      chart.data.datasets[5].data = s.tmbWpNorm.slice(0, validIdx).concat(nulls);
 
       const scrubber = document.getElementById('replay-scrubber');
       if (scrubber) {
         scrubber.value = Math.round((validIdx / total) * 100);
       }
 
-      const cur = validIdx - 1;
-      updateLiveScorecard(
-        s.tma, s.tmb, STATE.filters.year,
-        s.tmaPts[cur], s.tmbPts[cur],
-        s.tmaProj[cur], s.tmbProj[cur],
-        s.tmaWpNorm[cur], s.tmbWpNorm[cur],
-        s.colorA, s.colorB
-      );
-
+      updateScorecardDisplay(validIdx - 1);
       chart.update('none');
-    }
-
-    function updateLiveScorecard(tma, tmb, yr, ptsA, ptsB, projA, projB, wpA, wpB, colorA, colorB) {
-      const nameA = getTeamName(tma, yr);
-      const mgrA = getManagerName(tma, yr);
-      const nameB = getTeamName(tmb, yr);
-      const mgrB = getManagerName(tmb, yr);
-
-      document.getElementById('scorecard-tma-name').innerText = nameA;
-      document.getElementById('scorecard-tma-mgr').innerText = mgrA;
-      document.getElementById('scorecard-tma-pts').innerText = (ptsA || 0).toFixed(2);
-      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${(projA || 0).toFixed(2)}`;
-      document.getElementById('scorecard-tma-wp').innerText = `${(wpA || 0).toFixed(1)}%`;
-
-      document.getElementById('scorecard-tmb-name').innerText = nameB;
-      document.getElementById('scorecard-tmb-mgr').innerText = mgrB;
-      document.getElementById('scorecard-tmb-pts').innerText = (ptsB || 0).toFixed(2);
-      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${(projB || 0).toFixed(2)}`;
-      document.getElementById('scorecard-tmb-wp').innerText = `${(wpB || 0).toFixed(1)}%`;
-
-      document.getElementById('scorecard-tma-pts').style.color = colorA;
-      document.getElementById('scorecard-tma-wp').style.color = colorA;
-      document.getElementById('scorecard-tmb-pts').style.color = colorB;
-      document.getElementById('scorecard-tmb-wp').style.color = colorB;
-
-      const cardA = document.getElementById('scorecard-card-tma');
-      const cardB = document.getElementById('scorecard-card-tmb');
-      const chartContainer = document.getElementById('live-prob-chart-container');
-
-      const leadingColor = (wpA || 0) >= (wpB || 0) ? colorA : colorB;
-
-      if (cardA && cardB) {
-        if ((wpA || 0) >= (wpB || 0)) {
-          cardA.style.borderColor = colorA;
-          cardA.style.backgroundColor = hexToRgba(colorA, 0.08);
-          cardB.style.borderColor = '';
-          cardB.style.backgroundColor = '';
-        } else {
-          cardB.style.borderColor = colorB;
-          cardB.style.backgroundColor = hexToRgba(colorB, 0.08);
-          cardA.style.borderColor = '';
-          cardA.style.backgroundColor = '';
-        }
-      }
-
-      if (chartContainer) {
-        chartContainer.style.borderColor = leadingColor;
-        chartContainer.style.boxShadow = `0 10px 25px -5px ${hexToRgba(leadingColor, 0.25)}`;
-      }
     }
 
     function togglePlayPause() {
@@ -4752,7 +4725,7 @@
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
 
       const mult = STATE.liveProb.speedMultiplier || 3;
-      const intervalMs = Math.max(15, Math.round(90 / mult));
+      const intervalMs = Math.max(15, Math.round(120 / mult));
 
       STATE.liveProb.animationTimer = setInterval(() => {
         const s = STATE.liveProb.fullSeries;
@@ -4788,8 +4761,11 @@
     function downloadChartPNG() {
       const chart = STATE.liveProb.chartInstance;
       if (!chart) return;
+      const s = STATE.liveProb.fullSeries;
+      const yr = STATE.filters.year;
+      const wk = STATE.filters.weekMax;
       const link = document.createElement('a');
-      link.download = `NDL_LiveWinProb_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
+      link.download = `NDL_WinProb_${yr}_Wk${wk}_${s ? s.mgrA + '_vs_' + s.mgrB : 'Matchup'}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
@@ -4798,6 +4774,7 @@
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
       const yr = STATE.filters.year;
+      const wk = STATE.filters.weekMax;
       const nameA = getTeamName(s.tma, yr);
       const nameB = getTeamName(s.tmb, yr);
 
@@ -4815,21 +4792,16 @@
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `NDL_LiveWinProb_${yr}_Wk${STATE.filters.weekMax}.csv`);
+      link.setAttribute("download", `NDL_WinProb_${yr}_Wk${wk}_${s.mgrA}_vs_${s.mgrB}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
     // ==========================================
-    // SECTION 10: EVENT LISTENERS & INITIALIZATION
+    // SECTION 10: EVENT LISTENERS & INIT
     // ==========================================
-    document.addEventListener('DOMContentLoaded', () => {
-      initTheme();
-      setupTabNavigation();
-      setupFilterControls();
-      parseUrlHash();
-
+    function setupTableSorting() {
       document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
           const field = th.getAttribute('data-sort');
@@ -4837,70 +4809,71 @@
             STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
           } else {
             STATE.sort.field = field;
-            STATE.sort.dir = (field === 'effectiveRank' || field === 'actualRank' || field === 'team_name') ? 'asc' : 'desc';
+            STATE.sort.dir = (field === 'displayRank' || field === 'actualRank' || field === 'final_rank' || field === 'team_name') ? 'asc' : 'desc';
           }
           renderStandingsTable();
         });
       });
+    }
 
-      document.getElementById('clear-manager-filter').addEventListener('click', () => {
-        STATE.filters.selectedManager = null;
-        renderStandingsTable();
-        updateFilterBadge();
-        updateUrlHash();
-      });
-
-      document.getElementById('btn-export-standings-csv').addEventListener('click', () => {
-        if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
-        const curYear = getCurrentYear();
-        const isPriorYear = Number(STATE.filters.year) < curYear;
-
-        const csvData = STATE.computedStandings.map(r => {
-          const row = {
-            Rank: r.effectiveRank,
-            Regular_Season_Rank: r.actualRank,
-            Manager: r.manager,
-            Team: r.team_name,
-            W: r.W, L: r.L, T: r.T, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
-            ETEW_Pct: (r.ETEW_pct * 100).toFixed(1) + '%', WABL: r.WABL.toFixed(2), RABL: r.RABL,
-            Best_Wk: `${r.bestScore.toFixed(2)} (${r.bestWk})`, Worst_Wk: `${r.worstScore.toFixed(2)} (${r.worstWk})`,
-            AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
-          };
-          if (isPriorYear) {
-            row.Seed = r.seed ?? '';
-            row.Final_Rank = r.final_rank ?? '';
-          }
-          return row;
-        });
-        const csv = Papa.unparse(csvData);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_W${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
-
+    function setupSparklineTooltips() {
       const tooltip = document.getElementById('sparkline-tooltip');
-      document.addEventListener('mouseover', (e) => {
+      document.addEventListener('mouseover', e => {
         if (e.target.classList.contains('sparkline-dot')) {
           tooltip.innerHTML = e.target.getAttribute('data-info');
           tooltip.classList.remove('hidden');
         }
       });
-      document.addEventListener('mousemove', (e) => {
+      document.addEventListener('mousemove', e => {
         if (!tooltip.classList.contains('hidden')) {
           tooltip.style.left = (e.clientX + 12) + 'px';
-          tooltip.style.top = (e.clientY - 35) + 'px';
+          tooltip.style.top = (e.clientY - 28) + 'px';
         }
       });
-      document.addEventListener('mouseout', (e) => {
+      document.addEventListener('mouseout', e => {
         if (e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden');
       });
+    }
+
+    function downloadStandingsCSV() {
+      if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
+      const csvData = STATE.computedStandings.map(r => ({
+        Rank: r.displayRank,
+        RegSeason_Rank: r.actualRank,
+        Final_Rank: r.final_rank ?? '',
+        Manager: r.manager, Team: r.team_name,
+        W: r.W, L: r.L, T: r.T, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
+        ETEW_Pct: (r.ETEW_pct * 100).toFixed(2), WABL: r.WABL.toFixed(2), RABL: r.RABL,
+        Best_Wk_Score: r.bestScore, Best_Wk: r.bestWk, Worst_Wk_Score: r.worstScore, Worst_Wk: r.worstWk,
+        AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
+      }));
+      const csv = Papa.unparse(csvData);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_Wk${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      setupTabNavigation();
+      setupFilterControls();
+      setupTableSorting();
+      setupSparklineTooltips();
+      parseUrlHash();
+
+      document.getElementById('clear-manager-filter').addEventListener('click', () => {
+        STATE.filters.selectedManager = null;
+        renderStandingsTable(); updateFilterBadge(); updateUrlHash();
+      });
+
+      document.getElementById('btn-export-standings-csv').addEventListener('click', downloadStandingsCSV);
 
       window.addEventListener('hashchange', () => {
-        if (STATE._selfHash === window.location.hash) { STATE._selfHash = null; return; }
+        if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
         STATE._selfHash = null;
         if (!STATE.loaded) { parseUrlHash(); return; }
         applyUrlToState();
