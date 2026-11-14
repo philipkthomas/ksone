@@ -282,21 +282,14 @@
     </section>
 
     <!-- MATCHUPS TAB CONTENT -->
-    <section id="tab-matchups" class="tab-content space-y-4 hidden">
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div class="flex items-center gap-4">
-          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-gamepad text-brand-500"></i> Weekly Matchup Results
-          </h2>
-          <span class="text-slate-500 dark:text-slate-400 italic">Week comes from the filter bar above — use the ◀ ▶ arrows.</span>
-        </div>
+    <section id="tab-matchups" class="tab-content space-y-3 hidden">
+      <div class="flex items-center justify-between gap-2 px-1">
+        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-gamepad text-brand-500"></i> Weekly Matchup Results
+        </h2>
         <button id="btn-export-matchups-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
           <i class="fa-solid fa-download text-xs"></i> CSV
         </button>
-      </div>
-
-      <div class="bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-bold text-base py-2.5 text-center rounded-xl shadow">
-        Matchup Results: NDL <span id="matchup-banner-year">2026</span> Week <span id="matchup-banner-week">1</span>
       </div>
 
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
@@ -318,14 +311,14 @@
     </section>
 
     <!-- SURVIVOR TAB CONTENT -->
-    <section id="tab-survivor" class="tab-content space-y-4 hidden">
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div class="flex items-center gap-4">
+    <section id="tab-survivor" class="tab-content space-y-3 hidden">
+      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+        <div class="flex flex-wrap items-center gap-4">
           <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-skull text-amber-500"></i> Survivor Pool (Eliminations Start Week 6)
+            <i class="fa-solid fa-skull text-amber-500"></i> Survivor Pool (Starts W6)
           </h2>
           <!-- SURVIVOR VIEW TOGGLE -->
-          <div class="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
+          <div class="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
             <button id="btn-toggle-survivor-table" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Table View</button>
             <button id="btn-toggle-survivor-chart" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Graph View</button>
           </div>
@@ -342,11 +335,6 @@
 
       <!-- SURVIVOR TABULAR VIEW -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xl overflow-x-auto" id="survivor-table-container">
-        <div class="text-center mb-6">
-          <h1 class="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">Survivor</h1>
-          <p class="text-base font-semibold text-slate-500 dark:text-slate-400 mt-1">NDL <span id="survivor-year-label">2026</span></p>
-        </div>
-        
         <div class="overflow-x-auto">
           <table class="survivor-table min-w-full" id="survivor-table">
             <thead id="survivor-thead"></thead>
@@ -389,13 +377,13 @@
     </section>
 
     <!-- PROPS TAB CONTENT -->
-    <section id="tab-props" class="tab-content space-y-6 hidden">
+    <section id="tab-props" class="tab-content space-y-4 hidden">
       <!-- TOP CONTROL & EXPORT HEADER -->
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
+      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
         <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-          <i class="fa-solid fa-sack-dollar text-emerald-500"></i> Season Prop Bets & Divisional Competition ($15 per Prop)
+          <i class="fa-solid fa-sack-dollar text-emerald-500"></i> Season Prop Bets
         </h2>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 text-xs">
           <button id="btn-export-props-csv" title="Download Props Table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
             <i class="fa-solid fa-file-csv"></i> Table CSV
           </button>
@@ -483,20 +471,20 @@
     </section>
 
     <!-- WINS ABOVE EVEN & RANK TAB CONTENT -->
-    <section id="tab-wins_above" class="tab-content space-y-4 hidden">
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div class="flex flex-wrap items-center gap-5">
+    <section id="tab-wins_above" class="tab-content space-y-3 hidden">
+      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+        <div class="flex flex-wrap items-center gap-4">
           <h2 id="wae-chart-header-title" class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
             <i class="fa-solid fa-chart-line text-brand-500"></i> Standings & Performance Trends
           </h2>
 
           <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
+            <div class="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
               <button id="btn-toggle-metric-wae" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Wins Above Even</button>
               <button id="btn-toggle-metric-rank" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Rank</button>
             </div>
 
-            <div class="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
+            <div class="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
               <button id="btn-toggle-wae-matchup" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Matchup Results</button>
               <button id="btn-toggle-wae-etew" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">ETEW Wins</button>
             </div>
@@ -545,21 +533,21 @@
     </section>
 
     <!-- LIVE WIN PROB TAB CONTENT -->
-    <section id="tab-live_prob" class="tab-content space-y-4 hidden">
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div class="flex flex-wrap items-center gap-5">
+    <section id="tab-live_prob" class="tab-content space-y-3 hidden">
+      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+        <div class="flex flex-wrap items-center gap-4">
           <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
             <i class="fa-solid fa-chart-line text-brand-500"></i> Matchup Win Probability Replay
           </h2>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 text-xs">
             <span class="text-slate-600 dark:text-slate-400 font-medium">Select Matchup:</span>
-            <select id="live-prob-matchup" class="bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none min-w-[280px]">
+            <select id="live-prob-matchup" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none min-w-[280px]">
             </select>
           </div>
         </div>
 
-        <div class="flex items-center gap-1 border-l border-slate-300 dark:border-slate-800 pl-2">
+        <div class="flex items-center gap-1 text-xs">
           <button id="btn-export-chart-png" title="Download Chart as PNG Image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
             <i class="fa-solid fa-file-image"></i> PNG
           </button>
@@ -899,22 +887,6 @@
 
     // ==========================================
     // SECTION 1B: FILTER ENGINE  (shared year & week filters, "Hide current week" gate, URL <-> state sync)
-    // ------------------------------------------------------------
-    // URL params (hash form: #tab=props&year=2026&wmin=1&wmax=10&hcw=1 — a plain ?query string also works on load):
-    //   tab   active tab key                    year  season
-    //   wmin  first week                        wmax  last week  (= the single selected week on Matchups / Live Win Prob)
-    //   hcw   1|0 hide current week             mgr   cross-filtered manager
-    //   mu    selected matchup "tmA_tmB" (Live Win Prob only)
-    // Editing any of these in the address bar updates the matching control immediately (hashchange listener, Section 10).
-    //
-    // ASSUMPTIONS
-    //  * "Hide current week" keeps a row only if (year < currentYear OR week < currentWeek), using the currentweek table.
-    //    It defaults to OFF (false) for Standings and Survivor, and ON (true) for Props and Wins Above Even when not
-    //    overridden by URL or user toggle; it is hidden on Matchups / Live Win Prob.
-    //  * Standings & Props use the full [wmin, wmax] range. Survivor, Wins Above Even and the Props divisional chart are
-    //    cumulative from week 1, so on those tabs only wmax ("through week N") applies and the From control is hidden.
-    //  * Defaults when the URL has no wmax: current week for the current year; for past/non-current years, the week
-    //    before playoff_start_week on Standings, Props, and Survivor, and the last week with data on other tabs.
     // ==========================================
     const TAB_FILTER_MODE = {
       standings:  { from: true,  hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
@@ -948,7 +920,6 @@
         return list;
       },
 
-      // Weeks offered in the dropdowns: every week seen in points/scores for the year, plus the current week.
       weeksForYear(year) {
         const key = `${STATE.dataVersion}_${year}`;
         if (this._weeks[key]) return this._weeks[key];
@@ -966,11 +937,11 @@
         if (cw && Number(cw.curYear) === Number(year)) set.add(cw.curWeek);
         let weeks = [...set].sort((a, b) => a - b);
         if (weeks.length === 0) weeks = Array.from({ length: 17 }, (_, i) => i + 1);
-        this._weeks = { [key]: weeks };   // keep only the latest entry
+        this._weeks = { [key]: weeks };
         return weeks;
       },
 
-      snap(weeks, w) {   // nearest available week
+      snap(weeks, w) {
         return weeks.reduce((best, x) => Math.abs(x - w) < Math.abs(best - w) ? x : best, weeks[0]);
       },
 
@@ -986,7 +957,6 @@
         return weeks[weeks.length - 1];
       },
 
-      // The "Hide current week" rule: keeps rows where year < currentYear OR week < currentWeek.
       gate(year, week) {
         if (!STATE.filters.hideCW) return true;
         const cw = getCurrentYearAndWeek();
@@ -994,7 +964,6 @@
         return Number(year) < cw.curYear || Number(week) < cw.curWeek;
       },
 
-      // Last week that survives both wmax and the gate (0 = nothing to show).
       effectiveMax(year) {
         const weeks = this.weeksForYear(year);
         let m = Math.min(Number(STATE.filters.weekMax) || 0, weeks[weeks.length - 1]);
@@ -1020,9 +989,8 @@
       return isNaN(n) ? null : Math.min(hi, Math.max(lo, n));
     }
 
-    // State -> URL. Uses replaceState so it never echoes a hashchange back at us.
     function updateUrlHash() {
-      if (!STATE.loaded) return;   // never overwrite a shared link before data has resolved it
+      if (!STATE.loaded) return;
       const f = STATE.filters;
       const tab = FilterEngine.activeTab();
       const p = new URLSearchParams();
@@ -1037,19 +1005,17 @@
       if (window.location.hash === next) return;
       try {
         history.replaceState(null, '', next);
-      } catch (e) {            // e.g. file:// in some browsers
+      } catch (e) {
         STATE._selfHash = next;
         window.location.hash = next;
       }
     }
 
-    // Before data loads we only honour ?tab= so the right tab is visible immediately.
     function parseUrlHash() {
       const tab = readUrlParams().get('tab');
       if (tab && TAB_FILTER_MODE[tab]) activateTab(tab, { render: false });
     }
 
-    // URL -> state (first load and every hashchange). Anything missing falls back to its default.
     function applyUrlToState() {
       const p = readUrlParams();
       const f = STATE.filters;
@@ -1091,7 +1057,6 @@
       f.matchup = p.get('mu') || null;
     }
 
-    // Keep filters valid after a poll brings new data (never resets what the user chose).
     function reconcileFiltersWithData() {
       const f = STATE.filters;
       const years = FilterEngine.years();
@@ -1292,7 +1257,6 @@
 
     const LIVE_DB_URL = 'https://pub-19c72385a8a14ab098f1badf7251e65b.r2.dev/live.db';
 
-    // Cheap whole-file fingerprint so a poll that found no new data costs almost nothing (no parse, no re-render).
     function hashBuffer(buf) {
       let h = 2166136261 >>> 0;
       if (buf.byteLength % 4 === 0) {
@@ -1350,7 +1314,6 @@
 
         if (unchanged) { updateStatus("emerald", "Live"); return; }
 
-        // CSV fallback is only for the very first load (local dev). A failed poll keeps the data we already have.
         if (!fresh && firstLoad) {
           try {
             const [points, teams, scores, transactions, currentweek] = await Promise.all([
@@ -1434,12 +1397,10 @@
       const activeSec = document.getElementById(`tab-${tabKey}`);
       if (activeSec) activeSec.classList.remove('hidden');
 
-      // Apply per-tab default for Hide current week unless explicitly overridden by user or URL
       if (!STATE.hcwUserOverride) {
         STATE.filters.hideCW = FilterEngine.defaultHcwForTab(tabKey);
       }
 
-      // On non-current years, default wmax according to the active tab's rule unless manually overridden
       if (STATE.loaded && !STATE.weekUserOverride) {
         const cw = getCurrentYearAndWeek();
         const isCurrentYear = cw && Number(cw.curYear) === Number(STATE.filters.year);
@@ -1460,7 +1421,6 @@
       }
     }
 
-    // The filter bar sits in the same place on every tab; only which controls apply changes.
     function applyTabFilterVisibility(tabKey) {
       const m = TAB_FILTER_MODE[tabKey] || TAB_FILTER_MODE.standings;
       const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
@@ -1470,12 +1430,10 @@
       if (lbl) lbl.textContent = `${m.label}:`;
     }
 
-    // Push STATE.filters into every control (year stepper, week steppers, switch, badge).
     function syncFilterUI() {
       const f = STATE.filters;
       const $ = id => document.getElementById(id);
 
-      // Populate and sync Year stepper (years() is descending: [2026, 2025, ...], so left/prev = older/higher index, right/next = newer/lower index)
       const years = FilterEngine.years();
       const yearSelect = $('filter-year');
       if (yearSelect) {
@@ -1527,7 +1485,6 @@
       }
     }
 
-    // Debounced so rapid arrow clicks / typing in the URL don't thrash the charts.
     const scheduleRender = (() => {
       let t = null;
       return () => { clearTimeout(t); t = setTimeout(renderActiveTab, 60); };
@@ -1552,8 +1509,6 @@
       onFiltersChanged();
     }
 
-    // years() is sorted descending (e.g. [2026, 2025, 2024]):
-    // dir = -1 (left arrow) steps to older year (idx + 1); dir = +1 (right arrow) steps to newer year (idx - 1).
     function stepYear(dir) {
       const years = FilterEngine.years();
       if (years.length <= 1) return;
@@ -1584,7 +1539,6 @@
       if (weeks[ni] !== Number(cur)) setWeek(which, weeks[ni]);
     }
 
-    // One-time wiring of the global filter bar.
     function setupFilterControls() {
       const $ = id => document.getElementById(id);
 
@@ -1604,7 +1558,6 @@
       });
     }
 
-    // Chart empty-state helpers (never leave a blank canvas)
     function setChartEmpty(canvasId, msg) {
       const canvas = document.getElementById(canvasId);
       if (!canvas || !canvas.parentElement) return;
@@ -1636,7 +1589,6 @@
     }
 
     function renderStandingsTable() {
-      // Week range = wmin..wmax, clipped by the "Hide current week" gate (see FilterEngine)
       let data = MetricsEngine.computeStandings(STATE.filters.year, FilterEngine.effectiveMin(STATE.filters.year), FilterEngine.effectiveMax(STATE.filters.year));
       STATE.computedStandings = data;
 
@@ -1770,7 +1722,6 @@
     // SECTION 5: MATCHUPS TAB ENGINE
     // ==========================================
     function initMatchupsTab() {
-      // The week now comes from the global filter bar (wmax); nothing to populate here.
       const csvBtn = document.getElementById('btn-export-matchups-csv');
       if (csvBtn) csvBtn.addEventListener('click', downloadMatchupsCSV);
     }
@@ -1779,10 +1730,7 @@
 
     function renderMatchupsTable() {
       const yr = STATE.filters.year;
-      const wk = Number(STATE.filters.weekMax);   // single-week tab: wmax is the selected week
-
-      document.getElementById('matchup-banner-year').innerText = yr;
-      document.getElementById('matchup-banner-week').innerText = wk;
+      const wk = Number(STATE.filters.weekMax);
 
       const pts = STATE.data.points || [];
       const ptsWk = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
@@ -1994,7 +1942,6 @@
 
         const isDark = document.documentElement.classList.contains('dark');
         
-        // Week 0 to 5 Shading (Pre-elimination Phase)
         const x0 = scales.x.getPixelForValue(0);
         const x5 = scales.x.getPixelForValue(5);
 
@@ -2002,12 +1949,10 @@
         ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.08)' : 'rgba(241, 245, 249, 0.75)';
         ctx.fillRect(x0, chartArea.top, x5 - x0, chartArea.height);
 
-        // Week 5 to End Shading (Elimination Phase)
         const xRight = chartArea.right;
         ctx.fillStyle = isDark ? 'rgba(234, 88, 12, 0.08)' : 'rgba(255, 237, 213, 0.55)';
         ctx.fillRect(x5, chartArea.top, xRight - x5, chartArea.height);
 
-        // Week 5 Vertical Cutoff Line
         ctx.beginPath();
         ctx.setLineDash([4, 4]);
         ctx.strokeStyle = isDark ? 'rgba(203, 213, 225, 0.4)' : 'rgba(148, 163, 184, 0.6)';
@@ -2031,8 +1976,7 @@
       ctx.strokeStyle = color;
       ctx.stroke();
 
-      // Diagonal line
-      const angle = Math.PI / 4; // 45 degrees
+      const angle = Math.PI / 4;
       const dx = radius * Math.cos(angle);
       const dy = radius * Math.sin(angle);
 
@@ -2059,7 +2003,7 @@
           const elimWk = ds.eliminatedWeek;
 
           if (elimWk && elimWk >= 6 && elimWk <= curWk) {
-            const pointIdx = elimWk; // index matches week since Week 0 is idx 0
+            const pointIdx = elimWk;
             const pt = meta.data[pointIdx];
             if (pt && !pt.skip && pt.x !== undefined && pt.y !== undefined) {
               drawProhibitedCircleMarker(ctx, pt.x, pt.y, 7, ds.borderColor);
@@ -2144,8 +2088,6 @@
       if (!s) { renderSurvivorEmpty(emptyScopeMessage('survivor data')); return; }
       STATE.survivor.fullSeries = s;
 
-      document.getElementById('survivor-year-label').innerText = `${STATE.filters.year} · through Week ${s.maxWeek}`;
-
       initSurvivorChartCanvas(s);
       STATE.survivor.currentIdx = s.maxWeek;
       renderSurvivorFrameAtIdx(s.maxWeek);
@@ -2158,8 +2100,6 @@
       if (thead) thead.innerHTML = '';
       if (tbody) tbody.innerHTML = `<tr><td class="p-8 text-center text-slate-500 dark:text-slate-400">${msg}</td></tr>`;
       setChartEmpty('survivorPFChart', msg);
-      const lbl = document.getElementById('survivor-year-label');
-      if (lbl) lbl.innerText = STATE.filters.year;
     }
 
     function computeSurvivorData(year) {
@@ -2168,7 +2108,6 @@
 
       if (ptsYr.length === 0) return null;
 
-      // Week cap = wmax clipped by "Hide current week" and by the weeks that actually have data
       const maxWeek = Math.min(FilterEngine.effectiveMax(year), getMaxWeekForYear(year));
       if (maxWeek < 1) return null;
 
@@ -2306,11 +2245,7 @@
           interaction: { mode: 'index', intersect: false },
           plugins: {
             title: {
-              display: true,
-              text: `Survivor Weekly PF - NDL ${STATE.filters.year}`,
-              color: textColor,
-              font: { size: 18, weight: '800' },
-              padding: { bottom: 15 }
+              display: false
             },
             legend: {
               position: 'right',
@@ -2436,7 +2371,7 @@
           const elimWk = ds.eliminatedWeek;
           const endWk = (elimWk !== null && elimWk < validWk) ? elimWk : validWk;
 
-          const ptsArr = [0]; // Week 0 is 0
+          const ptsArr = [0];
           for (let w = 1; w <= s.maxWeek; w++) {
             if (w <= endWk) {
               ptsArr.push(s.teamScores[ds.teamId]?.[w] ?? null);
@@ -2606,7 +2541,6 @@
     function computePropsData() {
       const yr = STATE.filters.year;
       const pts = STATE.data.points || [];
-      // Props table honours the full week range (wmin..wmax) plus the "Hide current week" gate
       const wkMax = FilterEngine.effectiveMax(yr), wkMin = FilterEngine.effectiveMin(yr);
       const ptsYr = pts.filter(r => {
         if (Number(getVal(r, ['year', 'YR'])) !== Number(yr)) return false;
@@ -2858,7 +2792,6 @@
       const pts = STATE.data.points || [];
       const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
 
-      // Cumulative from week 1, so only the upper bound (wmax + current-week gate) applies
       const maxWk = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
       if (ptsYr.length === 0 || maxWk < 1) {
         clearChartState(STATE.props);
@@ -3275,7 +3208,6 @@
       const pts = STATE.data.points || [];
       const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
 
-      // Cumulative from week 1, so only the upper bound (wmax + current-week gate) applies
       const maxWk = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
       if (ptsYr.length === 0 || maxWk < 1) {
         clearChartState(STATE.wae);
@@ -3788,7 +3720,6 @@
 
       populateLiveProbMatchups();
 
-      // Week + year come from the global filter bar; only the matchup is chosen here (and kept in the URL as ?mu=)
       matchupSelect.addEventListener('change', () => {
         STATE.filters.matchup = matchupSelect.value || null;
         updateUrlHash();
@@ -3822,7 +3753,7 @@
       if (csvBtn) csvBtn.addEventListener('click', downloadChartCSV);
     }
 
-    function populateLiveProbWeeks() { populateLiveProbMatchups(); }   // week select moved to the global filter bar
+    function populateLiveProbWeeks() { populateLiveProbMatchups(); }
 
     function populateLiveProbMatchups() {
       const matchupSelect = document.getElementById('live-prob-matchup');
@@ -3858,7 +3789,6 @@
         return `<option value="${m.tma}_${m.tmb}">${nameA} (${mgrA}) vs ${nameB} (${mgrB})</option>`;
       }).join('');
 
-      // Keep the user's / URL's matchup if it exists this week, otherwise fall back to the first one
       const wanted = STATE.filters.matchup;
       const hasWanted = wanted && matchupList.some(m => `${m.tma}_${m.tmb}` === wanted);
       matchupSelect.value = hasWanted ? wanted : `${matchupList[0].tma}_${matchupList[0].tmb}`;
@@ -3896,7 +3826,7 @@
       if (!matchupSelect) return;
 
       const yr = STATE.filters.year;
-      const wk = Number(STATE.filters.weekMax);   // single-week tab: wmax is the selected week
+      const wk = Number(STATE.filters.weekMax);
       const val = matchupSelect.value;
 
       if (!val) {
@@ -4336,12 +4266,12 @@
     // ==========================================
     function onHashChange() {
       if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
-      if (!STATE.loaded) return;       // initial load reads the URL itself
-      applyUrlToState();               // address-bar edits drive the filters
+      if (!STATE.loaded) return;
+      applyUrlToState();
       applyTabFilterVisibility(FilterEngine.activeTab());
       syncFilterUI();
       renderActiveTab();
-      updateUrlHash();                 // canonicalise the URL (clamped values, defaults filled in)
+      updateUrlHash();
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
