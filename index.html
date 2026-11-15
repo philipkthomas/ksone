@@ -189,6 +189,7 @@
       animation: survivorBarReveal 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
+    /* Solidified Ice Block (locked-in frozen state on subsequent ticks & post-elimination weeks) */
     .survivor-ice-solid {
       background: linear-gradient(135deg, rgba(224, 242, 254, 0.95) 0%, rgba(125, 211, 252, 0.88) 50%, rgba(186, 230, 253, 0.95) 100%) !important;
       border: 1.5px solid #0284c7 !important;
@@ -208,6 +209,7 @@
         inset 0 -3px 8px rgba(12, 74, 110, 0.65) !important;
     }
 
+    /* Crystalline frost facet diagonal pattern inside ice blocks */
     .survivor-ice-solid::before,
     .survivor-ice-freezing::before {
       content: "";
@@ -219,6 +221,7 @@
       pointer-events: none;
     }
 
+    /* Active Freezing Animation on the exact elimination tick */
     .survivor-ice-freezing {
       background: linear-gradient(135deg, rgba(240, 249, 255, 0.98) 0%, rgba(125, 211, 252, 0.92) 48%, rgba(56, 189, 248, 0.9) 100%) !important;
       border: 1.5px solid #0ea5e9 !important;
@@ -242,6 +245,7 @@
       pointer-events: none;
     }
 
+    /* Current Week Column Highlighting in Survivor Table */
     .survivor-th-current {
       background: linear-gradient(180deg, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.08) 100%) !important;
       color: #b45309 !important;
@@ -334,7 +338,7 @@
 
     </div>
 
-    <!-- GLOBAL FILTER BAR -->
+    <!-- GLOBAL FILTER BAR (identical position on every tab; contents adapt per tab) -->
     <div id="global-filter-bar" class="bg-slate-200/50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800/80 py-1.5 px-4">
       <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs">
         <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -400,7 +404,7 @@
         <table class="standings-table" id="standings-table">
           <thead>
             <tr>
-              <th data-sort="displayRank" class="text-center">RANK</th>
+              <th data-sort="actualRank" class="text-center">RANK</th>
               <th data-sort="team_name" class="text-left">TEAM</th>
               <th data-sort="W" class="text-center">W-L-T</th>
               <th data-sort="PF" class="text-right">PF</th>
@@ -524,70 +528,73 @@
 
     <!-- PROPS TAB CONTENT -->
     <section id="tab-props" class="tab-content space-y-4 hidden">
+      <!-- TOP CONTROL & EXPORT HEADER -->
       <div class="flex flex-wrap items-center justify-between gap-2 px-1">
         <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-          <i class="fa-solid fa-sack-dollar text-emerald-500"></i> Season Prop Bets ($15 Each)
+          <i class="fa-solid fa-sack-dollar text-emerald-500"></i> Season Prop Bets
         </h2>
         <div class="flex items-center gap-2 text-xs">
-          <button id="btn-export-props-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
-            <i class="fa-solid fa-download text-xs"></i> Props CSV
+          <button id="btn-export-props-csv" title="Download Props Table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
+            <i class="fa-solid fa-file-csv"></i> Table CSV
+          </button>
+          <button id="btn-export-div-png" title="Download Divisional Chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
+            <i class="fa-solid fa-file-image"></i> Chart PNG
           </button>
         </div>
       </div>
 
-      <!-- PROPS TABLE -->
+      <!-- PROPS SUMMARY TABLE CONTAINER -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="props-table" id="props-table">
           <thead>
             <tr>
-              <th colspan="3" class="props-header-group prop-border-right">MANAGER & EARNINGS</th>
+              <th rowspan="2" class="text-center" style="width: 4%;">#</th>
+              <th rowspan="2" class="text-center" style="width: 4%;">$</th>
+              <th rowspan="2" class="text-left prop-border-right" style="width: 16%;">TEAM</th>
               <th colspan="3" class="props-header-group prop-border-right">TOP WEEK</th>
               <th colspan="5" class="props-header-group prop-border-right">TOP LOSS</th>
               <th colspan="4" class="props-header-group prop-border-right">TOP STARTER</th>
               <th colspan="4" class="props-header-group prop-border-right">TOP BENCH</th>
-              <th colspan="2" class="props-header-group prop-border-right">OVERALL</th>
+              <th colspan="2" class="props-header-group prop-border-right">AVERAGE RANK</th>
             </tr>
             <tr>
-              <th class="text-center">#</th>
-              <th class="text-center">$$</th>
-              <th class="text-left prop-border-right">TEAM</th>
-
+              <!-- TOP WEEK -->
               <th class="text-right">PF</th>
-              <th class="text-center">WK</th>
-              <th class="text-center prop-border-right">RANK</th>
-
+              <th class="text-center">(WK)</th>
+              <th class="text-center prop-border-right">[RANK]</th>
+              <!-- TOP LOSS -->
               <th class="text-right">PF</th>
               <th class="text-left">OPPONENT</th>
               <th class="text-right">PA</th>
-              <th class="text-center">WK</th>
-              <th class="text-center prop-border-right">RANK</th>
-
+              <th class="text-center">(WK)</th>
+              <th class="text-center prop-border-right">[RANK]</th>
+              <!-- TOP STARTER -->
               <th class="text-left">PLAYER</th>
               <th class="text-right">PF</th>
-              <th class="text-center">WK</th>
-              <th class="text-center prop-border-right">RANK</th>
-
+              <th class="text-center">(WK)</th>
+              <th class="text-center prop-border-right">[RANK]</th>
+              <!-- TOP BENCH -->
               <th class="text-left">PLAYER</th>
               <th class="text-right">PF</th>
-              <th class="text-center">WK</th>
-              <th class="text-center prop-border-right">RANK</th>
-
-              <th class="text-right">AVG_RK</th>
-              <th class="text-center prop-border-right">RANK</th>
+              <th class="text-center">(WK)</th>
+              <th class="text-center prop-border-right">[RANK]</th>
+              <!-- AVERAGE RANK -->
+              <th class="text-right">AVG</th>
+              <th class="text-center prop-border-right">[RANK]</th>
             </tr>
           </thead>
           <tbody id="props-tbody"></tbody>
         </table>
       </div>
 
-      <!-- DIVISIONAL PROP CHART -->
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xl">
-        <div class="relative w-full h-[460px]">
+      <!-- DIVISIONAL PROP BET CHART CONTAINER -->
+      <div id="div-prop-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xl">
+        <div class="relative w-full h-[520px]">
           <canvas id="divisionalPropChart"></canvas>
         </div>
       </div>
 
-      <!-- DIVISIONAL REPLAY CONTROLS -->
+      <!-- DIVISIONAL CHART REPLAY CONTROLS -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3">
           <button id="btn-div-play-pause" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
@@ -609,36 +616,34 @@
             <i class="fa-solid fa-clock text-slate-400"></i>
             <input type="range" id="div-scrubber" min="0" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
           </div>
-
-          <button id="btn-export-div-png" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-            <i class="fa-solid fa-image"></i> PNG
-          </button>
         </div>
       </div>
     </section>
 
-    <!-- WINS ABOVE EVEN / RANK TAB CONTENT -->
+    <!-- WINS ABOVE EVEN & RANK TAB CONTENT -->
     <section id="tab-wins_above" class="tab-content space-y-3 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-3 px-1">
-        <div class="flex flex-wrap items-center gap-3">
-          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-brand-500"></i> Season Trajectory
+      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+        <div class="flex flex-wrap items-center gap-4">
+          <h2 id="wae-chart-header-title" class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-brand-500"></i> Standings & Performance Trends
           </h2>
 
-          <div class="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
-            <button id="btn-toggle-metric-wae" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Wins Above Even</button>
-            <button id="btn-toggle-metric-rank" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Rank</button>
-          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
+              <button id="btn-toggle-metric-wae" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Wins Above Even</button>
+              <button id="btn-toggle-metric-rank" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Rank</button>
+            </div>
 
-          <div class="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
-            <button id="btn-toggle-wae-matchup" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Matchup Results</button>
-            <button id="btn-toggle-wae-etew" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">ETEW Wins</button>
+            <div class="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-1 rounded-lg">
+              <button id="btn-toggle-wae-matchup" class="px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow">Matchup Results</button>
+              <button id="btn-toggle-wae-etew" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">ETEW Wins</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xl">
-        <div class="relative w-full h-[540px]">
+      <div id="wae-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
+        <div class="relative w-full h-[520px]">
           <canvas id="winsAboveEvenChart"></canvas>
         </div>
       </div>
@@ -666,10 +671,10 @@
           </div>
 
           <div class="flex items-center gap-1.5">
-            <button id="btn-export-wae-png" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-image"></i> PNG
+            <button id="btn-export-wae-png" title="Download Chart as PNG Image" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
+              <i class="fa-solid fa-file-image"></i> PNG
             </button>
-            <button id="btn-export-wae-csv" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
+            <button id="btn-export-wae-csv" title="Download Chart Data as CSV" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
               <i class="fa-solid fa-file-csv"></i> CSV
             </button>
           </div>
@@ -677,56 +682,60 @@
       </div>
     </section>
 
-    <!-- LIVE WIN PROBABILITY TAB CONTENT -->
+    <!-- LIVE WIN PROB TAB CONTENT -->
     <section id="tab-live_prob" class="tab-content space-y-3 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-3 px-1">
-        <div class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+        <div class="flex flex-wrap items-center gap-4">
           <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-bolt text-amber-500"></i> Live Win Probability
+            <i class="fa-solid fa-chart-line text-brand-500"></i> Matchup Win Probability Replay
           </h2>
-          <select id="live-prob-matchup" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-sm"></select>
-        </div>
-      </div>
 
-      <!-- SCOREBOARD HEADER CARDS -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div id="scorecard-card-tma" class="bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-md transition-all flex items-center justify-between">
-          <div>
-            <div id="scorecard-tma-mgr" class="text-xs font-bold uppercase tracking-wider text-slate-400">--</div>
-            <div id="scorecard-tma-name" class="text-base font-extrabold text-slate-900 dark:text-white">--</div>
-            <div id="scorecard-tma-proj" class="text-xs font-mono text-slate-500 mt-0.5">Proj: --</div>
-          </div>
-          <div class="text-right">
-            <div id="scorecard-tma-pts" class="text-2xl font-mono font-black">0.00</div>
-            <div id="scorecard-tma-wp" class="text-sm font-mono font-bold mt-0.5">--%</div>
-          </div>
-        </div>
-
-        <div id="scorecard-card-tmb" class="bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-md transition-all flex items-center justify-between">
-          <div>
-            <div id="scorecard-tmb-mgr" class="text-xs font-bold uppercase tracking-wider text-slate-400">--</div>
-            <div id="scorecard-tmb-name" class="text-base font-extrabold text-slate-900 dark:text-white">--</div>
-            <div id="scorecard-tmb-proj" class="text-xs font-mono text-slate-500 mt-0.5">Proj: --</div>
-          </div>
-          <div class="text-right">
-            <div id="scorecard-tmb-pts" class="text-2xl font-mono font-black">0.00</div>
-            <div id="scorecard-tmb-wp" class="text-sm font-mono font-bold mt-0.5">--%</div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="text-slate-600 dark:text-slate-400 font-medium">Select Matchup:</span>
+            <select id="live-prob-matchup" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none min-w-[280px]">
+            </select>
           </div>
         </div>
       </div>
 
-      <!-- LIVE PROB CHART -->
-      <div id="live-prob-chart-container" class="bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xl transition-all">
-        <div class="relative w-full h-[460px]">
+      <div id="live-prob-scorecard" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+          <div id="scorecard-card-tma" class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition-all duration-200">
+            <div>
+              <span id="scorecard-tma-mgr" class="text-xs text-slate-500 dark:text-slate-400 block font-normal">--</span>
+              <h3 id="scorecard-tma-name" class="text-base font-bold text-slate-900 dark:text-slate-100">Team A</h3>
+              <span id="scorecard-tma-proj" class="text-xs text-slate-500 dark:text-slate-400">Proj: --</span>
+            </div>
+            <div class="text-right">
+              <span id="scorecard-tma-pts" class="text-2xl font-mono font-bold text-sky-500">0.00</span>
+              <div class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-0.5">Win Prob: <span id="scorecard-tma-wp" class="text-sky-500">--%</span></div>
+            </div>
+          </div>
+
+          <div id="scorecard-card-tmb" class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition-all duration-200">
+            <div>
+              <span id="scorecard-tmb-mgr" class="text-xs text-slate-500 dark:text-slate-400 block font-normal">--</span>
+              <h3 id="scorecard-tmb-name" class="text-base font-bold text-slate-900 dark:text-slate-100">Team B</h3>
+              <span id="scorecard-tmb-proj" class="text-xs text-slate-500 dark:text-slate-400">Proj: --</span>
+            </div>
+            <div class="text-right">
+              <span id="scorecard-tmb-pts" class="text-2xl font-mono font-bold text-orange-500">0.00</span>
+              <div class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-0.5">Win Prob: <span id="scorecard-tmb-wp" class="text-orange-500">--%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="live-prob-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl transition-all duration-200">
+        <div class="relative w-full h-[480px]">
           <canvas id="liveWinProbChart"></canvas>
         </div>
       </div>
 
-      <!-- LIVE PROB REPLAY CONTROLS -->
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-4 text-xs">
         <div class="flex items-center gap-3">
           <button id="btn-play-pause-replay" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i id="play-pause-icon" class="fa-solid fa-play"></i> <span id="play-pause-text">Play</span>
+            <i id="play-pause-icon" class="fa-solid fa-pause"></i> <span id="play-pause-text">Pause</span>
           </button>
           <button id="btn-replay-animation" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
             <i class="fa-solid fa-rotate-right"></i> Restart
@@ -737,71 +746,44 @@
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
             <input type="range" id="replay-speed-slider" min="1" max="10" value="3" step="1" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="replay-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">3x</span>
+            <span id="replay-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">3x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <i class="fa-solid fa-clock text-slate-400"></i>
-            <input type="range" id="replay-scrubber" min="1" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
+            <input type="range" id="replay-scrubber" min="0" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
           </div>
 
           <div class="flex items-center gap-1.5">
-            <button id="btn-export-chart-png" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-image"></i> PNG
+            <button id="btn-export-chart-png" title="Download Chart as PNG Image" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
+              <i class="fa-solid fa-file-image"></i> PNG
             </button>
-            <button id="btn-export-chart-csv" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
+            <button id="btn-export-chart-csv" title="Download Chart Data as CSV" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
               <i class="fa-solid fa-file-csv"></i> CSV
             </button>
           </div>
         </div>
       </div>
     </section>
-
   </main>
 
-  <!-- SPARKLINE FLOATING TOOLTIP -->
-  <div id="sparkline-tooltip" class="hidden fixed z-50 pointer-events-none bg-slate-900/95 text-white text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 shadow-xl"></div>
+  <div id="sparkline-tooltip" class="fixed hidden pointer-events-none z-50 bg-slate-900/95 text-white text-xs px-3 py-2 rounded-lg shadow-2xl border border-slate-700 backdrop-blur font-sans"></div>
 
   <script>
     // ==========================================
-    // SECTION 1: GLOBAL STATE & INDEXING CACHE
+    // SECTION 1: GLOBAL STATE, MANAGER LOOKUP & COLORS
     // ==========================================
     const STATE = {
-      SQL: null,
-      loaded: false,
-      loading: false,
-      dbSig: null,
-      dataVersion: 0,
-      weekUserOverride: false,
+      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
+      filters: { year: 2026, weekMin: 1, weekMax: 8, hideCW: false, selectedManager: null, matchup: null },
       hcwUserOverride: false,
-      _selfHash: null,
-      data: {
-        scores: [],
-        teams: [],
-        transactions: [],
-        points: [],
-        currentweek: []
-      },
-      filters: {
-        year: new Date().getFullYear(),
-        weekMin: 1,
-        weekMax: 14,
-        hideCW: false,
-        selectedManager: null,
-        matchup: null
-      },
-      sort: {
-        field: 'displayRank',
-        dir: 'asc'
-      },
+      weekUserOverride: false,
+      loaded: false, loading: false, dataVersion: 0, dbSig: null, SQL: null, _selfHash: null,
+      sort: { field: 'actualRank', dir: 'asc' },
       computedStandings: [],
       liveProb: {
-        chartInstance: null,
-        fullSeries: null,
-        animationTimer: null,
-        isPlaying: false,
-        currentIdx: 1,
-        speedMultiplier: 3
+        chartInstance: null, fullSeries: null, animationTimer: null,
+        isPlaying: false, currentIdx: 0, speedMultiplier: 3
       },
       wae: {
         chartInstance: null, metric: 'wae', mode: 'matchup',
@@ -813,62 +795,9 @@
         animationTimer: null, isPlaying: false, currentIdx: 0, speedMultiplier: 1.0
       },
       survivor: {
-        viewMode: 'table',
+        viewMode: 'table', // 'table' or 'chart'
         chartInstance: null, fullSeries: null, animationTimer: null,
         isPlaying: false, currentIdx: 0, prevIdx: 0, speedMultiplier: 1.0
-      }
-    };
-
-    // Fast pre-indexed lookup cache keyed by dataVersion so large points arrays aren't rescanned repeatedly
-    const DBIndex = {
-      _ver: -1,
-      _pointsByYear: new Map(),
-      _teamsByYear: new Map(),
-      _finalRanksCache: new Map(),
-
-      _ensure() {
-        if (this._ver === STATE.dataVersion) return;
-        this._ver = STATE.dataVersion;
-        this._pointsByYear.clear();
-        this._teamsByYear.clear();
-        this._finalRanksCache.clear();
-
-        for (const r of (STATE.data.points || [])) {
-          const yr = Number(getVal(r, ['year', 'YR']));
-          if (!yr) continue;
-          let arr = this._pointsByYear.get(yr);
-          if (!arr) { arr = []; this._pointsByYear.set(yr, arr); }
-          arr.push(r);
-        }
-
-        for (const t of (STATE.data.teams || [])) {
-          const yr = Number(getVal(t, ['year', 'YR']));
-          if (!yr) continue;
-          let arr = this._teamsByYear.get(yr);
-          if (!arr) { arr = []; this._teamsByYear.set(yr, arr); }
-          arr.push(t);
-        }
-      },
-
-      pointsForYear(year) {
-        this._ensure();
-        return this._pointsByYear.get(Number(year)) || [];
-      },
-
-      teamsForYear(year) {
-        this._ensure();
-        return this._teamsByYear.get(Number(year)) || [];
-      },
-
-      getCachedFinalRanks(year, computeFn) {
-        this._ensure();
-        const yr = Number(year);
-        if (this._finalRanksCache.has(yr)) {
-          return this._finalRanksCache.get(yr);
-        }
-        const res = computeFn(yr);
-        this._finalRanksCache.set(yr, res);
-        return res;
       }
     };
 
@@ -902,46 +831,35 @@
     }
 
     function getPlayoffStartWeek(year) {
-      const teams = DBIndex.teamsForYear(year);
-      const match = teams.find(t => getVal(t, ['playoff_start_week']) !== undefined);
+      const teams = STATE.data.teams || [];
+      const match = teams.find(t => Number(getVal(t, ['year', 'YR'])) === Number(year) && getVal(t, ['playoff_start_week']) !== undefined);
       const val = match ? Number(getVal(match, ['playoff_start_week'])) : NaN;
       return (!isNaN(val) && val > 1) ? val : 15;
     }
 
-    function getNumPlayoffTeams(year) {
-      const teams = DBIndex.teamsForYear(year);
-      const match = teams.find(t => getVal(t, ['num_playoff_teams']) !== undefined);
-      const val = match ? Number(getVal(match, ['num_playoff_teams'])) : NaN;
-      return (!isNaN(val) && val > 0) ? val : 6;
-    }
-
     function getMaxWeekForYear(yr) {
-      const ptsYr = DBIndex.pointsForYear(yr);
-      let maxW = 0;
-      for (const r of ptsYr) {
-        const w = Number(getVal(r, ['week', 'WK']));
-        if (w > maxW) maxW = w;
-      }
-      if (maxW > 0) return maxW;
-
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
+      const rawWeeks = [...new Set(ptsYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
+      if (rawWeeks.length > 0) return Math.max(...rawWeeks);
+      
       const sc = STATE.data.scores || [];
-      for (const r of sc) {
-        if (Number(getVal(r, ['year', 'YR'])) === Number(yr)) {
-          const w = Number(getVal(r, ['week', 'WK']));
-          if (w > maxW) maxW = w;
-        }
-      }
-      return maxW > 0 ? maxW : 17;
+      const scYr = sc.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
+      const scWeeks = [...new Set(scYr.map(r => Number(getVal(r, ['week', 'WK']))))].filter(w => !isNaN(w) && w > 0).sort((a,b) => a - b);
+      if (scWeeks.length > 0) return Math.max(...scWeeks);
+      
+      return 17;
     }
 
     function getManagerName(teamId, year, defaultName = '') {
       if (!teamId && teamId !== 0) return defaultName;
       const tId = Number(teamId);
-      const teamsYr = DBIndex.teamsForYear(year);
+      const yr = Number(year);
+      const teams = STATE.data.teams || [];
 
-      let matched = teamsYr.find(t => Number(getVal(t, ['team_id'])) === tId);
+      let matched = teams.find(t => Number(getVal(t, ['team_id'])) === tId && Number(getVal(t, ['year', 'YR'])) === yr);
       if (!matched) {
-        matched = (STATE.data.teams || []).find(t => Number(getVal(t, ['team_id'])) === tId);
+        matched = teams.find(t => Number(getVal(t, ['team_id'])) === tId);
       }
 
       if (matched) {
@@ -955,11 +873,12 @@
     function getTeamName(teamId, year, defaultName = '') {
       if (!teamId && teamId !== 0) return defaultName;
       const tId = Number(teamId);
-      const teamsYr = DBIndex.teamsForYear(year);
+      const yr = Number(year);
+      const teams = STATE.data.teams || [];
 
-      let matched = teamsYr.find(t => Number(getVal(t, ['team_id'])) === tId);
+      let matched = teams.find(t => Number(getVal(t, ['team_id'])) === tId && Number(getVal(t, ['year', 'YR'])) === yr);
       if (!matched) {
-        matched = (STATE.data.teams || []).find(t => Number(getVal(t, ['team_id'])) === tId);
+        matched = teams.find(t => Number(getVal(t, ['team_id'])) === tId);
       }
 
       if (matched) {
@@ -1027,7 +946,7 @@
           if (STATE.liveProb.chartInstance) updateChartThemeColors();
           if (STATE.wae.chartInstance) renderWinsAboveChart();
           if (STATE.props.chartInstance) renderDivisionalChart();
-          if (document.querySelector('.tab-btn[data-tab="survivor"]')?.classList.contains('active')) renderSurvivorTab();
+          if (document.querySelector('.tab-btn[data-tab="survivor"]').classList.contains('active')) renderSurvivorTab();
         });
       }
     }
@@ -1119,9 +1038,9 @@
     // SECTION 1B: FILTER ENGINE
     // ==========================================
     const TAB_FILTER_MODE = {
-      standings:  { from: true,  hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
+      standings:  { from: true,  hcw: true,  defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       props:      { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: true,  label: 'W' },
-      survivor:   { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
+      survivor:   { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       wins_above: { from: false, hcw: true,  defaultHcw: true,  regularSeasonDefault: false, label: 'W' },
       matchups:   { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       live_prob:  { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' }
@@ -1154,20 +1073,20 @@
         const key = `${STATE.dataVersion}_${year}`;
         if (this._weeks[key]) return this._weeks[key];
         const set = new Set();
-        for (const r of DBIndex.pointsForYear(year)) {
-          const w = Number(getVal(r, ['week', 'WK']));
-          if (w > 0) set.add(w);
-        }
-        for (const r of (STATE.data.scores || [])) {
-          if (Number(getVal(r, ['year', 'YR'])) !== Number(year)) continue;
-          const w = Number(getVal(r, ['week', 'WK']));
-          if (w > 0) set.add(w);
-        }
+        const scan = rows => {
+          for (const r of rows || []) {
+            if (Number(getVal(r, ['year', 'YR'])) !== Number(year)) continue;
+            const w = Number(getVal(r, ['week', 'WK']));
+            if (w > 0) set.add(w);
+          }
+        };
+        scan(STATE.data.points);
+        scan(STATE.data.scores);
         const cw = getCurrentYearAndWeek();
         if (cw && Number(cw.curYear) === Number(year)) set.add(cw.curWeek);
         let weeks = [...set].sort((a, b) => a - b);
         if (weeks.length === 0) weeks = Array.from({ length: 17 }, (_, i) => i + 1);
-        this._weeks[key] = weeks;
+        this._weeks = { [key]: weeks };
         return weeks;
       },
 
@@ -1296,183 +1215,221 @@
       f.weekMin = Math.min(f.weekMin, f.weekMax);
     }
 
+
     // ==========================================
-    // SECTION 2: STANDINGS & PLAYOFF BRACKET ENGINE
-    // (Uses strictly the `points` table; memoized per year & dataVersion)
+    // SECTION 1C: FINAL RANK ENGINE (PORTED FROM final_rank_engine.py)
     // ==========================================
-    const MetricsEngine = {
-      _computeFinalRanksUncached(year) {
-        const cw = getCurrentYearAndWeek();
-        const curYear = cw ? Number(cw.curYear) : new Date().getFullYear();
-        if (Number(year) >= curYear) return null;
+    function computeFinalRanks(year) {
+      const yr = Number(year);
+      const cw = getCurrentYearAndWeek();
+      const curYear = cw ? Number(cw.curYear) : null;
+      const curWeek = cw ? Number(cw.curWeek) : null;
 
-        const ptsAll = DBIndex.pointsForYear(year);
-        if (ptsAll.length === 0) return null;
+      const yearTeamsRaw = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === yr);
+      if (yearTeamsRaw.length === 0) return null;
 
-        const pStart = getPlayoffStartWeek(year);
-        const numPlayoffTeams = getNumPlayoffTeams(year);
-
-        // Deduplicate weekly team scores strictly from the `points` table
-        const weeklyTeamScores = {}; // weeklyTeamScores[week][teamId] = { pf, pa }
-        for (const r of ptsAll) {
-          const wk = Number(getVal(r, ['week', 'WK']));
-          const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
-          if (!wk || (!tId && tId !== 0)) continue;
-          if (!weeklyTeamScores[wk]) weeklyTeamScores[wk] = {};
-          if (!weeklyTeamScores[wk][tId]) {
-            weeklyTeamScores[wk][tId] = {
-              pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
-              pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0
-            };
-          }
+      const teamsById = {};
+      yearTeamsRaw.forEach(row => {
+        const tid = Number(getVal(row, ['team_id']));
+        if (!tid && tid !== 0) return;
+        if (!teamsById[tid]) {
+          teamsById[tid] = {
+            team_id: tid,
+            manager: getManagerName(tid, yr, getVal(row, ['manager', 'manager_name'])),
+            team_name: getTeamName(tid, yr, getVal(row, ['team_name', 'name'])),
+            playoff_start_week: Number(getVal(row, ['playoff_start_week'])) || 15,
+            num_playoff_teams: Number(getVal(row, ['num_playoff_teams'])) || 6,
+            league: getVal(row, ['league'])
+          };
         }
+      });
 
-        const teamIdSet = new Set();
-        Object.values(weeklyTeamScores).forEach(wkMap => {
-          Object.keys(wkMap).forEach(id => teamIdSet.add(Number(id)));
-        });
-        const allTeamIds = [...teamIdSet];
-        const totalTeams = allTeamIds.length;
-        if (totalTeams === 0) return null;
+      const teamList = Object.values(teamsById);
+      if (teamList.length === 0) return null;
 
-        // Calculate regular-season seeding (weeks 1 .. playoff_start_week - 1)
-        const regStats = allTeamIds.map(tId => {
-          let wins = 0, ties = 0, pf = 0;
-          for (let w = 1; w < pStart; w++) {
-            const rec = weeklyTeamScores[w]?.[tId];
-            if (rec) {
-              pf += rec.pf;
-              if (rec.pf > rec.pa) wins += 1;
-              else if (rec.pf === rec.pa) ties += 1;
+      const sampleTeam = teamList[0];
+      const playoffStartWeek = sampleTeam.playoff_start_week;
+      const numPlayoffTeams = sampleTeam.num_playoff_teams;
+      const league = sampleTeam.league;
+      const totalTeams = teamList.length;
+
+      // Active only IF current week is on/after playoff_start_week OR selected year is prior to current year
+      const isPriorYear = curYear !== null && yr < curYear;
+      const isCurrentYearPlayoffs = curYear !== null && yr === curYear && curWeek !== null && curWeek >= playoffStartWeek;
+      if (!isPriorYear && !isCurrentYearPlayoffs) {
+        return null;
+      }
+
+      // Select distinct matchup rows from points for the year and league
+      const matchups = {};
+      (STATE.data.points || []).forEach(row => {
+        if (Number(getVal(row, ['year', 'YR'])) !== yr) return;
+        const rowLeague = getVal(row, ['league']);
+        if (league !== undefined && league !== null && rowLeague !== undefined && rowLeague !== null && String(rowLeague) !== String(league)) {
+          return;
+        }
+        const wInt = Number(getVal(row, ['week', 'WK']));
+        const tidInt = Number(getVal(row, ['team_id', 'TMA', 'team']));
+        if (teamsById[tidInt] && wInt > 0) {
+          const oppRaw = getVal(row, ['opponent_team_id', 'TMB']);
+          const oppTid = (oppRaw !== undefined && oppRaw !== null && oppRaw !== '') ? Number(oppRaw) : 0;
+          matchups[`${wInt}_${tidInt}`] = {
+            team_points: Number(getVal(row, ['team_points', 'points', 'TMAPTS'])) || 0,
+            opponent_points: Number(getVal(row, ['opponent_points', 'TMBPTS'])) || 0,
+            opponent_team_id: isNaN(oppTid) ? 0 : oppTid
+          };
+        }
+      });
+
+      // Compute regular-season standings (weeks 1 .. playoff_start_week - 1)
+      const stats = {};
+      Object.keys(teamsById).forEach(tid => {
+        stats[tid] = { wins: 0, ties: 0, pf: 0.0 };
+      });
+
+      Object.entries(matchups).forEach(([key, m]) => {
+        const [wStr, tidStr] = key.split('_');
+        const w = Number(wStr);
+        const tid = Number(tidStr);
+        if (w < playoffStartWeek && stats[tid]) {
+          stats[tid].pf += m.team_points;
+          if (m.opponent_team_id !== 0) {
+            if (m.team_points > m.opponent_points) {
+              stats[tid].wins += 1;
+            } else if (m.team_points === m.opponent_points) {
+              stats[tid].ties += 1;
             }
           }
-          return { team_id: tId, regWins: wins + 0.5 * ties, regPF: pf };
-        });
+        }
+      });
 
-        regStats.sort((a, b) => (b.regWins - a.regWins) || (b.regPF - a.regPF));
+      const seededIds = Object.keys(teamsById).map(Number).sort((a, b) => {
+        if (stats[b].wins !== stats[a].wins) return stats[b].wins - stats[a].wins;
+        if (stats[b].ties !== stats[a].ties) return stats[b].ties - stats[a].ties;
+        return stats[b].pf - stats[a].pf;
+      });
 
-        const seedToTeam = {};
-        const teamToSeed = {};
-        regStats.forEach((s, idx) => {
-          const seed = idx + 1;
-          seedToTeam[seed] = s.team_id;
-          teamToSeed[s.team_id] = seed;
-        });
+      const seedToId = {};
+      const idToSeed = {};
+      seededIds.forEach((tid, idx) => {
+        seedToId[idx + 1] = tid;
+        idToSeed[tid] = idx + 1;
+      });
 
-        const resolveMatchup = (teamAId, teamBId, week) => {
-          if (!teamAId && !teamBId) return { winner: null, loser: null };
-          if (!teamBId) return { winner: teamAId, loser: null };
-          if (!teamAId) return { winner: teamBId, loser: null };
+      const resolveMatch = (week, teamA, teamB) => {
+        const mA = matchups[`${week}_${teamA}`];
+        const mB = matchups[`${week}_${teamB}`];
+        const ptsA = mA ? mA.team_points : 0.0;
+        const ptsB = mB ? mB.team_points : 0.0;
+        if (ptsA > ptsB) return [teamA, teamB];
+        if (ptsB > ptsA) return [teamB, teamA];
+        return idToSeed[teamA] < idToSeed[teamB] ? [teamA, teamB] : [teamB, teamA];
+      };
 
-          const ptsA = weeklyTeamScores[week]?.[teamAId]?.pf ?? -1;
-          const ptsB = weeklyTeamScores[week]?.[teamBId]?.pf ?? -1;
+      const finalRanks = {};
+      const w1 = playoffStartWeek;
+      const w2 = playoffStartWeek + 1;
+      const w3 = playoffStartWeek + 2;
 
-          if (ptsA > ptsB) return { winner: teamAId, loser: teamBId };
-          if (ptsB > ptsA) return { winner: teamBId, loser: teamAId };
+      // Championship Bracket
+      if (numPlayoffTeams === 4) {
+        const [pm1W, pm1L] = resolveMatch(w1, seedToId[1], seedToId[4]);
+        const [pm2W, pm2L] = resolveMatch(w1, seedToId[2], seedToId[3]);
 
-          const seedA = teamToSeed[teamAId] || 999;
-          const seedB = teamToSeed[teamBId] || 999;
-          return seedA <= seedB ? { winner: teamAId, loser: teamBId } : { winner: teamBId, loser: teamAId };
-        };
+        const [r1, r2] = resolveMatch(w2, pm1W, pm2W);
+        const [r3, r4] = resolveMatch(w2, pm1L, pm2L);
+        finalRanks[r1] = 1;
+        finalRanks[r2] = 2;
+        finalRanks[r3] = 3;
+        finalRanks[r4] = 4;
+      } else if (numPlayoffTeams === 6) {
+        const [pm1W, pm1L] = resolveMatch(w1, seedToId[4], seedToId[5]);
+        const [pm2W, pm2L] = resolveMatch(w1, seedToId[3], seedToId[6]);
 
-        const finalRankMap = {};
-        const assignRank = (teamId, rank) => {
-          if (teamId !== null && teamId !== undefined) {
-            finalRankMap[teamId] = rank;
-          }
-        };
-
-        // 1. Championship Bracket
-        if (numPlayoffTeams === 4 && totalTeams >= 4) {
-          const m1 = resolveMatchup(seedToTeam[1], seedToTeam[4], pStart);
-          const m2 = resolveMatchup(seedToTeam[2], seedToTeam[3], pStart);
-
-          const champ = resolveMatchup(m1.winner, m2.winner, pStart + 1);
-          const third = resolveMatchup(m1.loser, m2.loser, pStart + 1);
-
-          assignRank(champ.winner, 1);
-          assignRank(champ.loser, 2);
-          assignRank(third.winner, 3);
-          assignRank(third.loser, 4);
-        } else if (numPlayoffTeams === 6 && totalTeams >= 6) {
-          const m1 = resolveMatchup(seedToTeam[4], seedToTeam[5], pStart);
-          const m2 = resolveMatchup(seedToTeam[3], seedToTeam[6], pStart);
-
-          const sf1 = resolveMatchup(seedToTeam[1], m1.winner, pStart + 1);
-          const sf2 = resolveMatchup(seedToTeam[2], m2.winner, pStart + 1);
-          const fifth = resolveMatchup(m1.loser, m2.loser, pStart + 1);
-
-          assignRank(fifth.winner, 5);
-          assignRank(fifth.loser, 6);
-
-          const champ = resolveMatchup(sf1.winner, sf2.winner, pStart + 2);
-          const third = resolveMatchup(sf1.loser, sf2.loser, pStart + 2);
-
-          assignRank(champ.winner, 1);
-          assignRank(champ.loser, 2);
-          assignRank(third.winner, 3);
-          assignRank(third.loser, 4);
+        // Re-seed Semifinals so Seed 1 faces lowest remaining seed and Seed 2 faces highest remaining seed
+        const qfWinners = [pm1W, pm2W].sort((a, b) => idToSeed[a] - idToSeed[b]);
+        const m1 = matchups[`${w2}_${seedToId[1]}`];
+        let sf1Opp = m1 ? m1.opponent_team_id : 0;
+        let sf2Opp;
+        if (qfWinners.includes(sf1Opp)) {
+          sf2Opp = sf1Opp === qfWinners[1] ? qfWinners[0] : qfWinners[1];
+        } else {
+          sf1Opp = qfWinners[1];
+          sf2Opp = qfWinners[0];
         }
 
-        // 2. Consolation Bracket
-        if (totalTeams === 10 && numPlayoffTeams === 6) {
-          const c1 = resolveMatchup(seedToTeam[7], seedToTeam[10], pStart + 1);
-          const c2 = resolveMatchup(seedToTeam[8], seedToTeam[9], pStart + 1);
+        const [sf1W, sf1L] = resolveMatch(w2, seedToId[1], sf1Opp);
+        const [sf2W, sf2L] = resolveMatch(w2, seedToId[2], sf2Opp);
+        const [r5, r6] = resolveMatch(w2, pm1L, pm2L);
 
-          const seventh = resolveMatchup(c1.winner, c2.winner, pStart + 2);
-          const ninth = resolveMatchup(c1.loser, c2.loser, pStart + 2);
+        const [r1, r2] = resolveMatch(w3, sf1W, sf2W);
+        const [r3, r4] = resolveMatch(w3, sf1L, sf2L);
+        finalRanks[r1] = 1;
+        finalRanks[r2] = 2;
+        finalRanks[r3] = 3;
+        finalRanks[r4] = 4;
+        finalRanks[r5] = 5;
+        finalRanks[r6] = 6;
+      } else {
+        return null;
+      }
 
-          assignRank(seventh.winner, 7);
-          assignRank(seventh.loser, 8);
-          assignRank(ninth.winner, 9);
-          assignRank(ninth.loser, 10);
-        } else if (totalTeams === 10 && numPlayoffTeams === 4) {
-          assignRank(seedToTeam[9], 9);
-          assignRank(seedToTeam[10], 10);
+      // Consolation Bracket
+      if (numPlayoffTeams === 6 && totalTeams === 10) {
+        const [cm1W, cm1L] = resolveMatch(w2, seedToId[7], seedToId[10]);
+        const [cm2W, cm2L] = resolveMatch(w2, seedToId[8], seedToId[9]);
 
-          const c1 = resolveMatchup(seedToTeam[5], seedToTeam[8], pStart);
-          const c2 = resolveMatchup(seedToTeam[6], seedToTeam[7], pStart);
-
-          const fifth = resolveMatchup(c1.winner, c2.winner, pStart + 1);
-          const seventh = resolveMatchup(c1.loser, c2.loser, pStart + 1);
-
-          assignRank(fifth.winner, 5);
-          assignRank(fifth.loser, 6);
-          assignRank(seventh.winner, 7);
-          assignRank(seventh.loser, 8);
+        const [r7, r8] = resolveMatch(w3, cm1W, cm2W);
+        const [r9, r10] = resolveMatch(w3, cm1L, cm2L);
+        finalRanks[r7] = 7;
+        finalRanks[r8] = 8;
+        finalRanks[r9] = 9;
+        finalRanks[r10] = 10;
+      } else if (numPlayoffTeams === 4 && (totalTeams === 8 || totalTeams === 10)) {
+        if (totalTeams === 10) {
+          finalRanks[seedToId[9]] = 9;
+          finalRanks[seedToId[10]] = 10;
         }
+        const [cm1W, cm1L] = resolveMatch(w1, seedToId[5], seedToId[8]);
+        const [cm2W, cm2L] = resolveMatch(w1, seedToId[6], seedToId[7]);
 
-        // Fallback for any unassigned seeds
-        regStats.forEach((s, idx) => {
-          if (finalRankMap[s.team_id] === undefined) {
-            finalRankMap[s.team_id] = idx + 1;
-          }
-        });
+        const [r5, r6] = resolveMatch(w2, cm1W, cm2W);
+        const [r7, r8] = resolveMatch(w2, cm1L, cm2L);
+        finalRanks[r5] = 5;
+        finalRanks[r6] = 6;
+        finalRanks[r7] = 7;
+        finalRanks[r8] = 8;
+      } else {
+        for (let seedNum = numPlayoffTeams + 1; seedNum <= totalTeams; seedNum++) {
+          finalRanks[seedToId[seedNum]] = seedNum;
+        }
+      }
 
-        return finalRankMap;
-      },
+      return finalRanks;
+    }
 
-      computeFinalRanks(year) {
-        return DBIndex.getCachedFinalRanks(year, (yr) => this._computeFinalRanksUncached(yr));
-      },
-
+    // ==========================================
+    // SECTION 2: STANDINGS METRIC ENGINE
+    // ==========================================
+    const MetricsEngine = {
       computeStandings(year, weekMin, weekMax) {
-        const ptsYr = DBIndex.pointsForYear(year);
-        if (ptsYr.length === 0) return [];
+        if (!STATE.data.points || STATE.data.points.length === 0) return [];
 
         const cw = getCurrentYearAndWeek();
-        const curYear = cw ? Number(cw.curYear) : new Date().getFullYear();
-        const isPriorYear = Number(year) < curYear;
-        const pStart = getPlayoffStartWeek(year);
-        const wMin = Number(weekMin);
-        const wMax = Number(weekMax);
-        const useFinalRank = isPriorYear && wMax >= pStart;
-        const finalRankMap = useFinalRank ? this.computeFinalRanks(year) : null;
+        const isPriorYear = cw && Number(year) < Number(cw.curYear);
+        const playoffStartWeek = getPlayoffStartWeek(year);
+
+        const pointsFiltered = STATE.data.points.filter(r => {
+          const rYear = Number(getVal(r, ['year', 'YR']));
+          const rWeek = Number(getVal(r, ['week', 'WK']));
+          return rYear === Number(year) && rWeek >= Number(weekMin) && rWeek <= Number(weekMax);
+        });
+
+        if (pointsFiltered.length === 0) return [];
 
         const weeklyMap = {};
-        for (const r of ptsYr) {
+        pointsFiltered.forEach(r => {
           const rWeek = Number(getVal(r, ['week', 'WK']));
-          if (rWeek < wMin || rWeek > wMax) continue;
           const rTeamId = Number(getVal(r, ['team_id', 'TMA', 'team']));
           const key = `${rWeek}_${rTeamId}`;
           if (!weeklyMap[key]) {
@@ -1486,11 +1443,9 @@
               opponent_team_id: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0
             };
           }
-        }
+        });
 
         const weeklyRecords = Object.values(weeklyMap);
-        if (weeklyRecords.length === 0) return [];
-
         const byWeek = {};
         weeklyRecords.forEach(r => {
           if (!byWeek[r.week]) byWeek[r.week] = [];
@@ -1499,9 +1454,11 @@
 
         Object.keys(byWeek).forEach(wk => {
           const wkNum = Number(wk);
-          const isPlayoffWeek = wkNum >= pStart;
           const teamList = byWeek[wk];
           const n = teamList.length;
+          // For years prior to currentweek year, ignore W-L-T from matchups for weeks >= playoff_start_week
+          const ignoreMatchupWLT = isPriorYear && wkNum >= playoffStartWeek;
+
           teamList.forEach(t => {
             let beats = 0, ties = 0;
             teamList.forEach(o => {
@@ -1511,14 +1468,16 @@
               }
             });
             t.etew_share = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0;
-            if (isPlayoffWeek) {
+            if (ignoreMatchupWLT || t.opponent_team_id === 0) {
               t.win = 0;
               t.loss = 0;
               t.tie = 0;
+              t.countedForRecord = false;
             } else {
               t.win = t.team_points > t.opponent_points ? 1 : 0;
               t.loss = t.team_points < t.opponent_points ? 1 : 0;
               t.tie = t.team_points === t.opponent_points ? 1 : 0;
+              t.countedForRecord = true;
             }
           });
         });
@@ -1530,11 +1489,10 @@
         });
 
         const teamMetaMap = {};
-        DBIndex.teamsForYear(year).forEach(t => {
+        (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(year)).forEach(t => {
           teamMetaMap[Number(getVal(t, ['team_id']))] = t;
         });
 
-        const numPlayoffTeams = getNumPlayoffTeams(year);
         const result = [];
         Object.keys(teamGroups).forEach(team_id => {
           const teamIdNum = Number(team_id);
@@ -1546,18 +1504,15 @@
           const wins = group.reduce((acc, r) => acc + r.win, 0);
           const losses = group.reduce((acc, r) => acc + r.loss, 0);
           const ties = group.reduce((acc, r) => acc + r.tie, 0);
-          const regGames = wins + losses + ties;
-
+          const recordGames = group.reduce((acc, r) => acc + (r.countedForRecord ? 1 : 0), 0);
           const pf = group.reduce((acc, r) => acc + r.team_points, 0);
           const pa = group.reduce((acc, r) => acc + r.opponent_points, 0);
           const games = group.length;
 
           const etewSum = group.reduce((acc, r) => acc + r.etew_share, 0);
           const etewPct = games > 0 ? etewSum / games : 0;
-
-          const regGroup = group.filter(r => r.week < pStart);
-          const regEtewSum = regGroup.reduce((acc, r) => acc + r.etew_share, 0);
-          const wabl = regGames > 0 ? (wins + 0.5 * ties) - regEtewSum : 0;
+          const etewRecordSum = group.reduce((acc, r) => acc + (r.countedForRecord ? r.etew_share : 0), 0);
+          const wabl = recordGames > 0 ? (wins + 0.5 * ties) - etewRecordSum : 0;
 
           const scoresArr = group.map(r => r.team_points);
           const sortedScores = [...scoresArr].sort((a, b) => a - b);
@@ -1584,16 +1539,14 @@
           }
 
           const weeklyDetails = group.sort((a,b) => a.week - b.week).map(r => {
-            const isPlayoff = r.week >= pStart;
-            const res = isPlayoff ? 'PO' : (r.team_points > r.opponent_points ? 'W' : (r.team_points < r.opponent_points ? 'L' : 'T'));
+            const res = r.team_points > r.opponent_points ? 'W' : (r.team_points < r.opponent_points ? 'L' : 'T');
             return {
               week: r.week,
               pts: r.team_points,
               oppPts: r.opponent_points,
               oppName: getTeamName(r.opponent_team_id, year),
               oppMgr: getManagerName(r.opponent_team_id, year),
-              result: res,
-              isPlayoff
+              result: res
             };
           });
 
@@ -1602,7 +1555,7 @@
             manager: mgr,
             team_name: tname,
             W: wins, L: losses, T: ties,
-            winPct: regGames > 0 ? (wins + 0.5 * ties) / regGames : 0,
+            winPct: recordGames > 0 ? (wins + 0.5 * ties) / recordGames : 0,
             PF: pf, PA: pa,
             ETEW_pct: etewPct, WABL: wabl,
             bestScore: maxScore, bestWk: bestWk,
@@ -1610,24 +1563,29 @@
             AVG: avg, AVG_star: avgStar, SDEV: sdev,
             faab: Number(getVal(meta, ['faab_balance', 'faab'])) || 0,
             weeklyDetails: weeklyDetails,
-            playoffStartWeek: pStart,
-            numPlayoffTeams: numPlayoffTeams,
-            final_rank: finalRankMap ? (finalRankMap[teamIdNum] ?? null) : null
+            playoffStartWeek: Number(getVal(meta, ['playoff_start_week'])) || 15,
+            numPlayoffTeams: Number(getVal(meta, ['num_playoff_teams'])) || 6
           });
         });
 
-        result.sort((a, b) => (b.W - a.W) || (b.PF - a.PF));
-        result.forEach((r, idx) => r.actualRank = idx + 1);
+        result.sort((a, b) => (b.W - a.W) || (b.T - a.T) || (b.PF - a.PF));
+        result.forEach((r, idx) => r.regularRank = idx + 1);
 
+        // Supplant rank with final_rank when curWeek >= playoff_start_week or selected year < current year
+        const finalRanksMap = computeFinalRanks(year);
         result.forEach(r => {
-          r.displayRank = (useFinalRank && r.final_rank !== null) ? r.final_rank : r.actualRank;
+          const fRank = finalRanksMap && finalRanksMap[r.team_id] !== undefined ? finalRanksMap[r.team_id] : null;
+          r.final_rank = fRank;
+          r.actualRank = fRank !== null ? fRank : r.regularRank;
         });
+
+        result.sort((a, b) => a.actualRank - b.actualRank);
 
         const etewSorted = [...result].sort((a, b) => (b.ETEW_pct - a.ETEW_pct) || (b.PF - a.PF));
         etewSorted.forEach((r, idx) => r.etewRank = idx + 1);
 
-        const totalRegWeeks = pStart - 1;
-        const remainingWeeks = Math.max(0, totalRegWeeks - wMax);
+        const totalRegWeeks = result[0] ? result[0].playoffStartWeek - 1 : 14;
+        const remainingWeeks = Math.max(0, totalRegWeeks - Number(weekMax));
         const playoffCutoff = result[0] ? result[0].numPlayoffTeams : 6;
 
         result.forEach(r => {
@@ -1654,11 +1612,11 @@
       });
     }
 
-    async function fetchWithTimeout(url, timeoutMs = 15000) {
+    async function fetchWithTimeout(url, timeoutMs = 5000) {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+        const res = await fetch(url, { signal: controller.signal });
         clearTimeout(id);
         return res;
       } catch (err) {
@@ -1681,14 +1639,6 @@
       return `${buf.byteLength}:${h}`;
     }
 
-    function ensureSqlJs() {
-      if (STATE.SQL) return Promise.resolve(STATE.SQL);
-      if (!window.initSqlJs) return Promise.resolve(null);
-      return initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` })
-        .then(sql => { STATE.SQL = sql; return sql; })
-        .catch(err => { console.warn("sql.js init failed:", err); return null; });
-    }
-
     async function loadDataPipeline() {
       if (STATE.loading) return;
       STATE.loading = true;
@@ -1699,19 +1649,15 @@
         let unchanged = false;
 
         try {
-          // Download live.db and initialize sql.js WASM in parallel to minimize startup latency
-          const [response, SQL] = await Promise.all([
-            fetchWithTimeout(LIVE_DB_URL, 15000),
-            ensureSqlJs()
-          ]);
-
+          const response = await fetchWithTimeout(LIVE_DB_URL, 5000);
           if (response.ok) {
             const buffer = await response.arrayBuffer();
             const sig = hashBuffer(buffer);
             if (!firstLoad && sig === STATE.dbSig) {
               unchanged = true;
-            } else if (SQL) {
-              const db = new SQL.Database(new Uint8Array(buffer));
+            } else if (window.initSqlJs) {
+              if (!STATE.SQL) STATE.SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
+              const db = new STATE.SQL.Database(new Uint8Array(buffer));
               const tmp = { scores: [], teams: [], transactions: [], points: [], currentweek: [] };
               Object.keys(tmp).forEach(table => {
                 try {
@@ -1783,9 +1729,6 @@
         renderActiveTab();
         updateUrlHash();
         updateStatus("emerald", "Live");
-      } catch (fatalErr) {
-        console.error("Fatal error in loadDataPipeline:", fatalErr);
-        updateStatus("rose", "Load Error");
       } finally {
         STATE.loading = false;
       }
@@ -2019,24 +1962,8 @@
       return `No ${what} for NDL ${f.year} through week ${f.weekMax}.` + (hiding ? ` "Hide current week" is on, so week ${cw.curWeek} (in progress) is hidden — turn it off or pick a later year.` : ' Try a different year or week.');
     }
 
-    function getTrophyBadgeHTML(finalRank, isPriorYear) {
-      if (!isPriorYear || !finalRank) return '';
-      if (finalRank === 1) {
-        return `<i class="fa-solid fa-trophy ml-1.5 text-amber-400 drop-shadow-sm" title="1st Place Champion"></i>`;
-      }
-      if (finalRank === 2) {
-        return `<i class="fa-solid fa-trophy ml-1.5 text-slate-400 dark:text-slate-300 drop-shadow-sm" title="2nd Place Runner-Up"></i>`;
-      }
-      if (finalRank === 3) {
-        return `<i class="fa-solid fa-trophy ml-1.5 text-amber-700 dark:text-amber-600 drop-shadow-sm" title="3rd Place"></i>`;
-      }
-      return '';
-    }
-
     function renderStandingsTable() {
-      const effMin = FilterEngine.effectiveMin(STATE.filters.year);
-      const effMax = FilterEngine.effectiveMax(STATE.filters.year);
-      let data = MetricsEngine.computeStandings(STATE.filters.year, effMin, effMax);
+      let data = MetricsEngine.computeStandings(STATE.filters.year, FilterEngine.effectiveMin(STATE.filters.year), FilterEngine.effectiveMax(STATE.filters.year));
       STATE.computedStandings = data;
 
       if (!data || data.length === 0) {
@@ -2048,10 +1975,6 @@
       if (STATE.filters.selectedManager) {
         data = data.filter(r => r.manager === STATE.filters.selectedManager);
       }
-
-      const cw = getCurrentYearAndWeek();
-      const curYear = cw ? Number(cw.curYear) : new Date().getFullYear();
-      const isPriorYear = Number(STATE.filters.year) < curYear;
 
       const field = STATE.sort.field;
       const dir = STATE.sort.dir === 'asc' ? 1 : -1;
@@ -2076,18 +1999,14 @@
 
       const tbody = document.getElementById('standings-tbody');
       tbody.innerHTML = data.map(r => {
-        const shownRank = r.displayRank;
-        const rankStr = String(shownRank).padStart(2, '0');
-        const cutoff = r.numPlayoffTeams || 6;
-        const rankClass = shownRank <= cutoff ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 dark:text-slate-500 line-through";
+        const rankStr = String(r.actualRank).padStart(2, '0');
+        const rankClass = r.actualRank <= 6 ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 dark:text-slate-500 line-through";
         let teamClass = "text-slate-900 dark:text-slate-100 font-semibold";
         if (r.isClinched) teamClass = "clinched-text";
         if (r.isEliminated) teamClass = "eliminated-text";
 
-        const isCutoff = shownRank === cutoff;
+        const isCutoff = r.actualRank === 6;
         const rowClass = isCutoff ? "playoff-cutoff-row" : "";
-
-        const trophyHTML = getTrophyBadgeHTML(r.final_rank, isPriorYear);
 
         const wBg = HEATMAPS.greenClearRed(r.winPct, wStats.min, wStats.mid, wStats.max);
         const etewBg = HEATMAPS.greenClearRed(r.ETEW_pct, etewStats.min, 0.50, etewStats.max);
@@ -2107,7 +2026,7 @@
             <td class="text-center ${rankClass}">${rankStr}</td>
             <td class="text-left cursor-pointer" onclick="toggleManagerFilter('${r.manager}')">
               <span class="text-xs font-semibold mr-1.5 border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${getManagerColor(r.manager)}">${r.manager}</span>
-              <span class="${teamClass}">${r.team_name}</span>${trophyHTML}
+              <span class="${teamClass}">${r.team_name}</span>
             </td>
             <td class="text-center font-mono font-bold" style="background-color: ${wBg}">${r.W} - ${r.L}${r.T > 0 ? ` - ${r.T}` : ''}</td>
             <td class="text-right font-mono" style="background-color: ${pfBg}">${r.PF.toFixed(1)}</td>
@@ -2142,10 +2061,9 @@
       const dots = weeklyDetails.map((d, i) => {
         const x = (pad + (i / Math.max(1, weeklyDetails.length - 1)) * (w - 2 * pad)).toFixed(1);
         const y = (h - pad - ((d.pts - min) / r) * (h - 2 * pad)).toFixed(1);
-        const color = d.isPlayoff ? '#0ea5e9' : (d.result === 'W' ? '#22c55e' : (d.result === 'L' ? '#ef4444' : '#f59e0b'));
-        const resColorClass = d.isPlayoff ? 'text-sky-400 font-bold' : (d.result === 'W' ? 'text-emerald-400 font-bold' : (d.result === 'L' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold'));
-        const wkPrefix = d.isPlayoff ? `Playoff Week ${d.week}` : `Week ${d.week}`;
-        const tooltipInfo = `<div class="font-bold text-slate-100">${wkPrefix} vs ${escapeHTML(d.oppName)}${d.oppMgr ? ' <span class="text-slate-400 font-normal">(' + escapeHTML(d.oppMgr) + ')</span>' : ''}</div><div class="mt-0.5 flex items-center gap-1.5 font-mono"><span class="${resColorClass}">${d.result}</span> <span>${d.pts.toFixed(2)} - ${d.oppPts.toFixed(2)}</span></div>`;
+        const color = d.result === 'W' ? '#22c55e' : (d.result === 'L' ? '#ef4444' : '#f59e0b');
+        const resColorClass = d.result === 'W' ? 'text-emerald-400 font-bold' : (d.result === 'L' ? 'text-rose-400 font-bold' : 'text-amber-400 font-bold');
+        const tooltipInfo = `<div class="font-bold text-slate-100">Week ${d.week} vs ${escapeHTML(d.oppName)}${d.oppMgr ? ' <span class="text-slate-400 font-normal">(' + escapeHTML(d.oppMgr) + ')</span>' : ''}</div><div class="mt-0.5 flex items-center gap-1.5 font-mono"><span class="${resColorClass}">${d.result}</span> <span>${d.pts.toFixed(2)} - ${d.oppPts.toFixed(2)}</span></div>`;
 
         return `<circle cx="${x}" cy="${y}" r="3" fill="${color}" class="sparkline-dot cursor-pointer" data-info="${escapeHTML(tooltipInfo)}"/>`;
       }).join('');
@@ -2182,12 +2100,14 @@
       if (csvBtn) csvBtn.addEventListener('click', downloadMatchupsCSV);
     }
 
+    function populateMatchupsWeeks() { }
+
     function renderMatchupsTable() {
       const yr = STATE.filters.year;
       const wk = Number(STATE.filters.weekMax);
 
-      const ptsYr = DBIndex.pointsForYear(yr);
-      const ptsWk = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) === wk);
+      const pts = STATE.data.points || [];
+      const ptsWk = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
 
       if (ptsWk.length === 0) {
         document.getElementById('matchups-tbody').innerHTML = `
@@ -2357,7 +2277,8 @@
     function downloadMatchupsCSV() {
       const yr = STATE.filters.year;
       const wk = Number(STATE.filters.weekMax);
-      const rows = DBIndex.pointsForYear(yr).filter(r => Number(getVal(r, ['week', 'WK'])) === wk);
+      const pts = STATE.data.points || [];
+      const rows = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
 
       const csvData = rows.map(r => {
         const teamId = Number(getVal(r, ['team_id', 'TMA', 'team']));
@@ -2385,7 +2306,7 @@
     }
 
     // ==========================================
-    // SECTION 6: SURVIVOR TAB ENGINE
+    // SECTION 6: SURVIVOR TAB ENGINE (TABLE & GRAPH VIEWS)
     // ==========================================
     function getSurvivorCurrentWeek() {
       const cw = getCurrentYearAndWeek();
@@ -2409,15 +2330,18 @@
         const x5 = scales.x.getPixelForValue(Math.min(5, maxWk));
 
         ctx.save();
+        // Warmup Zone (Weeks 0..5)
         ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.08)' : 'rgba(241, 245, 249, 0.75)';
         ctx.fillRect(x0, chartArea.top, x5 - x0, chartArea.height);
 
+        // Elimination Zone (Weeks 5..maxWk)
         const xRight = chartArea.right;
         if (xRight > x5) {
           ctx.fillStyle = isDark ? 'rgba(234, 88, 12, 0.08)' : 'rgba(255, 237, 213, 0.55)';
           ctx.fillRect(x5, chartArea.top, xRight - x5, chartArea.height);
         }
 
+        // Elimination start divider line at W5
         ctx.beginPath();
         ctx.setLineDash([4, 4]);
         ctx.strokeStyle = isDark ? 'rgba(203, 213, 225, 0.4)' : 'rgba(148, 163, 184, 0.6)';
@@ -2426,6 +2350,7 @@
         ctx.lineTo(x5, chartArea.bottom);
         ctx.stroke();
 
+        // Current Week Highlight Band & Marker Line
         const curWk = getSurvivorCurrentWeek();
         if (curWk && curWk >= 1 && curWk <= maxWk) {
           const xCur = scales.x.getPixelForValue(curWk);
@@ -2445,6 +2370,7 @@
           ctx.lineTo(xCur, chartArea.bottom);
           ctx.stroke();
 
+          // Current Week Pill Label at top of line
           ctx.setLineDash([]);
           const labelText = `NOW • W${curWk}`;
           ctx.font = 'bold 10px ui-sans-serif, system-ui, sans-serif';
@@ -2471,6 +2397,7 @@
 
     function drawIceEliminationMarker(ctx, x, y, size, color) {
       ctx.save();
+      // Outer icy halo ring
       ctx.beginPath();
       ctx.arc(x, y, size + 3.5, 0, 2 * Math.PI);
       ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
@@ -2479,6 +2406,7 @@
       ctx.strokeStyle = '#38bdf8';
       ctx.stroke();
 
+      // Core ice crystal circle
       ctx.beginPath();
       ctx.arc(x, y, size, 0, 2 * Math.PI);
       ctx.fillStyle = '#e0f2fe';
@@ -2487,6 +2415,7 @@
       ctx.strokeStyle = color;
       ctx.stroke();
 
+      // Snowflake / Frost Crosshairs inside marker
       ctx.strokeStyle = '#0284c7';
       ctx.lineWidth = 1.6;
       const r = size * 0.62;
@@ -2605,6 +2534,7 @@
 
       const curWk = getSurvivorCurrentWeek();
 
+      // Fixed column widths so the grid NEVER stretches or shifts during left-to-right animation
       let colHtml = `<col style="width: 195px;">`;
       for (let w = 1; w <= s.maxWeek; w++) {
         colHtml += `<col style="width: 112px;">`;
@@ -2649,7 +2579,9 @@
     }
 
     function computeSurvivorData(year) {
-      const ptsYr = DBIndex.pointsForYear(year);
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(year));
+
       if (ptsYr.length === 0) return null;
 
       const maxWeek = Math.min(FilterEngine.effectiveMax(year), getMaxWeekForYear(year));
@@ -2788,7 +2720,9 @@
           animation: false,
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            title: { display: false },
+            title: {
+              display: false
+            },
             legend: {
               position: 'right',
               labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 12 }
@@ -2842,6 +2776,7 @@
         tickLbl.innerText = `Week ${validWk} / ${s.maxWeek}`;
       }
 
+      // Render Fixed-Layout Table View Frame (Always renders all 1..maxWeek columns so nothing stretches!)
       const tbody = document.getElementById('survivor-tbody');
       if (tbody) {
         const isDark = document.documentElement.classList.contains('dark');
@@ -2859,10 +2794,12 @@
               <span class="${teamNameClass}">${escapeHTML(t.teamName)}</span>
             </td>`;
 
+          // Loop through ALL weeks 1..s.maxWeek so columns remain fixed in place and fill left-to-right
           for (let w = 1; w <= s.maxWeek; w++) {
             const isCurrentCol = curRealWk !== null && w === curRealWk;
             const tdCurrentClass = isCurrentCol ? 'survivor-td-current' : '';
 
+            // Future weeks beyond current replay tick: render blank unrevealed slot
             if (w > validWk) {
               rowHtml += `
                 <td class="text-left px-1.5 py-1.5 ${tdCurrentClass}">
@@ -2881,6 +2818,8 @@
             const isEliminationWeek = w >= 6 && t.eliminatedWeek !== null && w === t.eliminatedWeek;
             const isPostEliminationFrozen = w >= 6 && t.eliminatedWeek !== null && w > t.eliminatedWeek;
             const isFrozenCell = isEliminationWeek || isPostEliminationFrozen;
+
+            // Newly revealed cell on the advancing tick gets entrance / freeze-solidify animation
             const isNewlyRevealed = isAnimatingStep && w === validWk;
 
             let bgColor = '';
@@ -2890,6 +2829,7 @@
             let iconHtml = '';
 
             if (isFrozenCell) {
+              // Ice block styling: animates solidifying on the elimination tick, stays locked-in solid ice afterward
               if (isNewlyRevealed && isEliminationWeek) {
                 extraBoxClasses = 'survivor-ice-freezing';
               } else {
@@ -2939,6 +2879,7 @@
         }).join('');
       }
 
+      // Render Chart View Frame
       const chart = STATE.survivor.chartInstance;
       if (chart) {
         chart.data.datasets.forEach((ds) => {
@@ -3118,8 +3059,10 @@
 
     function computePropsData() {
       const yr = STATE.filters.year;
+      const pts = STATE.data.points || [];
       const wkMax = FilterEngine.effectiveMax(yr), wkMin = FilterEngine.effectiveMin(yr);
-      const ptsYr = DBIndex.pointsForYear(yr).filter(r => {
+      const ptsYr = pts.filter(r => {
+        if (Number(getVal(r, ['year', 'YR'])) !== Number(yr)) return false;
         const w = Number(getVal(r, ['week', 'WK']));
         return w >= wkMin && w <= wkMax;
       });
@@ -3259,7 +3202,7 @@
       if (!tbody) return;
 
       if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="21" class="p-8 text-center text-slate-500">${emptyScopeMessage('prop bet data')}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="19" class="p-8 text-center text-slate-500">${emptyScopeMessage('prop bet data')}</td></tr>`;
         return;
       }
 
@@ -3365,7 +3308,8 @@
 
     function renderDivisionalChart() {
       const yr = STATE.filters.year;
-      const ptsYr = DBIndex.pointsForYear(yr);
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
 
       const maxWk = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
       if (ptsYr.length === 0 || maxWk < 1) {
@@ -3780,7 +3724,8 @@
 
     function renderWinsAboveChart() {
       const yr = STATE.filters.year;
-      const ptsYr = DBIndex.pointsForYear(yr);
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
 
       const maxWk = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
       if (ptsYr.length === 0 || maxWk < 1) {
@@ -3792,24 +3737,7 @@
 
       const weeks = Array.from({length: maxWk + 1}, (_, i) => i);
 
-      // Deduplicate weekly team rows once so we don't scan player rows per week
-      const dedupByWeek = {};
-      const teamIdSet = new Set();
-      for (const r of ptsYr) {
-        const w = Number(getVal(r, ['week', 'WK']));
-        const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
-        if (!w || w > maxWk || (!tId && tId !== 0)) continue;
-        teamIdSet.add(tId);
-        if (!dedupByWeek[w]) dedupByWeek[w] = {};
-        if (!dedupByWeek[w][tId]) {
-          dedupByWeek[w][tId] = {
-            pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
-            pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0
-          };
-        }
-      }
-
-      const teamIds = [...teamIdSet].sort((a,b) => a - b);
+      const teamIds = [...new Set(ptsYr.map(r => Number(getVal(r, ['team_id', 'TMA', 'team']))))].filter(t => !isNaN(t) && t !== 0).sort((a,b) => a - b);
       const numTeams = teamIds.length || 10;
 
       const seriesMap = {};
@@ -3821,7 +3749,7 @@
         teamMetaList.push({ team_id: tId, manager: mgrName, color });
 
         seriesMap[tId] = {
-          cumMatchup: [0], cumEtew: [0], cumPF: [0],
+          cumMatchup: [0], cumEtew: [0],
           cumMatchupDisplay: [], cumEtewDisplay: [],
           matchupRank: [numTeams], etewRank: [numTeams]
         };
@@ -3830,48 +3758,51 @@
       teamMetaList.sort((a, b) => a.manager.localeCompare(b.manager));
 
       for (let w = 1; w <= maxWk; w++) {
-        const wkMap = dedupByWeek[w] || {};
-        const wkTeams = Object.entries(wkMap);
-        const n = wkTeams.length;
+        const wkPoints = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) === w);
+        const n = wkPoints.length;
 
         teamMetaList.forEach(meta => {
           const tId = meta.team_id;
           const s = seriesMap[tId];
           const prevMatchup = s.cumMatchup[w - 1];
           const prevEtew = s.cumEtew[w - 1];
-          const prevPF = s.cumPF[w - 1];
 
-          const teamRow = wkMap[tId];
+          const teamRow = wkPoints.find(r => Number(getVal(r, ['team_id', 'TMA', 'team'])) === tId);
+
           if (teamRow) {
-            const { pf, pa } = teamRow;
-            s.cumPF.push(prevPF + pf);
+            const pf = Number(getVal(teamRow, ['team_points', 'points', 'TMAPTS'])) || 0;
+            const pa = Number(getVal(teamRow, ['opponent_points', 'TMBPTS'])) || 0;
 
             const winVal = pf > pa ? 1 : (pf === pa ? 0.5 : 0);
             s.cumMatchup.push(prevMatchup + (winVal - 0.5));
 
             let beats = 0, ties = 0;
-            for (const [oIdStr, oRow] of wkTeams) {
-              if (Number(oIdStr) !== tId) {
-                if (pf > oRow.pf) beats++;
-                else if (pf === oRow.pf) ties++;
+            wkPoints.forEach(o => {
+              if (Number(getVal(o, ['team_id', 'TMA', 'team'])) !== tId) {
+                const oPf = Number(getVal(o, ['team_points', 'points', 'TMAPTS'])) || 0;
+                if (pf > oPf) beats++;
+                else if (pf === oPf) ties++;
               }
-            }
+            });
             const etewShare = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0.5;
             s.cumEtew.push(prevEtew + (etewShare - 0.5));
           } else {
-            s.cumPF.push(prevPF);
             s.cumMatchup.push(prevMatchup);
             s.cumEtew.push(prevEtew);
           }
         });
+      }
 
+      for (let w = 1; w <= maxWk; w++) {
         const wkStandings = teamMetaList.map(meta => {
           const tId = meta.team_id;
+          const group = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) <= w && Number(getVal(r, ['team_id', 'TMA', 'team'])) === tId);
+          const pfSum = group.reduce((acc, r) => acc + (Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0), 0);
           return {
             team_id: tId,
             matchupVal: seriesMap[tId].cumMatchup[w],
             etewVal: seriesMap[tId].cumEtew[w],
-            pf: seriesMap[tId].cumPF[w]
+            pf: pfSum
           };
         });
 
@@ -4346,6 +4277,8 @@
       if (csvBtn) csvBtn.addEventListener('click', downloadChartCSV);
     }
 
+    function populateLiveProbWeeks() { populateLiveProbMatchups(); }
+
     function populateLiveProbMatchups() {
       const matchupSelect = document.getElementById('live-prob-matchup');
       if (!matchupSelect) return;
@@ -4606,11 +4539,11 @@
               callbacks: {
                 label: function(ctx) {
                   let label = ctx.dataset.label || '';
-                  if (ctx.parsed.y === null) return null;
-                  if (ctx.dataset.yAxisID === 'y1') {
-                    return `${label}: ${ctx.parsed.y.toFixed(1)}%`;
+                  if (label) label += ': ';
+                  if (ctx.parsed.y !== null && ctx.parsed.y !== undefined) {
+                    label += ctx.dataset.yAxisID === 'y1' ? `${ctx.parsed.y.toFixed(0)}%` : ctx.parsed.y.toFixed(2);
                   }
-                  return `${label}: ${ctx.parsed.y.toFixed(2)} pts`;
+                  return label;
                 }
               }
             }
@@ -4618,34 +4551,31 @@
           scales: {
             x: {
               grid: { color: gridColor },
-              ticks: { color: textColor, maxTicksLimit: 12, font: { size: 10 } }
+              ticks: { color: textColor, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 14 }
             },
             y: {
               type: 'linear',
+              display: true,
               position: 'left',
-              min: 0,
-              max: 240,
-              title: { display: true, text: 'Fantasy Points', color: textColor, font: { size: 11, weight: '700' } },
+              title: { display: true, text: 'Points Scored', color: textColor, font: { size: 11, weight: '700' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 11 } }
+              ticks: { color: textColor, font: { size: 10 } },
+              min: 0
             },
             y1: {
               type: 'linear',
+              display: true,
               position: 'right',
               stacked: true,
-              min: 0,
-              max: 100,
               title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '700' } },
               grid: { drawOnChartArea: false },
-              ticks: { color: textColor, font: { size: 11 }, callback: v => `${v}%` }
+              ticks: { color: textColor, font: { size: 10 }, callback: v => `${v}%` },
+              min: 0,
+              max: 100
             }
           }
         }
       });
-    }
-
-    function updateChartThemeColors() {
-      renderLiveProbMatchup();
     }
 
     function renderFrameAtIdx(idx) {
@@ -4654,74 +4584,91 @@
 
       const total = s.labels.length;
       const validIdx = Math.min(total, Math.max(1, idx));
-      const chart = STATE.liveProb.chartInstance;
-
-      const padNulls = (arr) => arr.slice(0, validIdx).concat(new Array(total - validIdx).fill(null));
-
-      chart.data.datasets[0].data = padNulls(s.tmaPts);
-      chart.data.datasets[1].data = padNulls(s.tmbPts);
-      chart.data.datasets[2].data = padNulls(s.tmaProj);
-      chart.data.datasets[3].data = padNulls(s.tmbProj);
-      chart.data.datasets[4].data = padNulls(s.tmaWpNorm);
-      chart.data.datasets[5].data = padNulls(s.tmbWpNorm);
-
-      const curIdx0 = validIdx - 1;
-      const wpA = s.tmaWpNorm[curIdx0];
-      const wpB = s.tmbWpNorm[curIdx0];
-      const ptsA = s.tmaPts[curIdx0];
-      const ptsB = s.tmbPts[curIdx0];
-      const projA = s.tmaProj[curIdx0];
-      const projB = s.tmbProj[curIdx0];
 
       const yr = STATE.filters.year;
       const nameA = getTeamName(s.tma, yr);
+      const mgrA = s.mgrA;
       const nameB = getTeamName(s.tmb, yr);
+      const mgrB = s.mgrB;
+
+      const idx0 = validIdx - 1;
+      const wpA = s.tmaWpNorm[idx0];
+      const wpB = s.tmbWpNorm[idx0];
 
       document.getElementById('scorecard-tma-name').innerText = nameA;
-      document.getElementById('scorecard-tma-mgr').innerText = s.mgrA;
-      document.getElementById('scorecard-tma-pts').innerText = ptsA.toFixed(2);
-      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${projA.toFixed(2)}`;
-      document.getElementById('scorecard-tma-wp').innerText = `${wpA.toFixed(1)}%`;
+      document.getElementById('scorecard-tma-mgr').innerText = mgrA ? `Manager: ${mgrA}` : '';
+      document.getElementById('scorecard-tma-pts').innerText = s.tmaPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tma-pts').style.color = s.colorA;
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.tmaProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tma-wp').innerText = `${wpA.toFixed(0)}%`;
+      document.getElementById('scorecard-tma-wp').style.color = s.colorA;
 
       document.getElementById('scorecard-tmb-name').innerText = nameB;
-      document.getElementById('scorecard-tmb-mgr').innerText = s.mgrB;
-      document.getElementById('scorecard-tmb-pts').innerText = ptsB.toFixed(2);
-      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${projB.toFixed(2)}`;
-      document.getElementById('scorecard-tmb-wp').innerText = `${wpB.toFixed(1)}%`;
+      document.getElementById('scorecard-tmb-mgr').innerText = mgrB ? `Manager: ${mgrB}` : '';
+      document.getElementById('scorecard-tmb-pts').innerText = s.tmbPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tmb-pts').style.color = s.colorB;
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tmb-wp').innerText = `${wpB.toFixed(0)}%`;
+      document.getElementById('scorecard-tmb-wp').style.color = s.colorB;
 
       const cardA = document.getElementById('scorecard-card-tma');
       const cardB = document.getElementById('scorecard-card-tmb');
-      const chartBox = document.getElementById('live-prob-chart-container');
+      const chartContainer = document.getElementById('live-prob-chart-container');
 
-      const favoriteColor = wpA >= wpB ? s.colorA : s.colorB;
-      if (chartBox) {
-        chartBox.style.borderColor = favoriteColor;
-        chartBox.style.backgroundColor = hexToRgba(favoriteColor, 0.04);
-      }
+      if (wpA > 50) {
+        const intensity = Math.min(1, (wpA - 50) / 50);
+        cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08 + 0.22 * intensity);
+        cardA.style.borderColor = hexToRgba(s.colorA, 0.3 + 0.4 * intensity);
+        cardB.style.backgroundColor = '';
+        cardB.style.borderColor = '';
 
-      if (cardA && cardB) {
-        cardA.style.borderColor = wpA >= wpB ? s.colorA : 'transparent';
-        cardA.style.backgroundColor = wpA >= wpB ? hexToRgba(s.colorA, 0.08) : '';
-        cardB.style.borderColor = wpB > wpA ? s.colorB : 'transparent';
-        cardB.style.backgroundColor = wpB > wpA ? hexToRgba(s.colorB, 0.08) : '';
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = hexToRgba(s.colorA, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorA, 0.25 + 0.35 * intensity);
+        }
+      } else if (wpB > 50) {
+        const intensity = Math.min(1, (wpB - 50) / 50);
+        cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08 + 0.22 * intensity);
+        cardB.style.borderColor = hexToRgba(s.colorB, 0.3 + 0.4 * intensity);
+        cardA.style.backgroundColor = '';
+        cardA.style.borderColor = '';
+
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = hexToRgba(s.colorB, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorB, 0.25 + 0.35 * intensity);
+        }
+      } else {
+        cardA.style.backgroundColor = ''; cardA.style.borderColor = '';
+        cardB.style.backgroundColor = ''; cardB.style.borderColor = '';
+        if (chartContainer) { chartContainer.style.backgroundColor = ''; chartContainer.style.borderColor = ''; }
       }
 
       const scrubber = document.getElementById('replay-scrubber');
-      if (scrubber) {
-        scrubber.value = Math.round((validIdx / total) * 100);
-      }
+      if (scrubber) scrubber.value = Math.round((validIdx / total) * 100);
+
+      const padNull = (arr) => arr.slice(0, validIdx).concat(new Array(total - validIdx).fill(null));
+      const extendRight = (arr) => {
+        const sliced = arr.slice(0, validIdx);
+        const lastVal = sliced[sliced.length - 1];
+        return sliced.concat(new Array(total - validIdx).fill(lastVal));
+      };
+
+      const chart = STATE.liveProb.chartInstance;
+      chart.data.datasets[0].data = padNull(s.tmaPts);
+      chart.data.datasets[1].data = padNull(s.tmbPts);
+      chart.data.datasets[2].data = extendRight(s.tmaProj);
+      chart.data.datasets[3].data = extendRight(s.tmbProj);
+      chart.data.datasets[4].data = padNull(s.tmaWpNorm);
+      chart.data.datasets[5].data = padNull(s.tmbWpNorm);
 
       chart.update('none');
     }
 
     function togglePlayPause() {
-      if (STATE.liveProb.isPlaying) {
-        pauseReplay();
-      } else {
+      if (STATE.liveProb.isPlaying) pauseReplay();
+      else {
         const s = STATE.liveProb.fullSeries;
-        if (s && STATE.liveProb.currentIdx >= s.labels.length) {
-          STATE.liveProb.currentIdx = 1;
-        }
+        if (s && STATE.liveProb.currentIdx >= s.labels.length) STATE.liveProb.currentIdx = 1;
         startReplay();
       }
     }
@@ -4749,9 +4696,8 @@
 
     function restartIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
-
       const mult = STATE.liveProb.speedMultiplier || 3;
-      const intervalMs = Math.max(15, Math.round(180 / mult));
+      const intervalMs = Math.max(10, Math.round(120 / mult));
 
       STATE.liveProb.animationTimer = setInterval(() => {
         const s = STATE.liveProb.fullSeries;
@@ -4782,11 +4728,29 @@
       }
     }
 
+    function updateChartThemeColors() {
+      const chart = STATE.liveProb.chartInstance;
+      if (!chart) return;
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+
+      chart.options.scales.x.grid.color = gridColor;
+      chart.options.scales.x.ticks.color = textColor;
+      chart.options.scales.y.grid.color = gridColor;
+      chart.options.scales.y.ticks.color = textColor;
+      chart.options.scales.y.title.color = textColor;
+      chart.options.scales.y1.ticks.color = textColor;
+      chart.options.scales.y1.title.color = textColor;
+      chart.options.plugins.legend.labels.color = textColor;
+      chart.update('none');
+    }
+
     function downloadChartPNG() {
       const chart = STATE.liveProb.chartInstance;
       if (!chart) return;
       const link = document.createElement('a');
-      link.download = `NDL_Live_Win_Prob_Wk${STATE.filters.weekMax}.png`;
+      link.download = `NDL_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
@@ -4794,30 +4758,52 @@
     function downloadChartCSV() {
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
-      const rows = s.labels.map((lbl, idx) => ({
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const nameB = getTeamName(s.tmb, yr);
+
+      const rows = s.labels.map((lbl, i) => ({
         Time: lbl,
-        TeamA: s.mgrA, TeamA_Pts: s.tmaPts[idx], TeamA_Proj: s.tmaProj[idx], TeamA_WinPct: s.tmaWpNorm[idx].toFixed(2),
-        TeamB: s.mgrB, TeamB_Pts: s.tmbPts[idx], TeamB_Proj: s.tmbProj[idx], TeamB_WinPct: s.tmbWpNorm[idx].toFixed(2)
+        [`${nameA}_Actual`]: s.tmaPts[i],
+        [`${nameB}_Actual`]: s.tmbPts[i],
+        [`${nameA}_Proj`]: s.tmaProj[i],
+        [`${nameB}_Proj`]: s.tmbProj[i],
+        [`${nameA}_WinProb_Pct`]: s.tmaWpNorm[i].toFixed(2),
+        [`${nameB}_WinProb_Pct`]: s.tmbWpNorm[i].toFixed(2)
       }));
+
       const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `NDL_WinProb_Wk${STATE.filters.weekMax}.csv`);
+      link.setAttribute("download", `NDL_Matchup_Data_${yr}_Wk${STATE.filters.weekMax}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
     // ==========================================
-    // SECTION 10: EVENT LISTENERS & INITIALIZATION
+    // SECTION 10: EVENT LISTENERS & BOOTSTRAP
     // ==========================================
-    function setupSparklineTooltip() {
-      const tooltip = document.getElementById('sparkline-tooltip');
-      if (!tooltip) return;
+    function setupTableSorting() {
+      document.querySelectorAll('.standings-table th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          if (STATE.sort.field === field) {
+            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            STATE.sort.field = field;
+            STATE.sort.dir = field === 'actualRank' || field === 'team_name' ? 'asc' : 'desc';
+          }
+          renderStandingsTable();
+        });
+      });
+    }
 
+    function setupSparklineTooltips() {
+      const tooltip = document.getElementById('sparkline-tooltip');
       document.addEventListener('mouseover', (e) => {
-        if (e.target && e.target.classList && e.target.classList.contains('sparkline-dot')) {
+        if (e.target.classList.contains('sparkline-dot')) {
           const info = e.target.getAttribute('data-info');
           if (info) {
             tooltip.innerHTML = info;
@@ -4825,88 +4811,70 @@
           }
         }
       });
-
       document.addEventListener('mousemove', (e) => {
         if (!tooltip.classList.contains('hidden')) {
-          tooltip.style.left = `${e.clientX + 12}px`;
-          tooltip.style.top = `${e.clientY - 32}px`;
+          const leftPos = Math.min(window.innerWidth - 260, e.clientX + 12);
+          tooltip.style.left = `${leftPos}px`;
+          tooltip.style.top = `${e.clientY - 48}px`;
         }
       });
-
       document.addEventListener('mouseout', (e) => {
-        if (e.target && e.target.classList && e.target.classList.contains('sparkline-dot')) {
+        if (e.target.classList.contains('sparkline-dot')) {
           tooltip.classList.add('hidden');
         }
       });
     }
 
-    function downloadStandingsCSV() {
-      if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
-      const rows = STATE.computedStandings.map(r => ({
-        Rank: r.displayRank,
-        RegularSeasonRank: r.actualRank,
-        FinalRank: r.final_rank ?? '',
-        Manager: r.manager, Team: r.team_name,
+    function downloadCSV() {
+      const data = STATE.computedStandings;
+      if (!data || data.length === 0) return;
+      const rows = data.map(r => ({
+        Rank: r.actualRank, Manager: r.manager, Team: r.team_name,
         W: r.W, L: r.L, T: r.T, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
-        ETEW_Pct: (r.ETEW_pct * 100).toFixed(2) + '%',
-        WABL: r.WABL.toFixed(2), RABL: r.RABL,
-        Best_Wk: r.bestScore.toFixed(2), Worst_Wk: r.worstScore.toFixed(2),
-        AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2),
-        FAAB: r.faab
+        ETEW_Pct: (r.ETEW_pct * 100).toFixed(2) + '%', WABL: r.WABL.toFixed(2), RABL: r.RABL,
+        Best_Wk: `${r.bestScore.toFixed(2)} (Wk ${r.bestWk})`,
+        Worst_Wk: `${r.worstScore.toFixed(2)} (Wk ${r.worstWk})`,
+        AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
       }));
       const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `NDL_Standings_${STATE.filters.year}.csv`);
+      link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_Wk${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      try {
-        initTheme();
-        setupTabNavigation();
-        setupFilterControls();
-        setupSparklineTooltip();
-        parseUrlHash();
+    window.addEventListener('hashchange', () => {
+      if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
+      STATE._selfHash = null;
+      if (!STATE.loaded) { parseUrlHash(); return; }
+      applyUrlToState();
+      syncFilterUI();
+      renderActiveTab();
+    });
 
-        window.addEventListener('hashchange', () => {
-          if (STATE._selfHash && window.location.hash === STATE._selfHash) {
-            STATE._selfHash = null;
-            return;
-          }
-          if (!STATE.loaded) return;
-          applyUrlToState();
-          syncFilterUI();
-          renderActiveTab();
-        });
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      setupTabNavigation();
+      setupFilterControls();
+      setupTableSorting();
+      setupSparklineTooltips();
 
-        document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
-          th.addEventListener('click', () => {
-            const f = th.getAttribute('data-sort');
-            STATE.sort.dir = (STATE.sort.field === f && STATE.sort.dir === 'asc') ? 'desc' : 'asc';
-            STATE.sort.field = f;
-            renderStandingsTable();
-          });
-        });
+      document.getElementById('clear-manager-filter').addEventListener('click', () => {
+        STATE.filters.selectedManager = null;
+        updateFilterBadge();
+        renderStandingsTable();
+        updateUrlHash();
+      });
 
-        document.getElementById('clear-manager-filter')?.addEventListener('click', () => {
-          STATE.filters.selectedManager = null;
-          renderStandingsTable();
-          updateFilterBadge();
-          updateUrlHash();
-        });
+      document.getElementById('btn-export-standings-csv').addEventListener('click', downloadCSV);
 
-        document.getElementById('btn-export-standings-csv')?.addEventListener('click', downloadStandingsCSV);
-
-        loadDataPipeline();
-        startLivePolling();
-      } catch (initErr) {
-        console.error('Initialization error:', initErr);
-        updateStatus('rose', 'Init Error');
-      }
+      parseUrlHash();
+      applyTabFilterVisibility(FilterEngine.activeTab());
+      loadDataPipeline();
+      startLivePolling();
     });
   </script>
 </body>
