@@ -313,6 +313,99 @@
       pointer-events: none;
     }
 
+    /* Lowest-PF red text must beat the ice-block text colors (the weekly lowest is always the frozen/eliminated cell from W6 on) */
+    .survivor-ice-solid.survivor-lowest-pf,
+    .survivor-ice-freezing.survivor-lowest-pf { color: #b91c1c !important; }
+    .dark .survivor-ice-solid.survivor-lowest-pf,
+    .dark .survivor-ice-freezing.survivor-lowest-pf { color: #fca5a5 !important; text-shadow: 0 1px 3px rgba(7, 24, 48, 0.85); }
+
+    /* Survivor fire block: final regular-season week, team(s) still standing */
+    @keyframes fireIgnite {
+      0% {
+        opacity: 0.4;
+        transform: scale(0.9);
+        filter: brightness(1.5) saturate(1.3);
+        box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.95), inset 0 0 12px rgba(254, 240, 138, 0.95);
+      }
+      45% {
+        opacity: 1;
+        transform: scale(1.07);
+        filter: brightness(1.2) saturate(1.2);
+        box-shadow: 0 0 18px 4px rgba(249, 115, 22, 0.9), inset 0 0 14px rgba(254, 240, 138, 0.9);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1) saturate(1);
+        box-shadow: 0 0 8px 1px rgba(249, 115, 22, 0.55), inset 0 -3px 6px rgba(185, 28, 28, 0.35);
+      }
+    }
+    @keyframes fireFlicker {
+      0%, 100% { box-shadow: 0 0 8px 1px rgba(249, 115, 22, 0.55), inset 0 -3px 6px rgba(185, 28, 28, 0.35); }
+      22% { box-shadow: 0 0 13px 2px rgba(239, 68, 68, 0.65), inset 0 -4px 8px rgba(185, 28, 28, 0.42); }
+      47% { box-shadow: 0 0 9px 1px rgba(250, 204, 21, 0.6), inset 0 -3px 6px rgba(234, 88, 12, 0.35); }
+      71% { box-shadow: 0 0 14px 3px rgba(249, 115, 22, 0.7), inset 0 -5px 9px rgba(185, 28, 28, 0.4); }
+    }
+    @keyframes fireGlowPulse {
+      0%, 100% { opacity: 0.55; transform: scaleY(0.9); }
+      50% { opacity: 0.95; transform: scaleY(1.15); }
+    }
+    @keyframes flameDance {
+      0%, 100% { transform: scale(1) rotate(-4deg) translateY(0); }
+      30% { transform: scale(1.12, 1.2) rotate(3deg) translateY(-1px); }
+      60% { transform: scale(0.95, 1.08) rotate(-2deg) translateY(0); }
+    }
+    @keyframes emberRise {
+      0% { transform: translateY(2px) scale(1); opacity: 0; }
+      20% { opacity: 1; }
+      100% { transform: translateY(-22px) scale(0.3); opacity: 0; }
+    }
+    .survivor-fire {
+      background: linear-gradient(135deg, #fef08a 0%, #fb923c 42%, #ef4444 100%) !important;
+      border: 1.5px solid #b91c1c !important;
+      color: #450a0a !important;
+      animation: fireFlicker 1.3s ease-in-out infinite;
+    }
+    .dark .survivor-fire {
+      border-color: #fdba74 !important;
+    }
+    .survivor-fire-ignite {
+      animation: fireIgnite 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards, fireFlicker 1.3s ease-in-out 0.7s infinite;
+    }
+    /* heat glow rising from the bottom of the block */
+    .survivor-fire::before {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 70%;
+      background: radial-gradient(ellipse at 50% 120%, rgba(254, 240, 138, 0.95) 0%, rgba(251, 146, 60, 0.45) 45%, transparent 72%);
+      transform-origin: bottom center;
+      animation: fireGlowPulse 0.9s ease-in-out infinite;
+      pointer-events: none;
+    }
+    /* drifting embers */
+    .survivor-fire::after {
+      content: "";
+      position: absolute;
+      bottom: 3px;
+      left: 14%;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #fef08a;
+      box-shadow: 16px -2px 0 #fde047, 34px 1px 0 #fff7ed, 52px -1px 0 #fef08a;
+      animation: emberRise 1.4s ease-out infinite;
+      pointer-events: none;
+    }
+    .survivor-fire > * { position: relative; z-index: 1; }
+    .survivor-flame-icon {
+      color: #b91c1c;
+      display: inline-block;
+      transform-origin: 50% 90%;
+      animation: flameDance 0.8s ease-in-out infinite;
+      filter: drop-shadow(0 0 2px rgba(254, 240, 138, 0.9));
+    }
+
     /* Current Week Column Highlighting in Survivor Table */
     .survivor-th-current {
       background: linear-gradient(180deg, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.08) 100%) !important;
@@ -2709,6 +2802,45 @@
       }
     };
 
+    function drawFireSurvivorMarker(ctx, x, y, size, color) {
+      ctx.save();
+      // Warm halo (no outline)
+      ctx.beginPath();
+      ctx.arc(x, y, size + 3.5, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(249, 115, 22, 0.30)';
+      ctx.fill();
+
+      // Core circle
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, 2 * Math.PI);
+      ctx.fillStyle = '#fff7ed';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+
+      // Flame (vector so it stays crisp and needs no image/emoji font)
+      const k = size * 0.72;
+      const flame = (scale, dy, fill) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y + dy - k * scale);
+        ctx.bezierCurveTo(x + 0.30 * k * scale, y + dy - 0.62 * k * scale, x + 0.82 * k * scale, y + dy - 0.28 * k * scale, x + 0.74 * k * scale, y + dy + 0.30 * k * scale);
+        ctx.bezierCurveTo(x + 0.68 * k * scale, y + dy + 0.82 * k * scale, x + 0.28 * k * scale, y + dy + k * scale, x, y + dy + k * scale);
+        ctx.bezierCurveTo(x - 0.28 * k * scale, y + dy + k * scale, x - 0.74 * k * scale, y + dy + 0.82 * k * scale, x - 0.74 * k * scale, y + dy + 0.28 * k * scale);
+        ctx.bezierCurveTo(x - 0.74 * k * scale, y + dy - 0.05 * k * scale, x - 0.46 * k * scale, y + dy - 0.30 * k * scale, x - 0.26 * k * scale, y + dy - 0.62 * k * scale);
+        ctx.bezierCurveTo(x - 0.12 * k * scale, y + dy - 0.40 * k * scale, x - 0.02 * k * scale, y + dy - 0.38 * k * scale, x, y + dy - k * scale);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+      };
+      const grad = ctx.createLinearGradient(x, y - k, x, y + k);
+      grad.addColorStop(0, '#f97316');
+      grad.addColorStop(1, '#dc2626');
+      flame(1, 0, grad);
+      flame(0.55, k * 0.38, '#fde047');
+      ctx.restore();
+    }
+
     function drawIceEliminationMarker(ctx, x, y, size, color) {
       ctx.save();
       // Outer icy halo ring
@@ -2759,6 +2891,24 @@
             if (pt && !pt.skip && pt.x !== undefined && pt.y !== undefined) {
               drawIceEliminationMarker(ctx, pt.x, pt.y, 7, ds.borderColor);
             }
+          }
+        });
+      }
+    };
+
+    const survivorFireMarkerPlugin = {
+      id: 'survivorFireMarkerPlugin',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const s = STATE.survivor.fullSeries;
+        if (!s || s.fireWeek === null || s.fireWeek === undefined) return;
+
+        const curWk = STATE.survivor.currentIdx;
+        chart.data.datasets.forEach((ds, dsIdx) => {
+          if (!ds.fireWeek || ds.fireWeek > curWk) return;
+          const pt = chart.getDatasetMeta(dsIdx).data[ds.fireWeek];
+          if (pt && !pt.skip && pt.x !== undefined && pt.y !== undefined) {
+            drawFireSurvivorMarker(ctx, pt.x, pt.y, 7, ds.borderColor);
           }
         });
       }
@@ -2954,6 +3104,14 @@
         }
       }
 
+      // Fire: the team(s) still standing after the last regular-season week (week before playoff_start_week).
+      // Only once that week is complete (not while it is still the in-progress current week).
+      const lastRegWeek = prePlayoffCap;
+      const curRealWkForFire = getSurvivorCurrentWeek();
+      const regSeasonComplete = curRealWkForFire === null || curRealWkForFire > lastRegWeek;
+      const fireWeek = (maxWeek === lastRegWeek && regSeasonComplete) ? lastRegWeek : null;
+      const fireTeamIds = fireWeek !== null ? teamIds.filter(id => eliminatedWeek[id] === null) : [];
+
       const orderedTeams = teamIds.map(tId => {
         const elimWk = eliminatedWeek[tId];
         const survivalTime = elimWk === null ? 999 : elimWk;
@@ -2983,7 +3141,9 @@
         teamScores,
         eliminatedWeek,
         maxScoresPerWeek,
-        minScoresPerWeek
+        minScoresPerWeek,
+        fireWeek,
+        fireTeamIds
       };
     }
 
@@ -3008,6 +3168,7 @@
           label: `${t.manager}`,
           teamId: t.teamId,
           eliminatedWeek: t.eliminatedWeek,
+          fireWeek: (s.fireWeek !== null && s.fireWeek !== undefined && s.fireTeamIds.includes(t.teamId)) ? s.fireWeek : null,
           data: [...emptyArray],
           borderColor: mgrColor,
           backgroundColor: mgrColor,
@@ -3022,7 +3183,7 @@
       const ctx = canvas.getContext('2d');
       STATE.survivor.chartInstance = new Chart(ctx, {
         type: 'line',
-        plugins: [survivorBackgroundPlugin, prohibitedMarkerPlugin],
+        plugins: [survivorBackgroundPlugin, prohibitedMarkerPlugin, survivorFireMarkerPlugin],
         data: {
           labels: weeksLabels,
           datasets: datasets
@@ -3052,7 +3213,8 @@
                   if (ctx.parsed.y === null || ctx.parsed.y === undefined) return null;
                   const elimWk = ctx.dataset.eliminatedWeek;
                   const isElim = elimWk && ctx.dataIndex === elimWk;
-                  return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} PF${isElim ? ' ❄️ (FROZEN / ELIMINATED)' : ''}`;
+                  const isFire = ctx.dataset.fireWeek && ctx.dataIndex === ctx.dataset.fireWeek;
+                  return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} PF${isElim ? ' ❄️ (FROZEN / ELIMINATED)' : ''}${isFire ? ' 🔥 (SURVIVOR)' : ''}`;
                 }
               }
             }
@@ -3131,6 +3293,7 @@
             const isEliminationWeek = w >= 6 && t.eliminatedWeek !== null && w === t.eliminatedWeek;
             const isPostEliminationFrozen = w >= 6 && t.eliminatedWeek !== null && w > t.eliminatedWeek;
             const isFrozenCell = isEliminationWeek || isPostEliminationFrozen;
+            const isFireCell = s.fireWeek !== null && s.fireWeek !== undefined && w === s.fireWeek && s.fireTeamIds.includes(t.teamId);
 
             // Newly revealed cell on the advancing tick gets entrance / freeze-solidify animation
             const isNewlyRevealed = isAnimatingStep && w === validWk;
@@ -3155,6 +3318,10 @@
               } else {
                 iconHtml = `<i class="fa-regular fa-snowflake text-[10px] opacity-75 shrink-0"></i>`;
               }
+            } else if (isFireCell) {
+              // Survivor on fire: final regular-season week, still standing
+              extraBoxClasses = isNewlyRevealed ? 'survivor-fire survivor-fire-ignite' : 'survivor-fire';
+              iconHtml = `<i class="fa-solid fa-fire survivor-flame-icon text-[12px] shrink-0"></i>`;
             } else if (isGrayedOut) {
               bgColor = isDark ? '#334155' : '#e2e8f0';
               if (isNewlyRevealed) extraBoxClasses = 'survivor-bar-newly-revealed';
@@ -3169,19 +3336,20 @@
 
             if (!isPostEliminationFrozen && score === minWkScore) {
               textColorClass = 'text-red-600 dark:text-red-400 font-black';
+              if (isFrozenCell) extraBoxClasses += ' survivor-lowest-pf';
             } else if (!isFrozenCell && score === maxWkScore) {
               textColorClass = 'text-emerald-600 dark:text-emerald-400 font-black';
             }
 
             const maxScoreInWeek = maxWkScore > 0 ? maxWkScore : 230;
             const widthPct = Math.max(46, Math.min(100, Math.round((score / maxScoreInWeek) * 100)));
-            const inlineStyle = isFrozenCell
+            const inlineStyle = (isFrozenCell || isFireCell)
               ? `width: ${widthPct}%;`
               : `width: ${widthPct}%; background-color: ${bgColor}; border-color: ${borderColor};`;
 
             rowHtml += `
               <td class="text-left px-1.5 py-1.5 ${tdCurrentClass}">
-                <div class="survivor-cell-box ${textColorClass} ${extraBoxClasses}" style="${inlineStyle}" title="${isEliminationWeek ? `Eliminated & Frozen in Week ${w}` : (isPostEliminationFrozen ? `Frozen (Eliminated W${t.eliminatedWeek})` : `Week ${w}: ${score.toFixed(2)} PF`)}">
+                <div class="survivor-cell-box ${textColorClass} ${extraBoxClasses}" style="${inlineStyle}" title="${isFireCell ? `Survivor! Still standing after Week ${w}` : isEliminationWeek ? `Eliminated & Frozen in Week ${w}` : (isPostEliminationFrozen ? `Frozen (Eliminated W${t.eliminatedWeek})` : `Week ${w}: ${score.toFixed(2)} PF`)}">
                   ${iconHtml}<span>${score.toFixed(2)}</span>
                 </div>
               </td>`;
