@@ -2716,9 +2716,6 @@
       ctx.arc(x, y, size + 3.5, 0, 2 * Math.PI);
       ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
       ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = '#38bdf8';
-      ctx.stroke();
 
       // Core ice crystal circle
       ctx.beginPath();
@@ -4485,6 +4482,7 @@
         ctx.moveTo(chartArea.left, y50);
         ctx.lineTo(chartArea.right, y50);
         ctx.stroke();
+        ctx.setLineDash([]);
 
         const meta0 = chart.getDatasetMeta(0);
         const meta1 = chart.getDatasetMeta(1);
@@ -5452,8 +5450,16 @@
       const cellRect = targetCell.getBoundingClientRect();
 
       const centerX = (cellRect.left - stageRect.left) + (cellRect.width / 2);
+
+      // Measure the belt while visible so its real height is used on the very first placement.
+      beltEl.classList.remove('hidden');
       const beltH = beltEl.offsetHeight || 22;
-      const bottomY = (cellRect.bottom - stageRect.top) - beltH - 1;
+
+      // The newest row plays a translateY slide-in animation, which shifts getBoundingClientRect().
+      // Layout offsets ignore transforms, so the belt lands on the cell's final resting position.
+      let cellTop = 0;
+      for (let el = targetCell; el && el !== stage; el = el.offsetParent) cellTop += el.offsetTop;
+      const bottomY = (cellTop + targetCell.offsetHeight) - beltH - 1;
 
       if (animateGlide) {
         const mult = STATE.belt.speedMultiplier || 1.0;
