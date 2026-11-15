@@ -4466,56 +4466,89 @@
     // ==========================================
     // SECTION 9: LIVE WIN PROBABILITY REPLAY ENGINE
     // ==========================================
-    const liveProbLogoPlugin = {
-      id: 'liveProbLogoPlugin',
-      afterDraw(chart) {
-        const { ctx, chartArea } = chart;
-        if (!chartArea) return;
-
-        const isDark = document.documentElement.classList.contains('dark');
-        const centerX = (chartArea.left + chartArea.right) / 2;
-        const centerY = (chartArea.top + chartArea.bottom) / 2;
-        const s = STATE.liveProb.fullSeries;
-
-        ctx.save();
-        ctx.translate(centerX, centerY);
-
-        ctx.font = '900 58px ui-sans-serif, system-ui, -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = isDark ? 'rgba(248, 250, 252, 0.04)' : 'rgba(15, 23, 42, 0.045)';
-        ctx.fillText('NDL', 0, -14);
-
-        ctx.font = '800 13px ui-sans-serif, system-ui, -apple-system, sans-serif';
-        ctx.fillStyle = isDark ? 'rgba(56, 189, 248, 0.14)' : 'rgba(2, 132, 199, 0.14)';
-        const yrText = s ? `${s.year} • WEEK ${s.week}` : 'DATA HEAVEN';
-        ctx.fillText(yrText, 0, 26);
-
-        ctx.restore();
-      }
-    };
-
-    const liveProbMidlinePlugin = {
-      id: 'liveProbMidlinePlugin',
-      afterDraw(chart) {
+    const liveReplayOverlayPlugin = {
+      id: 'liveReplayOverlay',
+      afterDatasetsDraw(chart) {
         const { ctx, chartArea, scales } = chart;
-        if (!chartArea || !scales.y) return;
+        if (!chartArea || !scales.y1 || !STATE.liveProb.fullSeries) return;
 
-        const isDark = document.documentElement.classList.contains('dark');
-        const y50 = scales.y.getPixelForValue(50);
+        const s = STATE.liveProb.fullSeries;
+        const curIdx0 = STATE.liveProb.currentIdx - 1;
+        if (curIdx0 < 0) return;
 
         ctx.save();
+        const y50 = scales.y1.getPixelForValue(50);
         ctx.beginPath();
         ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.35)' : 'rgba(100, 116, 139, 0.45)';
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
         ctx.lineWidth = 1.5;
         ctx.moveTo(chartArea.left, y50);
         ctx.lineTo(chartArea.right, y50);
         ctx.stroke();
 
-        ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.65)' : 'rgba(100, 116, 139, 0.8)';
-        ctx.font = 'bold 10px ui-monospace, SFMono-Regular, Menlo, monospace';
-        ctx.fillText('50% EVEN', chartArea.left + 8, y50 - 6);
+        const meta0 = chart.getDatasetMeta(0);
+        const meta1 = chart.getDatasetMeta(1);
+        const meta4 = chart.getDatasetMeta(4);
+
+        const ptA = meta0?.data[curIdx0];
+        const ptB = meta1?.data[curIdx0];
+        const ptWP = meta4?.data[curIdx0];
+
+        if (ptA && !ptA.skip && ptA.x && ptA.y) {
+          ctx.beginPath();
+          ctx.arc(ptA.x, ptA.y, 5.5, 0, 2 * Math.PI);
+          ctx.fillStyle = s.colorA;
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
+
+        if (ptB && !ptB.skip && ptB.x && ptB.y) {
+          ctx.beginPath();
+          ctx.arc(ptB.x, ptB.y, 5.5, 0, 2 * Math.PI);
+          ctx.fillStyle = s.colorB;
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
+
+        if (ptWP && ptWP.x && ptWP.y) {
+          const wpCur = s.tmaWpNorm[curIdx0];
+          const wpPrev = curIdx0 > 0 ? s.tmaWpNorm[curIdx0 - 1] : wpCur;
+          const diff = wpCur - wpPrev;
+
+          let dir = 'flat';
+          if (diff > 0.1) dir = 'up';
+          else if (diff < -0.1) dir = 'down';
+
+          const favoriteColor = wpCur >= 50 ? s.colorA : s.colorB;
+          const caretX = ptWP.x;
+          const caretY = ptWP.y;
+          const size = 6.5;
+
+          ctx.beginPath();
+          if (dir === 'up') {
+            ctx.moveTo(caretX, caretY - size - 2);
+            ctx.lineTo(caretX - size, caretY + size);
+            ctx.lineTo(caretX + size, caretY + size);
+          } else if (dir === 'down') {
+            ctx.moveTo(caretX, caretY + size + 2);
+            ctx.lineTo(caretX - size, caretY - size);
+            ctx.lineTo(caretX + size, caretY - size);
+          } else {
+            ctx.moveTo(caretX + size + 2, caretY);
+            ctx.lineTo(caretX - size, caretY - size);
+            ctx.lineTo(caretX - size, caretY + size);
+          }
+          ctx.closePath();
+          ctx.fillStyle = favoriteColor;
+          ctx.fill();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
         ctx.restore();
       }
     };
@@ -4529,22 +4562,25 @@
       const pngBtn = document.getElementById('btn-export-chart-png');
       const csvBtn = document.getElementById('btn-export-chart-csv');
 
-      if (matchupSelect) matchupSelect.addEventListener('change', (e) => {
-        STATE.filters.matchup = e.target.value || null;
+      if (!matchupSelect) return;
+
+      populateLiveProbMatchups();
+
+      matchupSelect.addEventListener('change', () => {
+        STATE.filters.matchup = matchupSelect.value || null;
         updateUrlHash();
         renderLiveProbMatchup();
       });
-      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleLiveProbPlayPause);
-      if (restartBtn) restartBtn.addEventListener('click', restartLiveProbReplay);
+
+      if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+      if (restartBtn) restartBtn.addEventListener('click', restartReplay);
 
       if (speedSlider) {
         speedSlider.addEventListener('input', (e) => {
           const mult = Number(e.target.value);
           STATE.liveProb.speedMultiplier = mult;
           document.getElementById('replay-speed-val').innerText = `${mult}x`;
-          if (STATE.liveProb.isPlaying) {
-            restartLiveProbIntervalTimer();
-          }
+          if (STATE.liveProb.isPlaying) restartIntervalTimer();
         });
       }
 
@@ -4553,9 +4589,9 @@
           const pct = Number(e.target.value);
           const total = STATE.liveProb.fullSeries ? STATE.liveProb.fullSeries.labels.length : 0;
           if (total === 0) return;
-          const targetIdx = Math.round((pct / 100) * (total - 1));
+          const targetIdx = Math.max(1, Math.round((pct / 100) * total));
           STATE.liveProb.currentIdx = targetIdx;
-          renderLiveProbFrameAtIdx(targetIdx);
+          renderFrameAtIdx(targetIdx);
         });
       }
 
@@ -4563,213 +4599,185 @@
       if (csvBtn) csvBtn.addEventListener('click', downloadChartCSV);
     }
 
-    function populateLiveProbWeeks() { }
+    function populateLiveProbWeeks() { populateLiveProbMatchups(); }
 
     function populateLiveProbMatchups() {
-      const yr = STATE.filters.year;
-      const wk = Number(STATE.filters.weekMax);
       const matchupSelect = document.getElementById('live-prob-matchup');
       if (!matchupSelect) return;
 
-      const scores = STATE.data.scores || [];
-      const wkRows = scores.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
+      const yr = STATE.filters.year;
+      const wk = Number(STATE.filters.weekMax);
 
-      const uniqueMatchups = {};
-      wkRows.forEach(r => {
-        const tmAId = getVal(r, ['TMA', 'team_id']);
-        const tmBId = getVal(r, ['TMB', 'opponent_team_id']);
-        const key = `${tmAId}_${tmBId}`;
-        const reverseKey = `${tmBId}_${tmAId}`;
+      const sc = STATE.data.scores || [];
 
-        if (!uniqueMatchups[key] && !uniqueMatchups[reverseKey]) {
-          const tmAName = getTeamName(tmAId, yr, getVal(r, ['TMANAME', 'team_name']));
-          const tmBName = getTeamName(tmBId, yr, getVal(r, ['TMBNAME', 'opponent_name']));
-          const mgrA = getManagerName(tmAId, yr);
-          const mgrB = getManagerName(tmBId, yr);
-
-          uniqueMatchups[key] = {
-            key, tmAId, tmBId,
-            label: `${mgrA} (${tmAName}) vs ${mgrB} (${tmBName})`
-          };
-        }
+      // One entry per matchup: the score table can hold both orientations (A vs B and B vs A).
+      const seen = new Set();
+      const matchupList = [];
+      sc.forEach(r => {
+        if (Number(getVal(r, ['YR', 'year'])) !== Number(yr) || Number(getVal(r, ['WK', 'week'])) !== wk) return;
+        const tma = Number(getVal(r, ['TMA', 'team_id']));
+        const tmb = Number(getVal(r, ['TMB', 'opponent_team_id']));
+        if (!tma || !tmb) return;
+        if (seen.has(`${tma}_${tmb}`) || seen.has(`${tmb}_${tma}`)) return;
+        seen.add(`${tma}_${tmb}`);
+        matchupList.push({ tma, tmb });
       });
 
-      const list = Object.values(uniqueMatchups);
-      if (list.length === 0) {
-        matchupSelect.innerHTML = `<option value="">No matchups recorded</option>`;
+      if (matchupList.length === 0) {
+        matchupSelect.innerHTML = `<option value="">No Matchups Found</option>`;
         return;
       }
 
-      const prev = STATE.filters.matchup;
-      matchupSelect.innerHTML = list.map(m => `<option value="${m.key}">${escapeHTML(m.label)}</option>`).join('');
-      if (prev && list.some(m => m.key === prev)) matchupSelect.value = prev;
-      else STATE.filters.matchup = matchupSelect.value;
+      matchupSelect.innerHTML = matchupList.map(m => {
+        const nameA = getTeamName(m.tma, yr);
+        const mgrA = getManagerName(m.tma, yr);
+        const nameB = getTeamName(m.tmb, yr);
+        const mgrB = getManagerName(m.tmb, yr);
+        return `<option value="${m.tma}_${m.tmb}">${nameA} (${mgrA}) vs ${nameB} (${mgrB})</option>`;
+      }).join('');
+
+      // A saved/URL matchup may be in either orientation.
+      const wanted = STATE.filters.matchup;
+      const hit = wanted ? matchupList.find(m => `${m.tma}_${m.tmb}` === wanted || `${m.tmb}_${m.tma}` === wanted) : null;
+      matchupSelect.value = hit ? `${hit.tma}_${hit.tmb}` : `${matchupList[0].tma}_${matchupList[0].tmb}`;
+      STATE.filters.matchup = matchupSelect.value;
+    }
+
+    function renderLiveProbEmpty(msg) {
+      clearChartState(STATE.liveProb);
+      setChartEmpty('liveWinProbChart', msg);
+      ['tma', 'tmb'].forEach(k => {
+        const set = (id, v) => { const el = document.getElementById(`scorecard-${k}-${id}`); if (el) el.innerText = v; };
+        set('name', '--'); set('mgr', ''); set('pts', '0.00'); set('proj', 'Proj: --'); set('wp', '--%');
+      });
+    }
+
+    function formatTimeLabel(tsStr) {
+      if (tsStr === undefined || tsStr === null || tsStr === '') return '';
+      try {
+        let dt;
+        if (typeof tsStr === 'number') dt = new Date(tsStr < 1e12 ? tsStr * 1000 : tsStr);
+        else dt = new Date(String(tsStr).replace(' ', 'T'));
+        if (isNaN(dt.getTime())) return String(tsStr);
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const day = days[dt.getDay()];
+        let hours = dt.getHours();
+        const mins = String(dt.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${day} ${hours}:${mins} ${ampm}`;
+      } catch (e) {
+        return String(tsStr);
+      }
+    }
+
+    // Builds the ordered, de-duplicated replay points for one matchup.
+    // - Accepts rows in either orientation (TMA/TMB swapped) and flips them so side A is always the selected team A.
+    // - Win prob is only ever the ratio A/(A+B) of the two stored values, so it is independent of 0-1 vs 0-100 storage.
+    //   Rows without BOTH win-prob values (or with a zero sum) are skipped; they are never turned into a neutral 50/50 row.
+    // - Rows sharing the same TIME+RUN (e.g. both orientations of the same snapshot) collapse to one point.
+    function buildLiveProbPoints(scores, yr, wk, tma, tmb) {
+      const num = v => (v === undefined || v === null || v === '') ? NaN : Number(v);
+      const timeOf = r => getVal(r, ['TIME', 'time', 'TS', 'timestamp', 'ts']);
+      const runOf = r => Number(getVal(r, ['RUN', 'run']) || 0);
+
+      const rows = scores.filter(r => {
+        if (Number(getVal(r, ['YR', 'year'])) !== Number(yr) || Number(getVal(r, ['WK', 'week'])) !== Number(wk)) return false;
+        const a = Number(getVal(r, ['TMA', 'team_id']));
+        const b = Number(getVal(r, ['TMB', 'opponent_team_id']));
+        return (a === tma && b === tmb) || (a === tmb && b === tma);
+      }).sort((x, y) => {
+        const tx = timeOf(x), ty = timeOf(y);
+        let c = 0;
+        if (typeof tx === 'number' && typeof ty === 'number') c = tx - ty;
+        else c = String(tx === undefined ? '' : tx).localeCompare(String(ty === undefined ? '' : ty));
+        return c || (runOf(x) - runOf(y));
+      });
+
+      const points = [];
+      const byKey = new Map();
+      rows.forEach(r => {
+        const flipped = Number(getVal(r, ['TMA', 'team_id'])) === tmb;
+        const A = (fa, fb) => getVal(r, flipped ? fb : fa);
+
+        const wpA = num(A(['TMAWP'], ['TMBWP']));
+        const wpB = num(A(['TMBWP'], ['TMAWP']));
+        if (!isFinite(wpA) || !isFinite(wpB) || (wpA + wpB) <= 0) return;
+
+        const normA = (wpA / (wpA + wpB)) * 100;
+        const pt = {
+          time: timeOf(r),
+          ptsA: Number(A(['TMAPTS', 'team_points'], ['TMBPTS', 'opponent_points'])) || 0,
+          ptsB: Number(A(['TMBPTS', 'opponent_points'], ['TMAPTS', 'team_points'])) || 0,
+          projA: Number(A(['TMAPROJ', 'team_proj_points'], ['TMBPROJ', 'opponent_proj_points'])) || 0,
+          projB: Number(A(['TMBPROJ', 'opponent_proj_points'], ['TMAPROJ', 'team_proj_points'])) || 0,
+          wpRawA: wpA, wpRawB: wpB,
+          wpA: normA, wpB: 100 - normA
+        };
+
+        const key = `${pt.time}|${runOf(r)}`;
+        if (byKey.has(key)) {
+          const i = byKey.get(key);
+          if ((pt.ptsA + pt.ptsB) > (points[i].ptsA + points[i].ptsB)) points[i] = pt;
+        } else {
+          byKey.set(key, points.length);
+          points.push(pt);
+        }
+      });
+      return points;
     }
 
     function renderLiveProbMatchup() {
+      const matchupSelect = document.getElementById('live-prob-matchup');
+      if (!matchupSelect) return;
+
       const yr = STATE.filters.year;
       const wk = Number(STATE.filters.weekMax);
-      const matchupKey = document.getElementById('live-prob-matchup').value;
+      const val = matchupSelect.value;
 
-      if (!matchupKey) {
-        clearChartState(STATE.liveProb);
-        setChartEmpty('liveWinProbChart', `No live win probability data recorded for NDL ${yr} Week ${wk}. Use the ◀ ▶ arrows in the filter bar to pick another week.`);
-        document.getElementById('scorecard-tma-name').innerText = 'Team A';
-        document.getElementById('scorecard-tmb-name').innerText = 'Team B';
-        document.getElementById('scorecard-tma-mgr').innerText = '--';
-        document.getElementById('scorecard-tmb-mgr').innerText = '--';
-        document.getElementById('scorecard-tma-pts').innerText = '0.00';
-        document.getElementById('scorecard-tmb-pts').innerText = '0.00';
-        document.getElementById('scorecard-tma-wp').innerText = '--%';
-        document.getElementById('scorecard-tmb-wp').innerText = '--%';
+      if (!val) {
+        renderLiveProbEmpty(`No live scoring data for NDL ${yr} Week ${wk}. Use the \u25C0 \u25B6 arrows in the filter bar to pick another week.`);
+        return;
+      }
+      const [tma, tmb] = val.split('_').map(Number);
+
+      const pts = buildLiveProbPoints(STATE.data.scores || [], yr, wk, tma, tmb);
+
+      if (pts.length === 0) {
+        renderLiveProbEmpty(`No live scoring rows for that matchup in Week ${wk}.`);
         return;
       }
       setChartEmpty('liveWinProbChart', null);
 
-      const [tmAId, tmBId] = matchupKey.split('_');
-      const scores = STATE.data.scores || [];
-
-      const rawSeriesRows = scores.filter(r => {
-        const rYr = Number(getVal(r, ['year', 'YR']));
-        const rWk = Number(getVal(r, ['week', 'WK']));
-        const rA = String(getVal(r, ['TMA', 'team_id']));
-        const rB = String(getVal(r, ['TMB', 'opponent_team_id']));
-        return rYr === Number(yr) && rWk === Number(wk) && ((rA === tmAId && rB === tmBId) || (rA === tmBId && rB === tmAId));
-      }).sort((a, b) => {
-        const tsA = getVal(a, ['TS', 'timestamp', 'ts']) || 0;
-        const tsB = getVal(b, ['TS', 'timestamp', 'ts']) || 0;
-        return tsA > tsB ? 1 : (tsA < tsB ? -1 : 0);
-      });
-
-      if (rawSeriesRows.length === 0) return;
-
-      // Determine whether the entire matchup series is stored as 0..1 decimals or 0..100 percentages.
-      // Checking per-row caused values <= 1% (e.g. 0.5%) to be multiplied by 100 into 50%, producing ~50.3% / ~49.7% spikes!
-      const allWpVals = [];
-      rawSeriesRows.forEach(r => {
-        const w1 = Number(getVal(r, ['TMAWP', 'win_prob']));
-        const w2 = Number(getVal(r, ['TMBWP', 'opp_win_prob']));
-        if (!isNaN(w1) && w1 > 0) allWpVals.push(w1);
-        if (!isNaN(w2) && w2 > 0) allWpVals.push(w2);
-      });
-      const maxWpInSeries = allWpVals.length > 0 ? Math.max(...allWpVals) : 100;
-      const isDecimalScale = maxWpInSeries <= 1.05;
-
-      // Deduplicate rows by timestamp (TS), preferring rows with valid non-neutral win probabilities when duplicates exist
-      const parsedPoints = [];
-      const seenByTs = new Map();
-
-      rawSeriesRows.forEach(r => {
-        const isFlipped = String(getVal(r, ['TMA', 'team_id'])) === tmBId;
-        const ptsA = Number(getVal(r, isFlipped ? ['TMBPTS', 'opp_points'] : ['TMAPTS', 'points'])) || 0;
-        const ptsB = Number(getVal(r, isFlipped ? ['TMAPTS', 'points'] : ['TMBPTS', 'opp_points'])) || 0;
-        const projA = Number(getVal(r, isFlipped ? ['TMBPROJ', 'opp_proj'] : ['TMAPROJ', 'proj'])) || 0;
-        const projB = Number(getVal(r, isFlipped ? ['TMAPROJ', 'proj'] : ['TMBPROJ', 'opp_proj'])) || 0;
-
-        let rawWpA = Number(getVal(r, isFlipped ? ['TMBWP', 'opp_win_prob'] : ['TMAWP', 'win_prob']));
-        let rawWpB = Number(getVal(r, isFlipped ? ['TMAWP', 'win_prob'] : ['TMBWP', 'opp_win_prob']));
-
-        if (isNaN(rawWpA) && !isNaN(rawWpB)) rawWpA = (isDecimalScale ? 1 : 100) - rawWpB;
-        if (isNaN(rawWpB) && !isNaN(rawWpA)) rawWpB = (isDecimalScale ? 1 : 100) - rawWpA;
-        if (isNaN(rawWpA) && isNaN(rawWpB)) {
-          rawWpA = isDecimalScale ? 0.5 : 50;
-          rawWpB = isDecimalScale ? 0.5 : 50;
-        }
-
-        let wpA = isDecimalScale ? rawWpA * 100 : rawWpA;
-        let wpB = isDecimalScale ? rawWpB * 100 : rawWpB;
-
-        wpA = Math.max(0, Math.min(100, wpA));
-        wpB = Math.max(0, Math.min(100, wpB));
-
-        const totalWp = wpA + wpB;
-        if (totalWp > 0 && Math.abs(totalWp - 100) > 0.01) {
-          wpA = (wpA / totalWp) * 100;
-          wpB = (wpB / totalWp) * 100;
-        } else if (totalWp === 0) {
-          wpA = 50;
-          wpB = 50;
-        }
-
-        const rawTs = getVal(r, ['TS', 'timestamp', 'ts']);
-        let label = 'Point';
-        if (rawTs) {
-          const dt = new Date(typeof rawTs === 'number' && rawTs < 1e12 ? rawTs * 1000 : rawTs);
-          if (!isNaN(dt.getTime())) {
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            label = `${days[dt.getDay()]} ${dt.getHours() % 12 || 12}:${String(dt.getMinutes()).padStart(2, '0')} ${dt.getHours() >= 12 ? 'PM' : 'AM'}`;
-          } else {
-            label = String(rawTs);
-          }
-        }
-
-        const ptObj = {
-          tsKey: rawTs !== undefined && rawTs !== null ? String(rawTs) : null,
-          label,
-          ptsA,
-          ptsB,
-          projA,
-          projB,
-          wpA: Number(wpA.toFixed(1)),
-          wpB: Number(wpB.toFixed(1))
-        };
-
-        if (ptObj.tsKey !== null) {
-          if (seenByTs.has(ptObj.tsKey)) {
-            const existingIdx = seenByTs.get(ptObj.tsKey);
-            const existing = parsedPoints[existingIdx];
-            // If duplicate timestamp exists, keep the one with actual scores/probabilities rather than a stale/neutral 50.3/49.7 row
-            const existingIsNeutral = Math.abs(existing.wpA - 50) <= 0.5 && (ptObj.ptsA > 0 || ptObj.ptsB > 0) && Math.abs(ptObj.wpA - 50) > 0.5;
-            if (existingIsNeutral || (ptObj.ptsA + ptObj.ptsB) >= (existing.ptsA + existing.ptsB)) {
-              parsedPoints[existingIdx] = ptObj;
-            }
-          } else {
-            seenByTs.set(ptObj.tsKey, parsedPoints.length);
-            parsedPoints.push(ptObj);
-          }
-        } else {
-          parsedPoints.push(ptObj);
-        }
-      });
-
-      const firstRow = rawSeriesRows[0];
-      const isFirstFlipped = String(getVal(firstRow, ['TMA', 'team_id'])) === tmBId;
-      const tmAName = getTeamName(tmAId, yr, getVal(firstRow, isFirstFlipped ? ['TMBNAME', 'opponent_name'] : ['TMANAME', 'team_name']));
-      const tmBName = getTeamName(tmBId, yr, getVal(firstRow, isFirstFlipped ? ['TMANAME', 'team_name'] : ['TMBNAME', 'opponent_name']));
-      const mgrA = getManagerName(tmAId, yr);
-      const mgrB = getManagerName(tmBId, yr);
-
-      const labels = parsedPoints.map(p => p.label);
-      const wpASeries = parsedPoints.map(p => p.wpA);
-      const wpBSeries = parsedPoints.map(p => p.wpB);
-      const ptsASeries = parsedPoints.map(p => p.ptsA);
-      const ptsBSeries = parsedPoints.map(p => p.ptsB);
-      const projASeries = parsedPoints.map(p => p.projA);
-      const projBSeries = parsedPoints.map(p => p.projB);
-
+      const mgrA = getManagerName(tma, yr);
+      const mgrB = getManagerName(tmb, yr);
       const colorA = getManagerColor(mgrA, 0);
       const colorB = getManagerColor(mgrB, 1);
 
-      document.getElementById('scorecard-tma-mgr').innerText = mgrA;
-      document.getElementById('scorecard-tma-name').innerText = tmAName;
-      document.getElementById('scorecard-tma-pts').style.color = colorA;
-      document.getElementById('scorecard-tma-wp').style.color = colorA;
-
-      document.getElementById('scorecard-tmb-mgr').innerText = mgrB;
-      document.getElementById('scorecard-tmb-name').innerText = tmBName;
-      document.getElementById('scorecard-tmb-pts').style.color = colorB;
-      document.getElementById('scorecard-tmb-wp').style.color = colorB;
+      const labels = pts.map(p => formatTimeLabel(p.time));
+      const tmaPts = pts.map(p => p.ptsA);
+      const tmbPts = pts.map(p => p.ptsB);
+      const tmaProj = pts.map(p => p.projA);
+      const tmbProj = pts.map(p => p.projB);
+      const tmaWpRaw = pts.map(p => p.wpRawA);
+      const tmbWpRaw = pts.map(p => p.wpRawB);
+      const tmaWpNorm = pts.map(p => p.wpA);
+      const tmbWpNorm = pts.map(p => p.wpB);
 
       STATE.liveProb.fullSeries = {
-        labels, wpASeries, wpBSeries, ptsASeries, ptsBSeries, projASeries, projBSeries,
-        tmAName, tmBName, mgrA, mgrB, colorA, colorB, year: yr, week: wk
+        tma, tmb, mgrA, mgrB, colorA, colorB,
+        labels, tmaPts, tmbPts, tmaProj, tmbProj,
+        tmaWpNorm, tmbWpNorm, tmaWpRaw, tmbWpRaw
       };
 
-      initLiveProbChartCanvas(labels, tmAName, tmBName, mgrA, mgrB, colorA, colorB);
-      restartLiveProbReplay();
+      const nameA = getTeamName(tma, yr);
+      const nameB = getTeamName(tmb, yr);
+
+      initFixedChart(labels, nameA, nameB, colorA, colorB);
+      restartReplay();
     }
 
-    function initLiveProbChartCanvas(labels, tmAName, tmBName, mgrA, mgrB, colorA, colorB) {
+    function initFixedChart(fullLabels, nameA, nameB, colorA, colorB) {
       const canvas = document.getElementById('liveWinProbChart');
       if (!canvas) return;
 
@@ -4781,42 +4789,88 @@
         STATE.liveProb.chartInstance.destroy();
       }
 
-      const emptyArray = new Array(labels.length).fill(null);
-      const ctx = canvas.getContext('2d');
+      const emptyArray = new Array(fullLabels.length).fill(null);
 
+      const ctx = canvas.getContext('2d');
       STATE.liveProb.chartInstance = new Chart(ctx, {
         type: 'line',
-        plugins: [liveProbLogoPlugin, liveProbMidlinePlugin],
+        plugins: [liveReplayOverlayPlugin],
         data: {
-          labels: labels,
+          labels: fullLabels,
           datasets: [
             {
-              label: `${mgrA} (${tmAName})`,
+              label: `${nameA} (Actual)`,
               data: [...emptyArray],
               borderColor: colorA,
-              backgroundColor: hexToRgba(colorA, 0.14),
+              backgroundColor: colorA,
               borderWidth: 3,
-              fill: true,
-              tension: 0.25,
               pointRadius: 0,
               pointHoverRadius: 6,
-              pointHoverBackgroundColor: colorA,
-              pointHoverBorderColor: '#ffffff',
-              pointHoverBorderWidth: 2
+              yAxisID: 'y',
+              tension: 0.15,
+              spanGaps: false
             },
             {
-              label: `${mgrB} (${tmBName})`,
+              label: `${nameB} (Actual)`,
               data: [...emptyArray],
               borderColor: colorB,
-              backgroundColor: hexToRgba(colorB, 0.14),
+              backgroundColor: colorB,
               borderWidth: 3,
-              fill: true,
-              tension: 0.25,
               pointRadius: 0,
               pointHoverRadius: 6,
-              pointHoverBackgroundColor: colorB,
-              pointHoverBorderColor: '#ffffff',
-              pointHoverBorderWidth: 2
+              yAxisID: 'y',
+              tension: 0.15,
+              spanGaps: false
+            },
+            {
+              label: `${nameA} (Proj)`,
+              data: [...emptyArray],
+              borderColor: colorA,
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              yAxisID: 'y',
+              tension: 0.15,
+              spanGaps: false
+            },
+            {
+              label: `${nameB} (Proj)`,
+              data: [...emptyArray],
+              borderColor: colorB,
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              yAxisID: 'y',
+              tension: 0.15,
+              spanGaps: false
+            },
+            {
+              label: `${nameA} Win %`,
+              data: [...emptyArray],
+              borderColor: hexToRgba(colorA, 0.4),
+              backgroundColor: hexToRgba(colorA, 0.25),
+              fill: 'origin',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              yAxisID: 'y1',
+              stack: 'winprob',
+              tension: 0.2,
+              spanGaps: false
+            },
+            {
+              label: `${nameB} Win %`,
+              data: [...emptyArray],
+              borderColor: hexToRgba(colorB, 0.4),
+              backgroundColor: hexToRgba(colorB, 0.25),
+              fill: '-1',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              yAxisID: 'y1',
+              stack: 'winprob',
+              tension: 0.2,
+              spanGaps: false
             }
           ]
         },
@@ -4826,208 +4880,232 @@
           animation: false,
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { labels: { color: textColor, font: { size: 12, weight: 'bold' }, usePointStyle: true, pointStyle: 'circle' } },
+            legend: {
+              position: 'top',
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14 }
+            },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               titleColor: isDark ? '#f8fafc' : '#0f172a',
               bodyColor: isDark ? '#cbd5e1' : '#334155',
               borderColor: isDark ? '#334155' : '#cbd5e1',
               borderWidth: 1,
-              padding: 12,
+              padding: 10,
               callbacks: {
-                afterBody: (items) => {
-                  const idx = items[0].dataIndex;
-                  const s = STATE.liveProb.fullSeries;
-                  if (!s || idx >= s.ptsASeries.length) return '';
-                  return [
-                    ``,
-                    `Live Score: ${s.mgrA} ${s.ptsASeries[idx].toFixed(2)} - ${s.ptsBSeries[idx].toFixed(2)} ${s.mgrB}`,
-                    `Live Proj:  ${s.mgrA} ${s.projASeries[idx].toFixed(1)} - ${s.projBSeries[idx].toFixed(1)} ${s.mgrB}`
-                  ];
-                },
-                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + '%' : '--'}`
+                label: function(ctx) {
+                  let label = ctx.dataset.label || '';
+                  if (label) label += ': ';
+                  if (ctx.parsed.y !== null && ctx.parsed.y !== undefined) {
+                    label += ctx.dataset.yAxisID === 'y1' ? `${ctx.parsed.y.toFixed(0)}%` : ctx.parsed.y.toFixed(2);
+                  }
+                  return label;
+                }
               }
             }
           },
           scales: {
-            x: { grid: { color: gridColor }, ticks: { color: textColor, maxTicksLimit: 12, font: { size: 11 } } },
-            y: {
-              min: 0, max: 100,
+            x: {
               grid: { color: gridColor },
-              ticks: { color: textColor, callback: v => v + '%', font: { size: 11 } },
-              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 12, weight: 'bold' } }
+              ticks: { color: textColor, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 14 }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: { display: true, text: 'Points Scored', color: textColor, font: { size: 11, weight: '700' } },
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 10 } },
+              min: 0
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              stacked: true,
+              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '700' } },
+              grid: { drawOnChartArea: false },
+              ticks: { color: textColor, font: { size: 10 }, callback: v => `${v}%` },
+              min: 0,
+              max: 100
             }
           }
         }
       });
     }
 
-    function updateChartThemeColors() {
-      const s = STATE.liveProb.fullSeries;
-      if (!s) return;
-      s.colorA = getManagerColor(s.mgrA, 0);
-      s.colorB = getManagerColor(s.mgrB, 1);
-
-      document.getElementById('scorecard-tma-pts').style.color = s.colorA;
-      document.getElementById('scorecard-tma-wp').style.color = s.colorA;
-      document.getElementById('scorecard-tmb-pts').style.color = s.colorB;
-      document.getElementById('scorecard-tmb-wp').style.color = s.colorB;
-
-      initLiveProbChartCanvas(s.labels, s.tmAName, s.tmBName, s.mgrA, s.mgrB, s.colorA, s.colorB);
-      renderLiveProbFrameAtIdx(STATE.liveProb.currentIdx);
-    }
-
-    function renderLiveProbFrameAtIdx(idx) {
+    function renderFrameAtIdx(idx) {
       const s = STATE.liveProb.fullSeries;
       if (!s || !STATE.liveProb.chartInstance) return;
 
       const total = s.labels.length;
-      const validIdx = Math.min(total - 1, Math.max(0, idx));
+      const validIdx = Math.min(total, Math.max(1, idx));
 
-      const slicedA = s.wpASeries.slice(0, validIdx + 1);
-      const slicedB = s.wpBSeries.slice(0, validIdx + 1);
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const mgrA = s.mgrA;
+      const nameB = getTeamName(s.tmb, yr);
+      const mgrB = s.mgrB;
 
-      const paddedA = slicedA.concat(new Array(total - (validIdx + 1)).fill(null));
-      const paddedB = slicedB.concat(new Array(total - (validIdx + 1)).fill(null));
+      const idx0 = validIdx - 1;
+      const wpA = s.tmaWpNorm[idx0];
+      const wpB = s.tmbWpNorm[idx0];
 
-      const pointRadii = new Array(total).fill(0);
-      pointRadii[validIdx] = 6.5;
+      document.getElementById('scorecard-tma-name').innerText = nameA;
+      document.getElementById('scorecard-tma-mgr').innerText = mgrA ? `Manager: ${mgrA}` : '';
+      document.getElementById('scorecard-tma-pts').innerText = s.tmaPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tma-pts').style.color = s.colorA;
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.tmaProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tma-wp').innerText = `${wpA.toFixed(0)}%`;
+      document.getElementById('scorecard-tma-wp').style.color = s.colorA;
 
-      const chart = STATE.liveProb.chartInstance;
-      chart.data.datasets[0].data = paddedA;
-      chart.data.datasets[0].pointRadius = pointRadii;
-      chart.data.datasets[0].pointBackgroundColor = s.colorA;
-      chart.data.datasets[0].pointBorderColor = '#ffffff';
-      chart.data.datasets[0].pointBorderWidth = 2;
-
-      chart.data.datasets[1].data = paddedB;
-      chart.data.datasets[1].pointRadius = pointRadii;
-      chart.data.datasets[1].pointBackgroundColor = s.colorB;
-      chart.data.datasets[1].pointBorderColor = '#ffffff';
-      chart.data.datasets[1].pointBorderWidth = 2;
-
-      const curWpA = s.wpASeries[validIdx];
-      const curWpB = s.wpBSeries[validIdx];
-
-      document.getElementById('scorecard-tma-pts').innerText = s.ptsASeries[validIdx].toFixed(2);
-      document.getElementById('scorecard-tmb-pts').innerText = s.ptsBSeries[validIdx].toFixed(2);
-      document.getElementById('scorecard-tma-wp').innerText = `${curWpA.toFixed(1)}%`;
-      document.getElementById('scorecard-tmb-wp').innerText = `${curWpB.toFixed(1)}%`;
-      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.projASeries[validIdx].toFixed(1)}`;
-      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.projBSeries[validIdx].toFixed(1)}`;
+      document.getElementById('scorecard-tmb-name').innerText = nameB;
+      document.getElementById('scorecard-tmb-mgr').innerText = mgrB ? `Manager: ${mgrB}` : '';
+      document.getElementById('scorecard-tmb-pts').innerText = s.tmbPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tmb-pts').style.color = s.colorB;
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tmb-wp').innerText = `${wpB.toFixed(0)}%`;
+      document.getElementById('scorecard-tmb-wp').style.color = s.colorB;
 
       const cardA = document.getElementById('scorecard-card-tma');
       const cardB = document.getElementById('scorecard-card-tmb');
-      const chartBox = document.getElementById('live-prob-chart-container');
+      const chartContainer = document.getElementById('live-prob-chart-container');
 
-      const leadingColor = curWpA >= curWpB ? s.colorA : s.colorB;
-      if (chartBox) {
-        chartBox.style.borderColor = hexToRgba(leadingColor, 0.5);
-        chartBox.style.boxShadow = `0 10px 25px -5px ${hexToRgba(leadingColor, 0.12)}`;
-      }
+      if (wpA > 50) {
+        const intensity = Math.min(1, (wpA - 50) / 50);
+        cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08 + 0.22 * intensity);
+        cardA.style.borderColor = hexToRgba(s.colorA, 0.3 + 0.4 * intensity);
+        cardB.style.backgroundColor = '';
+        cardB.style.borderColor = '';
 
-      if (cardA && cardB) {
-        if (curWpA > curWpB) {
-          cardA.style.borderColor = s.colorA;
-          cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08);
-          cardB.style.borderColor = '';
-          cardB.style.backgroundColor = '';
-        } else if (curWpB > curWpA) {
-          cardB.style.borderColor = s.colorB;
-          cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08);
-          cardA.style.borderColor = '';
-          cardA.style.backgroundColor = '';
-        } else {
-          cardA.style.borderColor = ''; cardA.style.backgroundColor = '';
-          cardB.style.borderColor = ''; cardB.style.backgroundColor = '';
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = hexToRgba(s.colorA, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorA, 0.25 + 0.35 * intensity);
         }
+      } else if (wpB > 50) {
+        const intensity = Math.min(1, (wpB - 50) / 50);
+        cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08 + 0.22 * intensity);
+        cardB.style.borderColor = hexToRgba(s.colorB, 0.3 + 0.4 * intensity);
+        cardA.style.backgroundColor = '';
+        cardA.style.borderColor = '';
+
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = hexToRgba(s.colorB, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorB, 0.25 + 0.35 * intensity);
+        }
+      } else {
+        cardA.style.backgroundColor = ''; cardA.style.borderColor = '';
+        cardB.style.backgroundColor = ''; cardB.style.borderColor = '';
+        if (chartContainer) { chartContainer.style.backgroundColor = ''; chartContainer.style.borderColor = ''; }
       }
 
       const scrubber = document.getElementById('replay-scrubber');
-      if (scrubber && total > 1) {
-        scrubber.value = Math.round((validIdx / (total - 1)) * 100);
-      }
+      if (scrubber) scrubber.value = Math.round((validIdx / total) * 100);
+
+      const padNull = (arr) => arr.slice(0, validIdx).concat(new Array(total - validIdx).fill(null));
+      const extendRight = (arr) => {
+        const sliced = arr.slice(0, validIdx);
+        const lastVal = sliced[sliced.length - 1];
+        return sliced.concat(new Array(total - validIdx).fill(lastVal));
+      };
+
+      const chart = STATE.liveProb.chartInstance;
+      chart.data.datasets[0].data = padNull(s.tmaPts);
+      chart.data.datasets[1].data = padNull(s.tmbPts);
+      chart.data.datasets[2].data = extendRight(s.tmaProj);
+      chart.data.datasets[3].data = extendRight(s.tmbProj);
+      chart.data.datasets[4].data = padNull(s.tmaWpNorm);
+      chart.data.datasets[5].data = padNull(s.tmbWpNorm);
 
       chart.update('none');
     }
 
-    function toggleLiveProbPlayPause() {
-      if (STATE.liveProb.isPlaying) {
-        pauseLiveProbReplay();
-      } else {
+    function togglePlayPause() {
+      if (STATE.liveProb.isPlaying) pauseReplay();
+      else {
         const s = STATE.liveProb.fullSeries;
-        if (s && STATE.liveProb.currentIdx >= s.labels.length - 1) {
-          STATE.liveProb.currentIdx = 0;
-        }
-        startLiveProbReplay();
+        if (s && STATE.liveProb.currentIdx >= s.labels.length) STATE.liveProb.currentIdx = 1;
+        startReplay();
       }
     }
 
-    function startLiveProbReplay() {
+    function startReplay() {
       STATE.liveProb.isPlaying = true;
-      updatePlayPauseButtonUI();
-      restartLiveProbIntervalTimer();
+      updatePlayPauseUI();
+      restartIntervalTimer();
     }
 
-    function pauseLiveProbReplay() {
+    function pauseReplay() {
       STATE.liveProb.isPlaying = false;
       if (STATE.liveProb.animationTimer) {
         clearInterval(STATE.liveProb.animationTimer);
         STATE.liveProb.animationTimer = null;
       }
-      updatePlayPauseButtonUI();
+      updatePlayPauseUI();
     }
 
-    function restartLiveProbReplay() {
-      STATE.liveProb.currentIdx = 0;
-      renderLiveProbFrameAtIdx(0);
-      startLiveProbReplay();
+    function restartReplay() {
+      STATE.liveProb.currentIdx = 1;
+      renderFrameAtIdx(1);
+      startReplay();
     }
 
-    function restartLiveProbIntervalTimer() {
+    function restartIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
-
       const mult = STATE.liveProb.speedMultiplier || 3;
-      const intervalMs = Math.max(15, Math.round(90 / mult));
+      const intervalMs = Math.max(10, Math.round(120 / mult));
 
       STATE.liveProb.animationTimer = setInterval(() => {
         const s = STATE.liveProb.fullSeries;
         if (!s) return;
 
         STATE.liveProb.currentIdx += 1;
-        if (STATE.liveProb.currentIdx >= s.labels.length - 1) {
-          STATE.liveProb.currentIdx = s.labels.length - 1;
-          renderLiveProbFrameAtIdx(STATE.liveProb.currentIdx);
-          pauseLiveProbReplay();
+        if (STATE.liveProb.currentIdx >= s.labels.length) {
+          STATE.liveProb.currentIdx = s.labels.length;
+          renderFrameAtIdx(STATE.liveProb.currentIdx);
+          pauseReplay();
         } else {
-          renderLiveProbFrameAtIdx(STATE.liveProb.currentIdx);
+          renderFrameAtIdx(STATE.liveProb.currentIdx);
         }
       }, intervalMs);
     }
 
-    function updatePlayPauseButtonUI() {
+    function updatePlayPauseUI() {
       const icon = document.getElementById('play-pause-icon');
       const text = document.getElementById('play-pause-text');
       const btn = document.getElementById('btn-play-pause-replay');
 
       if (STATE.liveProb.isPlaying) {
-        icon.className = 'fa-solid fa-pause';
-        text.innerText = 'Pause';
+        icon.className = 'fa-solid fa-pause'; text.innerText = 'Pause';
         btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       } else {
-        icon.className = 'fa-solid fa-play';
-        text.innerText = 'Play';
+        icon.className = 'fa-solid fa-play'; text.innerText = 'Play';
         btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       }
     }
 
+    function updateChartThemeColors() {
+      const chart = STATE.liveProb.chartInstance;
+      if (!chart) return;
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+
+      chart.options.scales.x.grid.color = gridColor;
+      chart.options.scales.x.ticks.color = textColor;
+      chart.options.scales.y.grid.color = gridColor;
+      chart.options.scales.y.ticks.color = textColor;
+      chart.options.scales.y.title.color = textColor;
+      chart.options.scales.y1.ticks.color = textColor;
+      chart.options.scales.y1.title.color = textColor;
+      chart.options.plugins.legend.labels.color = textColor;
+      chart.update('none');
+    }
+
     function downloadChartPNG() {
       const chart = STATE.liveProb.chartInstance;
-      const s = STATE.liveProb.fullSeries;
-      if (!chart || !s) return;
-
+      if (!chart) return;
       const link = document.createElement('a');
-      link.download = `NDL_WinProb_${s.year}_Wk${s.week}_${s.mgrA}_vs_${s.mgrB}.png`;
+      link.download = `NDL_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
@@ -5035,29 +5113,29 @@
     function downloadChartCSV() {
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const nameB = getTeamName(s.tmb, yr);
 
-      const csvRows = s.labels.map((lbl, idx) => ({
-        Timestamp: lbl,
-        [`${s.mgrA}_Team`]: s.tmAName,
-        [`${s.mgrA}_Points`]: s.ptsASeries[idx],
-        [`${s.mgrA}_Proj`]: s.projASeries[idx],
-        [`${s.mgrA}_WinProb`]: s.wpASeries[idx],
-        [`${s.mgrB}_Team`]: s.tmBName,
-        [`${s.mgrB}_Points`]: s.ptsBSeries[idx],
-        [`${s.mgrB}_Proj`]: s.projBSeries[idx],
-        [`${s.mgrB}_WinProb`]: s.wpBSeries[idx]
+      const rows = s.labels.map((lbl, i) => ({
+        Time: lbl,
+        [`${nameA}_Actual`]: s.tmaPts[i],
+        [`${nameB}_Actual`]: s.tmbPts[i],
+        [`${nameA}_Proj`]: s.tmaProj[i],
+        [`${nameB}_Proj`]: s.tmbProj[i],
+        [`${nameA}_WinProb_Pct`]: s.tmaWpNorm[i].toFixed(2),
+        [`${nameB}_WinProb_Pct`]: s.tmbWpNorm[i].toFixed(2)
       }));
 
-      const csv = Papa.unparse(csvRows);
+      const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `NDL_WinProb_${s.year}_Wk${s.week}_${s.mgrA}_vs_${s.mgrB}.csv`);
+      link.setAttribute("download", `NDL_Matchup_Data_${yr}_Wk${STATE.filters.weekMax}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
-
     // ==========================================
     // SECTION 10: BELT TAB ENGINE (LINEAL CHAMPIONSHIP BELT)
     // ==========================================
