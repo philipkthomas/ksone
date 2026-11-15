@@ -1292,7 +1292,7 @@
     const TAB_FILTER_MODE = {
       standings:  { from: true,  hcw: true,  defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       props:      { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: true,  label: 'W' },
-      survivor:   { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: false, label: 'W' },
+      survivor:   { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
       wins_above: { from: false, hcw: true,  defaultHcw: true,  regularSeasonDefault: false, label: 'W' },
       matchups:   { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       live_prob:  { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
@@ -2638,7 +2638,7 @@
 
         const isDark = document.documentElement.classList.contains('dark');
         const s = STATE.survivor.fullSeries;
-        const maxWk = s ? s.maxWeek : 17;
+        const maxWk = s ? s.maxWeek : 14;
 
         const x0 = scales.x.getPixelForValue(0);
         const x5 = scales.x.getPixelForValue(Math.min(5, maxWk));
@@ -2898,7 +2898,9 @@
 
       if (ptsYr.length === 0) return null;
 
-      const maxWeek = Math.min(FilterEngine.effectiveMax(year), getMaxWeekForYear(year));
+      // Survivor never extends past the week prior to playoff_start_week
+      const prePlayoffCap = Math.max(1, getPlayoffStartWeek(year) - 1);
+      const maxWeek = Math.min(FilterEngine.effectiveMax(year), getMaxWeekForYear(year), prePlayoffCap);
       if (maxWeek < 1) return null;
 
       const teamIds = [...new Set(ptsYr.map(r => Number(getVal(r, ['team_id', 'TMA', 'team']))))].filter(t => !isNaN(t) && t !== 0);
@@ -3374,7 +3376,12 @@
     function computePropsData() {
       const yr = STATE.filters.year;
       const pts = STATE.data.points || [];
-      const wkMax = FilterEngine.effectiveMax(yr), wkMin = FilterEngine.effectiveMin(yr);
+      // Props never extend past the week prior to playoff_start_week
+      const prePlayoffCap = Math.max(1, getPlayoffStartWeek(yr) - 1);
+      const wkMax = Math.min(FilterEngine.effectiveMax(yr), prePlayoffCap);
+      const wkMin = Math.min(FilterEngine.effectiveMin(yr), wkMax);
+      if (wkMax < 1) return [];
+
       const ptsYr = pts.filter(r => {
         if (Number(getVal(r, ['year', 'YR'])) !== Number(yr)) return false;
         const w = Number(getVal(r, ['week', 'WK']));
@@ -3625,7 +3632,9 @@
       const pts = STATE.data.points || [];
       const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
 
-      const maxWk = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
+      // Divisional Prop Bet stops the week prior to playoff_start_week
+      const prePlayoffCap = Math.max(1, getPlayoffStartWeek(yr) - 1);
+      const maxWk = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr), prePlayoffCap);
       if (ptsYr.length === 0 || maxWk < 1) {
         clearChartState(STATE.props);
         setChartEmpty('divisionalPropChart', emptyScopeMessage('divisional prop data'));
@@ -4231,7 +4240,7 @@
             ctx.save();
             ctx.beginPath();
             ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.6)' : 'rgba(71, 85, 105, 0.6)';
+            ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(100, 116, 139, 0.5)';
             ctx.lineWidth = 1.5;
             ctx.moveTo(chartArea.left, y0);
             ctx.lineTo(chartArea.right, y0);
@@ -4247,9 +4256,7 @@
           responsive: true,
           maintainAspectRatio: false,
           animation: false,
-          layout: {
-            padding: isRank ? { top: 10, bottom: 10 } : 0
-          },
+          layout: { padding: { top: 12, bottom: 12 } },
           interaction: { mode: 'index', intersect: false },
           plugins: {
             title: {
@@ -4257,7 +4264,7 @@
               text: chartTitle,
               color: textColor,
               font: { size: 16, weight: '700' },
-              padding: { bottom: 15 }
+              padding: { bottom: 16 }
             },
             legend: {
               position: 'right',
@@ -4271,41 +4278,38 @@
               borderWidth: 1,
               padding: 10,
               callbacks: {
+                title: (items) => `Week ${items[0].label}`,
                 label: (ctx) => {
-                  const rawVal = ctx.dataset.rawValues ? ctx.dataset.rawValues[ctx.dataIndex] : ctx.parsed.y;
-                  if (rawVal === null || rawVal === undefined) return null;
-                  if (STATE.wae.metric === 'rank') {
-                    return `${ctx.dataset.label}: Rank ${rawVal}`;
+                  const idx = ctx.dataIndex;
+                  if (isRank && idx === 0) return `${ctx.dataset.label}: Preseason`;
+                  const trueVal = ctx.dataset.rawValues[idx];
+                  if (trueVal === null || trueVal === undefined) return null;
+                  
+                  if (isRank) {
+                    return `${ctx.dataset.label}: #${trueVal}`;
+                  } else {
+                    return `${ctx.dataset.label}: ${trueVal > 0 ? '+' : ''}${trueVal.toFixed(2)} WAE`;
                   }
-                  return `${ctx.dataset.label}: ${rawVal > 0 ? '+' : ''}${rawVal.toFixed(2)}`;
                 }
               }
             }
           },
           scales: {
             x: {
-              title: { display: true, text: 'Week', color: textColor, font: { size: 12, weight: '600' } },
+              title: { display: true, text: 'Week', color: textColor, font: { size: 12, weight: '700' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 11 } }
+              ticks: { color: textColor, font: { size: 11, weight: '600' } }
             },
             y: isRank ? {
-              reverse: true,
-              min: 1,
-              max: numTeams,
-              title: { display: true, text: 'Rank', color: textColor, font: { size: 12, weight: '600' } },
+              min: 1, max: numTeams, reverse: true,
+              title: { display: true, text: 'Rank', color: textColor, font: { size: 12, weight: '700' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 11, weight: '700' }, stepSize: 1 }
+              ticks: { color: textColor, font: { size: 11, weight: '600' }, stepSize: 1 }
             } : {
-              min: yMinFixed,
-              max: yMaxFixed,
-              title: { display: true, text: 'Wins Above Even', color: textColor, font: { size: 12, weight: '600' } },
+              min: yMinFixed, max: yMaxFixed,
+              title: { display: true, text: 'Wins Above Even', color: textColor, font: { size: 12, weight: '700' } },
               grid: { color: gridColor },
-              ticks: {
-                color: textColor,
-                font: { size: 11 },
-                stepSize: 1,
-                callback: v => v > 0 ? `+${v}` : v
-              }
+              ticks: { color: textColor, font: { size: 11, weight: '600' }, stepSize: 1 }
             }
           }
         }
@@ -4316,37 +4320,33 @@
       const s = STATE.wae.fullSeries;
       if (!s || !STATE.wae.chartInstance) return;
 
-      const isRank = STATE.wae.metric === 'rank';
       const total = s.weeks.length;
       const validIdx = Math.min(total - 1, Math.max(0, idx));
       const chart = STATE.wae.chartInstance;
+      const isRank = STATE.wae.metric === 'rank';
+      const isMatchup = STATE.wae.mode === 'matchup';
 
       s.teamMetaList.forEach((meta, mIdx) => {
-        const teamSeries = s.seriesMap[meta.team_id];
-        
-        let displayArr, rawArr;
+        const teamData = s.seriesMap[meta.team_id];
+
         if (isRank) {
-          const rankArr = STATE.wae.mode === 'matchup' ? teamSeries.matchupRank : teamSeries.etewRank;
-          displayArr = rankArr;
-          rawArr = rankArr;
+          const fullRankArr = isMatchup ? teamData.matchupRank : teamData.etewRank;
+          const sliced = [null].concat(fullRankArr.slice(1, validIdx + 1));
+          const padded = sliced.concat(new Array(total - sliced.length).fill(null));
+          chart.data.datasets[mIdx].data = padded;
+          chart.data.datasets[mIdx].rawValues = padded;
         } else {
-          displayArr = STATE.wae.mode === 'matchup' ? teamSeries.cumMatchupDisplay : teamSeries.cumEtewDisplay;
-          rawArr = STATE.wae.mode === 'matchup' ? teamSeries.cumMatchup : teamSeries.cumEtew;
+          const fullRawArr = isMatchup ? teamData.cumMatchup : teamData.cumEtew;
+          const fullDisplayArr = isMatchup ? teamData.cumMatchupDisplay : teamData.cumEtewDisplay;
+
+          const slicedDisplay = fullDisplayArr.slice(0, validIdx + 1);
+          const paddedDisplay = slicedDisplay.concat(new Array(total - (validIdx + 1)).fill(null));
+          chart.data.datasets[mIdx].data = paddedDisplay;
+
+          const slicedRaw = fullRawArr.slice(0, validIdx + 1);
+          const paddedRaw = slicedRaw.concat(new Array(total - (validIdx + 1)).fill(null));
+          chart.data.datasets[mIdx].rawValues = paddedRaw;
         }
-
-        const slicedDisplay = displayArr.slice(0, validIdx + 1);
-        const slicedRaw = rawArr.slice(0, validIdx + 1);
-
-        const paddedDisplay = slicedDisplay.concat(new Array(total - (validIdx + 1)).fill(null));
-        const paddedRaw = slicedRaw.concat(new Array(total - (validIdx + 1)).fill(null));
-
-        if (isRank && validIdx === 0) {
-          paddedDisplay[0] = null;
-          paddedRaw[0] = null;
-        }
-
-        chart.data.datasets[mIdx].data = paddedDisplay;
-        chart.data.datasets[mIdx].rawValues = paddedRaw;
       });
 
       const scrubber = document.getElementById('wae-scrubber');
@@ -4363,7 +4363,7 @@
       } else {
         const s = STATE.wae.fullSeries;
         if (s && STATE.wae.currentIdx >= s.weeks.length - 1) {
-          STATE.wae.currentIdx = STATE.wae.metric === 'rank' ? 1 : 0;
+          STATE.wae.currentIdx = 0;
         }
         startWaeReplay();
       }
@@ -4385,9 +4385,8 @@
     }
 
     function restartWaeReplay() {
-      const startIdx = STATE.wae.metric === 'rank' ? 1 : 0;
-      STATE.wae.currentIdx = startIdx;
-      renderWaeFrameAtIdx(startIdx);
+      STATE.wae.currentIdx = 0;
+      renderWaeFrameAtIdx(0);
       startWaeReplay();
     }
 
@@ -4430,7 +4429,7 @@
       const chart = STATE.wae.chartInstance;
       if (!chart) return;
       const link = document.createElement('a');
-      link.download = `${STATE.wae.metric}_${STATE.wae.mode}_${STATE.filters.year}.png`;
+      link.download = `NDL_${STATE.wae.metric === 'rank' ? 'Rank' : 'Wins_Above_Even'}_${STATE.filters.year}_${STATE.wae.mode}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
@@ -4440,27 +4439,25 @@
       if (!s) return;
 
       const isRank = STATE.wae.metric === 'rank';
-      const rows = s.weeks.map((wk, wIdx) => {
-        if (isRank && wIdx === 0) return null;
-        const rowObj = { Week: wk };
+      const isMatchup = STATE.wae.mode === 'matchup';
+      const csvRows = s.weeks.map((wk, wIdx) => {
+        const row = { Week: wk };
         s.teamMetaList.forEach(meta => {
-          let arr;
+          const teamData = s.seriesMap[meta.team_id];
           if (isRank) {
-            arr = STATE.wae.mode === 'matchup' ? s.seriesMap[meta.team_id].matchupRank : s.seriesMap[meta.team_id].etewRank;
-            rowObj[meta.manager] = arr[wIdx];
+            row[meta.manager] = wIdx === 0 ? '' : (isMatchup ? teamData.matchupRank[wIdx] : teamData.etewRank[wIdx]);
           } else {
-            arr = STATE.wae.mode === 'matchup' ? s.seriesMap[meta.team_id].cumMatchup : s.seriesMap[meta.team_id].cumEtew;
-            rowObj[meta.manager] = Number(arr[wIdx].toFixed(3));
+            row[meta.manager] = (isMatchup ? teamData.cumMatchup[wIdx] : teamData.cumEtew[wIdx]).toFixed(4);
           }
         });
-        return rowObj;
-      }).filter(r => r !== null);
+        return row;
+      });
 
-      const csv = Papa.unparse(rows);
+      const csv = Papa.unparse(csvRows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `${STATE.wae.metric}_${STATE.wae.mode}_${STATE.filters.year}.csv`);
+      link.setAttribute("download", `NDL_${isRank ? 'Rank' : 'WAE'}_${STATE.filters.year}_${STATE.wae.mode}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -4469,313 +4466,310 @@
     // ==========================================
     // SECTION 9: LIVE WIN PROBABILITY REPLAY ENGINE
     // ==========================================
-    const liveReplayOverlayPlugin = {
-      id: 'liveReplayOverlay',
-      afterDatasetsDraw(chart) {
-        const { ctx, chartArea, scales } = chart;
-        if (!chartArea || !scales.y1 || !STATE.liveProb.fullSeries) return;
+    const liveProbLogoPlugin = {
+      id: 'liveProbLogoPlugin',
+      afterDraw(chart) {
+        const { ctx, chartArea } = chart;
+        if (!chartArea) return;
 
+        const isDark = document.documentElement.classList.contains('dark');
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
         const s = STATE.liveProb.fullSeries;
-        const curIdx0 = STATE.liveProb.currentIdx - 1;
-        if (curIdx0 < 0) return;
 
         ctx.save();
+        ctx.translate(centerX, centerY);
 
-        // 1. 50% Win Prob Midline
-        const y50 = scales.y1.getPixelForValue(50);
-        ctx.beginPath();
-        ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
-        ctx.lineWidth = 1.5;
-        ctx.moveTo(chartArea.left, y50);
-        ctx.lineTo(chartArea.right, y50);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.font = '900 58px ui-sans-serif, system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = isDark ? 'rgba(248, 250, 252, 0.04)' : 'rgba(15, 23, 42, 0.045)';
+        ctx.fillText('NDL', 0, -14);
 
-        // 2. Active Point Markers & Carets (borderless)
-        const meta0 = chart.getDatasetMeta(0); // Team A Actual
-        const meta1 = chart.getDatasetMeta(1); // Team B Actual
-        const meta4 = chart.getDatasetMeta(4); // Team A Win Prob
-
-        const ptA = meta0?.data[curIdx0];
-        const ptB = meta1?.data[curIdx0];
-        const ptWP = meta4?.data[curIdx0];
-
-        if (ptA && !ptA.skip && ptA.x !== undefined && ptA.y !== undefined) {
-          ctx.beginPath();
-          ctx.arc(ptA.x, ptA.y, 5.5, 0, 2 * Math.PI);
-          ctx.fillStyle = s.colorA;
-          ctx.fill();
-        }
-
-        if (ptB && !ptB.skip && ptB.x !== undefined && ptB.y !== undefined) {
-          ctx.beginPath();
-          ctx.arc(ptB.x, ptB.y, 5.5, 0, 2 * Math.PI);
-          ctx.fillStyle = s.colorB;
-          ctx.fill();
-        }
-
-        if (ptWP && ptWP.x !== undefined && ptWP.y !== undefined) {
-          const wpCur = s.tmaWpNorm[curIdx0];
-          const wpPrev = curIdx0 > 0 ? s.tmaWpNorm[curIdx0 - 1] : wpCur;
-          const diff = wpCur - wpPrev;
-
-          let dir = 'flat';
-          if (diff > 0.1) dir = 'up';
-          else if (diff < -0.1) dir = 'down';
-
-          const favoriteColor = wpCur >= 50 ? s.colorA : s.colorB;
-          const caretX = ptWP.x;
-          const caretY = ptWP.y;
-          const size = 6.5;
-
-          ctx.beginPath();
-          if (dir === 'up') {
-            ctx.moveTo(caretX, caretY - size - 2);
-            ctx.lineTo(caretX - size, caretY + size);
-            ctx.lineTo(caretX + size, caretY + size);
-          } else if (dir === 'down') {
-            ctx.moveTo(caretX, caretY + size + 2);
-            ctx.lineTo(caretX - size, caretY - size);
-            ctx.lineTo(caretX + size, caretY - size);
-          } else {
-            ctx.moveTo(caretX + size + 2, caretY);
-            ctx.lineTo(caretX - size, caretY - size);
-            ctx.lineTo(caretX - size, caretY + size);
-          }
-          ctx.closePath();
-          ctx.fillStyle = favoriteColor;
-          ctx.fill();
-        }
+        ctx.font = '800 13px ui-sans-serif, system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = isDark ? 'rgba(56, 189, 248, 0.14)' : 'rgba(2, 132, 199, 0.14)';
+        const yrText = s ? `${s.year} • WEEK ${s.week}` : 'DATA HEAVEN';
+        ctx.fillText(yrText, 0, 26);
 
         ctx.restore();
       }
     };
 
+    const liveProbMidlinePlugin = {
+      id: 'liveProbMidlinePlugin',
+      afterDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea || !scales.y) return;
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const y50 = scales.y.getPixelForValue(50);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.35)' : 'rgba(100, 116, 139, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(chartArea.left, y50);
+        ctx.lineTo(chartArea.right, y50);
+        ctx.stroke();
+
+        ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.65)' : 'rgba(100, 116, 139, 0.8)';
+        ctx.font = 'bold 10px ui-monospace, SFMono-Regular, Menlo, monospace';
+        ctx.fillText('50% EVEN', chartArea.left + 8, y50 - 6);
+        ctx.restore();
+      }
+    };
+
     function initLiveProbTab() {
-      const muSelect = document.getElementById('live-prob-matchup');
-      if (muSelect) {
-        muSelect.addEventListener('change', () => {
-          STATE.filters.matchup = muSelect.value || null;
-          renderLiveProbMatchup();
-          updateUrlHash();
+      const matchupSelect = document.getElementById('live-prob-matchup');
+      const playPauseBtn = document.getElementById('btn-play-pause-replay');
+      const restartBtn = document.getElementById('btn-replay-animation');
+      const speedSlider = document.getElementById('replay-speed-slider');
+      const scrubber = document.getElementById('replay-scrubber');
+      const pngBtn = document.getElementById('btn-export-chart-png');
+      const csvBtn = document.getElementById('btn-export-chart-csv');
+
+      if (matchupSelect) matchupSelect.addEventListener('change', (e) => {
+        STATE.filters.matchup = e.target.value || null;
+        updateUrlHash();
+        renderLiveProbMatchup();
+      });
+      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleLiveProbPlayPause);
+      if (restartBtn) restartBtn.addEventListener('click', restartLiveProbReplay);
+
+      if (speedSlider) {
+        speedSlider.addEventListener('input', (e) => {
+          const mult = Number(e.target.value);
+          STATE.liveProb.speedMultiplier = mult;
+          document.getElementById('replay-speed-val').innerText = `${mult}x`;
+          if (STATE.liveProb.isPlaying) {
+            restartLiveProbIntervalTimer();
+          }
         });
       }
 
-      document.getElementById('btn-play-pause-replay').addEventListener('click', toggleReplayPlayPause);
-      document.getElementById('btn-replay-animation').addEventListener('click', restartLiveProbReplay);
+      if (scrubber) {
+        scrubber.addEventListener('input', (e) => {
+          const pct = Number(e.target.value);
+          const total = STATE.liveProb.fullSeries ? STATE.liveProb.fullSeries.labels.length : 0;
+          if (total === 0) return;
+          const targetIdx = Math.round((pct / 100) * (total - 1));
+          STATE.liveProb.currentIdx = targetIdx;
+          renderLiveProbFrameAtIdx(targetIdx);
+        });
+      }
 
-      const speedSlider = document.getElementById('replay-speed-slider');
-      speedSlider.addEventListener('input', (e) => {
-        const mult = Number(e.target.value);
-        STATE.liveProb.speedMultiplier = mult;
-        document.getElementById('replay-speed-val').innerText = `${mult}x`;
-        if (STATE.liveProb.isPlaying) {
-          restartReplayIntervalTimer();
-        }
-      });
-
-      const scrubber = document.getElementById('replay-scrubber');
-      scrubber.addEventListener('input', (e) => {
-        const pct = Number(e.target.value);
-        const total = STATE.liveProb.fullSeries ? STATE.liveProb.fullSeries.labels.length : 0;
-        if (total === 0) return;
-        const targetIdx = Math.round((pct / 100) * total);
-        STATE.liveProb.currentIdx = targetIdx;
-        renderFrameAtIdx(targetIdx);
-      });
-
-      document.getElementById('btn-export-chart-png').addEventListener('click', downloadLiveProbPNG);
-      document.getElementById('btn-export-chart-csv').addEventListener('click', downloadLiveProbCSV);
+      if (pngBtn) pngBtn.addEventListener('click', downloadChartPNG);
+      if (csvBtn) csvBtn.addEventListener('click', downloadChartCSV);
     }
 
     function populateLiveProbWeeks() { }
 
     function populateLiveProbMatchups() {
-      const muSelect = document.getElementById('live-prob-matchup');
-      if (!muSelect) return;
-
       const yr = STATE.filters.year;
       const wk = Number(STATE.filters.weekMax);
+      const matchupSelect = document.getElementById('live-prob-matchup');
+      if (!matchupSelect) return;
 
-      if (!STATE.data.scores || STATE.data.scores.length === 0) {
-        muSelect.innerHTML = '<option value="">No Scores Data Available</option>';
-        return;
-      }
+      const scores = STATE.data.scores || [];
+      const wkRows = scores.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
 
-      const filtered = STATE.data.scores.filter(r =>
-        Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk)
-      );
+      const uniqueMatchups = {};
+      wkRows.forEach(r => {
+        const tmAId = getVal(r, ['TMA', 'team_id']);
+        const tmBId = getVal(r, ['TMB', 'opponent_team_id']);
+        const key = `${tmAId}_${tmBId}`;
+        const reverseKey = `${tmBId}_${tmAId}`;
 
-      const matchupsMap = {};
-      filtered.forEach(r => {
-        const tmaId = Number(getVal(r, ['TMA', 'team_a_id', 'team_id']));
-        const tmbId = Number(getVal(r, ['TMB', 'team_b_id', 'opponent_team_id']));
-        if (!tmaId || !tmbId) return;
+        if (!uniqueMatchups[key] && !uniqueMatchups[reverseKey]) {
+          const tmAName = getTeamName(tmAId, yr, getVal(r, ['TMANAME', 'team_name']));
+          const tmBName = getTeamName(tmBId, yr, getVal(r, ['TMBNAME', 'opponent_name']));
+          const mgrA = getManagerName(tmAId, yr);
+          const mgrB = getManagerName(tmBId, yr);
 
-        const key = `${tmaId}_vs_${tmbId}`;
-        if (!matchupsMap[key]) {
-          const mgrA = getManagerName(tmaId, yr);
-          const teamA = getTeamName(tmaId, yr);
-          const mgrB = getManagerName(tmbId, yr);
-          const teamB = getTeamName(tmbId, yr);
-
-          matchupsMap[key] = {
-            key, tmaId, tmbId,
-            label: `${mgrA} (${teamA}) vs ${mgrB} (${teamB})`
+          uniqueMatchups[key] = {
+            key, tmAId, tmBId,
+            label: `${mgrA} (${tmAName}) vs ${mgrB} (${tmBName})`
           };
         }
       });
 
-      const optionsList = Object.values(matchupsMap);
-      if (optionsList.length === 0) {
-        muSelect.innerHTML = `<option value="">No Matchups Found (Week ${wk})</option>`;
+      const list = Object.values(uniqueMatchups);
+      if (list.length === 0) {
+        matchupSelect.innerHTML = `<option value="">No matchups recorded</option>`;
         return;
       }
 
-      const prevValue = STATE.filters.matchup || muSelect.value;
-      muSelect.innerHTML = optionsList.map(m => `<option value="${m.key}">${m.label}</option>`).join('');
-
-      if (prevValue && optionsList.some(m => m.key === prevValue)) {
-        muSelect.value = prevValue;
-      }
-      STATE.filters.matchup = muSelect.value || null;
+      const prev = STATE.filters.matchup;
+      matchupSelect.innerHTML = list.map(m => `<option value="${m.key}">${escapeHTML(m.label)}</option>`).join('');
+      if (prev && list.some(m => m.key === prev)) matchupSelect.value = prev;
+      else STATE.filters.matchup = matchupSelect.value;
     }
 
     function renderLiveProbMatchup() {
       const yr = STATE.filters.year;
       const wk = Number(STATE.filters.weekMax);
-      const muKey = document.getElementById('live-prob-matchup')?.value;
+      const matchupKey = document.getElementById('live-prob-matchup').value;
 
-      if (!muKey) {
+      if (!matchupKey) {
         clearChartState(STATE.liveProb);
-        ['scorecard-tma-name', 'scorecard-tmb-name'].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '--'; });
-        ['scorecard-tma-mgr', 'scorecard-tmb-mgr'].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '--'; });
-        ['scorecard-tma-proj', 'scorecard-tmb-proj'].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = 'Proj: --'; });
-        ['scorecard-tma-pts', 'scorecard-tmb-pts'].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '0.00'; });
-        ['scorecard-tma-wp', 'scorecard-tmb-wp'].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '--%'; });
-        setChartEmpty('liveWinProbChart', `No live win probability data for NDL ${yr} Week ${wk}. Use the ◀ ▶ arrows in the filter bar to pick another week.`);
+        setChartEmpty('liveWinProbChart', `No live win probability data recorded for NDL ${yr} Week ${wk}. Use the ◀ ▶ arrows in the filter bar to pick another week.`);
+        document.getElementById('scorecard-tma-name').innerText = 'Team A';
+        document.getElementById('scorecard-tmb-name').innerText = 'Team B';
+        document.getElementById('scorecard-tma-mgr').innerText = '--';
+        document.getElementById('scorecard-tmb-mgr').innerText = '--';
+        document.getElementById('scorecard-tma-pts').innerText = '0.00';
+        document.getElementById('scorecard-tmb-pts').innerText = '0.00';
+        document.getElementById('scorecard-tma-wp').innerText = '--%';
+        document.getElementById('scorecard-tmb-wp').innerText = '--%';
         return;
       }
       setChartEmpty('liveWinProbChart', null);
 
-      const [tmaIdStr, tmbIdStr] = muKey.split('_vs_');
-      const tmaId = Number(tmaIdStr);
-      const tmbId = Number(tmbIdStr);
+      const [tmAId, tmBId] = matchupKey.split('_');
+      const scores = STATE.data.scores || [];
 
-      let rows = STATE.data.scores.filter(r =>
-        Number(getVal(r, ['year', 'YR'])) === Number(yr) &&
-        Number(getVal(r, ['week', 'WK'])) === Number(wk) &&
-        Number(getVal(r, ['TMA', 'team_a_id', 'team_id'])) === tmaId &&
-        Number(getVal(r, ['TMB', 'team_b_id', 'opponent_team_id'])) === tmbId
-      );
-
-      if (rows.length === 0) return;
-
-      rows.sort((a, b) => {
-        const tsA = getVal(a, ['TS', 'timestamp', 'datetime', 'time']) || '';
-        const tsB = getVal(b, ['TS', 'timestamp', 'datetime', 'time']) || '';
-        return String(tsA).localeCompare(String(tsB));
+      const rawSeriesRows = scores.filter(r => {
+        const rYr = Number(getVal(r, ['year', 'YR']));
+        const rWk = Number(getVal(r, ['week', 'WK']));
+        const rA = String(getVal(r, ['TMA', 'team_id']));
+        const rB = String(getVal(r, ['TMB', 'opponent_team_id']));
+        return rYr === Number(yr) && rWk === Number(wk) && ((rA === tmAId && rB === tmBId) || (rA === tmBId && rB === tmAId));
+      }).sort((a, b) => {
+        const tsA = getVal(a, ['TS', 'timestamp', 'ts']) || 0;
+        const tsB = getVal(b, ['TS', 'timestamp', 'ts']) || 0;
+        return tsA > tsB ? 1 : (tsA < tsB ? -1 : 0);
       });
 
-      const validRows = rows.filter(r => {
-        const ts = getVal(r, ['TS', 'timestamp', 'datetime', 'time']);
-        const wpA = getVal(r, ['TMAWP', 'team_a_wp', 'win_prob']);
-        return ts !== null && ts !== undefined && String(ts).trim() !== '' && wpA !== null && wpA !== undefined && !isNaN(Number(wpA));
+      if (rawSeriesRows.length === 0) return;
+
+      // Determine whether the entire matchup series is stored as 0..1 decimals or 0..100 percentages.
+      // Checking per-row caused values <= 1% (e.g. 0.5%) to be multiplied by 100 into 50%, producing ~50.3% / ~49.7% spikes!
+      const allWpVals = [];
+      rawSeriesRows.forEach(r => {
+        const w1 = Number(getVal(r, ['TMAWP', 'win_prob']));
+        const w2 = Number(getVal(r, ['TMBWP', 'opp_win_prob']));
+        if (!isNaN(w1) && w1 > 0) allWpVals.push(w1);
+        if (!isNaN(w2) && w2 > 0) allWpVals.push(w2);
+      });
+      const maxWpInSeries = allWpVals.length > 0 ? Math.max(...allWpVals) : 100;
+      const isDecimalScale = maxWpInSeries <= 1.05;
+
+      // Deduplicate rows by timestamp (TS), preferring rows with valid non-neutral win probabilities when duplicates exist
+      const parsedPoints = [];
+      const seenByTs = new Map();
+
+      rawSeriesRows.forEach(r => {
+        const isFlipped = String(getVal(r, ['TMA', 'team_id'])) === tmBId;
+        const ptsA = Number(getVal(r, isFlipped ? ['TMBPTS', 'opp_points'] : ['TMAPTS', 'points'])) || 0;
+        const ptsB = Number(getVal(r, isFlipped ? ['TMAPTS', 'points'] : ['TMBPTS', 'opp_points'])) || 0;
+        const projA = Number(getVal(r, isFlipped ? ['TMBPROJ', 'opp_proj'] : ['TMAPROJ', 'proj'])) || 0;
+        const projB = Number(getVal(r, isFlipped ? ['TMAPROJ', 'proj'] : ['TMBPROJ', 'opp_proj'])) || 0;
+
+        let rawWpA = Number(getVal(r, isFlipped ? ['TMBWP', 'opp_win_prob'] : ['TMAWP', 'win_prob']));
+        let rawWpB = Number(getVal(r, isFlipped ? ['TMAWP', 'win_prob'] : ['TMBWP', 'opp_win_prob']));
+
+        if (isNaN(rawWpA) && !isNaN(rawWpB)) rawWpA = (isDecimalScale ? 1 : 100) - rawWpB;
+        if (isNaN(rawWpB) && !isNaN(rawWpA)) rawWpB = (isDecimalScale ? 1 : 100) - rawWpA;
+        if (isNaN(rawWpA) && isNaN(rawWpB)) {
+          rawWpA = isDecimalScale ? 0.5 : 50;
+          rawWpB = isDecimalScale ? 0.5 : 50;
+        }
+
+        let wpA = isDecimalScale ? rawWpA * 100 : rawWpA;
+        let wpB = isDecimalScale ? rawWpB * 100 : rawWpB;
+
+        wpA = Math.max(0, Math.min(100, wpA));
+        wpB = Math.max(0, Math.min(100, wpB));
+
+        const totalWp = wpA + wpB;
+        if (totalWp > 0 && Math.abs(totalWp - 100) > 0.01) {
+          wpA = (wpA / totalWp) * 100;
+          wpB = (wpB / totalWp) * 100;
+        } else if (totalWp === 0) {
+          wpA = 50;
+          wpB = 50;
+        }
+
+        const rawTs = getVal(r, ['TS', 'timestamp', 'ts']);
+        let label = 'Point';
+        if (rawTs) {
+          const dt = new Date(typeof rawTs === 'number' && rawTs < 1e12 ? rawTs * 1000 : rawTs);
+          if (!isNaN(dt.getTime())) {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            label = `${days[dt.getDay()]} ${dt.getHours() % 12 || 12}:${String(dt.getMinutes()).padStart(2, '0')} ${dt.getHours() >= 12 ? 'PM' : 'AM'}`;
+          } else {
+            label = String(rawTs);
+          }
+        }
+
+        const ptObj = {
+          tsKey: rawTs !== undefined && rawTs !== null ? String(rawTs) : null,
+          label,
+          ptsA,
+          ptsB,
+          projA,
+          projB,
+          wpA: Number(wpA.toFixed(1)),
+          wpB: Number(wpB.toFixed(1))
+        };
+
+        if (ptObj.tsKey !== null) {
+          if (seenByTs.has(ptObj.tsKey)) {
+            const existingIdx = seenByTs.get(ptObj.tsKey);
+            const existing = parsedPoints[existingIdx];
+            // If duplicate timestamp exists, keep the one with actual scores/probabilities rather than a stale/neutral 50.3/49.7 row
+            const existingIsNeutral = Math.abs(existing.wpA - 50) <= 0.5 && (ptObj.ptsA > 0 || ptObj.ptsB > 0) && Math.abs(ptObj.wpA - 50) > 0.5;
+            if (existingIsNeutral || (ptObj.ptsA + ptObj.ptsB) >= (existing.ptsA + existing.ptsB)) {
+              parsedPoints[existingIdx] = ptObj;
+            }
+          } else {
+            seenByTs.set(ptObj.tsKey, parsedPoints.length);
+            parsedPoints.push(ptObj);
+          }
+        } else {
+          parsedPoints.push(ptObj);
+        }
       });
 
-      if (validRows.length === 0) {
-        clearChartState(STATE.liveProb);
-        setChartEmpty('liveWinProbChart', `No valid timestamped win probability records for NDL ${yr} Week ${wk}.`);
-        return;
-      }
+      const firstRow = rawSeriesRows[0];
+      const isFirstFlipped = String(getVal(firstRow, ['TMA', 'team_id'])) === tmBId;
+      const tmAName = getTeamName(tmAId, yr, getVal(firstRow, isFirstFlipped ? ['TMBNAME', 'opponent_name'] : ['TMANAME', 'team_name']));
+      const tmBName = getTeamName(tmBId, yr, getVal(firstRow, isFirstFlipped ? ['TMANAME', 'team_name'] : ['TMBNAME', 'opponent_name']));
+      const mgrA = getManagerName(tmAId, yr);
+      const mgrB = getManagerName(tmBId, yr);
 
-      const mgrA = getManagerName(tmaId, yr);
-      const teamAName = getTeamName(tmaId, yr);
-      const mgrB = getManagerName(tmbId, yr);
-      const teamBName = getTeamName(tmbId, yr);
+      const labels = parsedPoints.map(p => p.label);
+      const wpASeries = parsedPoints.map(p => p.wpA);
+      const wpBSeries = parsedPoints.map(p => p.wpB);
+      const ptsASeries = parsedPoints.map(p => p.ptsA);
+      const ptsBSeries = parsedPoints.map(p => p.ptsB);
+      const projASeries = parsedPoints.map(p => p.projA);
+      const projBSeries = parsedPoints.map(p => p.projB);
 
       const colorA = getManagerColor(mgrA, 0);
-      let colorB = getManagerColor(mgrB, 1);
-      if (colorA === colorB) colorB = '#f97316';
+      const colorB = getManagerColor(mgrB, 1);
 
-      document.getElementById('scorecard-tma-name').innerText = teamAName;
       document.getElementById('scorecard-tma-mgr').innerText = mgrA;
-      document.getElementById('scorecard-tmb-name').innerText = teamBName;
+      document.getElementById('scorecard-tma-name').innerText = tmAName;
+      document.getElementById('scorecard-tma-pts').style.color = colorA;
+      document.getElementById('scorecard-tma-wp').style.color = colorA;
+
       document.getElementById('scorecard-tmb-mgr').innerText = mgrB;
-
-      const ptsElA = document.getElementById('scorecard-tma-pts');
-      const wpElA = document.getElementById('scorecard-tma-wp');
-      if (ptsElA) ptsElA.style.color = colorA;
-      if (wpElA) wpElA.style.color = colorA;
-
-      const ptsElB = document.getElementById('scorecard-tmb-pts');
-      const wpElB = document.getElementById('scorecard-tmb-wp');
-      if (ptsElB) ptsElB.style.color = colorB;
-      if (wpElB) wpElB.style.color = colorB;
-
-      const labels = [];
-      const rawTimestamps = [];
-      const tmaActual = [];
-      const tmbActual = [];
-      const tmaProj = [];
-      const tmbProj = [];
-      const tmaWpNorm = [];
-      const tmbWpNorm = [];
-
-      validRows.forEach((r) => {
-        const tsRaw = getVal(r, ['TS', 'timestamp', 'datetime', 'time']) || '';
-        rawTimestamps.push(tsRaw);
-        labels.push(formatFriendlyTimestamp(tsRaw));
-
-        let wpA = Number(getVal(r, ['TMAWP', 'team_a_wp', 'win_prob']));
-        if (wpA <= 1 && wpA >= 0) wpA = wpA * 100;
-        let wpB = Number(getVal(r, ['TMBWP', 'team_b_wp']));
-        if (isNaN(wpB)) wpB = 100 - wpA;
-        else if (wpB <= 1 && wpB >= 0) wpB = wpB * 100;
-
-        const sumWp = (wpA + wpB) || 100;
-        const normA = Number(((wpA / sumWp) * 100).toFixed(1));
-        const normB = Number((100 - normA).toFixed(1));
-
-        tmaWpNorm.push(normA);
-        tmbWpNorm.push(normB);
-
-        tmaActual.push(Number(getVal(r, ['TMAPTS', 'team_a_pts', 'points'])) || 0);
-        tmbActual.push(Number(getVal(r, ['TMBPTS', 'team_b_pts', 'opponent_points'])) || 0);
-        tmaProj.push(Number(getVal(r, ['TMAPROJ', 'team_a_proj'])) || 0);
-        tmbProj.push(Number(getVal(r, ['TMBPROJ', 'team_b_proj'])) || 0);
-      });
-
-      const allVals = [...tmaActual, ...tmbActual, ...tmaProj, ...tmbProj];
-      const maxVal = Math.max(...allVals, 100);
-      const yMax = Math.ceil(maxVal / 25) * 25;
+      document.getElementById('scorecard-tmb-name').innerText = tmBName;
+      document.getElementById('scorecard-tmb-pts').style.color = colorB;
+      document.getElementById('scorecard-tmb-wp').style.color = colorB;
 
       STATE.liveProb.fullSeries = {
-        teamAName, teamBName, mgrA, mgrB, colorA, colorB, yMax,
-        labels, rawTimestamps,
-        tmaActual, tmbActual, tmaProj, tmbProj, tmaWpNorm, tmbWpNorm
+        labels, wpASeries, wpBSeries, ptsASeries, ptsBSeries, projASeries, projBSeries,
+        tmAName, tmBName, mgrA, mgrB, colorA, colorB, year: yr, week: wk
       };
 
-      initFixedChart(teamAName, teamBName, mgrA, mgrB, colorA, colorB, labels, yMax);
+      initLiveProbChartCanvas(labels, tmAName, tmBName, mgrA, mgrB, colorA, colorB);
       restartLiveProbReplay();
     }
 
-    function formatFriendlyTimestamp(tsStr) {
-      if (!tsStr) return '';
-      const d = new Date(String(tsStr).replace(' ', 'T'));
-      if (isNaN(d.getTime())) return String(tsStr).slice(5, 16);
-
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const dayName = days[d.getDay()];
-      let hrs = d.getHours();
-      const mins = String(d.getMinutes()).padStart(2, '0');
-      const ampm = hrs >= 12 ? 'PM' : 'AM';
-      hrs = hrs % 12 || 12;
-      return `${dayName} ${hrs}:${mins} ${ampm}`;
-    }
-
-    function initFixedChart(teamAName, teamBName, mgrA, mgrB, colorA, colorB, labels, yMax) {
+    function initLiveProbChartCanvas(labels, tmAName, tmBName, mgrA, mgrB, colorA, colorB) {
       const canvas = document.getElementById('liveWinProbChart');
       if (!canvas) return;
 
@@ -4788,87 +4782,41 @@
       }
 
       const emptyArray = new Array(labels.length).fill(null);
-
       const ctx = canvas.getContext('2d');
+
       STATE.liveProb.chartInstance = new Chart(ctx, {
         type: 'line',
-        plugins: [liveReplayOverlayPlugin],
+        plugins: [liveProbLogoPlugin, liveProbMidlinePlugin],
         data: {
           labels: labels,
           datasets: [
             {
-              label: `${mgrA} (${teamAName}) Points`,
+              label: `${mgrA} (${tmAName})`,
               data: [...emptyArray],
               borderColor: colorA,
-              backgroundColor: colorA,
-              borderWidth: 2.8,
+              backgroundColor: hexToRgba(colorA, 0.14),
+              borderWidth: 3,
+              fill: true,
+              tension: 0.25,
               pointRadius: 0,
-              pointHoverRadius: 5,
-              tension: 0.15,
-              yAxisID: 'y',
-              order: 1
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: colorA,
+              pointHoverBorderColor: '#ffffff',
+              pointHoverBorderWidth: 2
             },
             {
-              label: `${mgrB} (${teamBName}) Points`,
+              label: `${mgrB} (${tmBName})`,
               data: [...emptyArray],
               borderColor: colorB,
-              backgroundColor: colorB,
-              borderWidth: 2.8,
+              backgroundColor: hexToRgba(colorB, 0.14),
+              borderWidth: 3,
+              fill: true,
+              tension: 0.25,
               pointRadius: 0,
-              pointHoverRadius: 5,
-              tension: 0.15,
-              yAxisID: 'y',
-              order: 2
-            },
-            {
-              label: `${mgrA} (${teamAName}) Proj`,
-              data: [...emptyArray],
-              borderColor: colorA,
-              backgroundColor: 'transparent',
-              borderWidth: 2,
-              borderDash: [5, 5],
-              pointRadius: 0,
-              pointHoverRadius: 4,
-              tension: 0.15,
-              yAxisID: 'y',
-              order: 3
-            },
-            {
-              label: `${mgrB} (${teamBName}) Proj`,
-              data: [...emptyArray],
-              borderColor: colorB,
-              backgroundColor: 'transparent',
-              borderWidth: 2,
-              borderDash: [5, 5],
-              pointRadius: 0,
-              pointHoverRadius: 4,
-              tension: 0.15,
-              yAxisID: 'y',
-              order: 4
-            },
-            {
-              label: `${mgrA} Win Prob (%)`,
-              data: [...emptyArray],
-              borderColor: 'transparent',
-              backgroundColor: hexToRgba(colorA, 0.24),
-              borderWidth: 0,
-              pointRadius: 0,
-              fill: 'origin',
-              stack: 'winprob',
-              yAxisID: 'y1',
-              order: 5
-            },
-            {
-              label: `${mgrB} Win Prob (%)`,
-              data: [...emptyArray],
-              borderColor: 'transparent',
-              backgroundColor: hexToRgba(colorB, 0.24),
-              borderWidth: 0,
-              pointRadius: 0,
-              fill: '-1',
-              stack: 'winprob',
-              yAxisID: 'y1',
-              order: 6
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: colorB,
+              pointHoverBorderColor: '#ffffff',
+              pointHoverBorderWidth: 2
             }
           ]
         },
@@ -4878,14 +4826,7 @@
           animation: false,
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: {
-              labels: {
-                color: textColor,
-                font: { size: 11, weight: '600' },
-                usePointStyle: true,
-                boxWidth: 12
-              }
-            },
+            legend: { labels: { color: textColor, font: { size: 12, weight: 'bold' }, usePointStyle: true, pointStyle: 'circle' } },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               titleColor: isDark ? '#f8fafc' : '#0f172a',
@@ -4897,39 +4838,24 @@
                 afterBody: (items) => {
                   const idx = items[0].dataIndex;
                   const s = STATE.liveProb.fullSeries;
-                  if (!s || idx >= s.tmaActual.length) return '';
+                  if (!s || idx >= s.ptsASeries.length) return '';
                   return [
                     ``,
-                    `${s.mgrA} (${s.teamAName}): ${s.tmaActual[idx].toFixed(2)} pts | Proj: ${s.tmaProj[idx].toFixed(2)} | Win Prob: ${s.tmaWpNorm[idx].toFixed(1)}%`,
-                    `${s.mgrB} (${s.teamBName}): ${s.tmbActual[idx].toFixed(2)} pts | Proj: ${s.tmbProj[idx].toFixed(2)} | Win Prob: ${s.tmbWpNorm[idx].toFixed(1)}%`
+                    `Live Score: ${s.mgrA} ${s.ptsASeries[idx].toFixed(2)} - ${s.ptsBSeries[idx].toFixed(2)} ${s.mgrB}`,
+                    `Live Proj:  ${s.mgrA} ${s.projASeries[idx].toFixed(1)} - ${s.projBSeries[idx].toFixed(1)} ${s.mgrB}`
                   ];
-                }
+                },
+                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + '%' : '--'}`
               }
             }
           },
           scales: {
-            x: {
-              grid: { color: gridColor },
-              ticks: { color: textColor, maxTicksLimit: 12, font: { size: 11 } }
-            },
+            x: { grid: { color: gridColor }, ticks: { color: textColor, maxTicksLimit: 12, font: { size: 11 } } },
             y: {
-              type: 'linear',
-              position: 'left',
-              min: 0,
-              max: yMax,
-              title: { display: true, text: 'Fantasy Points', color: textColor, font: { size: 12, weight: '600' } },
+              min: 0, max: 100,
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 11 } }
-            },
-            y1: {
-              type: 'linear',
-              position: 'right',
-              min: 0,
-              max: 100,
-              stacked: true,
-              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 12, weight: '600' } },
-              grid: { drawOnChartArea: false },
-              ticks: { color: textColor, font: { size: 11 }, callback: v => v + '%' }
+              ticks: { color: textColor, callback: v => v + '%', font: { size: 11 } },
+              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 12, weight: 'bold' } }
             }
           }
         }
@@ -4937,91 +4863,100 @@
     }
 
     function updateChartThemeColors() {
-      const chart = STATE.liveProb.chartInstance;
-      if (!chart) return;
-      const isDark = document.documentElement.classList.contains('dark');
-      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-      const textColor = isDark ? '#94a3b8' : '#475569';
+      const s = STATE.liveProb.fullSeries;
+      if (!s) return;
+      s.colorA = getManagerColor(s.mgrA, 0);
+      s.colorB = getManagerColor(s.mgrB, 1);
 
-      chart.options.plugins.legend.labels.color = textColor;
-      chart.options.scales.x.grid.color = gridColor;
-      chart.options.scales.x.ticks.color = textColor;
-      chart.options.scales.y.grid.color = gridColor;
-      chart.options.scales.y.ticks.color = textColor;
-      chart.options.scales.y.title.color = textColor;
-      chart.options.scales.y1.ticks.color = textColor;
-      chart.options.scales.y1.title.color = textColor;
-      chart.update('none');
+      document.getElementById('scorecard-tma-pts').style.color = s.colorA;
+      document.getElementById('scorecard-tma-wp').style.color = s.colorA;
+      document.getElementById('scorecard-tmb-pts').style.color = s.colorB;
+      document.getElementById('scorecard-tmb-wp').style.color = s.colorB;
+
+      initLiveProbChartCanvas(s.labels, s.tmAName, s.tmBName, s.mgrA, s.mgrB, s.colorA, s.colorB);
+      renderLiveProbFrameAtIdx(STATE.liveProb.currentIdx);
     }
 
-    function renderFrameAtIdx(idx) {
+    function renderLiveProbFrameAtIdx(idx) {
       const s = STATE.liveProb.fullSeries;
       if (!s || !STATE.liveProb.chartInstance) return;
 
       const total = s.labels.length;
-      const count = Math.min(total, Math.max(0, idx));
-      const pad = new Array(total - count).fill(null);
+      const validIdx = Math.min(total - 1, Math.max(0, idx));
 
-      const ds = STATE.liveProb.chartInstance.data.datasets;
-      ds[0].data = s.tmaActual.slice(0, count).concat(pad);
-      ds[1].data = s.tmbActual.slice(0, count).concat(pad);
-      ds[2].data = s.tmaProj.slice(0, count).concat(pad);
-      ds[3].data = s.tmbProj.slice(0, count).concat(pad);
-      ds[4].data = s.tmaWpNorm.slice(0, count).concat(pad);
-      ds[5].data = s.tmbWpNorm.slice(0, count).concat(pad);
+      const slicedA = s.wpASeries.slice(0, validIdx + 1);
+      const slicedB = s.wpBSeries.slice(0, validIdx + 1);
 
-      STATE.liveProb.chartInstance.update('none');
+      const paddedA = slicedA.concat(new Array(total - (validIdx + 1)).fill(null));
+      const paddedB = slicedB.concat(new Array(total - (validIdx + 1)).fill(null));
 
-      const curIdx0 = Math.max(0, count - 1);
-      const curPtsA = count > 0 ? s.tmaActual[curIdx0] : 0;
-      const curPtsB = count > 0 ? s.tmbActual[curIdx0] : 0;
-      const curWpA = count > 0 ? s.tmaWpNorm[curIdx0] : 50;
-      const curWpB = count > 0 ? s.tmbWpNorm[curIdx0] : 50;
-      const curProjA = count > 0 ? s.tmaProj[curIdx0] : 0;
-      const curProjB = count > 0 ? s.tmbProj[curIdx0] : 0;
+      const pointRadii = new Array(total).fill(0);
+      pointRadii[validIdx] = 6.5;
 
-      document.getElementById('scorecard-tma-pts').innerText = curPtsA.toFixed(2);
-      document.getElementById('scorecard-tmb-pts').innerText = curPtsB.toFixed(2);
-      document.getElementById('scorecard-tma-wp').innerText = curWpA.toFixed(1) + '%';
-      document.getElementById('scorecard-tmb-wp').innerText = curWpB.toFixed(1) + '%';
-      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${curProjA.toFixed(2)}`;
-      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${curProjB.toFixed(2)}`;
+      const chart = STATE.liveProb.chartInstance;
+      chart.data.datasets[0].data = paddedA;
+      chart.data.datasets[0].pointRadius = pointRadii;
+      chart.data.datasets[0].pointBackgroundColor = s.colorA;
+      chart.data.datasets[0].pointBorderColor = '#ffffff';
+      chart.data.datasets[0].pointBorderWidth = 2;
+
+      chart.data.datasets[1].data = paddedB;
+      chart.data.datasets[1].pointRadius = pointRadii;
+      chart.data.datasets[1].pointBackgroundColor = s.colorB;
+      chart.data.datasets[1].pointBorderColor = '#ffffff';
+      chart.data.datasets[1].pointBorderWidth = 2;
+
+      const curWpA = s.wpASeries[validIdx];
+      const curWpB = s.wpBSeries[validIdx];
+
+      document.getElementById('scorecard-tma-pts').innerText = s.ptsASeries[validIdx].toFixed(2);
+      document.getElementById('scorecard-tmb-pts').innerText = s.ptsBSeries[validIdx].toFixed(2);
+      document.getElementById('scorecard-tma-wp').innerText = `${curWpA.toFixed(1)}%`;
+      document.getElementById('scorecard-tmb-wp').innerText = `${curWpB.toFixed(1)}%`;
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.projASeries[validIdx].toFixed(1)}`;
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.projBSeries[validIdx].toFixed(1)}`;
 
       const cardA = document.getElementById('scorecard-card-tma');
       const cardB = document.getElementById('scorecard-card-tmb');
-      const chartContainer = document.getElementById('live-prob-chart-container');
+      const chartBox = document.getElementById('live-prob-chart-container');
+
+      const leadingColor = curWpA >= curWpB ? s.colorA : s.colorB;
+      if (chartBox) {
+        chartBox.style.borderColor = hexToRgba(leadingColor, 0.5);
+        chartBox.style.boxShadow = `0 10px 25px -5px ${hexToRgba(leadingColor, 0.12)}`;
+      }
 
       if (cardA && cardB) {
-        cardA.style.backgroundColor = '';
-        cardA.style.borderColor = '';
-        cardB.style.backgroundColor = '';
-        cardB.style.borderColor = '';
-
         if (curWpA > curWpB) {
-          cardA.style.backgroundColor = hexToRgba(s.colorA, 0.14);
-          cardA.style.borderColor = hexToRgba(s.colorA, 0.55);
-          if (chartContainer) chartContainer.style.borderColor = hexToRgba(s.colorA, 0.45);
+          cardA.style.borderColor = s.colorA;
+          cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08);
+          cardB.style.borderColor = '';
+          cardB.style.backgroundColor = '';
         } else if (curWpB > curWpA) {
-          cardB.style.backgroundColor = hexToRgba(s.colorB, 0.14);
-          cardB.style.borderColor = hexToRgba(s.colorB, 0.55);
-          if (chartContainer) chartContainer.style.borderColor = hexToRgba(s.colorB, 0.45);
+          cardB.style.borderColor = s.colorB;
+          cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08);
+          cardA.style.borderColor = '';
+          cardA.style.backgroundColor = '';
         } else {
-          if (chartContainer) chartContainer.style.borderColor = '';
+          cardA.style.borderColor = ''; cardA.style.backgroundColor = '';
+          cardB.style.borderColor = ''; cardB.style.backgroundColor = '';
         }
       }
 
       const scrubber = document.getElementById('replay-scrubber');
-      if (scrubber && total > 0) {
-        scrubber.value = Math.round((count / total) * 100);
+      if (scrubber && total > 1) {
+        scrubber.value = Math.round((validIdx / (total - 1)) * 100);
       }
+
+      chart.update('none');
     }
 
-    function toggleReplayPlayPause() {
+    function toggleLiveProbPlayPause() {
       if (STATE.liveProb.isPlaying) {
         pauseLiveProbReplay();
       } else {
         const s = STATE.liveProb.fullSeries;
-        if (s && STATE.liveProb.currentIdx >= s.labels.length) {
+        if (s && STATE.liveProb.currentIdx >= s.labels.length - 1) {
           STATE.liveProb.currentIdx = 0;
         }
         startLiveProbReplay();
@@ -5030,8 +4965,8 @@
 
     function startLiveProbReplay() {
       STATE.liveProb.isPlaying = true;
-      updatePlayPauseUI();
-      restartReplayIntervalTimer();
+      updatePlayPauseButtonUI();
+      restartLiveProbIntervalTimer();
     }
 
     function pauseLiveProbReplay() {
@@ -5040,37 +4975,37 @@
         clearInterval(STATE.liveProb.animationTimer);
         STATE.liveProb.animationTimer = null;
       }
-      updatePlayPauseUI();
+      updatePlayPauseButtonUI();
     }
 
     function restartLiveProbReplay() {
       STATE.liveProb.currentIdx = 0;
-      renderFrameAtIdx(0);
+      renderLiveProbFrameAtIdx(0);
       startLiveProbReplay();
     }
 
-    function restartReplayIntervalTimer() {
+    function restartLiveProbIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
 
       const mult = STATE.liveProb.speedMultiplier || 3;
-      const intervalMs = Math.max(15, Math.round(180 / mult));
+      const intervalMs = Math.max(15, Math.round(90 / mult));
 
       STATE.liveProb.animationTimer = setInterval(() => {
         const s = STATE.liveProb.fullSeries;
         if (!s) return;
 
         STATE.liveProb.currentIdx += 1;
-        if (STATE.liveProb.currentIdx >= s.labels.length) {
-          STATE.liveProb.currentIdx = s.labels.length;
-          renderFrameAtIdx(STATE.liveProb.currentIdx);
+        if (STATE.liveProb.currentIdx >= s.labels.length - 1) {
+          STATE.liveProb.currentIdx = s.labels.length - 1;
+          renderLiveProbFrameAtIdx(STATE.liveProb.currentIdx);
           pauseLiveProbReplay();
         } else {
-          renderFrameAtIdx(STATE.liveProb.currentIdx);
+          renderLiveProbFrameAtIdx(STATE.liveProb.currentIdx);
         }
       }, intervalMs);
     }
 
-    function updatePlayPauseUI() {
+    function updatePlayPauseButtonUI() {
       const icon = document.getElementById('play-pause-icon');
       const text = document.getElementById('play-pause-text');
       const btn = document.getElementById('btn-play-pause-replay');
@@ -5086,41 +5021,38 @@
       }
     }
 
-    function downloadLiveProbPNG() {
+    function downloadChartPNG() {
       const chart = STATE.liveProb.chartInstance;
       const s = STATE.liveProb.fullSeries;
       if (!chart || !s) return;
 
       const link = document.createElement('a');
-      link.download = `WinProb_${s.mgrA}_vs_${s.mgrB}_Wk${STATE.filters.weekMax}.png`;
+      link.download = `NDL_WinProb_${s.year}_Wk${s.week}_${s.mgrA}_vs_${s.mgrB}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
 
-    function downloadLiveProbCSV() {
+    function downloadChartCSV() {
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
 
-      const rows = s.labels.map((lbl, idx) => ({
-        Timestamp: s.rawTimestamps[idx],
-        FormattedTime: lbl,
-        TeamA_Manager: s.mgrA,
-        TeamA_Name: s.teamAName,
-        TeamA_Points: s.tmaActual[idx],
-        TeamA_Proj: s.tmaProj[idx],
-        TeamA_WinProb_Pct: s.tmaWpNorm[idx],
-        TeamB_Manager: s.mgrB,
-        TeamB_Name: s.teamBName,
-        TeamB_Points: s.tmbActual[idx],
-        TeamB_Proj: s.tmbProj[idx],
-        TeamB_WinProb_Pct: s.tmbWpNorm[idx]
+      const csvRows = s.labels.map((lbl, idx) => ({
+        Timestamp: lbl,
+        [`${s.mgrA}_Team`]: s.tmAName,
+        [`${s.mgrA}_Points`]: s.ptsASeries[idx],
+        [`${s.mgrA}_Proj`]: s.projASeries[idx],
+        [`${s.mgrA}_WinProb`]: s.wpASeries[idx],
+        [`${s.mgrB}_Team`]: s.tmBName,
+        [`${s.mgrB}_Points`]: s.ptsBSeries[idx],
+        [`${s.mgrB}_Proj`]: s.projBSeries[idx],
+        [`${s.mgrB}_WinProb`]: s.wpBSeries[idx]
       }));
 
-      const csv = Papa.unparse(rows);
+      const csv = Papa.unparse(csvRows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `WinProb_${s.mgrA}_vs_${s.mgrB}_Wk${STATE.filters.weekMax}.csv`);
+      link.setAttribute("download", `NDL_WinProb_${s.year}_Wk${s.week}_${s.mgrA}_vs_${s.mgrB}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -5129,6 +5061,154 @@
     // ==========================================
     // SECTION 10: BELT TAB ENGINE (LINEAL CHAMPIONSHIP BELT)
     // ==========================================
+    function getPriorYearChampionTeamId(year) {
+      const prevYear = Number(year) - 1;
+      const prevFinalRanks = computeFinalRanks(prevYear);
+      if (prevFinalRanks) {
+        const prevChampEntry = Object.entries(prevFinalRanks).find(([, rank]) => Number(rank) === 1);
+        if (prevChampEntry) {
+          const prevChampTid = Number(prevChampEntry[0]);
+          const prevChampMgr = getManagerName(prevChampTid, prevYear);
+          const curTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(year));
+          // Match by manager name first (in case team_id changed across seasons), then fallback to team_id
+          const byMgr = curTeams.find(t => getManagerName(Number(getVal(t, ['team_id'])), year).toLowerCase() === String(prevChampMgr).toLowerCase());
+          if (byMgr) return Number(getVal(byMgr, ['team_id']));
+          const byTid = curTeams.find(t => Number(getVal(t, ['team_id'])) === prevChampTid);
+          if (byTid) return prevChampTid;
+        }
+      }
+
+      // Fallback: check teams table for champion / rank=1 in prevYear, or default to Fish's team
+      const prevTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === prevYear);
+      const champRow = prevTeams.find(t => Number(getVal(t, ['final_rank', 'rank', 'champion'])) === 1);
+      if (champRow) {
+        const mgr = getManagerName(Number(getVal(champRow, ['team_id'])), prevYear);
+        const curTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(year));
+        const matchCur = curTeams.find(t => getManagerName(Number(getVal(t, ['team_id'])), year).toLowerCase() === String(mgr).toLowerCase());
+        if (matchCur) return Number(getVal(matchCur, ['team_id']));
+      }
+
+      const curTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(year));
+      const fishRow = curTeams.find(t => getManagerName(Number(getVal(t, ['team_id'])), year).toLowerCase() === 'fish');
+      if (fishRow) return Number(getVal(fishRow, ['team_id']));
+      return curTeams[0] ? Number(getVal(curTeams[0], ['team_id'])) : 1;
+    }
+
+    function computeBeltLineage(year) {
+      const yr = Number(year);
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === yr);
+      if (ptsYr.length === 0) return null;
+
+      const maxWeek = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
+      if (maxWeek < 1) return null;
+
+      const startingHolderTid = getPriorYearChampionTeamId(yr);
+      const startingHolderMgr = getManagerName(startingHolderTid, yr);
+
+      // Build lookup of weekly matchups per team
+      const weeklyMatchup = {};
+      ptsYr.forEach(r => {
+        const w = Number(getVal(r, ['week', 'WK']));
+        const tid = Number(getVal(r, ['team_id', 'TMA', 'team']));
+        if (w < 1 || w > maxWeek || (!tid && tid !== 0)) return;
+        const key = `${w}_${tid}`;
+        if (!weeklyMatchup[key]) {
+          weeklyMatchup[key] = {
+            week: w,
+            team_id: tid,
+            pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
+            opp_id: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0,
+            pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0
+          };
+        }
+      });
+
+      const rows = [];
+      let currentHolderTid = startingHolderTid;
+
+      for (let w = 1; w <= maxWeek; w++) {
+        const m = weeklyMatchup[`${w}_${currentHolderTid}`];
+        const holderMgr = getManagerName(currentHolderTid, yr);
+
+        if (!m || !m.opp_id || m.opp_id === 0) {
+          // Bye week or unscheduled playoff week — belt stays with holder
+          const pfVal = m ? m.pf : 0;
+          rows.push({
+            week: w,
+            holderTid: currentHolderTid,
+            holderMgr,
+            pf: pfVal,
+            oppTid: null,
+            oppMgr: 'BYE',
+            pa: null,
+            result: 'BYE',
+            nextHolderTid: currentHolderTid,
+            nextHolderMgr: holderMgr,
+            beltChanged: false
+          });
+          continue;
+        }
+
+        const oppMgr = getManagerName(m.opp_id, yr);
+        let result = 'T';
+        let nextHolderTid = currentHolderTid;
+        let beltChanged = false;
+
+        if (m.pf > m.pa) {
+          result = 'W';
+          nextHolderTid = currentHolderTid;
+        } else if (m.pf < m.pa) {
+          result = 'L';
+          nextHolderTid = m.opp_id;
+          beltChanged = true;
+        } else {
+          // Tie retains belt
+          result = 'T';
+          nextHolderTid = currentHolderTid;
+        }
+
+        rows.push({
+          week: w,
+          holderTid: currentHolderTid,
+          holderMgr,
+          pf: m.pf,
+          oppTid: m.opp_id,
+          oppMgr,
+          pa: m.pa,
+          result,
+          nextHolderTid,
+          nextHolderMgr: getManagerName(nextHolderTid, yr),
+          beltChanged
+        });
+
+        currentHolderTid = nextHolderTid;
+      }
+
+      // Compute summary metrics across full lineage
+      const defensesByMgr = {};
+      const weeksHeldByMgr = {};
+      rows.forEach(r => {
+        weeksHeldByMgr[r.holderMgr] = (weeksHeldByMgr[r.holderMgr] || 0) + 1;
+        if (r.result === 'W') {
+          defensesByMgr[r.holderMgr] = (defensesByMgr[r.holderMgr] || 0) + 1;
+        }
+      });
+
+      const finalHolderMgr = rows.length > 0 ? rows[rows.length - 1].nextHolderMgr : startingHolderMgr;
+
+      return {
+        year: yr,
+        startingHolderTid,
+        startingHolderMgr,
+        finalHolderMgr,
+        maxWeek,
+        rows,
+        defensesByMgr,
+        weeksHeldByMgr
+      };
+    }
+
     function initBeltTab() {
       const playPauseBtn = document.getElementById('btn-belt-play-pause');
       const restartBtn = document.getElementById('btn-belt-restart');
@@ -5152,11 +5232,14 @@
       if (scrubber) {
         scrubber.addEventListener('input', (e) => {
           const pct = Number(e.target.value);
-          const L = STATE.belt.lineage;
-          if (!L || L.rows.length === 0) return;
+          const total = STATE.belt.lineage ? STATE.belt.lineage.rows.length : 0;
+          if (total === 0) return;
           pauseBeltReplay();
-          const targetIdx = Math.min(L.rows.length - 1, Math.max(0, Math.round((pct / 100) * (L.rows.length - 1))));
-          renderBeltThroughIdx(targetIdx, 'mgr', false);
+          const targetIdx = Math.max(0, Math.min(total - 1, Math.round((pct / 100) * (total - 1))));
+          STATE.belt.currentIdx = targetIdx;
+          const row = STATE.belt.lineage.rows[targetIdx];
+          STATE.belt.activeCol = row && row.beltChanged ? 'opp' : 'mgr';
+          renderBeltFrameAtIdx(targetIdx, STATE.belt.activeCol, false);
         });
       }
 
@@ -5164,477 +5247,220 @@
       if (pngBtn) pngBtn.addEventListener('click', () => window.print());
 
       window.addEventListener('resize', () => {
-        if (document.querySelector('.tab-btn[data-tab="belt"]')?.classList.contains('active') && STATE.belt.lineage) {
-          positionFloatingBelt(STATE.belt.currentIdx, STATE.belt.activeCol || 'mgr', false);
+        if (document.querySelector('.tab-btn[data-tab="belt"]')?.classList.contains('active')) {
+          positionFloatingBelt(STATE.belt.currentIdx, STATE.belt.activeCol, false);
         }
       });
-    }
-
-    function resolveInitialBeltHolderTeamId(year, ptsYr) {
-      const yr = Number(year);
-      const prevYear = yr - 1;
-      const yearTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === yr);
-      const prevYearTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === prevYear);
-
-      // 1. Primary: Previous year's Champion (final_rank === 1)
-      let prevChampTeam = prevYearTeams.find(t => Number(getVal(t, ['final_rank'])) === 1);
-
-      if (!prevChampTeam && prevYearTeams.length > 0) {
-        const computedPrevRanks = computeFinalRanks(prevYear);
-        if (computedPrevRanks) {
-          const champTidStr = Object.keys(computedPrevRanks).find(tid => computedPrevRanks[tid] === 1);
-          if (champTidStr !== undefined) {
-            prevChampTeam = prevYearTeams.find(t => Number(getVal(t, ['team_id'])) === Number(champTidStr));
-          }
-        }
-      }
-
-      if (prevChampTeam) {
-        const prevChampTid = Number(getVal(prevChampTeam, ['team_id']));
-        const champMgr = getManagerName(prevChampTid, prevYear, getVal(prevChampTeam, ['manager', 'manager_name'])).toLowerCase();
-
-        // Match previous year's champion manager in the selected year's teams
-        if (champMgr) {
-          const matchedMgrTeam = yearTeams.find(t => {
-            const tid = Number(getVal(t, ['team_id']));
-            return getManagerName(tid, yr, getVal(t, ['manager', 'manager_name'])).toLowerCase() === champMgr;
-          });
-          if (matchedMgrTeam) {
-            return {
-              teamId: Number(getVal(matchedMgrTeam, ['team_id'])),
-              reason: `${prevYear} Champion (final_rank 1)`
-            };
-          }
-        }
-
-        // Fallback to same team_id if manager name wasn't matched
-        const matchedSameTid = yearTeams.find(t => Number(getVal(t, ['team_id'])) === prevChampTid);
-        if (matchedSameTid) {
-          return {
-            teamId: prevChampTid,
-            reason: `${prevYear} Champion (final_rank 1)`
-          };
-        }
-      }
-
-      // 2. Fallback if prior year data doesn't exist: check current year's teams table or seed 1
-      if (yearTeams.length > 0) {
-        const seed1 = yearTeams.find(t => Number(getVal(t, ['seed', 'rank', 'standing'])) === 1);
-        if (seed1) {
-          return {
-            teamId: Number(getVal(seed1, ['team_id'])),
-            reason: 'Top Seed'
-          };
-        }
-        const sortedById = [...yearTeams].sort((a, b) => Number(getVal(a, ['team_id'])) - Number(getVal(b, ['team_id'])));
-        return {
-          teamId: Number(getVal(sortedById[0], ['team_id'])),
-          reason: 'Opening Holder'
-        };
-      }
-
-      const firstRow = ptsYr.find(r => Number(getVal(r, ['week', 'WK'])) === 1) || ptsYr[0];
-      return {
-        teamId: Number(getVal(firstRow, ['team_id', 'TMA', 'team'])),
-        reason: 'Opening Holder'
-      };
-    }
-
-    function computeBeltLineage(year) {
-      const yr = Number(year);
-      const pts = STATE.data.points || [];
-      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === yr);
-      if (ptsYr.length === 0) return null;
-
-      // Stop the week prior to playoff_start_week (regular season championship belt)
-      const playoffStartWeek = getPlayoffStartWeek(yr);
-      const prePlayoffCap = Math.max(1, playoffStartWeek - 1);
-      const maxWeek = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr), prePlayoffCap);
-      if (maxWeek < 1) return null;
-
-      // Index distinct weekly team matchups
-      const weeklyMatchups = {};
-      ptsYr.forEach(r => {
-        const wk = Number(getVal(r, ['week', 'WK']));
-        const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
-        if (!wk || !tId || wk > maxWeek) return;
-        const key = `${wk}_${tId}`;
-        if (!weeklyMatchups[key]) {
-          weeklyMatchups[key] = {
-            week: wk,
-            teamId: tId,
-            pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
-            pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
-            oppTeamId: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0
-          };
-        }
-      });
-
-      const initHolder = resolveInitialBeltHolderTeamId(yr, ptsYr);
-      let currentHolderId = initHolder.teamId;
-      const startMgr = getManagerName(currentHolderId, yr);
-
-      const rows = [];
-
-      for (let w = 1; w <= maxWeek; w++) {
-        const m = weeklyMatchups[`${w}_${currentHolderId}`];
-        const holderMgr = getManagerName(currentHolderId, yr);
-        const holderTeam = getTeamName(currentHolderId, yr);
-
-        if (!m || m.oppTeamId === 0) {
-          rows.push({
-            week: w,
-            holderId: currentHolderId,
-            mgr: holderMgr,
-            teamName: holderTeam,
-            pf: m ? m.pf : 0,
-            oppId: 0,
-            o_mgr: 'BYE',
-            oppTeamName: 'Bye Week',
-            pa: 0,
-            res: 'W',
-            nextHolderId: currentHolderId,
-            nextMgr: holderMgr
-          });
-          continue;
-        }
-
-        const oppMgr = getManagerName(m.oppTeamId, yr);
-        const oppTeam = getTeamName(m.oppTeamId, yr);
-        const isWin = m.pf > m.pa;
-        const isLoss = m.pf < m.pa;
-        const res = isWin ? 'W' : (isLoss ? 'L' : 'T');
-        const nextHolderId = isLoss ? m.oppTeamId : currentHolderId;
-        const nextMgr = getManagerName(nextHolderId, yr);
-
-        rows.push({
-          week: w,
-          holderId: currentHolderId,
-          mgr: holderMgr,
-          teamName: holderTeam,
-          pf: m.pf,
-          oppId: m.oppTeamId,
-          o_mgr: oppMgr,
-          oppTeamName: oppTeam,
-          pa: m.pa,
-          res,
-          nextHolderId,
-          nextMgr
-        });
-
-        currentHolderId = nextHolderId;
-      }
-
-      return {
-        year: yr,
-        maxWeek,
-        playoffStartWeek,
-        startHolderId: initHolder.teamId,
-        startMgr,
-        startReason: initHolder.reason,
-        rows
-      };
-    }
-
-    function clearBeltTimers() {
-      if (STATE.belt.animationTimer) {
-        clearInterval(STATE.belt.animationTimer);
-        STATE.belt.animationTimer = null;
-      }
-      if (STATE.belt.subTimer) {
-        clearTimeout(STATE.belt.subTimer);
-        STATE.belt.subTimer = null;
-      }
     }
 
     function renderBeltTab() {
-      const L = computeBeltLineage(STATE.filters.year);
-      STATE.belt.lineage = L;
+      const lineage = computeBeltLineage(STATE.filters.year);
+      STATE.belt.lineage = lineage;
+      STATE.belt.renderedCount = 0;
 
       const tbody = document.getElementById('belt-tbody');
       const startBadge = document.getElementById('belt-starting-holder-badge');
-      const pillsEl = document.getElementById('belt-summary-pills');
+      const pillsBox = document.getElementById('belt-summary-pills');
       const beltEl = document.getElementById('floating-championship-belt');
 
-      if (!L || L.rows.length === 0) {
-        clearBeltTimers();
-        STATE.belt.isPlaying = false;
+      if (!lineage || lineage.rows.length === 0) {
+        pauseBeltReplay();
         if (beltEl) beltEl.classList.add('hidden');
         if (startBadge) startBadge.innerText = 'Start: --';
-        if (pillsEl) pillsEl.innerHTML = '';
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 dark:text-slate-400">${emptyScopeMessage('championship belt lineage')}</td></tr>`;
-        }
+        if (pillsBox) pillsBox.innerHTML = '';
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 dark:text-slate-400">${emptyScopeMessage('belt matchup data')}</td></tr>`;
         return;
       }
 
+      const startColor = getManagerColor(lineage.startingHolderMgr);
       if (startBadge) {
-        startBadge.innerHTML = `Start: <strong style="color: ${getManagerColor(L.startMgr)}">${escapeHTML(L.startMgr)}</strong> (${escapeHTML(L.startReason)})`;
+        startBadge.innerHTML = `Start: <strong style="color:${startColor}">${escapeHTML(lineage.startingHolderMgr)}</strong>`;
       }
 
+      if (tbody) tbody.innerHTML = '';
+
+      // Start replay from Week 1
       restartBeltReplay();
     }
 
-    function buildBeltRowHTML(r, idx, isNew) {
-      const mgrBg = getManagerColor(r.mgr);
-      const mgrText = getContrastTextColor(mgrBg);
-      const oppBg = r.oppId ? getManagerColor(r.o_mgr) : '#64748b';
-      const oppText = r.oppId ? getContrastTextColor(oppBg) : '#ffffff';
+    function updateBeltSummaryPills(upToIdx) {
+      const lineage = STATE.belt.lineage;
+      const pillsBox = document.getElementById('belt-summary-pills');
+      if (!lineage || !pillsBox) return;
 
-      let resBg = 'rgba(245, 158, 11, 0.25)';
-      let resTextClass = 'text-amber-700 dark:text-amber-300 font-black';
-      if (r.res === 'W') {
-        resBg = 'rgba(34, 197, 94, 0.35)';
-        resTextClass = 'text-emerald-800 dark:text-emerald-200 font-black';
-      } else if (r.res === 'L') {
-        resBg = 'rgba(239, 68, 68, 0.35)';
-        resTextClass = 'text-rose-800 dark:text-rose-200 font-black';
-      }
+      const slice = lineage.rows.slice(0, upToIdx + 1);
+      const lastRow = slice[slice.length - 1];
+      const activeHolder = (STATE.belt.activeCol === 'opp' && lastRow.beltChanged)
+        ? lastRow.nextHolderMgr
+        : lastRow.holderMgr;
 
-      const animClass = isNew ? 'belt-row-revealed' : '';
-
-      return `
-        <tr id="belt-row-${idx}" class="${animClass}" data-row-idx="${idx}">
-          <td class="text-right font-mono font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/50">${r.week}</td>
-          <td id="belt-cell-mgr-${idx}" class="text-center font-extrabold tracking-tight" style="background-color: ${mgrBg}; color: ${mgrText};" title="${escapeHTML(r.mgr)} (${escapeHTML(r.teamName)})">
-            ${escapeHTML(r.mgr)}
-          </td>
-          <td class="text-right font-mono font-semibold text-slate-900 dark:text-slate-100">${r.pf.toFixed(2)}</td>
-          <td id="belt-cell-opp-${idx}" class="text-center font-extrabold tracking-tight" style="background-color: ${oppBg}; color: ${oppText};" title="${escapeHTML(r.o_mgr)} (${escapeHTML(r.oppTeamName)})">
-            ${escapeHTML(r.o_mgr)}
-          </td>
-          <td class="text-right font-mono font-semibold text-slate-900 dark:text-slate-100">${r.oppId ? r.pa.toFixed(2) : '--'}</td>
-          <td class="text-center font-mono ${resTextClass}" style="background-color: ${resBg}">${r.res}</td>
-        </tr>`;
-    }
-
-    function updateBeltHighlights(rowIdx, colType) {
-      document.querySelectorAll('#belt-tbody tr').forEach(tr => tr.classList.remove('belt-row-active'));
-      document.querySelectorAll('.belt-cell-holder-glow').forEach(td => td.classList.remove('belt-cell-holder-glow'));
-
-      const activeRow = document.getElementById(`belt-row-${rowIdx}`);
-      if (activeRow) activeRow.classList.add('belt-row-active');
-
-      const activeCell = document.getElementById(`belt-cell-${colType}-${rowIdx}`);
-      if (activeCell) activeCell.classList.add('belt-cell-holder-glow');
-    }
-
-    function updateBeltControlsAndSummary(rowIdx, colType) {
-      const L = STATE.belt.lineage;
-      if (!L) return;
-
-      const validIdx = Math.min(L.rows.length - 1, Math.max(0, rowIdx));
-      const row = L.rows[validIdx];
-      const activeMgr = colType === 'opp' && row.oppId ? row.o_mgr : row.mgr;
-
-      // Update tick label
-      const tickLbl = document.getElementById('belt-tick-label');
-      if (tickLbl) {
-        tickLbl.innerText = `Week ${row.week} / ${L.maxWeek}`;
-      }
-
-      // Compute progressive summary metrics through current revealed row & column state
-      let defenses = 0;
-      let changes = 0;
-      const streakByMgr = {};
-      let currentStreakMgr = L.startMgr;
-      let currentStreakCount = 0;
-
-      for (let i = 0; i <= validIdx; i++) {
-        const r = L.rows[i];
-        const isLastStepAndStillInMgrCol = (i === validIdx && colType === 'mgr');
-
-        if (!isLastStepAndStillInMgrCol) {
-          if (r.res === 'W') defenses++;
-          else if (r.res === 'L') changes++;
-        }
-
-        if (r.mgr === currentStreakMgr) {
-          currentStreakCount++;
-        } else {
-          currentStreakMgr = r.mgr;
-          currentStreakCount = 1;
-        }
-        if (!streakByMgr[currentStreakMgr] || currentStreakCount > streakByMgr[currentStreakMgr]) {
-          streakByMgr[currentStreakMgr] = currentStreakCount;
-        }
-      }
-
-      let longestMgr = L.startMgr;
-      let longestWeeks = 1;
-      Object.entries(streakByMgr).forEach(([mgr, cnt]) => {
-        if (cnt > longestWeeks) {
-          longestWeeks = cnt;
-          longestMgr = mgr;
-        }
+      const defenses = {};
+      slice.forEach(r => {
+        if (r.result === 'W') defenses[r.holderMgr] = (defenses[r.holderMgr] || 0) + 1;
       });
+      const topDefenderEntry = Object.entries(defenses).sort((a, b) => b[1] - a[1])[0];
 
-      const pillsEl = document.getElementById('belt-summary-pills');
-      if (pillsEl) {
-        const holderColor = getManagerColor(activeMgr);
-        const longestColor = getManagerColor(longestMgr);
-        pillsEl.innerHTML = `
-          <span class="bg-slate-200/80 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2.5 py-0.5 rounded-full font-semibold text-slate-700 dark:text-slate-200">
-            Holder: <strong style="color: ${holderColor}">${escapeHTML(activeMgr)}</strong>
-          </span>
-          <span class="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-semibold">
-            Defenses: <strong>${defenses}</strong>
-          </span>
-          <span class="bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 px-2.5 py-0.5 rounded-full font-semibold">
-            Changes: <strong>${changes}</strong>
-          </span>
-          <span class="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold">
-            Longest Held: <strong style="color: ${longestColor}">${escapeHTML(longestMgr)}</strong> (${longestWeeks} W)
-          </span>
-        `;
-      }
+      const holderColor = getManagerColor(activeHolder);
+      const topDefHtml = topDefenderEntry
+        ? `<span class="bg-slate-200/80 dark:bg-slate-800 px-2.5 py-0.5 rounded-full text-slate-700 dark:text-slate-300">Most Defenses: <strong style="color:${getManagerColor(topDefenderEntry[0])}">${escapeHTML(topDefenderEntry[0])}</strong> (${topDefenderEntry[1]})</span>`
+        : '';
 
-      const scrubber = document.getElementById('belt-scrubber');
-      if (scrubber && L.rows.length > 0) {
-        scrubber.value = L.rows.length > 1
-          ? Math.round((validIdx / (L.rows.length - 1)) * 100)
-          : 100;
-      }
+      pillsBox.innerHTML = `
+        <span class="bg-amber-500/15 border border-amber-500/40 px-2.5 py-0.5 rounded-full text-slate-800 dark:text-slate-100">
+          Holder: <strong style="color:${holderColor}">${escapeHTML(activeHolder)}</strong>
+        </span>
+        ${topDefHtml}
+      `;
     }
 
-    function positionFloatingBelt(rowIdx, colType = 'mgr', animate = true, durationMs = 340) {
-      const stage = document.getElementById('belt-stage');
-      const beltEl = document.getElementById('floating-championship-belt');
-      const targetCell = document.getElementById(`belt-cell-${colType}-${rowIdx}`);
+    function createBeltRowElement(r, rowIdx, isNewlyRevealed) {
+      const mgrBg = getManagerColor(r.holderMgr);
+      const mgrText = getContrastTextColor(mgrBg);
 
-      if (!stage || !beltEl || !targetCell) return;
+      const oppBg = r.oppMgr === 'BYE' ? '#64748b' : getManagerColor(r.oppMgr);
+      const oppText = r.oppMgr === 'BYE' ? '#ffffff' : getContrastTextColor(oppBg);
+
+      const resBg = r.result === 'W'
+        ? '#16a34a'
+        : (r.result === 'L' ? '#dc2626' : '#64748b');
+
+      const tr = document.createElement('tr');
+      tr.dataset.rowIdx = String(rowIdx);
+      if (isNewlyRevealed) tr.classList.add('belt-row-revealed');
+
+      tr.innerHTML = `
+        <td class="text-right font-mono font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/70">${r.week}</td>
+        <td data-col="mgr" class="text-center font-bold tracking-tight transition-all duration-300" style="background-color: ${mgrBg}; color: ${mgrText};">
+          ${escapeHTML(r.holderMgr)}
+        </td>
+        <td class="text-right font-mono font-semibold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950">
+          ${r.pf !== null ? r.pf.toFixed(2) : '--'}
+        </td>
+        <td data-col="opp" class="text-center font-bold tracking-tight transition-all duration-300" style="background-color: ${oppBg}; color: ${oppText};">
+          ${escapeHTML(r.oppMgr)}
+        </td>
+        <td class="text-right font-mono font-semibold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950">
+          ${r.pa !== null ? r.pa.toFixed(2) : '--'}
+        </td>
+        <td class="text-center font-mono font-extrabold text-white" style="background-color: ${resBg};">
+          ${r.result}
+        </td>
+      `;
+      return tr;
+    }
+
+    function positionFloatingBelt(rowIdx, colKey, animateGlide = true) {
+      const stage = document.getElementById('belt-stage');
+      const tbody = document.getElementById('belt-tbody');
+      const beltEl = document.getElementById('floating-championship-belt');
+      if (!stage || !tbody || !beltEl) return;
+
+      const targetRow = tbody.querySelector(`tr[data-row-idx="${rowIdx}"]`);
+      if (!targetRow) {
+        beltEl.classList.add('hidden');
+        return;
+      }
+
+      const targetCell = targetRow.querySelector(`td[data-col="${colKey}"]`) || targetRow.querySelector('td[data-col="mgr"]');
+      if (!targetCell) return;
+
+      // Clear previous holder glow and apply to active holder cell
+      tbody.querySelectorAll('tr.belt-row-active').forEach(tr => tr.classList.remove('belt-row-active'));
+      tbody.querySelectorAll('td.belt-cell-holder-glow').forEach(td => td.classList.remove('belt-cell-holder-glow'));
+      targetRow.classList.add('belt-row-active');
+      targetCell.classList.add('belt-cell-holder-glow');
 
       const stageRect = stage.getBoundingClientRect();
       const cellRect = targetCell.getBoundingClientRect();
-      if (stageRect.width === 0 || cellRect.width === 0) return;
 
       const centerX = (cellRect.left - stageRect.left) + (cellRect.width / 2);
-      // Position belt directly beneath the manager's name inside the lower portion of the cell
-      const beltHeight = beltEl.offsetHeight || 22;
-      const underTextTop = (cellRect.bottom - stageRect.top) - beltHeight - 2;
+      const beltH = beltEl.offsetHeight || 22;
+      const bottomY = (cellRect.bottom - stageRect.top) - beltH - 1;
 
-      if (animate) {
-        beltEl.style.transition = `left ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1), top ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+      if (animateGlide) {
+        const mult = STATE.belt.speedMultiplier || 1.0;
+        const glideMs = Math.max(150, Math.round(420 / mult));
+        beltEl.style.transition = `left ${glideMs}ms cubic-bezier(0.22, 1, 0.36, 1), top ${glideMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
       } else {
         beltEl.style.transition = 'none';
       }
 
       beltEl.classList.remove('hidden');
-      beltEl.style.left = `${centerX.toFixed(1)}px`;
-      beltEl.style.top = `${underTextTop.toFixed(1)}px`;
-
-      updateBeltHighlights(rowIdx, colType);
+      beltEl.style.left = `${centerX}px`;
+      beltEl.style.top = `${Math.max(0, bottomY)}px`;
     }
 
-    function renderBeltThroughIdx(targetIdx, colType = 'mgr', animateBelt = false) {
-      const L = STATE.belt.lineage;
+    function renderBeltFrameAtIdx(idx, colKey = 'mgr', animateStep = true) {
+      const lineage = STATE.belt.lineage;
       const tbody = document.getElementById('belt-tbody');
-      if (!L || !tbody) return;
+      if (!lineage || !tbody) return;
 
-      const validIdx = Math.min(L.rows.length - 1, Math.max(0, targetIdx));
-      STATE.belt.currentIdx = validIdx;
-      STATE.belt.activeCol = colType;
+      const total = lineage.rows.length;
+      const validIdx = Math.min(total - 1, Math.max(0, idx));
+      const desiredCount = validIdx + 1;
 
-      // Populate rows ONLY up to the current animation week
-      let html = '';
-      for (let i = 0; i <= validIdx; i++) {
-        html += buildBeltRowHTML(L.rows[i], i, i === validIdx && animateBelt);
+      // Incrementally append rows when advancing forward so existing rows stay put and belt glides smoothly
+      if (STATE.belt.renderedCount > desiredCount) {
+        tbody.innerHTML = '';
+        STATE.belt.renderedCount = 0;
       }
-      tbody.innerHTML = html;
-      STATE.belt.renderedCount = validIdx + 1;
 
-      updateBeltControlsAndSummary(validIdx, colType);
+      for (let i = STATE.belt.renderedCount; i < desiredCount; i++) {
+        const isLastNew = animateStep && (i === desiredCount - 1);
+        const tr = createBeltRowElement(lineage.rows[i], i, isLastNew);
+        tbody.appendChild(tr);
+      }
+      STATE.belt.renderedCount = desiredCount;
+      STATE.belt.currentIdx = validIdx;
+      STATE.belt.activeCol = colKey;
+
+      const tickLbl = document.getElementById('belt-tick-label');
+      if (tickLbl) {
+        tickLbl.innerText = `Week ${lineage.rows[validIdx].week} / ${lineage.maxWeek}`;
+      }
+
+      const scrubber = document.getElementById('belt-scrubber');
+      if (scrubber && total > 1) {
+        scrubber.value = Math.round((validIdx / (total - 1)) * 100);
+      } else if (scrubber) {
+        scrubber.value = 100;
+      }
+
+      updateBeltSummaryPills(validIdx);
 
       requestAnimationFrame(() => {
-        positionFloatingBelt(validIdx, colType, animateBelt, 260);
+        positionFloatingBelt(validIdx, colKey, animateStep);
       });
     }
 
-    function appendBeltRow(idx) {
-      const L = STATE.belt.lineage;
-      const tbody = document.getElementById('belt-tbody');
-      if (!L || !tbody || idx >= L.rows.length) return;
+    function scheduleBeltWinnerTransfer(rowIdx) {
+      if (STATE.belt.subTimer) {
+        clearTimeout(STATE.belt.subTimer);
+        STATE.belt.subTimer = null;
+      }
+      const lineage = STATE.belt.lineage;
+      if (!lineage) return;
+      const row = lineage.rows[rowIdx];
+      if (!row || !row.beltChanged) return;
 
-      const row = L.rows[idx];
-      tbody.insertAdjacentHTML('beforeend', buildBeltRowHTML(row, idx, true));
-      STATE.belt.renderedCount = idx + 1;
-    }
-
-    function advanceBeltOneStep() {
-      const L = STATE.belt.lineage;
-      if (!L) return;
-
-      const idx = STATE.belt.currentIdx;
-      const row = L.rows[idx];
       const mult = STATE.belt.speedMultiplier || 1.0;
-      const stepTotalMs = Math.max(260, Math.round(920 / mult));
+      const transferDelay = Math.max(130, Math.round(380 / mult));
 
-      // If we are on the final week and it's a loss, slide horizontally onto the winning O_MGR before stopping
-      if (idx >= L.rows.length - 1) {
-        if (row.res === 'L' && row.oppId && STATE.belt.activeCol === 'mgr') {
-          const slideAcrossMs = Math.max(120, Math.round(stepTotalMs * 0.48));
+      STATE.belt.subTimer = setTimeout(() => {
+        if (STATE.belt.currentIdx === rowIdx) {
           STATE.belt.activeCol = 'opp';
-          positionFloatingBelt(idx, 'opp', true, slideAcrossMs);
-          updateBeltControlsAndSummary(idx, 'opp');
-
-          STATE.belt.subTimer = setTimeout(() => {
-            pauseBeltReplay();
-          }, slideAcrossMs + 60);
-          return;
+          updateBeltSummaryPills(rowIdx);
+          positionFloatingBelt(rowIdx, 'opp', true);
         }
-        pauseBeltReplay();
-        return;
-      }
-
-      const nextIdx = idx + 1;
-
-      if (row.res === 'L' && row.oppId) {
-        // Loss logic:
-        // Phase 1: Slide horizontally across the row onto the winning opponent (o_mgr)
-        const slideAcrossMs = Math.max(110, Math.round(stepTotalMs * 0.44));
-        const slideDiagMs = Math.max(120, Math.round(stepTotalMs * 0.46));
-
-        STATE.belt.activeCol = 'opp';
-        positionFloatingBelt(idx, 'opp', true, slideAcrossMs);
-        updateBeltControlsAndSummary(idx, 'opp');
-
-        // Phase 2: Reveal next week's row & glide diagonally down to opponent's name in the MGR column
-        STATE.belt.subTimer = setTimeout(() => {
-          if (!STATE.belt.isPlaying) return;
-          appendBeltRow(nextIdx);
-          STATE.belt.currentIdx = nextIdx;
-          STATE.belt.activeCol = 'mgr';
-          updateBeltControlsAndSummary(nextIdx, 'mgr');
-
-          requestAnimationFrame(() => {
-            positionFloatingBelt(nextIdx, 'mgr', true, slideDiagMs);
-          });
-        }, slideAcrossMs);
-      } else {
-        // Win / Tie / Bye logic: reveal next week's row & slide straight down to the same manager
-        const slideDownMs = Math.max(140, Math.round(stepTotalMs * 0.65));
-        appendBeltRow(nextIdx);
-        STATE.belt.currentIdx = nextIdx;
-        STATE.belt.activeCol = 'mgr';
-        updateBeltControlsAndSummary(nextIdx, 'mgr');
-
-        requestAnimationFrame(() => {
-          positionFloatingBelt(nextIdx, 'mgr', true, slideDownMs);
-        });
-      }
+      }, transferDelay);
     }
 
     function toggleBeltPlayPause() {
       if (STATE.belt.isPlaying) {
         pauseBeltReplay();
       } else {
-        const L = STATE.belt.lineage;
-        if (!L || L.rows.length === 0) return;
-        const lastIdx = L.rows.length - 1;
-        const lastRow = L.rows[lastIdx];
-        const isAtFinalStop = STATE.belt.currentIdx >= lastIdx &&
-          !(lastRow.res === 'L' && lastRow.oppId && STATE.belt.activeCol === 'mgr');
-        if (isAtFinalStop) {
+        const lineage = STATE.belt.lineage;
+        if (lineage && STATE.belt.currentIdx >= lineage.rows.length - 1) {
           restartBeltReplay();
           return;
         }
@@ -5643,8 +5469,6 @@
     }
 
     function startBeltReplay() {
-      const L = STATE.belt.lineage;
-      if (!L || L.rows.length === 0) return;
       STATE.belt.isPlaying = true;
       updateBeltPlayPauseUI();
       restartBeltIntervalTimer();
@@ -5652,25 +5476,60 @@
 
     function pauseBeltReplay() {
       STATE.belt.isPlaying = false;
-      clearBeltTimers();
+      if (STATE.belt.animationTimer) {
+        clearInterval(STATE.belt.animationTimer);
+        STATE.belt.animationTimer = null;
+      }
+      if (STATE.belt.subTimer) {
+        clearTimeout(STATE.belt.subTimer);
+        STATE.belt.subTimer = null;
+      }
       updateBeltPlayPauseUI();
     }
 
     function restartBeltReplay() {
-      const L = STATE.belt.lineage;
-      if (!L || L.rows.length === 0) return;
-      clearBeltTimers();
-      renderBeltThroughIdx(0, 'mgr', false);
-      startBeltReplay();
+      pauseBeltReplay();
+      const tbody = document.getElementById('belt-tbody');
+      if (tbody) tbody.innerHTML = '';
+      STATE.belt.renderedCount = 0;
+      STATE.belt.currentIdx = 0;
+      STATE.belt.activeCol = 'mgr';
+
+      renderBeltFrameAtIdx(0, 'mgr', true);
+      scheduleBeltWinnerTransfer(0);
+
+      const lineage = STATE.belt.lineage;
+      if (lineage && lineage.rows.length > 1) {
+        startBeltReplay();
+      } else {
+        updateBeltPlayPauseUI();
+      }
     }
 
     function restartBeltIntervalTimer() {
-      clearBeltTimers();
+      if (STATE.belt.animationTimer) clearInterval(STATE.belt.animationTimer);
       const mult = STATE.belt.speedMultiplier || 1.0;
-      const intervalMs = Math.max(280, Math.round(960 / mult));
+      const intervalMs = Math.max(240, Math.round(920 / mult));
 
       STATE.belt.animationTimer = setInterval(() => {
-        advanceBeltOneStep();
+        const lineage = STATE.belt.lineage;
+        if (!lineage) return;
+
+        const nextIdx = STATE.belt.currentIdx + 1;
+        if (nextIdx >= lineage.rows.length) {
+          pauseBeltReplay();
+          return;
+        }
+
+        renderBeltFrameAtIdx(nextIdx, 'mgr', true);
+        scheduleBeltWinnerTransfer(nextIdx);
+
+        if (nextIdx === lineage.rows.length - 1) {
+          const finishDelay = Math.max(180, Math.round(480 / mult));
+          setTimeout(() => {
+            if (STATE.belt.currentIdx === nextIdx) pauseBeltReplay();
+          }, finishDelay);
+        }
       }, intervalMs);
     }
 
@@ -5681,113 +5540,121 @@
       if (!icon || !text || !btn) return;
 
       if (STATE.belt.isPlaying) {
-        icon.className = 'fa-solid fa-pause';
-        text.innerText = 'Pause';
+        icon.className = 'fa-solid fa-pause'; text.innerText = 'Pause';
         btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       } else {
-        icon.className = 'fa-solid fa-play';
-        text.innerText = 'Play';
+        icon.className = 'fa-solid fa-play'; text.innerText = 'Play';
         btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       }
     }
 
     function downloadBeltCSV() {
-      const L = STATE.belt.lineage;
-      if (!L || L.rows.length === 0) return;
+      const lineage = STATE.belt.lineage;
+      if (!lineage || !lineage.rows) return;
 
-      const csvRows = L.rows.map(r => ({
-        Year: L.year,
+      const rows = lineage.rows.map(r => ({
+        Year: lineage.year,
         WK: r.week,
-        MGR: r.mgr,
-        Team: r.teamName,
-        PF: r.pf.toFixed(2),
-        O_MGR: r.o_mgr,
-        Opponent_Team: r.oppTeamName,
-        PA: r.oppId ? r.pa.toFixed(2) : '',
-        RES: r.res,
-        Next_Holder: r.nextMgr
+        MGR: r.holderMgr,
+        PF: r.pf !== null ? r.pf.toFixed(2) : '',
+        O_MGR: r.oppMgr,
+        PA: r.pa !== null ? r.pa.toFixed(2) : '',
+        RES: r.result,
+        BELT_AFTER_WEEK: r.nextHolderMgr
       }));
 
-      const csv = Papa.unparse(csvRows);
+      const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', `NDL_Belt_${L.year}.csv`);
+      link.setAttribute('download', `NDL_Belt_Lineage_${lineage.year}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
     // ==========================================
-    // SECTION 11: TOOLTIPS, SORTING & CSV EXPORT
+    // SECTION 11: TOOLTIPS, SORTING, CSV & INIT
     // ==========================================
+    function setupSparklineTooltips() {
+      const tooltip = document.getElementById('sparkline-tooltip');
+      document.addEventListener('mouseover', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          tooltip.innerHTML = e.target.getAttribute('data-info');
+          tooltip.classList.remove('hidden');
+        }
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!tooltip.classList.contains('hidden')) {
+          tooltip.style.left = `${e.clientX + 12}px`; tooltip.style.top = `${e.clientY - 35}px`;
+        }
+      });
+      document.addEventListener('mouseout', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden');
+      });
+    }
+
     function setupTableSorting() {
-      document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
+      document.querySelectorAll('.standings-table th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
-          const f = th.getAttribute('data-sort');
-          STATE.sort.dir = (STATE.sort.field === f && STATE.sort.dir === 'asc') ? 'desc' : 'asc';
-          STATE.sort.field = f;
+          const field = th.getAttribute('data-sort');
+          if (STATE.sort.field === field) {
+            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            STATE.sort.field = field; STATE.sort.dir = (field === 'actualRank' || field === 'team_name') ? 'asc' : 'desc';
+          }
           renderStandingsTable();
         });
       });
     }
 
-    function setupSparklineTooltips() {
-      const tt = document.getElementById('sparkline-tooltip');
-      document.addEventListener('mouseover', (e) => {
-        if (e.target && e.target.classList.contains('sparkline-dot')) {
-          tt.innerHTML = e.target.getAttribute('data-info');
-          tt.classList.remove('hidden');
-        }
-      });
-      document.addEventListener('mousemove', (e) => {
-        if (!tt.classList.contains('hidden')) {
-          tt.style.left = (e.clientX + 12) + 'px'; tt.style.top = (e.clientY - 28) + 'px';
-        }
-      });
-      document.addEventListener('mouseout', (e) => {
-        if (e.target && e.target.classList.contains('sparkline-dot')) tt.classList.add('hidden');
-      });
-    }
-
     function downloadStandingsCSV() {
-      if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
-      const rows = STATE.computedStandings.map(r => ({
-        Rank: r.actualRank, Manager: r.manager, Team: r.team_name, Record: `${r.W}-${r.L}-${r.T}`,
-        PF: r.PF.toFixed(1), PA: r.PA.toFixed(1), ETEW_Pct: (r.ETEW_pct * 100).toFixed(1),
-        WABL: r.WABL.toFixed(2), RABL: r.RABL, Best_Wk: `${r.bestScore.toFixed(2)} (${r.bestWk})`,
-        Worst_Wk: `${r.worstScore.toFixed(2)} (${r.worstWk})`, AVG: r.AVG.toFixed(2),
-        AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
-      }));
-      const csv = Papa.unparse(rows);
+      if (!STATE.computedStandings.length) return;
+      const csv = Papa.unparse(STATE.computedStandings.map(r => ({
+        Rank: r.actualRank, Manager: r.manager, Team: r.team_name,
+        W: r.W, L: r.L, T: r.T, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
+        ETEW_Pct: (r.ETEW_pct * 100).toFixed(1) + '%', WABL: r.WABL.toFixed(2), RABL: r.RABL,
+        Best_Wk: `${r.bestScore.toFixed(2)} (Wk ${r.bestWk})`,
+        Worst_Wk: `${r.worstScore.toFixed(2)} (Wk ${r.worstWk})`,
+        AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
+      })));
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_Wk${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
-      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
       setupTabNavigation();
       setupFilterControls();
-      setupTableSorting();
-      setupSparklineTooltips();
       parseUrlHash();
       applyTabFilterVisibility(FilterEngine.activeTab());
+      setupTableSorting();
+      setupSparklineTooltips();
+
+      const clearMgrBtn = document.getElementById('clear-manager-filter');
+      if (clearMgrBtn) clearMgrBtn.addEventListener('click', () => {
+        STATE.filters.selectedManager = null;
+        renderStandingsTable();
+        updateFilterBadge();
+        updateUrlHash();
+      });
+
+      const exportCsvBtn = document.getElementById('btn-export-standings-csv');
+      if (exportCsvBtn) exportCsvBtn.addEventListener('click', downloadStandingsCSV);
 
       window.addEventListener('hashchange', () => {
-        if (!STATE.loaded) return;
         if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
+        if (!STATE.loaded) { parseUrlHash(); return; }
         applyUrlToState();
+        applyTabFilterVisibility(FilterEngine.activeTab());
         syncFilterUI();
         renderActiveTab();
       });
-
-      document.getElementById('clear-manager-filter').addEventListener('click', () => {
-        STATE.filters.selectedManager = null; renderStandingsTable(); updateFilterBadge(); updateUrlHash();
-      });
-      document.getElementById('btn-export-standings-csv').addEventListener('click', downloadStandingsCSV);
 
       loadDataPipeline();
       startLivePolling();
