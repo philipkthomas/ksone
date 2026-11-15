@@ -26,13 +26,13 @@
 
   <style>
     /* Table Styling - Adaptive Light & Dark Theme */
-    .standings-table, .matchup-table, .props-table, .survivor-table, .belt-table {
+    .standings-table, .matchup-table, .props-table, .survivor-table {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
-    .standings-table th, .matchup-table th, .props-table th, .survivor-table th, .belt-table th {
+    .standings-table th, .matchup-table th, .props-table th, .survivor-table th {
       background-color: #f1f5f9;
       color: #475569;
       font-size: 0.75rem;
@@ -46,8 +46,8 @@
       user-select: none;
       white-space: nowrap;
     }
-    .standings-table th:hover, .matchup-table th:hover, .props-table th:hover, .survivor-table th:hover, .belt-table th:hover { background-color: #e2e8f0; color: #0f172a; }
-    .standings-table td, .matchup-table td, .props-table td, .survivor-table td, .belt-table td {
+    .standings-table th:hover, .matchup-table th:hover, .props-table th:hover, .survivor-table th:hover { background-color: #e2e8f0; color: #0f172a; }
+    .standings-table td, .matchup-table td, .props-table td, .survivor-table td {
       padding: 7px 10px;
       font-size: 0.8125rem;
       border-bottom: 1px solid #e2e8f0;
@@ -56,21 +56,21 @@
       transition: background-color 0.15s ease;
       color: #0f172a;
     }
-    .standings-table tr:hover td, .matchup-table tr:hover td, .props-table tr:hover td, .survivor-table tr:hover td, .belt-table tr:hover td { filter: brightness(0.97); }
+    .standings-table tr:hover td, .matchup-table tr:hover td, .props-table tr:hover td, .survivor-table tr:hover td { filter: brightness(0.97); }
 
-    .dark .standings-table th, .dark .matchup-table th, .dark .props-table th, .dark .survivor-table th, .dark .belt-table th {
+    .dark .standings-table th, .dark .matchup-table th, .dark .props-table th, .dark .survivor-table th {
       background-color: #0f172a;
       color: #94a3b8;
       border-bottom: 2px solid #334155;
       border-right: 1px solid #1e293b;
     }
-    .dark .standings-table th:hover, .dark .matchup-table th:hover, .dark .props-table th:hover, .dark .survivor-table th:hover, .dark .belt-table th:hover { background-color: #1e293b; color: #f8fafc; }
-    .dark .standings-table td, .dark .matchup-table td, .dark .props-table td, .dark .survivor-table td, .dark .belt-table td {
+    .dark .standings-table th:hover, .dark .matchup-table th:hover, .dark .props-table th:hover, .dark .survivor-table th:hover { background-color: #1e293b; color: #f8fafc; }
+    .dark .standings-table td, .dark .matchup-table td, .dark .props-table td, .dark .survivor-table td {
       border-bottom: 1px solid #1e293b;
       border-right: 1px solid #1e293b;
       color: #f8fafc;
     }
-    .dark .standings-table tr:hover td, .dark .matchup-table tr:hover td, .dark .props-table tr:hover td, .dark .survivor-table tr:hover td, .dark .belt-table tr:hover td { filter: brightness(1.08); }
+    .dark .standings-table tr:hover td, .dark .matchup-table tr:hover td, .dark .props-table tr:hover td, .dark .survivor-table tr:hover td { filter: brightness(1.08); }
 
     .prop-border-right {
       border-right: 3px solid #64748b !important;
@@ -107,74 +107,6 @@
     .dark .sparkline-path { stroke: #94a3b8; opacity: 0.6; }
     .sparkline-dot { transition: r 0.15s ease, filter 0.15s ease; }
     .sparkline-dot:hover { r: 5.5; filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.8)); }
-
-    /* ============================================================
-       BELT TAB: MOBILE-FRIENDLY COMPACT TABLE, ROW REVEAL & BELT GLIDE
-       ============================================================ */
-    .belt-table {
-      table-layout: fixed;
-      width: 100%;
-    }
-    .belt-table th {
-      padding: 7px 4px;
-      font-size: 0.68rem;
-      letter-spacing: 0.03em;
-      cursor: default;
-    }
-    .belt-table td {
-      padding: 5px 5px 15px 5px;
-      font-size: 0.75rem;
-      vertical-align: top;
-      line-height: 1.25;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    @media (min-width: 640px) {
-      .belt-table th {
-        padding: 9px 10px;
-        font-size: 0.75rem;
-      }
-      .belt-table td {
-        padding: 7px 10px 18px 10px;
-        font-size: 0.85rem;
-      }
-    }
-    @keyframes beltRowSlideIn {
-      0% {
-        opacity: 0;
-        transform: translateY(-6px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    .belt-row-revealed {
-      animation: beltRowSlideIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-    .belt-row-active td {
-      box-shadow: inset 0 1px 0 rgba(250, 204, 21, 0.55), inset 0 -1px 0 rgba(250, 204, 21, 0.55);
-    }
-    .belt-cell-holder-glow {
-      position: relative;
-      box-shadow: inset 0 0 0 2px #facc15, 0 0 10px rgba(250, 204, 21, 0.5) !important;
-      z-index: 5;
-    }
-    #floating-championship-belt {
-      position: absolute;
-      z-index: 30;
-      pointer-events: none;
-      transform: translate(-50%, 0%);
-      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 5px rgba(250, 204, 21, 0.65));
-      will-change: left, top, transform;
-    }
-    @keyframes beltGoldShine {
-      0%, 100% { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 5px rgba(250, 204, 21, 0.6)); }
-      50% { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 12px rgba(253, 224, 71, 0.95)); }
-    }
-    .belt-shine-active {
-      animation: beltGoldShine 1.6s ease-in-out infinite;
-    }
 
     /* ============================================================
        SURVIVOR TAB: FIXED LEFT-TO-RIGHT GRID, CURRENT WEEK & ICE BLOCKS
@@ -395,14 +327,13 @@
       </div>
 
       <!-- MAIN NAVIGATION TABS -->
-      <nav class="flex flex-wrap items-center gap-1 bg-slate-200 dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs font-semibold">
+      <nav class="flex items-center gap-1 bg-slate-200 dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs font-semibold">
         <button data-tab="standings" class="tab-btn active bg-brand-600 text-white px-3 py-1.5 rounded-md transition shadow">Standings</button>
         <button data-tab="matchups" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Matchups</button>
         <button data-tab="survivor" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Survivor</button>
         <button data-tab="props" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Props</button>
         <button data-tab="wins_above" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Wins Above Even</button>
         <button data-tab="live_prob" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Live Win Prob</button>
-        <button data-tab="belt" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Belt</button>
       </nav>
 
     </div>
@@ -456,7 +387,7 @@
   </header>
 
   <!-- MAIN CONTENT AREA -->
-  <main class="max-w-[1700px] mx-auto px-2 sm:px-4 py-4">
+  <main class="max-w-[1700px] mx-auto px-4 py-4">
 
     <!-- STANDINGS TAB CONTENT -->
     <section id="tab-standings" class="tab-content space-y-3">
@@ -834,164 +765,6 @@
         </div>
       </div>
     </section>
-
-    <!-- BELT TAB CONTENT -->
-    <section id="tab-belt" class="tab-content space-y-3 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-award text-amber-500"></i> Lineal Championship Belt
-          </h2>
-          <span id="belt-starting-holder-badge" class="text-xs font-medium bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
-            Starting Champion: --
-          </span>
-        </div>
-
-        <div id="belt-summary-pills" class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs"></div>
-      </div>
-
-      <!-- BELT LINEAGE TABLE WITH FLOATING CHAMPIONSHIP BELT OVERLAY -->
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 sm:p-5">
-        <div id="belt-stage" class="relative w-full max-w-xl mx-auto">
-          <!-- Floating FFball & WWE-Inspired Championship Belt SVG -->
-          <div id="floating-championship-belt" class="hidden belt-shine-active" aria-hidden="true">
-            <svg class="w-[46px] h-[20px] sm:w-[58px] sm:h-[26px]" viewBox="0 0 152 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="beltStrapGrad" x1="0" y1="0" x2="0" y2="68" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#1e293b"/>
-                  <stop offset="50%" stop-color="#090d16"/>
-                  <stop offset="100%" stop-color="#1e293b"/>
-                </linearGradient>
-                <linearGradient id="beltGoldGrad" x1="20" y1="6" x2="132" y2="62" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#fef08a"/>
-                  <stop offset="30%" stop-color="#facc15"/>
-                  <stop offset="65%" stop-color="#eab308"/>
-                  <stop offset="100%" stop-color="#a16207"/>
-                </linearGradient>
-                <linearGradient id="beltCenterGrad" x1="50" y1="8" x2="102" y2="60" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#fef9c3"/>
-                  <stop offset="40%" stop-color="#facc15"/>
-                  <stop offset="80%" stop-color="#ca8a04"/>
-                  <stop offset="100%" stop-color="#854d0e"/>
-                </linearGradient>
-                <linearGradient id="footballLeather" x1="62" y1="22" x2="90" y2="46" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#9a3412"/>
-                  <stop offset="55%" stop-color="#7c2d12"/>
-                  <stop offset="100%" stop-color="#431407"/>
-                </linearGradient>
-              </defs>
-
-              <!-- Leather Championship Strap -->
-              <path d="M6 22 C18 19, 32 19, 44 21 L108 21 C120 19, 134 19, 146 22 L149 34 L146 46 C134 49, 120 49, 108 47 L44 47 C32 49, 18 49, 6 46 L3 34 Z" fill="url(#beltStrapGrad)" stroke="#eab308" stroke-width="1.6"/>
-              <!-- Gold Strap Studs -->
-              <circle cx="12" cy="27" r="1.7" fill="#fde047"/>
-              <circle cx="12" cy="41" r="1.7" fill="#fde047"/>
-              <circle cx="140" cy="27" r="1.7" fill="#fde047"/>
-              <circle cx="140" cy="41" r="1.7" fill="#fde047"/>
-
-              <!-- Left & Right WWE-Style Side Plates -->
-              <rect x="23" y="19" width="22" height="30" rx="6" fill="url(#beltGoldGrad)" stroke="#713f12" stroke-width="1.8"/>
-              <circle cx="34" cy="34" r="6" fill="#991b1b" stroke="#fef08a" stroke-width="1.4"/>
-              <circle cx="34" cy="23.5" r="1.5" fill="#dc2626"/>
-              <circle cx="34" cy="44.5" r="1.5" fill="#dc2626"/>
-
-              <rect x="107" y="19" width="22" height="30" rx="6" fill="url(#beltGoldGrad)" stroke="#713f12" stroke-width="1.8"/>
-              <circle cx="118" cy="34" r="6" fill="#991b1b" stroke="#fef08a" stroke-width="1.4"/>
-              <circle cx="118" cy="23.5" r="1.5" fill="#dc2626"/>
-              <circle cx="118" cy="44.5" r="1.5" fill="#dc2626"/>
-
-              <!-- Center Heavyweight Winged Medallion Plate -->
-              <path d="M47 16 L58 8 L94 8 L105 16 L109 34 L105 52 L94 60 L58 60 L47 52 L43 34 Z" fill="url(#beltCenterGrad)" stroke="#713f12" stroke-width="2.2" stroke-linejoin="round"/>
-              <!-- Inner Filigree Bevel -->
-              <path d="M51 19 L60 12 L92 12 L101 19 L104 34 L101 49 L92 56 L60 56 L51 49 L48 34 Z" fill="none" stroke="#fef9c3" stroke-width="1.1" opacity="0.85"/>
-
-              <!-- Crown & Ruby Jewels on Center Plate -->
-              <polygon points="76,12 79,16 73,16" fill="#dc2626"/>
-              <circle cx="62" cy="16" r="2.1" fill="#dc2626" stroke="#fef9c3" stroke-width="0.7"/>
-              <circle cx="90" cy="16" r="2.1" fill="#dc2626" stroke="#fef9c3" stroke-width="0.7"/>
-              <circle cx="62" cy="52" r="2.1" fill="#dc2626" stroke="#fef9c3" stroke-width="0.7"/>
-              <circle cx="90" cy="52" r="2.1" fill="#dc2626" stroke="#fef9c3" stroke-width="0.7"/>
-              <circle cx="76" cy="55" r="2.3" fill="#dc2626" stroke="#fef9c3" stroke-width="0.8"/>
-
-              <!-- Center Emblem Dark Backing Ring -->
-              <circle cx="76" cy="34" r="16.5" fill="#0f172a" stroke="#fef08a" stroke-width="1.8"/>
-
-              <!-- Embossed American Football in Center -->
-              <ellipse cx="76" cy="34" rx="13.5" ry="8.5" transform="rotate(-22 76 34)" fill="url(#footballLeather)" stroke="#fde047" stroke-width="1.5"/>
-              <!-- White Football Stripes & Laces -->
-              <g transform="rotate(-22 76 34)">
-                <path d="M66.5 28.5 C65.5 32, 65.5 36, 66.5 39.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
-                <path d="M85.5 28.5 C86.5 32, 86.5 36, 85.5 39.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
-                <line x1="70.5" y1="34" x2="81.5" y2="34" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
-                <line x1="72.5" y1="31.5" x2="72.5" y2="36.5" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round"/>
-                <line x1="75.0" y1="31.5" x2="75.0" y2="36.5" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round"/>
-                <line x1="77.5" y1="31.5" x2="77.5" y2="36.5" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round"/>
-                <line x1="80.0" y1="31.5" x2="80.0" y2="36.5" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round"/>
-              </g>
-            </svg>
-          </div>
-
-          <table class="belt-table border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden" id="belt-table">
-            <colgroup>
-              <col style="width: 10%;" />
-              <col style="width: 24%;" />
-              <col style="width: 16%;" />
-              <col style="width: 24%;" />
-              <col style="width: 16%;" />
-              <col style="width: 10%;" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th class="text-right">WK</th>
-                <th class="text-center">MGR</th>
-                <th class="text-right">PF</th>
-                <th class="text-center">O_MGR</th>
-                <th class="text-right">PA</th>
-                <th class="text-center">RES</th>
-              </tr>
-            </thead>
-            <tbody id="belt-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- BELT REPLAY CONTROLS -->
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xl flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-2 sm:gap-3">
-          <button id="btn-belt-play-pause" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i id="belt-play-icon" class="fa-solid fa-play"></i> <span id="belt-play-text">Play</span>
-          </button>
-          <button id="btn-belt-restart" class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-rotate-right"></i> Restart
-          </button>
-          <span id="belt-tick-label" class="font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2 py-1 rounded-md">
-            Week -- / --
-          </span>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-3 sm:gap-4">
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="belt-speed-slider" min="0.5" max="5" value="1" step="0.5" class="w-16 sm:w-20 accent-brand-500 cursor-pointer" />
-            <span id="belt-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[28px]">1x</span>
-          </div>
-
-          <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
-            <i class="fa-solid fa-clock text-slate-400"></i>
-            <input type="range" id="belt-scrubber" min="0" max="100" value="0" class="w-32 sm:w-56 accent-brand-500 cursor-pointer" />
-          </div>
-
-          <div class="flex items-center gap-1.5">
-            <button id="btn-export-belt-png" title="Print/Export Belt View" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-file-image"></i> PNG / Print
-            </button>
-            <button id="btn-export-belt-csv" title="Download Belt CSV" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-file-csv"></i> CSV
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <div id="sparkline-tooltip" class="fixed hidden pointer-events-none z-50 bg-slate-900/95 text-white text-xs px-3 py-2 rounded-lg shadow-2xl border border-slate-700 backdrop-blur font-sans"></div>
@@ -1025,16 +798,6 @@
         viewMode: 'table', // 'table' or 'chart'
         chartInstance: null, fullSeries: null, animationTimer: null,
         isPlaying: false, currentIdx: 0, prevIdx: 0, speedMultiplier: 1.0
-      },
-      belt: {
-        lineage: null,
-        animationTimer: null,
-        subTimer: null,
-        isPlaying: false,
-        currentIdx: 0,
-        activeCol: 'mgr',
-        renderedCount: 0,
-        speedMultiplier: 1.0
       }
     };
 
@@ -1150,20 +913,6 @@
       return fallback[idx % fallback.length];
     }
 
-    function getContrastTextColor(hexColor) {
-      if (!hexColor || !hexColor.startsWith('#')) return '#0f172a';
-      let c = hexColor.replace('#', '');
-      if (c.length === 3) c = c.split('').map(x => x + x).join('');
-      const num = parseInt(c, 16);
-      if (isNaN(num)) return '#0f172a';
-      const r = (num >> 16) & 255;
-      const g = (num >> 8) & 255;
-      const b = num & 255;
-      // Perceived luminance
-      const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-      return yiq >= 145 ? '#0f172a' : '#ffffff';
-    }
-
     function hexToRgba(hex, alpha) {
       if (!hex || hex === 'transparent') return `rgba(14, 165, 233, ${alpha})`;
       if (hex.startsWith('rgba')) return hex;
@@ -1198,7 +947,6 @@
           if (STATE.wae.chartInstance) renderWinsAboveChart();
           if (STATE.props.chartInstance) renderDivisionalChart();
           if (document.querySelector('.tab-btn[data-tab="survivor"]').classList.contains('active')) renderSurvivorTab();
-          if (document.querySelector('.tab-btn[data-tab="belt"]').classList.contains('active')) renderBeltTab();
         });
       }
     }
@@ -1295,8 +1043,7 @@
       survivor:   { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       wins_above: { from: false, hcw: true,  defaultHcw: true,  regularSeasonDefault: false, label: 'W' },
       matchups:   { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
-      live_prob:  { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
-      belt:       { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' }
+      live_prob:  { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' }
     };
 
     const FilterEngine = {
@@ -1350,16 +1097,10 @@
       defaultWeekMax(year, tabKey = this.activeTab()) {
         const cw = getCurrentYearAndWeek();
         const weeks = this.weeksForYear(year);
+        if (cw && Number(cw.curYear) === Number(year)) return cw.curWeek;
         const m = TAB_FILTER_MODE[tabKey] || TAB_FILTER_MODE.standings;
-        const prePlayoffWeek = Math.max(1, getPlayoffStartWeek(year) - 1);
-
-        if (cw && Number(cw.curYear) === Number(year)) {
-          if (m.regularSeasonDefault) {
-            return this.snap(weeks, Math.min(cw.curWeek, prePlayoffWeek));
-          }
-          return cw.curWeek;
-        }
         if (m.regularSeasonDefault) {
+          const prePlayoffWeek = Math.max(1, getPlayoffStartWeek(year) - 1);
           return this.snap(weeks, prePlayoffWeek);
         }
         return weeks[weeks.length - 1];
@@ -1667,34 +1408,6 @@
       return finalRanks;
     }
 
-    function getTrophyBadgeHTML(finalRank) {
-      if (finalRank !== 1 && finalRank !== 2 && finalRank !== 3) return '';
-      const styles = {
-        1: { fill: '#facc15', stroke: '#ca8a04', lace: '#713f12', title: '1st Place (Gold Trophy)' },
-        2: { fill: '#cbd5e1', stroke: '#64748b', lace: '#1e293b', title: '2nd Place (Silver Trophy)' },
-        3: { fill: '#d97706', stroke: '#92400e', lace: '#451a03', title: '3rd Place (Bronze Trophy)' }
-      };
-      const s = styles[finalRank];
-      return `
-        <span class="inline-flex items-center ml-1.5 align-middle" title="${s.title}">
-          <svg width="16" height="14" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="inline-block drop-shadow-sm">
-            <!-- Trophy Handles -->
-            <path d="M5 4H2.5C1.9 4 1.5 4.4 1.5 5V7C1.5 8.7 2.8 10 4.5 10H6" stroke="${s.stroke}" stroke-width="1.6" stroke-linecap="round"/>
-            <path d="M19 4H21.5C22.1 4 22.5 4.4 22.5 5V7C22.5 8.7 21.2 10 19.5 10H18" stroke="${s.stroke}" stroke-width="1.6" stroke-linecap="round"/>
-            <!-- Stem & Pedestal -->
-            <path d="M12 12.5V16" stroke="${s.stroke}" stroke-width="2.2" stroke-linecap="round"/>
-            <path d="M7.5 18.5H16.5L15.5 16H8.5L7.5 18.5Z" fill="${s.fill}" stroke="${s.stroke}" stroke-width="1.3" stroke-linejoin="round"/>
-            <!-- Football-shaped Cup -->
-            <ellipse cx="12" cy="7.2" rx="6.6" ry="4.8" fill="${s.fill}" stroke="${s.stroke}" stroke-width="1.5"/>
-            <!-- Football Laces -->
-            <line x1="9.2" y1="7.2" x2="14.8" y2="7.2" stroke="${s.lace}" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="10.4" y1="5.8" x2="10.4" y2="8.6" stroke="${s.lace}" stroke-width="1.1" stroke-linecap="round"/>
-            <line x1="12" y1="5.8" x2="12" y2="8.6" stroke="${s.lace}" stroke-width="1.1" stroke-linecap="round"/>
-            <line x1="13.6" y1="5.8" x2="13.6" y2="8.6" stroke="${s.lace}" stroke-width="1.1" stroke-linecap="round"/>
-          </svg>
-        </span>`;
-    }
-
     // ==========================================
     // SECTION 2: STANDINGS METRIC ENGINE
     // ==========================================
@@ -1705,12 +1418,11 @@
         const cw = getCurrentYearAndWeek();
         const isPriorYear = cw && Number(year) < Number(cw.curYear);
         const playoffStartWeek = getPlayoffStartWeek(year);
-        const effWeekMax = Number(weekMax);
 
         const pointsFiltered = STATE.data.points.filter(r => {
           const rYear = Number(getVal(r, ['year', 'YR']));
           const rWeek = Number(getVal(r, ['week', 'WK']));
-          return rYear === Number(year) && rWeek >= Number(weekMin) && rWeek <= effWeekMax;
+          return rYear === Number(year) && rWeek >= Number(weekMin) && rWeek <= Number(weekMax);
         });
 
         if (pointsFiltered.length === 0) return [];
@@ -1756,7 +1468,6 @@
               }
             });
             t.etew_share = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0;
-            t.isPlayoffByeOrNoMatchup = wkNum >= playoffStartWeek && t.opponent_team_id === 0 && t.team_points === 0;
             if (ignoreMatchupWLT || t.opponent_team_id === 0) {
               t.win = 0;
               t.loss = 0;
@@ -1798,39 +1509,32 @@
           const pa = group.reduce((acc, r) => acc + r.opponent_points, 0);
           const games = group.length;
 
-          // Exclude 0-point non-matchup playoff weeks (byes / eliminated teams) from worst_wk & per-game scoring stats
-          const activeScoringGroup = group.filter(r => !r.isPlayoffByeOrNoMatchup);
-          const scoringGames = activeScoringGroup.length;
-
           const etewSum = group.reduce((acc, r) => acc + r.etew_share, 0);
           const etewPct = games > 0 ? etewSum / games : 0;
           const etewRecordSum = group.reduce((acc, r) => acc + (r.countedForRecord ? r.etew_share : 0), 0);
           const wabl = recordGames > 0 ? (wins + 0.5 * ties) - etewRecordSum : 0;
 
-          const scoresArr = activeScoringGroup.map(r => r.team_points);
+          const scoresArr = group.map(r => r.team_points);
           const sortedScores = [...scoresArr].sort((a, b) => a - b);
           
           let maxScore = -1, bestWk = 0;
-          let minScore = Infinity, worstWk = 0;
-          activeScoringGroup.forEach(r => {
+          let minScore = 9999, worstWk = 0;
+          group.forEach(r => {
             if (r.team_points > maxScore) { maxScore = r.team_points; bestWk = r.week; }
             if (r.team_points < minScore) { minScore = r.team_points; worstWk = r.week; }
           });
-          if (maxScore < 0) maxScore = 0;
-          if (!isFinite(minScore)) minScore = 0;
 
-          const activePf = activeScoringGroup.reduce((acc, r) => acc + r.team_points, 0);
-          const avg = scoringGames > 0 ? activePf / scoringGames : 0;
+          const avg = games > 0 ? pf / games : 0;
           let avgStar = avg;
-          if (scoringGames > 2) {
+          if (games > 2) {
             const trimmed = sortedScores.slice(1, -1);
             avgStar = trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
           }
 
           let sdev = 0;
-          if (scoringGames > 1) {
+          if (games > 1) {
             const mean = avg;
-            const variance = scoresArr.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / (scoringGames - 1);
+            const variance = scoresArr.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / (games - 1);
             sdev = Math.sqrt(variance);
           }
 
@@ -1867,14 +1571,12 @@
         result.sort((a, b) => (b.W - a.W) || (b.T - a.T) || (b.PF - a.PF));
         result.forEach((r, idx) => r.regularRank = idx + 1);
 
-        // Compute final_rank whenever active; supplant rank ONLY when weekMax >= playoff_start_week
+        // Supplant rank with final_rank when curWeek >= playoff_start_week or selected year < current year
         const finalRanksMap = computeFinalRanks(year);
-        const useFinalRankForSorting = finalRanksMap !== null && effWeekMax >= playoffStartWeek;
         result.forEach(r => {
           const fRank = finalRanksMap && finalRanksMap[r.team_id] !== undefined ? finalRanksMap[r.team_id] : null;
           r.final_rank = fRank;
-          r.priorYearTrophyRank = isPriorYear ? fRank : null;
-          r.actualRank = (useFinalRankForSorting && fRank !== null) ? fRank : r.regularRank;
+          r.actualRank = fRank !== null ? fRank : r.regularRank;
         });
 
         result.sort((a, b) => a.actualRank - b.actualRank);
@@ -1883,24 +1585,15 @@
         etewSorted.forEach((r, idx) => r.etewRank = idx + 1);
 
         const totalRegWeeks = result[0] ? result[0].playoffStartWeek - 1 : 14;
-        const remainingWeeks = Math.max(0, totalRegWeeks - effWeekMax);
+        const remainingWeeks = Math.max(0, totalRegWeeks - Number(weekMax));
         const playoffCutoff = result[0] ? result[0].numPlayoffTeams : 6;
-        const regSorted = [...result].sort((a, b) => a.regularRank - b.regularRank);
 
         result.forEach(r => {
           r.RABL = r.etewRank - r.actualRank;
-          if (useFinalRankForSorting && r.final_rank !== null) {
-            r.isClinched = r.final_rank <= playoffCutoff;
-            r.isEliminated = r.final_rank > playoffCutoff;
-          } else if (remainingWeeks === 0) {
-            r.isClinched = r.regularRank <= playoffCutoff;
-            r.isEliminated = r.regularRank > playoffCutoff;
-          } else {
-            const winsAtCutoffNext = regSorted[playoffCutoff] ? regSorted[playoffCutoff].W : 0;
-            r.isClinched = r.regularRank <= playoffCutoff && r.W > (winsAtCutoffNext + remainingWeeks);
-            const winsAtCutoffLastIn = regSorted[playoffCutoff - 1] ? regSorted[playoffCutoff - 1].W : 0;
-            r.isEliminated = (r.W + remainingWeeks) < winsAtCutoffLastIn;
-          }
+          const winsAtCutoff7th = result[playoffCutoff] ? result[playoffCutoff].W : 0;
+          r.isClinched = r.actualRank <= playoffCutoff && r.W > (winsAtCutoff7th + remainingWeeks);
+          const winsAtCutoff6th = result[playoffCutoff - 1] ? result[playoffCutoff - 1].W : 0;
+          r.isEliminated = (r.W + remainingWeeks) < winsAtCutoff6th;
         });
 
         return result;
@@ -2028,7 +1721,6 @@
           initPropsTab();
           initWinsAboveTab();
           initLiveProbTab();
-          initBeltTab();
         } else {
           reconcileFiltersWithData();
         }
@@ -2068,9 +1760,6 @@
 
       if (tabKey !== 'survivor') {
         pauseSurvivorReplay();
-      }
-      if (tabKey !== 'belt') {
-        pauseBeltReplay();
       }
 
       document.querySelectorAll('.tab-btn').forEach(b => {
@@ -2164,7 +1853,6 @@
           case 'props':      renderPropsTab(); break;
           case 'wins_above': renderWinsAboveChart(); break;
           case 'live_prob':  populateLiveProbMatchups(); renderLiveProbMatchup(); break;
-          case 'belt':       renderBeltTab(); break;
         }
       } catch (err) {
         console.error('Render failed:', err);
@@ -2312,15 +2000,13 @@
       const tbody = document.getElementById('standings-tbody');
       tbody.innerHTML = data.map(r => {
         const rankStr = String(r.actualRank).padStart(2, '0');
-        const playoffCutoff = r.numPlayoffTeams || 6;
-        const rankClass = r.actualRank <= playoffCutoff ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 dark:text-slate-500 line-through";
+        const rankClass = r.actualRank <= 6 ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 dark:text-slate-500 line-through";
         let teamClass = "text-slate-900 dark:text-slate-100 font-semibold";
         if (r.isClinched) teamClass = "clinched-text";
         if (r.isEliminated) teamClass = "eliminated-text";
 
-        const isCutoff = r.actualRank === playoffCutoff;
+        const isCutoff = r.actualRank === 6;
         const rowClass = isCutoff ? "playoff-cutoff-row" : "";
-        const trophyHTML = getTrophyBadgeHTML(r.priorYearTrophyRank);
 
         const wBg = HEATMAPS.greenClearRed(r.winPct, wStats.min, wStats.mid, wStats.max);
         const etewBg = HEATMAPS.greenClearRed(r.ETEW_pct, etewStats.min, 0.50, etewStats.max);
@@ -2340,7 +2026,7 @@
             <td class="text-center ${rankClass}">${rankStr}</td>
             <td class="text-left cursor-pointer" onclick="toggleManagerFilter('${r.manager}')">
               <span class="text-xs font-semibold mr-1.5 border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${getManagerColor(r.manager)}">${r.manager}</span>
-              <span class="${teamClass}">${r.team_name}</span>${trophyHTML}
+              <span class="${teamClass}">${r.team_name}</span>
             </td>
             <td class="text-center font-mono font-bold" style="background-color: ${wBg}">${r.W} - ${r.L}${r.T > 0 ? ` - ${r.T}` : ''}</td>
             <td class="text-right font-mono" style="background-color: ${pfBg}">${r.PF.toFixed(1)}</td>
@@ -4292,18 +3978,14 @@
               reverse: isRank,
               min: isRank ? 1 : yMinFixed,
               max: isRank ? numTeams : yMaxFixed,
-              title: {
-                display: true,
-                text: isRank ? 'League Rank' : 'Wins Above .500',
-                color: textColor,
-                font: { size: 12, weight: '700' }
-              },
+              title: { display: true, text: isRank ? 'Rank' : 'Wins Above Even', color: textColor, font: { size: 12, weight: '700' } },
               grid: { color: gridColor },
               ticks: {
                 color: textColor,
                 font: { size: 11, weight: '600' },
                 stepSize: isRank ? 1 : undefined,
-                callback: v => isRank ? v : (v > 0 ? `+${v}` : v)
+                precision: isRank ? 0 : undefined,
+                callback: isRank ? (v) => (v >= 1 && v <= numTeams && Number.isInteger(v) ? v : '') : undefined
               }
             }
           }
@@ -4321,26 +4003,28 @@
 
       const isRank = STATE.wae.metric === 'rank';
       const isMatchup = STATE.wae.mode === 'matchup';
-      const startIndex = isRank ? 1 : 0;
 
-      s.teamMetaList.forEach((meta, mIdx) => {
-        const teamData = s.seriesMap[meta.team_id];
+      s.teamMetaList.forEach((meta, mgrIdx) => {
+        let displayArr = [];
+        let rawArr = [];
 
-        let rawArr, displayArr;
         if (isRank) {
-          rawArr = isMatchup ? teamData.matchupRank : teamData.etewRank;
-          displayArr = rawArr;
+          const rankData = isMatchup ? s.seriesMap[meta.team_id].matchupRank : s.seriesMap[meta.team_id].etewRank;
+          displayArr = rankData;
+          rawArr = rankData;
         } else {
-          rawArr = isMatchup ? teamData.cumMatchup : teamData.cumEtew;
-          displayArr = isMatchup ? teamData.cumMatchupDisplay : teamData.cumEtewDisplay;
+          displayArr = isMatchup ? s.seriesMap[meta.team_id].cumMatchupDisplay : s.seriesMap[meta.team_id].cumEtewDisplay;
+          rawArr = isMatchup ? s.seriesMap[meta.team_id].cumMatchup : s.seriesMap[meta.team_id].cumEtew;
         }
 
-        const slicedDisplay = displayArr.slice(0, validIdx + 1).map((val, i) => i < startIndex ? null : val);
-        const slicedRaw = rawArr.slice(0, validIdx + 1).map((val, i) => i < startIndex ? null : val);
-        const nullPad = new Array(total - (validIdx + 1)).fill(null);
+        const slicedDisplay = displayArr.slice(0, validIdx + 1);
+        const paddedDisplay = slicedDisplay.concat(new Array(total - (validIdx + 1)).fill(null));
 
-        chart.data.datasets[mIdx].data = slicedDisplay.concat(nullPad);
-        chart.data.datasets[mIdx].rawValues = slicedRaw.concat(nullPad);
+        const slicedRaw = rawArr.slice(0, validIdx + 1);
+        const paddedRaw = slicedRaw.concat(new Array(total - (validIdx + 1)).fill(null));
+
+        chart.data.datasets[mgrIdx].data = paddedDisplay;
+        chart.data.datasets[mgrIdx].rawValues = paddedRaw;
       });
 
       const scrubber = document.getElementById('wae-scrubber');
@@ -4357,7 +4041,7 @@
       } else {
         const s = STATE.wae.fullSeries;
         if (s && STATE.wae.currentIdx >= s.weeks.length - 1) {
-          STATE.wae.currentIdx = STATE.wae.metric === 'rank' ? 1 : 0;
+          STATE.wae.currentIdx = 0;
         }
         startWaeReplay();
       }
@@ -4379,9 +4063,8 @@
     }
 
     function restartWaeReplay() {
-      const startIdx = STATE.wae.metric === 'rank' ? 1 : 0;
-      STATE.wae.currentIdx = startIdx;
-      renderWaeFrameAtIdx(startIdx);
+      STATE.wae.currentIdx = 0;
+      renderWaeFrameAtIdx(0);
       startWaeReplay();
     }
 
@@ -4389,7 +4072,7 @@
       if (STATE.wae.animationTimer) clearInterval(STATE.wae.animationTimer);
 
       const mult = STATE.wae.speedMultiplier || 1.0;
-      const intervalMs = Math.max(40, Math.round(350 / mult));
+      const intervalMs = Math.max(40, Math.round(300 / mult));
 
       STATE.wae.animationTimer = setInterval(() => {
         const s = STATE.wae.fullSeries;
@@ -4423,9 +4106,9 @@
     function downloadWaePNG() {
       const chart = STATE.wae.chartInstance;
       if (!chart) return;
-      const metricName = STATE.wae.metric === 'rank' ? 'Rank' : 'Wins_Above_Even';
+      const isRank = STATE.wae.metric === 'rank';
       const link = document.createElement('a');
-      link.download = `NDL_${metricName}_${STATE.filters.year}_${STATE.wae.mode}.png`;
+      link.download = `${isRank ? 'Rank' : 'Wins_Above_Even'}_${STATE.filters.year}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
@@ -4433,69 +4116,149 @@
     function downloadWaeCSV() {
       const s = STATE.wae.fullSeries;
       if (!s) return;
-
       const isRank = STATE.wae.metric === 'rank';
       const isMatchup = STATE.wae.mode === 'matchup';
-      const startIndex = isRank ? 1 : 0;
 
-      const csvRows = [];
-      for (let wIdx = startIndex; wIdx < s.weeks.length; wIdx++) {
-        const rowObj = { Week: s.weeks[wIdx] };
+      const rows = [];
+      for (let i = 0; i < s.weeks.length; i++) {
+        const rowObj = { Week: s.weeks[i] };
         s.teamMetaList.forEach(meta => {
-          const teamData = s.seriesMap[meta.team_id];
-          const valArr = isRank 
-            ? (isMatchup ? teamData.matchupRank : teamData.etewRank)
-            : (isMatchup ? teamData.cumMatchup : teamData.cumEtew);
-          rowObj[meta.manager] = isRank ? valArr[wIdx] : valArr[wIdx].toFixed(3);
+          if (isRank) {
+            rowObj[meta.manager] = isMatchup ? s.seriesMap[meta.team_id].matchupRank[i] : s.seriesMap[meta.team_id].etewRank[i];
+          } else {
+            rowObj[meta.manager] = isMatchup ? s.seriesMap[meta.team_id].cumMatchup[i] : s.seriesMap[meta.team_id].cumEtew[i];
+          }
         });
-        csvRows.push(rowObj);
+        rows.push(rowObj);
       }
-
-      const csv = Papa.unparse(csvRows);
+      const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      const metricName = isRank ? 'Rank' : 'Wins_Above_Even';
-      link.setAttribute("download", `NDL_${metricName}_${STATE.filters.year}_${STATE.wae.mode}.csv`);
+      link.setAttribute("download", `${isRank ? 'Rank' : 'Wins_Above_Even'}_${STATE.filters.year}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
     // ==========================================
-    // SECTION 9: LIVE WIN PROB ENGINE
+    // SECTION 9: LIVE WIN PROBABILITY REPLAY ENGINE
     // ==========================================
+    const liveReplayOverlayPlugin = {
+      id: 'liveReplayOverlay',
+      afterDatasetsDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea || !scales.y1 || !STATE.liveProb.fullSeries) return;
+
+        const s = STATE.liveProb.fullSeries;
+        const curIdx0 = STATE.liveProb.currentIdx - 1;
+        if (curIdx0 < 0) return;
+
+        ctx.save();
+        const y50 = scales.y1.getPixelForValue(50);
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(chartArea.left, y50);
+        ctx.lineTo(chartArea.right, y50);
+        ctx.stroke();
+
+        const meta0 = chart.getDatasetMeta(0);
+        const meta1 = chart.getDatasetMeta(1);
+        const meta4 = chart.getDatasetMeta(4);
+
+        const ptA = meta0?.data[curIdx0];
+        const ptB = meta1?.data[curIdx0];
+        const ptWP = meta4?.data[curIdx0];
+
+        if (ptA && !ptA.skip && ptA.x && ptA.y) {
+          ctx.beginPath();
+          ctx.arc(ptA.x, ptA.y, 5.5, 0, 2 * Math.PI);
+          ctx.fillStyle = s.colorA;
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
+
+        if (ptB && !ptB.skip && ptB.x && ptB.y) {
+          ctx.beginPath();
+          ctx.arc(ptB.x, ptB.y, 5.5, 0, 2 * Math.PI);
+          ctx.fillStyle = s.colorB;
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
+
+        if (ptWP && ptWP.x && ptWP.y) {
+          const wpCur = s.tmaWpNorm[curIdx0];
+          const wpPrev = curIdx0 > 0 ? s.tmaWpNorm[curIdx0 - 1] : wpCur;
+          const diff = wpCur - wpPrev;
+
+          let dir = 'flat';
+          if (diff > 0.1) dir = 'up';
+          else if (diff < -0.1) dir = 'down';
+
+          const favoriteColor = wpCur >= 50 ? s.colorA : s.colorB;
+          const caretX = ptWP.x;
+          const caretY = ptWP.y;
+          const size = 6.5;
+
+          ctx.beginPath();
+          if (dir === 'up') {
+            ctx.moveTo(caretX, caretY - size - 2);
+            ctx.lineTo(caretX - size, caretY + size);
+            ctx.lineTo(caretX + size, caretY + size);
+          } else if (dir === 'down') {
+            ctx.moveTo(caretX, caretY + size + 2);
+            ctx.lineTo(caretX - size, caretY - size);
+            ctx.lineTo(caretX + size, caretY - size);
+          } else {
+            ctx.moveTo(caretX + size + 2, caretY);
+            ctx.lineTo(caretX - size, caretY - size);
+            ctx.lineTo(caretX - size, caretY + size);
+          }
+          ctx.closePath();
+          ctx.fillStyle = favoriteColor;
+          ctx.fill();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    };
+
     function initLiveProbTab() {
-      const muSelect = document.getElementById('live-prob-matchup');
+      const matchupSelect = document.getElementById('live-prob-matchup');
       const playPauseBtn = document.getElementById('btn-play-pause-replay');
-      const replayBtn = document.getElementById('btn-replay-animation');
+      const restartBtn = document.getElementById('btn-replay-animation');
       const speedSlider = document.getElementById('replay-speed-slider');
       const scrubber = document.getElementById('replay-scrubber');
-      const exportPngBtn = document.getElementById('btn-export-chart-png');
-      const exportCsvBtn = document.getElementById('btn-export-chart-csv');
+      const pngBtn = document.getElementById('btn-export-chart-png');
+      const csvBtn = document.getElementById('btn-export-chart-csv');
 
-      if (muSelect) muSelect.addEventListener('change', (e) => {
-        STATE.filters.matchup = e.target.value;
+      if (!matchupSelect) return;
+
+      populateLiveProbMatchups();
+
+      matchupSelect.addEventListener('change', () => {
+        STATE.filters.matchup = matchupSelect.value || null;
         updateUrlHash();
         renderLiveProbMatchup();
       });
 
-      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleReplayPlayPause);
-
-      if (replayBtn) replayBtn.addEventListener('click', () => {
-        STATE.liveProb.currentIdx = 0;
-        renderFrameAtIdx(0);
-        startReplayAnimation();
-      });
+      if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+      if (restartBtn) restartBtn.addEventListener('click', restartReplay);
 
       if (speedSlider) {
         speedSlider.addEventListener('input', (e) => {
           const mult = Number(e.target.value);
           STATE.liveProb.speedMultiplier = mult;
           document.getElementById('replay-speed-val').innerText = `${mult}x`;
-          if (STATE.liveProb.isPlaying) {
-            restartIntervalTimer();
-          }
+          if (STATE.liveProb.isPlaying) restartIntervalTimer();
         });
       }
 
@@ -4504,170 +4267,162 @@
           const pct = Number(e.target.value);
           const total = STATE.liveProb.fullSeries ? STATE.liveProb.fullSeries.labels.length : 0;
           if (total === 0) return;
-
-          const targetIdx = Math.round((pct / 100) * (total - 1));
+          const targetIdx = Math.max(1, Math.round((pct / 100) * total));
           STATE.liveProb.currentIdx = targetIdx;
           renderFrameAtIdx(targetIdx);
         });
       }
 
-      if (exportPngBtn) exportPngBtn.addEventListener('click', downloadChartPNG);
-      if (exportCsvBtn) exportCsvBtn.addEventListener('click', downloadChartCSV);
+      if (pngBtn) pngBtn.addEventListener('click', downloadChartPNG);
+      if (csvBtn) csvBtn.addEventListener('click', downloadChartCSV);
     }
 
-    function populateLiveProbWeeks() { }
+    function populateLiveProbWeeks() { populateLiveProbMatchups(); }
 
     function populateLiveProbMatchups() {
+      const matchupSelect = document.getElementById('live-prob-matchup');
+      if (!matchupSelect) return;
+
       const yr = STATE.filters.year;
       const wk = Number(STATE.filters.weekMax);
-      const muSelect = document.getElementById('live-prob-matchup');
-      if (!muSelect) return;
 
-      const scores = STATE.data.scores || [];
-      const filtered = scores.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) === Number(wk));
+      const sc = STATE.data.scores || [];
+      const filtered = sc.filter(r => Number(getVal(r, ['YR', 'year'])) === Number(yr) && Number(getVal(r, ['WK', 'week'])) === Number(wk));
 
-      const uniqueMatchups = new Map();
+      const matchupsMap = {};
       filtered.forEach(r => {
-        const tmaId = Number(getVal(r, ['TMA']));
-        const tmbId = Number(getVal(r, ['TMB']));
-        const tmaMgr = getManagerName(tmaId, yr);
-        const tmbMgr = getManagerName(tmbId, yr);
-        const tmaTeam = getTeamName(tmaId, yr);
-        const tmbTeam = getTeamName(tmbId, yr);
-
-        const key = `${tmaId}_${tmbId}`;
-        if (!uniqueMatchups.has(key) && tmaId && tmbId) {
-          uniqueMatchups.set(key, {
-            key, tmaId, tmbId,
-            tmaMgr, tmbMgr, tmaTeam, tmbTeam,
-            label: `${tmaMgr} (${tmaTeam}) vs ${tmbMgr} (${tmbTeam})`
-          });
+        const tma = Number(getVal(r, ['TMA', 'team_id']));
+        const tmb = Number(getVal(r, ['TMB', 'opponent_team_id']));
+        if (tma && tmb) {
+          const key = `${tma}_${tmb}`;
+          if (!matchupsMap[key]) matchupsMap[key] = { tma, tmb };
         }
       });
 
-      const list = Array.from(uniqueMatchups.values());
-      if (list.length === 0) {
-        muSelect.innerHTML = `<option value="">No Matchups Available</option>`;
+      const matchupList = Object.values(matchupsMap);
+      if (matchupList.length === 0) {
+        matchupSelect.innerHTML = `<option value="">No Matchups Found</option>`;
         return;
       }
 
-      muSelect.innerHTML = list.map(m => `<option value="${m.key}">${escapeHTML(m.label)}</option>`).join('');
+      matchupSelect.innerHTML = matchupList.map(m => {
+        const nameA = getTeamName(m.tma, yr);
+        const mgrA = getManagerName(m.tma, yr);
+        const nameB = getTeamName(m.tmb, yr);
+        const mgrB = getManagerName(m.tmb, yr);
+        return `<option value="${m.tma}_${m.tmb}">${nameA} (${mgrA}) vs ${nameB} (${mgrB})</option>`;
+      }).join('');
 
-      if (STATE.filters.matchup && uniqueMatchups.has(STATE.filters.matchup)) {
-        muSelect.value = STATE.filters.matchup;
-      } else {
-        STATE.filters.matchup = list[0].key;
-        muSelect.value = list[0].key;
+      const wanted = STATE.filters.matchup;
+      const hasWanted = wanted && matchupList.some(m => `${m.tma}_${m.tmb}` === wanted);
+      matchupSelect.value = hasWanted ? wanted : `${matchupList[0].tma}_${matchupList[0].tmb}`;
+      STATE.filters.matchup = matchupSelect.value;
+    }
+
+    function renderLiveProbEmpty(msg) {
+      clearChartState(STATE.liveProb);
+      setChartEmpty('liveWinProbChart', msg);
+      ['tma', 'tmb'].forEach(k => {
+        const set = (id, v) => { const el = document.getElementById(`scorecard-${k}-${id}`); if (el) el.innerText = v; };
+        set('name', '--'); set('mgr', ''); set('pts', '0.00'); set('proj', 'Proj: --'); set('wp', '--%');
+      });
+    }
+
+    function formatTimeLabel(tsStr) {
+      if (!tsStr) return '';
+      try {
+        const dt = new Date(String(tsStr).replace(' ', 'T'));
+        if (isNaN(dt.getTime())) return String(tsStr);
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const day = days[dt.getDay()];
+        let hours = dt.getHours();
+        const mins = String(dt.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${day} ${hours}:${mins} ${ampm}`;
+      } catch (e) {
+        return String(tsStr);
       }
     }
 
     function renderLiveProbMatchup() {
+      const matchupSelect = document.getElementById('live-prob-matchup');
+      if (!matchupSelect) return;
+
       const yr = STATE.filters.year;
       const wk = Number(STATE.filters.weekMax);
-      const muKey = document.getElementById('live-prob-matchup').value;
-      if (!muKey) {
-        clearChartState(STATE.liveProb);
-        ['tma', 'tmb'].forEach(side => {
-          document.getElementById(`scorecard-${side}-mgr`).innerText = '--';
-          document.getElementById(`scorecard-${side}-name`).innerText = side === 'tma' ? 'Team A' : 'Team B';
-          document.getElementById(`scorecard-${side}-proj`).innerText = 'Proj: --';
-          document.getElementById(`scorecard-${side}-pts`).innerText = '0.00';
-          document.getElementById(`scorecard-${side}-wp`).innerText = '--%';
-        });
-        setChartEmpty('liveWinProbChart', emptyScopeMessage('live win-probability data'));
+      const val = matchupSelect.value;
+
+      if (!val) {
+        renderLiveProbEmpty(`No live scoring data for NDL ${yr} Week ${wk}. Use the ◀ ▶ arrows in the filter bar to pick another week.`);
+        return;
+      }
+      const [tma, tmb] = val.split('_').map(Number);
+
+      const sc = STATE.data.scores || [];
+      const rows = sc.filter(r => 
+        Number(getVal(r, ['YR', 'year'])) === Number(yr) && 
+        Number(getVal(r, ['WK', 'week'])) === Number(wk) && 
+        Number(getVal(r, ['TMA', 'team_id'])) === tma && 
+        Number(getVal(r, ['TMB', 'opponent_team_id'])) === tmb
+      ).sort((a, b) => {
+        const ta = String(getVal(a, ['TIME', 'time']) || '');
+        const tb = String(getVal(b, ['TIME', 'time']) || '');
+        return ta.localeCompare(tb) || Number(getVal(a, ['RUN', 'run']) || 0) - Number(getVal(b, ['RUN', 'run']) || 0);
+      });
+
+      if (rows.length === 0) {
+        renderLiveProbEmpty(`No live scoring rows for that matchup in Week ${wk}.`);
         return;
       }
       setChartEmpty('liveWinProbChart', null);
 
-      const [tmaId, tmbId] = muKey.split('_').map(Number);
+      const mgrA = getManagerName(tma, yr);
+      const mgrB = getManagerName(tmb, yr);
+      const colorA = getManagerColor(mgrA, 0);
+      const colorB = getManagerColor(mgrB, 1);
 
-      const scores = STATE.data.scores || [];
-      const rows = scores.filter(r =>
-        Number(getVal(r, ['year', 'YR'])) === Number(yr) &&
-        Number(getVal(r, ['week', 'WK'])) === Number(wk) &&
-        Number(getVal(r, ['TMA'])) === tmaId &&
-        Number(getVal(r, ['TMB'])) === tmbId
-      );
+      const labels = rows.map(r => formatTimeLabel(getVal(r, ['TIME', 'time'])));
+      const tmaPts = rows.map(r => Number(getVal(r, ['TMAPTS', 'team_points'])) || 0);
+      const tmbPts = rows.map(r => Number(getVal(r, ['TMBPTS', 'opponent_points'])) || 0);
+      const tmaProj = rows.map(r => Number(getVal(r, ['TMAPROJ', 'team_proj_points'])) || 0);
+      const tmbProj = rows.map(r => Number(getVal(r, ['TMBPROJ', 'opponent_proj_points'])) || 0);
+      
+      const tmaWpRaw = rows.map(r => Number(getVal(r, ['TMAWP'])) || 0);
+      const tmbWpRaw = rows.map(r => Number(getVal(r, ['TMBWP'])) || 0);
 
-      if (rows.length === 0) {
-        clearChartState(STATE.liveProb);
-        setChartEmpty('liveWinProbChart', `No win-probability timeline rows for NDL ${yr} Week ${wk}.`);
-        return;
+      const tmaWpNorm = [];
+      const tmbWpNorm = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const rawA = tmaWpRaw[i];
+        const rawB = tmbWpRaw[i];
+        const sum = rawA + rawB;
+        if (sum > 0) {
+          const normA = (rawA / sum) * 100;
+          tmaWpNorm.push(normA);
+          tmbWpNorm.push(100 - normA);
+        } else {
+          tmaWpNorm.push(50);
+          tmbWpNorm.push(50);
+        }
       }
 
-      rows.sort((a, b) => {
-        const ta = new Date(getVal(a, ['timestamp', 'TIMESTAMP', 'time']) || 0).getTime();
-        const tb = new Date(getVal(b, ['timestamp', 'TIMESTAMP', 'time']) || 0).getTime();
-        return ta - tb;
-      });
+      STATE.liveProb.fullSeries = {
+        tma, tmb, mgrA, mgrB, colorA, colorB,
+        labels, tmaPts, tmbPts, tmaProj, tmbProj,
+        tmaWpNorm, tmbWpNorm, tmaWpRaw, tmbWpRaw,
+        lastRow: rows[rows.length - 1]
+      };
 
-      const tmaMgr = getManagerName(tmaId, yr);
-      const tmbMgr = getManagerName(tmbId, yr);
-      const tmaTeam = getTeamName(tmaId, yr);
-      const tmbTeam = getTeamName(tmbId, yr);
+      const nameA = getTeamName(tma, yr);
+      const nameB = getTeamName(tmb, yr);
 
-      document.getElementById('scorecard-tma-mgr').innerText = tmaMgr;
-      document.getElementById('scorecard-tma-name').innerText = tmaTeam;
-      document.getElementById('scorecard-tmb-mgr').innerText = tmbMgr;
-      document.getElementById('scorecard-tmb-name').innerText = tmbTeam;
-
-      const tmaColor = getManagerColor(tmaMgr, 0);
-      let tmbColor = getManagerColor(tmbMgr, 1);
-      if (tmaColor === tmbColor) tmbColor = '#f97316';
-
-      document.getElementById('scorecard-tma-pts').style.color = tmaColor;
-      document.getElementById('scorecard-tma-wp').style.color = tmaColor;
-      document.getElementById('scorecard-tmb-pts').style.color = tmbColor;
-      document.getElementById('scorecard-tmb-wp').style.color = tmbColor;
-
-      const labels = [], tmaWpData = [], tmbWpData = [], rawPointsData = [];
-
-      rows.forEach((r, idx) => {
-        const rawTs = getVal(r, ['timestamp', 'TIMESTAMP', 'time']);
-        let displayTime = `Pt ${idx + 1}`;
-        let fullTimeStr = displayTime;
-
-        if (rawTs) {
-          const d = new Date(rawTs);
-          if (!isNaN(d.getTime())) {
-            const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-            const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-            displayTime = `${dayName} ${timeStr}`;
-            fullTimeStr = d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-          } else {
-            displayTime = String(rawTs).slice(5, 16);
-            fullTimeStr = String(rawTs);
-          }
-        }
-
-        let wpA = Number(getVal(r, ['TMAWP', 'tmawp', 'win_prob']));
-        if (isNaN(wpA)) wpA = 50;
-        else if (wpA <= 1 && wpA > 0) wpA = wpA * 100;
-
-        let wpB = Number(getVal(r, ['TMBWP', 'tmbwp']));
-        if (isNaN(wpB)) wpB = 100 - wpA;
-        else if (wpB <= 1 && wpB > 0) wpB = wpB * 100;
-
-        const ptsA = Number(getVal(r, ['TMAPTS', 'tmapts'])) || 0;
-        const ptsB = Number(getVal(r, ['TMBPTS', 'tmbpts'])) || 0;
-        const projA = Number(getVal(r, ['TMAPROJ', 'tmaproj'])) || 0;
-        const projB = Number(getVal(r, ['TMBPROJ', 'tmbproj'])) || 0;
-
-        labels.push(displayTime);
-        tmaWpData.push(Number(wpA.toFixed(1)));
-        tmbWpData.push(Number(wpB.toFixed(1)));
-        rawPointsData.push({ fullTime: fullTimeStr, ptsA, ptsB, projA, projB, wpA, wpB });
-      });
-
-      STATE.liveProb.fullSeries = { labels, tmaWpData, tmbWpData, rawPointsData, tmaMgr, tmbMgr, tmaTeam, tmbTeam, tmaColor, tmbColor };
-
-      initChartCanvas(tmaMgr, tmbMgr, tmaColor, tmbColor);
-      STATE.liveProb.currentIdx = 0;
-      renderFrameAtIdx(0);
-      startReplayAnimation();
+      initFixedChart(labels, nameA, nameB, colorA, colorB);
+      restartReplay();
     }
 
-    function initChartCanvas(tmaName, tmbName, tmaColor, tmbColor) {
+    function initFixedChart(fullLabels, nameA, nameB, colorA, colorB) {
       const canvas = document.getElementById('liveWinProbChart');
       if (!canvas) return;
 
@@ -4679,52 +4434,88 @@
         STATE.liveProb.chartInstance.destroy();
       }
 
+      const emptyArray = new Array(fullLabels.length).fill(null);
+
       const ctx = canvas.getContext('2d');
       STATE.liveProb.chartInstance = new Chart(ctx, {
         type: 'line',
-        plugins: [{
-          id: 'midline50Plugin',
-          afterDraw(chart) {
-            const { ctx, chartArea, scales } = chart;
-            if (!chartArea || !scales.y) return;
-            const y50 = scales.y.getPixelForValue(50);
-            ctx.save();
-            ctx.beginPath();
-            ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.35)' : 'rgba(100, 116, 139, 0.35)';
-            ctx.lineWidth = 1;
-            ctx.moveTo(chartArea.left, y50);
-            ctx.lineTo(chartArea.right, y50);
-            ctx.stroke();
-            ctx.restore();
-          }
-        }],
+        plugins: [liveReplayOverlayPlugin],
         data: {
-          labels: [],
+          labels: fullLabels,
           datasets: [
             {
-              label: `${tmaName} Win Prob %`,
-              data: [],
-              borderColor: tmaColor,
-              backgroundColor: hexToRgba(tmaColor, 0.14),
-              borderWidth: 2.5,
-              fill: true,
-              tension: 0.25,
+              label: `${nameA} (Actual)`,
+              data: [...emptyArray],
+              borderColor: colorA,
+              backgroundColor: colorA,
+              borderWidth: 3,
               pointRadius: 0,
-              pointHoverRadius: 5,
-              pointHoverBackgroundColor: tmaColor
+              pointHoverRadius: 6,
+              yAxisID: 'y',
+              tension: 0.15,
+              spanGaps: false
             },
             {
-              label: `${tmbName} Win Prob %`,
-              data: [],
-              borderColor: tmbColor,
-              backgroundColor: hexToRgba(tmbColor, 0.14),
-              borderWidth: 2.5,
-              fill: true,
-              tension: 0.25,
+              label: `${nameB} (Actual)`,
+              data: [...emptyArray],
+              borderColor: colorB,
+              backgroundColor: colorB,
+              borderWidth: 3,
               pointRadius: 0,
-              pointHoverRadius: 5,
-              pointHoverBackgroundColor: tmbColor
+              pointHoverRadius: 6,
+              yAxisID: 'y',
+              tension: 0.15,
+              spanGaps: false
+            },
+            {
+              label: `${nameA} (Proj)`,
+              data: [...emptyArray],
+              borderColor: colorA,
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              yAxisID: 'y',
+              tension: 0.15,
+              spanGaps: false
+            },
+            {
+              label: `${nameB} (Proj)`,
+              data: [...emptyArray],
+              borderColor: colorB,
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              yAxisID: 'y',
+              tension: 0.15,
+              spanGaps: false
+            },
+            {
+              label: `${nameA} Win %`,
+              data: [...emptyArray],
+              borderColor: hexToRgba(colorA, 0.4),
+              backgroundColor: hexToRgba(colorA, 0.25),
+              fill: 'origin',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              yAxisID: 'y1',
+              stack: 'winprob',
+              tension: 0.2,
+              spanGaps: false
+            },
+            {
+              label: `${nameB} Win %`,
+              data: [...emptyArray],
+              borderColor: hexToRgba(colorB, 0.4),
+              backgroundColor: hexToRgba(colorB, 0.25),
+              fill: '-1',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              yAxisID: 'y1',
+              stack: 'winprob',
+              tension: 0.2,
+              spanGaps: false
             }
           ]
         },
@@ -4734,31 +4525,25 @@
           animation: false,
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { labels: { color: textColor, font: { size: 12, weight: '600' } } },
+            legend: {
+              position: 'top',
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14 }
+            },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               titleColor: isDark ? '#f8fafc' : '#0f172a',
               bodyColor: isDark ? '#cbd5e1' : '#334155',
               borderColor: isDark ? '#334155' : '#cbd5e1',
               borderWidth: 1,
-              padding: 12,
+              padding: 10,
               callbacks: {
-                title: (items) => {
-                  if (!items.length || !STATE.liveProb.fullSeries) return '';
-                  const idx = items[0].dataIndex;
-                  const meta = STATE.liveProb.fullSeries.rawPointsData[idx];
-                  return meta ? `Time: ${meta.fullTime}` : items[0].label;
-                },
-                afterBody: (items) => {
-                  if (!items.length || !STATE.liveProb.fullSeries) return [];
-                  const idx = items[0].dataIndex;
-                  const meta = STATE.liveProb.fullSeries.rawPointsData[idx];
-                  if (!meta) return [];
-                  return [
-                    `----------------------------`,
-                    `${STATE.liveProb.fullSeries.tmaMgr}: ${meta.ptsA.toFixed(2)} pts (Proj: ${meta.projA.toFixed(1)})`,
-                    `${STATE.liveProb.fullSeries.tmbMgr}: ${meta.ptsB.toFixed(2)} pts (Proj: ${meta.projB.toFixed(1)})`
-                  ];
+                label: function(ctx) {
+                  let label = ctx.dataset.label || '';
+                  if (label) label += ': ';
+                  if (ctx.parsed.y !== null && ctx.parsed.y !== undefined) {
+                    label += ctx.dataset.yAxisID === 'y1' ? `${ctx.parsed.y.toFixed(0)}%` : ctx.parsed.y.toFixed(2);
+                  }
+                  return label;
                 }
               }
             }
@@ -4766,13 +4551,27 @@
           scales: {
             x: {
               grid: { color: gridColor },
-              ticks: { color: textColor, maxTicksLimit: 12, font: { size: 11 } }
+              ticks: { color: textColor, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 14 }
             },
             y: {
-              min: 0,
-              max: 100,
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: { display: true, text: 'Points Scored', color: textColor, font: { size: 11, weight: '700' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, callback: v => `${v}%`, font: { size: 11 } }
+              ticks: { color: textColor, font: { size: 10 } },
+              min: 0
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              stacked: true,
+              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '700' } },
+              grid: { drawOnChartArea: false },
+              ticks: { color: textColor, font: { size: 10 }, callback: v => `${v}%` },
+              min: 0,
+              max: 100
             }
           }
         }
@@ -4784,91 +4583,147 @@
       if (!s || !STATE.liveProb.chartInstance) return;
 
       const total = s.labels.length;
-      const validIdx = Math.min(total - 1, Math.max(0, idx));
+      const validIdx = Math.min(total, Math.max(1, idx));
 
-      const chart = STATE.liveProb.chartInstance;
-      chart.data.labels = s.labels.slice(0, validIdx + 1);
-      chart.data.datasets[0].data = s.tmaWpData.slice(0, validIdx + 1);
-      chart.data.datasets[1].data = s.tmbWpData.slice(0, validIdx + 1);
-      chart.update('none');
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const mgrA = s.mgrA;
+      const nameB = getTeamName(s.tmb, yr);
+      const mgrB = s.mgrB;
 
-      const cur = s.rawPointsData[validIdx];
-      if (cur) {
-        document.getElementById('scorecard-tma-pts').innerText = cur.ptsA.toFixed(2);
-        document.getElementById('scorecard-tma-proj').innerText = `Proj: ${cur.projA.toFixed(1)}`;
-        document.getElementById('scorecard-tma-wp').innerText = `${cur.wpA.toFixed(1)}%`;
+      const idx0 = validIdx - 1;
+      const wpA = s.tmaWpNorm[idx0];
+      const wpB = s.tmbWpNorm[idx0];
 
-        document.getElementById('scorecard-tmb-pts').innerText = cur.ptsB.toFixed(2);
-        document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${cur.projB.toFixed(1)}`;
-        document.getElementById('scorecard-tmb-wp').innerText = `${cur.wpB.toFixed(1)}%`;
+      document.getElementById('scorecard-tma-name').innerText = nameA;
+      document.getElementById('scorecard-tma-mgr').innerText = mgrA ? `Manager: ${mgrA}` : '';
+      document.getElementById('scorecard-tma-pts').innerText = s.tmaPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tma-pts').style.color = s.colorA;
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.tmaProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tma-wp').innerText = `${wpA.toFixed(0)}%`;
+      document.getElementById('scorecard-tma-wp').style.color = s.colorA;
+
+      document.getElementById('scorecard-tmb-name').innerText = nameB;
+      document.getElementById('scorecard-tmb-mgr').innerText = mgrB ? `Manager: ${mgrB}` : '';
+      document.getElementById('scorecard-tmb-pts').innerText = s.tmbPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tmb-pts').style.color = s.colorB;
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tmb-wp').innerText = `${wpB.toFixed(0)}%`;
+      document.getElementById('scorecard-tmb-wp').style.color = s.colorB;
+
+      const cardA = document.getElementById('scorecard-card-tma');
+      const cardB = document.getElementById('scorecard-card-tmb');
+      const chartContainer = document.getElementById('live-prob-chart-container');
+
+      if (wpA > 50) {
+        const intensity = Math.min(1, (wpA - 50) / 50);
+        cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08 + 0.22 * intensity);
+        cardA.style.borderColor = hexToRgba(s.colorA, 0.3 + 0.4 * intensity);
+        cardB.style.backgroundColor = '';
+        cardB.style.borderColor = '';
+
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = hexToRgba(s.colorA, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorA, 0.25 + 0.35 * intensity);
+        }
+      } else if (wpB > 50) {
+        const intensity = Math.min(1, (wpB - 50) / 50);
+        cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08 + 0.22 * intensity);
+        cardB.style.borderColor = hexToRgba(s.colorB, 0.3 + 0.4 * intensity);
+        cardA.style.backgroundColor = '';
+        cardA.style.borderColor = '';
+
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = hexToRgba(s.colorB, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorB, 0.25 + 0.35 * intensity);
+        }
+      } else {
+        cardA.style.backgroundColor = ''; cardA.style.borderColor = '';
+        cardB.style.backgroundColor = ''; cardB.style.borderColor = '';
+        if (chartContainer) { chartContainer.style.backgroundColor = ''; chartContainer.style.borderColor = ''; }
       }
 
       const scrubber = document.getElementById('replay-scrubber');
-      if (scrubber && total > 1) {
-        scrubber.value = Math.round((validIdx / (total - 1)) * 100);
-      }
+      if (scrubber) scrubber.value = Math.round((validIdx / total) * 100);
+
+      const padNull = (arr) => arr.slice(0, validIdx).concat(new Array(total - validIdx).fill(null));
+      const extendRight = (arr) => {
+        const sliced = arr.slice(0, validIdx);
+        const lastVal = sliced[sliced.length - 1];
+        return sliced.concat(new Array(total - validIdx).fill(lastVal));
+      };
+
+      const chart = STATE.liveProb.chartInstance;
+      chart.data.datasets[0].data = padNull(s.tmaPts);
+      chart.data.datasets[1].data = padNull(s.tmbPts);
+      chart.data.datasets[2].data = extendRight(s.tmaProj);
+      chart.data.datasets[3].data = extendRight(s.tmbProj);
+      chart.data.datasets[4].data = padNull(s.tmaWpNorm);
+      chart.data.datasets[5].data = padNull(s.tmbWpNorm);
+
+      chart.update('none');
     }
 
-    function toggleReplayPlayPause() {
-      if (STATE.liveProb.isPlaying) {
-        pauseReplayAnimation();
-      } else {
+    function togglePlayPause() {
+      if (STATE.liveProb.isPlaying) pauseReplay();
+      else {
         const s = STATE.liveProb.fullSeries;
-        if (s && STATE.liveProb.currentIdx >= s.labels.length - 1) {
-          STATE.liveProb.currentIdx = 0;
-        }
-        startReplayAnimation();
+        if (s && STATE.liveProb.currentIdx >= s.labels.length) STATE.liveProb.currentIdx = 1;
+        startReplay();
       }
     }
 
-    function startReplayAnimation() {
+    function startReplay() {
       STATE.liveProb.isPlaying = true;
-      updatePlayPauseButtonUI();
+      updatePlayPauseUI();
       restartIntervalTimer();
     }
 
-    function pauseReplayAnimation() {
+    function pauseReplay() {
       STATE.liveProb.isPlaying = false;
       if (STATE.liveProb.animationTimer) {
         clearInterval(STATE.liveProb.animationTimer);
         STATE.liveProb.animationTimer = null;
       }
-      updatePlayPauseButtonUI();
+      updatePlayPauseUI();
+    }
+
+    function restartReplay() {
+      STATE.liveProb.currentIdx = 1;
+      renderFrameAtIdx(1);
+      startReplay();
     }
 
     function restartIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
-
       const mult = STATE.liveProb.speedMultiplier || 3;
-      const intervalMs = Math.max(12, Math.round(90 / mult));
+      const intervalMs = Math.max(10, Math.round(120 / mult));
 
       STATE.liveProb.animationTimer = setInterval(() => {
         const s = STATE.liveProb.fullSeries;
         if (!s) return;
 
         STATE.liveProb.currentIdx += 1;
-        if (STATE.liveProb.currentIdx >= s.labels.length - 1) {
-          STATE.liveProb.currentIdx = s.labels.length - 1;
+        if (STATE.liveProb.currentIdx >= s.labels.length) {
+          STATE.liveProb.currentIdx = s.labels.length;
           renderFrameAtIdx(STATE.liveProb.currentIdx);
-          pauseReplayAnimation();
+          pauseReplay();
         } else {
           renderFrameAtIdx(STATE.liveProb.currentIdx);
         }
       }, intervalMs);
     }
 
-    function updatePlayPauseButtonUI() {
+    function updatePlayPauseUI() {
       const icon = document.getElementById('play-pause-icon');
       const text = document.getElementById('play-pause-text');
       const btn = document.getElementById('btn-play-pause-replay');
 
       if (STATE.liveProb.isPlaying) {
-        icon.className = 'fa-solid fa-pause';
-        text.innerText = 'Pause';
+        icon.className = 'fa-solid fa-pause'; text.innerText = 'Pause';
         btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       } else {
-        icon.className = 'fa-solid fa-play';
-        text.innerText = 'Play';
+        icon.className = 'fa-solid fa-play'; text.innerText = 'Play';
         btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       }
     }
@@ -4880,19 +4735,22 @@
       const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const textColor = isDark ? '#94a3b8' : '#475569';
 
-      chart.options.plugins.legend.labels.color = textColor;
       chart.options.scales.x.grid.color = gridColor;
       chart.options.scales.x.ticks.color = textColor;
       chart.options.scales.y.grid.color = gridColor;
       chart.options.scales.y.ticks.color = textColor;
+      chart.options.scales.y.title.color = textColor;
+      chart.options.scales.y1.ticks.color = textColor;
+      chart.options.scales.y1.title.color = textColor;
+      chart.options.plugins.legend.labels.color = textColor;
       chart.update('none');
     }
 
     function downloadChartPNG() {
       const chart = STATE.liveProb.chartInstance;
-      if (!chart || !STATE.liveProb.fullSeries) return;
+      if (!chart) return;
       const link = document.createElement('a');
-      link.download = `NDL_${STATE.filters.year}_Wk${STATE.filters.weekMax}_${STATE.liveProb.fullSeries.tmaMgr}_vs_${STATE.liveProb.fullSeries.tmbMgr}.png`;
+      link.download = `NDL_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
@@ -4900,686 +4758,121 @@
     function downloadChartCSV() {
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const nameB = getTeamName(s.tmb, yr);
 
-      const csvRows = s.rawPointsData.map((pt, idx) => ({
-        Timestamp: pt.fullTime,
-        DisplayTime: s.labels[idx],
-        [`${s.tmaMgr}_Team`]: s.tmaTeam,
-        [`${s.tmaMgr}_Points`]: pt.ptsA.toFixed(2),
-        [`${s.tmaMgr}_Proj`]: pt.projA.toFixed(2),
-        [`${s.tmaMgr}_WinProb`]: `${pt.wpA.toFixed(1)}%`,
-        [`${s.tmbMgr}_Team`]: s.tmbTeam,
-        [`${s.tmbMgr}_Points`]: pt.ptsB.toFixed(2),
-        [`${s.tmbMgr}_Proj`]: pt.projB.toFixed(2),
-        [`${s.tmbMgr}_WinProb`]: `${pt.wpB.toFixed(1)}%`
+      const rows = s.labels.map((lbl, i) => ({
+        Time: lbl,
+        [`${nameA}_Actual`]: s.tmaPts[i],
+        [`${nameB}_Actual`]: s.tmbPts[i],
+        [`${nameA}_Proj`]: s.tmaProj[i],
+        [`${nameB}_Proj`]: s.tmbProj[i],
+        [`${nameA}_WinProb_Pct`]: s.tmaWpNorm[i].toFixed(2),
+        [`${nameB}_WinProb_Pct`]: s.tmbWpNorm[i].toFixed(2)
       }));
 
-      const csv = Papa.unparse(csvRows);
+      const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `NDL_${STATE.filters.year}_Wk${STATE.filters.weekMax}_${s.tmaMgr}_vs_${s.tmbMgr}.csv`);
+      link.setAttribute("download", `NDL_Matchup_Data_${yr}_Wk${STATE.filters.weekMax}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
     // ==========================================
-    // SECTION 10: BELT TAB ENGINE (LINEAL CHAMPIONSHIP BELT)
+    // SECTION 10: EVENT LISTENERS & BOOTSTRAP
     // ==========================================
-    function getBeltEffectiveMaxWeek(year) {
-      const yr = Number(year);
-      const prePlayoffCap = Math.max(1, getPlayoffStartWeek(yr) - 1);
-      const rawMax = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
-      return Math.min(rawMax, prePlayoffCap);
-    }
-
-    function resolveInitialBeltHolderForYear(year) {
-      const yr = Number(year);
-      const allYears = FilterEngine.years().map(Number).sort((a, b) => a - b);
-      const minYear = allYears.length > 0 ? allYears[0] : yr;
-
-      // In the very first year of the database, the belt starts with Dan
-      if (yr <= minYear) {
-        return { manager: 'Dan', reason: 'Inaugural Season Holder (Dan)' };
-      }
-
-      // Walk forward from the earliest year through (yr - 1) so multi-year lineages carry over seamlessly
-      let holder = 'Dan';
-      for (let y = minYear; y < yr; y++) {
-        const yPrePlayoff = Math.max(1, getPlayoffStartWeek(y) - 1);
-        const yMax = Math.min(getMaxWeekForYear(y), yPrePlayoff);
-        const sub = computeBeltLineageForYear(y, yMax, holder);
-        if (sub && sub.endingHolder) {
-          holder = sub.endingHolder;
-        }
-      }
-      return { manager: holder, reason: `Carried Over from ${yr - 1}` };
-    }
-
-    function computeBeltLineageForYear(year, maxWeekCap, initialHolder) {
-      const yr = Number(year);
-      const pts = STATE.data.points || [];
-      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === yr);
-      if (ptsYr.length === 0 || maxWeekCap < 1) return null;
-
-      // Build weekly team matchup map for the year
-      const weekTeamMap = {};
-      ptsYr.forEach(r => {
-        const wk = Number(getVal(r, ['week', 'WK']));
-        const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
-        if (!wk || wk > maxWeekCap || !tId) return;
-        const key = `${wk}_${tId}`;
-        if (!weekTeamMap[key]) {
-          weekTeamMap[key] = {
-            week: wk,
-            team_id: tId,
-            manager: getManagerName(tId, yr, getVal(r, ['manager_name', 'manager'])),
-            team_name: getTeamName(tId, yr, getVal(r, ['team_name', 'name'])),
-            pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
-            pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
-            oppTeamId: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0
-          };
-        }
-      });
-
-      const allRecords = Object.values(weekTeamMap);
-      if (allRecords.length === 0) return null;
-
-      let currentHolder = initialHolder;
-      const rows = [];
-      let defenses = 0;
-      let changes = 0;
-      let ties = 0;
-
-      for (let w = 1; w <= maxWeekCap; w++) {
-        const wkRecords = allRecords.filter(r => r.week === w);
-        if (wkRecords.length === 0) continue;
-
-        const holderRec = wkRecords.find(r => String(r.manager).toLowerCase() === String(currentHolder).toLowerCase());
-        if (!holderRec) continue;
-
-        const oppMgr = holderRec.oppTeamId ? getManagerName(holderRec.oppTeamId, yr) : 'BYE';
-        const oppTeam = holderRec.oppTeamId ? getTeamName(holderRec.oppTeamId, yr) : 'Bye Week';
-
-        let result = 'T';
-        let nextHolder = holderRec.manager;
-
-        if (!holderRec.oppTeamId || oppMgr === 'BYE') {
-          result = 'DEF';
-          defenses++;
-        } else if (holderRec.pf > holderRec.pa) {
-          result = 'W';
-          defenses++;
-          nextHolder = holderRec.manager;
-        } else if (holderRec.pf < holderRec.pa) {
-          result = 'L';
-          changes++;
-          nextHolder = oppMgr;
-        } else {
-          result = 'T';
-          ties++;
-          nextHolder = holderRec.manager;
-        }
-
-        rows.push({
-          week: w,
-          mgr: holderRec.manager,
-          teamName: holderRec.team_name,
-          pf: holderRec.pf,
-          o_mgr: oppMgr,
-          o_teamName: oppTeam,
-          pa: holderRec.pa,
-          result,
-          nextHolder
-        });
-
-        currentHolder = nextHolder;
-      }
-
-      if (rows.length === 0) return null;
-
-      return {
-        year: yr,
-        startingHolder: initialHolder,
-        endingHolder: currentHolder,
-        rows,
-        defenses,
-        changes,
-        ties
-      };
-    }
-
-    function computeBeltLineage(year) {
-      const yr = Number(year);
-      const maxWeek = getBeltEffectiveMaxWeek(yr);
-      if (maxWeek < 1) return null;
-
-      const initInfo = resolveInitialBeltHolderForYear(yr);
-      const lineage = computeBeltLineageForYear(yr, maxWeek, initInfo.manager);
-      if (!lineage) return null;
-      lineage.startReason = initInfo.reason;
-      return lineage;
-    }
-
-    function computeBeltStatsUpTo(lineage, maxIdx, activeCol) {
-      if (!lineage || !lineage.rows || lineage.rows.length === 0) {
-        return { holder: '--', defenses: 0, changes: 0, longestMgr: '--', longestStreak: 0 };
-      }
-      const clampedIdx = Math.min(lineage.rows.length - 1, Math.max(0, maxIdx));
-      let defenses = 0;
-      let changes = 0;
-      const streakMap = {};
-
-      for (let i = 0; i <= clampedIdx; i++) {
-        const r = lineage.rows[i];
-        const isLastStep = i === clampedIdx;
-        const switchedOnThisRow = r.result === 'L' && (!isLastStep || activeCol === 'o_mgr');
-
-        if (r.result === 'W' || r.result === 'DEF') {
-          defenses++;
-        } else if (switchedOnThisRow) {
-          changes++;
-        }
-
-        const effectiveHolder = switchedOnThisRow ? r.o_mgr : r.mgr;
-        streakMap[effectiveHolder] = (streakMap[effectiveHolder] || 0) + 1;
-      }
-
-      const activeRow = lineage.rows[clampedIdx];
-      const currentHolder = (activeCol === 'o_mgr' && activeRow.result === 'L') ? activeRow.o_mgr : activeRow.mgr;
-
-      let longestMgr = currentHolder;
-      let longestStreak = 0;
-      Object.entries(streakMap).forEach(([mgr, cnt]) => {
-        if (cnt > longestStreak) {
-          longestStreak = cnt;
-          longestMgr = mgr;
-        }
-      });
-
-      return { holder: currentHolder, defenses, changes, longestMgr, longestStreak };
-    }
-
-    function updateBeltSummaryPills(lineage, idx, activeCol) {
-      const pillsEl = document.getElementById('belt-summary-pills');
-      if (!pillsEl || !lineage) return;
-
-      const stats = computeBeltStatsUpTo(lineage, idx, activeCol);
-      const holderColor = getManagerColor(stats.holder);
-      const holderTextColor = getContrastTextColor(holderColor);
-
-      pillsEl.innerHTML = `
-        <span class="px-2.5 py-0.5 rounded-full font-bold shadow-sm transition-colors duration-200" style="background-color: ${holderColor}; color: ${holderTextColor};">
-          Holder: ${escapeHTML(stats.holder)}
-        </span>
-        <span class="px-2 sm:px-2.5 py-0.5 rounded-full font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-          Defenses: ${stats.defenses}
-        </span>
-        <span class="px-2 sm:px-2.5 py-0.5 rounded-full font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
-          Changes: ${stats.changes}
-        </span>
-        <span class="px-2 sm:px-2.5 py-0.5 rounded-full font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-          Longest: ${escapeHTML(stats.longestMgr)} (${stats.longestStreak}w)
-        </span>
-      `;
-    }
-
-    function initBeltTab() {
-      const playPauseBtn = document.getElementById('btn-belt-play-pause');
-      const restartBtn = document.getElementById('btn-belt-restart');
-      const speedSlider = document.getElementById('belt-speed-slider');
-      const scrubber = document.getElementById('belt-scrubber');
-      const csvBtn = document.getElementById('btn-export-belt-csv');
-      const pngBtn = document.getElementById('btn-export-belt-png');
-
-      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleBeltPlayPause);
-      if (restartBtn) restartBtn.addEventListener('click', restartBeltReplay);
-
-      if (speedSlider) {
-        speedSlider.addEventListener('input', (e) => {
-          const mult = Number(e.target.value);
-          STATE.belt.speedMultiplier = mult;
-          document.getElementById('belt-speed-val').innerText = `${mult}x`;
-          if (STATE.belt.isPlaying) restartBeltIntervalTimer();
-        });
-      }
-
-      if (scrubber) {
-        scrubber.addEventListener('input', (e) => {
-          const pct = Number(e.target.value);
-          const lineage = STATE.belt.lineage;
-          if (!lineage || lineage.rows.length === 0) return;
-          const total = lineage.rows.length;
-          const targetIdx = Math.round((pct / 100) * (total - 1));
-          if (STATE.belt.subTimer) {
-            clearTimeout(STATE.belt.subTimer);
-            STATE.belt.subTimer = null;
-          }
-          STATE.belt.currentIdx = targetIdx;
-          const targetRow = lineage.rows[targetIdx];
-          const endCol = (targetRow && targetRow.result === 'L') ? 'o_mgr' : 'mgr';
-          renderBeltFrameAtIdx(targetIdx, endCol, false);
-        });
-      }
-
-      if (csvBtn) csvBtn.addEventListener('click', downloadBeltCSV);
-      if (pngBtn) pngBtn.addEventListener('click', downloadBeltPNG);
-
-      window.addEventListener('resize', () => {
-        if (FilterEngine.activeTab() === 'belt' && STATE.belt.lineage) {
-          positionFloatingBelt(STATE.belt.currentIdx, STATE.belt.activeCol, false);
-        }
-      });
-    }
-
-    function renderBeltTab() {
-      const lineage = computeBeltLineage(STATE.filters.year);
-      STATE.belt.lineage = lineage;
-      STATE.belt.renderedCount = 0;
-
-      const tbody = document.getElementById('belt-tbody');
-      const beltEl = document.getElementById('floating-championship-belt');
-      const startBadge = document.getElementById('belt-starting-holder-badge');
-      const pillsEl = document.getElementById('belt-summary-pills');
-
-      if (!lineage || lineage.rows.length === 0) {
-        pauseBeltReplay();
-        if (beltEl) beltEl.classList.add('hidden');
-        if (startBadge) startBadge.innerText = 'Starting Champion: --';
-        if (pillsEl) pillsEl.innerHTML = '';
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 dark:text-slate-400">${emptyScopeMessage('championship belt data')}</td></tr>`;
-        }
-        return;
-      }
-
-      if (startBadge) {
-        startBadge.innerText = `Start: ${lineage.startingHolder} (${lineage.startReason})`;
-      }
-
-      if (tbody) {
-        tbody.innerHTML = '';
-      }
-
-      restartBeltReplay();
-    }
-
-    function renderBeltRowHTML(r, idx, isRevealingNow) {
-      const mgrBg = getManagerColor(r.mgr);
-      const mgrText = getContrastTextColor(mgrBg);
-      const oMgrBg = getManagerColor(r.o_mgr);
-      const oMgrText = getContrastTextColor(oMgrBg);
-
-      let resBg = 'transparent';
-      let resTextClass = 'text-slate-700 dark:text-slate-300 font-bold';
-      if (r.result === 'W' || r.result === 'DEF') {
-        resBg = 'rgba(34, 197, 94, 0.28)';
-        resTextClass = 'text-emerald-700 dark:text-emerald-300 font-extrabold';
-      } else if (r.result === 'L') {
-        resBg = 'rgba(239, 68, 68, 0.28)';
-        resTextClass = 'text-rose-700 dark:text-rose-300 font-extrabold';
-      } else {
-        resBg = 'rgba(245, 158, 11, 0.25)';
-        resTextClass = 'text-amber-700 dark:text-amber-300 font-extrabold';
-      }
-
-      const animClass = isRevealingNow ? 'belt-row-revealed' : '';
-
-      return `
-        <tr id="belt-row-${idx}" data-belt-idx="${idx}" class="cursor-pointer transition-colors ${animClass}">
-          <td class="text-right font-mono font-bold text-slate-600 dark:text-slate-300">${r.week}</td>
-          <td id="belt-cell-${idx}-mgr" class="text-center font-extrabold tracking-wide transition-shadow duration-200" style="background-color: ${mgrBg}; color: ${mgrText};">
-            <span class="belt-mgr-label inline-block leading-tight">${escapeHTML(r.mgr)}</span>
-          </td>
-          <td class="text-right font-mono font-semibold">${r.pf.toFixed(1)}</td>
-          <td id="belt-cell-${idx}-o_mgr" class="text-center font-extrabold tracking-wide transition-shadow duration-200" style="background-color: ${oMgrBg}; color: ${oMgrText};">
-            <span class="belt-mgr-label inline-block leading-tight">${escapeHTML(r.o_mgr)}</span>
-          </td>
-          <td class="text-right font-mono font-semibold">${r.pa.toFixed(1)}</td>
-          <td class="text-center font-mono ${resTextClass}" style="background-color: ${resBg}">${r.result}</td>
-        </tr>`;
-    }
-
-    function syncBeltRenderedRows(targetIdx, isAnimatingStep) {
-      const lineage = STATE.belt.lineage;
-      const tbody = document.getElementById('belt-tbody');
-      if (!lineage || !tbody) return;
-
-      const desiredCount = Math.min(lineage.rows.length, Math.max(1, targetIdx + 1));
-
-      if (desiredCount < STATE.belt.renderedCount) {
-        // Re-render cleanly up to desiredCount when scrubbing backward or restarting
-        let html = '';
-        for (let i = 0; i < desiredCount; i++) {
-          html += renderBeltRowHTML(lineage.rows[i], i, false);
-        }
-        tbody.innerHTML = html;
-      } else if (desiredCount > STATE.belt.renderedCount) {
-        // Progressively append only the newly reached row(s)
-        let appendHtml = '';
-        for (let i = STATE.belt.renderedCount; i < desiredCount; i++) {
-          const animateNewRow = isAnimatingStep && (i === desiredCount - 1);
-          appendHtml += renderBeltRowHTML(lineage.rows[i], i, animateNewRow);
-        }
-        tbody.insertAdjacentHTML('beforeend', appendHtml);
-      }
-
-      // Bind row click handlers for newly added rows
-      for (let i = STATE.belt.renderedCount; i < desiredCount; i++) {
-        const rowEl = document.getElementById(`belt-row-${i}`);
-        if (rowEl) {
-          rowEl.addEventListener('click', () => {
-            pauseBeltReplay();
-            if (STATE.belt.subTimer) {
-              clearTimeout(STATE.belt.subTimer);
-              STATE.belt.subTimer = null;
-            }
-            STATE.belt.currentIdx = i;
-            const r = lineage.rows[i];
-            const col = (r && r.result === 'L') ? 'o_mgr' : 'mgr';
-            renderBeltFrameAtIdx(i, col, true);
-          });
-        }
-      }
-
-      STATE.belt.renderedCount = desiredCount;
-    }
-
-    function positionFloatingBelt(rowIdx, colType, animateTransition = true) {
-      const stage = document.getElementById('belt-stage');
-      const beltEl = document.getElementById('floating-championship-belt');
-      const cellEl = document.getElementById(`belt-cell-${rowIdx}-${colType}`);
-
-      if (!stage || !beltEl || !cellEl) return;
-
-      const stageRect = stage.getBoundingClientRect();
-      const cellRect = cellEl.getBoundingClientRect();
-      const labelEl = cellEl.querySelector('.belt-mgr-label');
-      const labelRect = labelEl ? labelEl.getBoundingClientRect() : cellRect;
-
-      if (stageRect.width === 0 || cellRect.width === 0) return;
-
-      const centerX = (labelRect.left - stageRect.left) + (labelRect.width / 2);
-      // Position directly underneath the manager's name text baseline inside the cell
-      const topY = labelEl
-        ? (labelRect.bottom - stageRect.top) + 1
-        : (cellRect.top - stageRect.top) + (cellRect.height * 0.56);
-
-      if (animateTransition) {
-        const mult = STATE.belt.speedMultiplier || 1.0;
-        const durMs = Math.max(120, Math.round(360 / mult));
-        beltEl.style.transition = `left ${durMs}ms cubic-bezier(0.22, 1, 0.36, 1), top ${durMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${durMs}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
-      } else {
-        beltEl.style.transition = 'none';
-      }
-
-      beltEl.classList.remove('hidden');
-      beltEl.style.left = `${centerX.toFixed(1)}px`;
-      beltEl.style.top = `${topY.toFixed(1)}px`;
-    }
-
-    function renderBeltFrameAtIdx(idx, colType = 'mgr', animateTransition = true) {
-      const lineage = STATE.belt.lineage;
-      if (!lineage || lineage.rows.length === 0) return;
-
-      const total = lineage.rows.length;
-      const validIdx = Math.min(total - 1, Math.max(0, idx));
-      const row = lineage.rows[validIdx];
-
-      STATE.belt.currentIdx = validIdx;
-      STATE.belt.activeCol = colType;
-
-      // Progressively reveal rows 0 .. validIdx
-      syncBeltRenderedRows(validIdx, animateTransition);
-
-      const tickLbl = document.getElementById('belt-tick-label');
-      if (tickLbl) {
-        const maxWk = lineage.rows[total - 1].week;
-        tickLbl.innerText = `Week ${row.week} / ${maxWk}`;
-      }
-
-      // Highlight current row and active belt holder cell
-      document.querySelectorAll('#belt-tbody tr').forEach((tr, rIdx) => {
-        tr.classList.toggle('belt-row-active', rIdx === validIdx);
-      });
-      document.querySelectorAll('.belt-cell-holder-glow').forEach(el => {
-        el.classList.remove('belt-cell-holder-glow');
-      });
-
-      const activeCell = document.getElementById(`belt-cell-${validIdx}-${colType}`);
-      if (activeCell) {
-        activeCell.classList.add('belt-cell-holder-glow');
-      }
-
-      // Update live Holder pill & stats in header legend
-      updateBeltSummaryPills(lineage, validIdx, colType);
-
-      const scrubber = document.getElementById('belt-scrubber');
-      if (scrubber && total > 1) {
-        scrubber.value = Math.round((validIdx / (total - 1)) * 100);
-      } else if (scrubber) {
-        scrubber.value = 100;
-      }
-
-      positionFloatingBelt(validIdx, colType, animateTransition);
-    }
-
-    function toggleBeltPlayPause() {
-      if (STATE.belt.isPlaying) {
-        pauseBeltReplay();
-      } else {
-        const lineage = STATE.belt.lineage;
-        if (lineage && STATE.belt.currentIdx >= lineage.rows.length - 1) {
-          restartBeltReplay();
-          return;
-        }
-        startBeltReplay();
-      }
-    }
-
-    function startBeltReplay() {
-      STATE.belt.isPlaying = true;
-      updateBeltPlayPauseUI();
-      restartBeltIntervalTimer();
-    }
-
-    function pauseBeltReplay() {
-      STATE.belt.isPlaying = false;
-      if (STATE.belt.animationTimer) {
-        clearInterval(STATE.belt.animationTimer);
-        STATE.belt.animationTimer = null;
-      }
-      if (STATE.belt.subTimer) {
-        clearTimeout(STATE.belt.subTimer);
-        STATE.belt.subTimer = null;
-      }
-      updateBeltPlayPauseUI();
-    }
-
-    function restartBeltReplay() {
-      if (STATE.belt.subTimer) {
-        clearTimeout(STATE.belt.subTimer);
-        STATE.belt.subTimer = null;
-      }
-      const tbody = document.getElementById('belt-tbody');
-      if (tbody) tbody.innerHTML = '';
-      STATE.belt.renderedCount = 0;
-
-      STATE.belt.currentIdx = 0;
-      STATE.belt.activeCol = 'mgr';
-      renderBeltFrameAtIdx(0, 'mgr', false);
-      scheduleBeltLossSlideIfNeeded(0);
-      startBeltReplay();
-    }
-
-    function scheduleBeltLossSlideIfNeeded(rowIdx) {
-      const lineage = STATE.belt.lineage;
-      if (!lineage || !lineage.rows[rowIdx]) return;
-      const row = lineage.rows[rowIdx];
-      if (row.result === 'L') {
-        const mult = STATE.belt.speedMultiplier || 1.0;
-        const stepMs = Math.max(220, Math.round(900 / mult));
-        if (STATE.belt.subTimer) clearTimeout(STATE.belt.subTimer);
-        STATE.belt.subTimer = setTimeout(() => {
-          if (STATE.belt.currentIdx === rowIdx) {
-            renderBeltFrameAtIdx(rowIdx, 'o_mgr', true);
-          }
-        }, Math.round(stepMs * 0.44));
-      }
-    }
-
-    function restartBeltIntervalTimer() {
-      if (STATE.belt.animationTimer) clearInterval(STATE.belt.animationTimer);
-
-      const mult = STATE.belt.speedMultiplier || 1.0;
-      const stepMs = Math.max(220, Math.round(900 / mult));
-
-      STATE.belt.animationTimer = setInterval(() => {
-        const lineage = STATE.belt.lineage;
-        if (!lineage) return;
-
-        const nextIdx = STATE.belt.currentIdx + 1;
-        if (nextIdx >= lineage.rows.length) {
-          pauseBeltReplay();
-          return;
-        }
-
-        renderBeltFrameAtIdx(nextIdx, 'mgr', true);
-        scheduleBeltLossSlideIfNeeded(nextIdx);
-
-        if (nextIdx >= lineage.rows.length - 1) {
-          const finishDelay = lineage.rows[nextIdx].result === 'L' ? Math.round(stepMs * 0.9) : 150;
-          setTimeout(() => {
-            if (STATE.belt.currentIdx === nextIdx) {
-              pauseBeltReplay();
-            }
-          }, finishDelay);
-        }
-      }, stepMs);
-    }
-
-    function updateBeltPlayPauseUI() {
-      const icon = document.getElementById('belt-play-icon');
-      const text = document.getElementById('belt-play-text');
-      const btn = document.getElementById('btn-belt-play-pause');
-
-      if (!icon || !text || !btn) return;
-
-      if (STATE.belt.isPlaying) {
-        icon.className = 'fa-solid fa-pause'; text.innerText = 'Pause';
-        btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
-      } else {
-        icon.className = 'fa-solid fa-play'; text.innerText = 'Play';
-        btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
-      }
-    }
-
-    function downloadBeltCSV() {
-      const lineage = STATE.belt.lineage;
-      if (!lineage) return;
-
-      const csvRows = lineage.rows.map(r => ({
-        Year: lineage.year,
-        WK: r.week,
-        MGR: r.mgr,
-        PF: r.pf.toFixed(2),
-        O_MGR: r.o_mgr,
-        PA: r.pa.toFixed(2),
-        RESULT: r.result,
-        BeltHolderAfter: r.nextHolder
-      }));
-
-      const csv = Papa.unparse(csvRows);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', `NDL_Belt_Lineage_${lineage.year}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    function downloadBeltPNG() {
-      window.print();
-    }
-
-    // ==========================================
-    // SECTION 11: TOOLTIPS, CSV EXPORTS & INITIALIZATION
-    // ==========================================
-    function setupSparklineTooltips() {
-      const tooltip = document.getElementById('sparkline-tooltip');
-      document.addEventListener('mouseover', (e) => {
-        if (e.target.classList.contains('sparkline-dot')) {
-          tooltip.innerHTML = e.target.getAttribute('data-info');
-          tooltip.classList.remove('hidden');
-        }
-      });
-      document.addEventListener('mousemove', (e) => {
-        if (!tooltip.classList.contains('hidden')) {
-          tooltip.style.left = (e.clientX + 12) + 'px';
-          tooltip.style.top = (e.clientY - 38) + 'px';
-        }
-      });
-      document.addEventListener('mouseout', (e) => {
-        if (e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden');
-      });
-    }
-
-    function setupSorting() {
-      document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
+    function setupTableSorting() {
+      document.querySelectorAll('.standings-table th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
           const field = th.getAttribute('data-sort');
           if (STATE.sort.field === field) {
             STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
           } else {
-            STATE.sort.field = field; STATE.sort.dir = field === 'actualRank' || field === 'team_name' ? 'asc' : 'desc';
+            STATE.sort.field = field;
+            STATE.sort.dir = field === 'actualRank' || field === 'team_name' ? 'asc' : 'desc';
           }
           renderStandingsTable();
         });
       });
     }
 
-    function setupExportCSV() {
-      const btn = document.getElementById('btn-export-standings-csv');
-      if (btn) btn.addEventListener('click', () => {
-        const csv = Papa.unparse(STATE.computedStandings.map(r => ({
-          Rank: r.actualRank, Manager: r.manager, Team: r.team_name,
-          Wins: r.W, Losses: r.L, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
-          ETEW_Pct: (r.ETEW_pct * 100).toFixed(1) + '%', WABL: r.WABL.toFixed(2), RABL: r.RABL,
-          AVG: r.AVG.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
-        })));
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_W${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    function setupSparklineTooltips() {
+      const tooltip = document.getElementById('sparkline-tooltip');
+      document.addEventListener('mouseover', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          const info = e.target.getAttribute('data-info');
+          if (info) {
+            tooltip.innerHTML = info;
+            tooltip.classList.remove('hidden');
+          }
+        }
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!tooltip.classList.contains('hidden')) {
+          const leftPos = Math.min(window.innerWidth - 260, e.clientX + 12);
+          tooltip.style.left = `${leftPos}px`;
+          tooltip.style.top = `${e.clientY - 48}px`;
+        }
+      });
+      document.addEventListener('mouseout', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          tooltip.classList.add('hidden');
+        }
       });
     }
+
+    function downloadCSV() {
+      const data = STATE.computedStandings;
+      if (!data || data.length === 0) return;
+      const rows = data.map(r => ({
+        Rank: r.actualRank, Manager: r.manager, Team: r.team_name,
+        W: r.W, L: r.L, T: r.T, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
+        ETEW_Pct: (r.ETEW_pct * 100).toFixed(2) + '%', WABL: r.WABL.toFixed(2), RABL: r.RABL,
+        Best_Wk: `${r.bestScore.toFixed(2)} (Wk ${r.bestWk})`,
+        Worst_Wk: `${r.worstScore.toFixed(2)} (Wk ${r.worstWk})`,
+        AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
+      }));
+      const csv = Papa.unparse(rows);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_Wk${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    window.addEventListener('hashchange', () => {
+      if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
+      STATE._selfHash = null;
+      if (!STATE.loaded) { parseUrlHash(); return; }
+      applyUrlToState();
+      syncFilterUI();
+      renderActiveTab();
+    });
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
       setupTabNavigation();
       setupFilterControls();
-      setupSorting();
+      setupTableSorting();
       setupSparklineTooltips();
-      setupExportCSV();
-
-      parseUrlHash();
 
       document.getElementById('clear-manager-filter').addEventListener('click', () => {
-        STATE.filters.selectedManager = null; renderStandingsTable(); updateFilterBadge(); updateUrlHash();
+        STATE.filters.selectedManager = null;
+        updateFilterBadge();
+        renderStandingsTable();
+        updateUrlHash();
       });
 
-      window.addEventListener('hashchange', () => {
-        if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
-        STATE._selfHash = null;
-        if (!STATE.loaded) return;
-        applyUrlToState();
-        syncFilterUI();
-        renderActiveTab();
-      });
+      document.getElementById('btn-export-standings-csv').addEventListener('click', downloadCSV);
 
+      parseUrlHash();
+      applyTabFilterVisibility(FilterEngine.activeTab());
       loadDataPipeline();
       startLivePolling();
     });
