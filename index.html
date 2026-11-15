@@ -1408,6 +1408,34 @@
       return finalRanks;
     }
 
+    function getTrophyBadgeHTML(finalRank) {
+      if (finalRank !== 1 && finalRank !== 2 && finalRank !== 3) return '';
+      const styles = {
+        1: { fill: '#facc15', stroke: '#ca8a04', lace: '#713f12', title: '1st Place (Gold Trophy)' },
+        2: { fill: '#cbd5e1', stroke: '#64748b', lace: '#1e293b', title: '2nd Place (Silver Trophy)' },
+        3: { fill: '#d97706', stroke: '#92400e', lace: '#451a03', title: '3rd Place (Bronze Trophy)' }
+      };
+      const s = styles[finalRank];
+      return `
+        <span class="inline-flex items-center ml-1.5 align-middle" title="${s.title}">
+          <svg width="16" height="14" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="inline-block drop-shadow-sm">
+            <!-- Trophy Handles -->
+            <path d="M5 4H2.5C1.9 4 1.5 4.4 1.5 5V7C1.5 8.7 2.8 10 4.5 10H6" stroke="${s.stroke}" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M19 4H21.5C22.1 4 22.5 4.4 22.5 5V7C22.5 8.7 21.2 10 19.5 10H18" stroke="${s.stroke}" stroke-width="1.6" stroke-linecap="round"/>
+            <!-- Stem & Pedestal -->
+            <path d="M12 12.5V16" stroke="${s.stroke}" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M7.5 18.5H16.5L15.5 16H8.5L7.5 18.5Z" fill="${s.fill}" stroke="${s.stroke}" stroke-width="1.3" stroke-linejoin="round"/>
+            <!-- Football-shaped Cup -->
+            <ellipse cx="12" cy="7.2" rx="6.6" ry="4.8" fill="${s.fill}" stroke="${s.stroke}" stroke-width="1.5"/>
+            <!-- Football Laces -->
+            <line x1="9.2" y1="7.2" x2="14.8" y2="7.2" stroke="${s.lace}" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="10.4" y1="5.8" x2="10.4" y2="8.6" stroke="${s.lace}" stroke-width="1.1" stroke-linecap="round"/>
+            <line x1="12" y1="5.8" x2="12" y2="8.6" stroke="${s.lace}" stroke-width="1.1" stroke-linecap="round"/>
+            <line x1="13.6" y1="5.8" x2="13.6" y2="8.6" stroke="${s.lace}" stroke-width="1.1" stroke-linecap="round"/>
+          </svg>
+        </span>`;
+    }
+
     // ==========================================
     // SECTION 2: STANDINGS METRIC ENGINE
     // ==========================================
@@ -1418,11 +1446,12 @@
         const cw = getCurrentYearAndWeek();
         const isPriorYear = cw && Number(year) < Number(cw.curYear);
         const playoffStartWeek = getPlayoffStartWeek(year);
+        const effWeekMax = Number(weekMax);
 
         const pointsFiltered = STATE.data.points.filter(r => {
           const rYear = Number(getVal(r, ['year', 'YR']));
           const rWeek = Number(getVal(r, ['week', 'WK']));
-          return rYear === Number(year) && rWeek >= Number(weekMin) && rWeek <= Number(weekMax);
+          return rYear === Number(year) && rWeek >= Number(weekMin) && rWeek <= effWeekMax;
         });
 
         if (pointsFiltered.length === 0) return [];
@@ -1468,6 +1497,7 @@
               }
             });
             t.etew_share = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0;
+            t.isPlayoffByeOrNoMatchup = wkNum >= playoffStartWeek && t.opponent_team_id === 0 && t.team_points === 0;
             if (ignoreMatchupWLT || t.opponent_team_id === 0) {
               t.win = 0;
               t.loss = 0;
@@ -1509,32 +1539,39 @@
           const pa = group.reduce((acc, r) => acc + r.opponent_points, 0);
           const games = group.length;
 
+          // Exclude 0-point non-matchup playoff weeks (byes / eliminated teams) from worst_wk & per-game scoring stats
+          const activeScoringGroup = group.filter(r => !r.isPlayoffByeOrNoMatchup);
+          const scoringGames = activeScoringGroup.length;
+
           const etewSum = group.reduce((acc, r) => acc + r.etew_share, 0);
           const etewPct = games > 0 ? etewSum / games : 0;
           const etewRecordSum = group.reduce((acc, r) => acc + (r.countedForRecord ? r.etew_share : 0), 0);
           const wabl = recordGames > 0 ? (wins + 0.5 * ties) - etewRecordSum : 0;
 
-          const scoresArr = group.map(r => r.team_points);
+          const scoresArr = activeScoringGroup.map(r => r.team_points);
           const sortedScores = [...scoresArr].sort((a, b) => a - b);
           
           let maxScore = -1, bestWk = 0;
-          let minScore = 9999, worstWk = 0;
-          group.forEach(r => {
+          let minScore = Infinity, worstWk = 0;
+          activeScoringGroup.forEach(r => {
             if (r.team_points > maxScore) { maxScore = r.team_points; bestWk = r.week; }
             if (r.team_points < minScore) { minScore = r.team_points; worstWk = r.week; }
           });
+          if (maxScore < 0) maxScore = 0;
+          if (!isFinite(minScore)) minScore = 0;
 
-          const avg = games > 0 ? pf / games : 0;
+          const activePf = activeScoringGroup.reduce((acc, r) => acc + r.team_points, 0);
+          const avg = scoringGames > 0 ? activePf / scoringGames : 0;
           let avgStar = avg;
-          if (games > 2) {
+          if (scoringGames > 2) {
             const trimmed = sortedScores.slice(1, -1);
             avgStar = trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
           }
 
           let sdev = 0;
-          if (games > 1) {
+          if (scoringGames > 1) {
             const mean = avg;
-            const variance = scoresArr.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / (games - 1);
+            const variance = scoresArr.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / (scoringGames - 1);
             sdev = Math.sqrt(variance);
           }
 
@@ -1571,12 +1608,14 @@
         result.sort((a, b) => (b.W - a.W) || (b.T - a.T) || (b.PF - a.PF));
         result.forEach((r, idx) => r.regularRank = idx + 1);
 
-        // Supplant rank with final_rank when curWeek >= playoff_start_week or selected year < current year
+        // Compute final_rank whenever active; supplant rank ONLY when weekMax >= playoff_start_week
         const finalRanksMap = computeFinalRanks(year);
+        const useFinalRankForSorting = finalRanksMap !== null && effWeekMax >= playoffStartWeek;
         result.forEach(r => {
           const fRank = finalRanksMap && finalRanksMap[r.team_id] !== undefined ? finalRanksMap[r.team_id] : null;
           r.final_rank = fRank;
-          r.actualRank = fRank !== null ? fRank : r.regularRank;
+          r.priorYearTrophyRank = isPriorYear ? fRank : null;
+          r.actualRank = (useFinalRankForSorting && fRank !== null) ? fRank : r.regularRank;
         });
 
         result.sort((a, b) => a.actualRank - b.actualRank);
@@ -1585,15 +1624,24 @@
         etewSorted.forEach((r, idx) => r.etewRank = idx + 1);
 
         const totalRegWeeks = result[0] ? result[0].playoffStartWeek - 1 : 14;
-        const remainingWeeks = Math.max(0, totalRegWeeks - Number(weekMax));
+        const remainingWeeks = Math.max(0, totalRegWeeks - effWeekMax);
         const playoffCutoff = result[0] ? result[0].numPlayoffTeams : 6;
+        const regSorted = [...result].sort((a, b) => a.regularRank - b.regularRank);
 
         result.forEach(r => {
           r.RABL = r.etewRank - r.actualRank;
-          const winsAtCutoff7th = result[playoffCutoff] ? result[playoffCutoff].W : 0;
-          r.isClinched = r.actualRank <= playoffCutoff && r.W > (winsAtCutoff7th + remainingWeeks);
-          const winsAtCutoff6th = result[playoffCutoff - 1] ? result[playoffCutoff - 1].W : 0;
-          r.isEliminated = (r.W + remainingWeeks) < winsAtCutoff6th;
+          if (useFinalRankForSorting && r.final_rank !== null) {
+            r.isClinched = r.final_rank <= playoffCutoff;
+            r.isEliminated = r.final_rank > playoffCutoff;
+          } else if (remainingWeeks === 0) {
+            r.isClinched = r.regularRank <= playoffCutoff;
+            r.isEliminated = r.regularRank > playoffCutoff;
+          } else {
+            const winsAtCutoffNext = regSorted[playoffCutoff] ? regSorted[playoffCutoff].W : 0;
+            r.isClinched = r.regularRank <= playoffCutoff && r.W > (winsAtCutoffNext + remainingWeeks);
+            const winsAtCutoffLastIn = regSorted[playoffCutoff - 1] ? regSorted[playoffCutoff - 1].W : 0;
+            r.isEliminated = (r.W + remainingWeeks) < winsAtCutoffLastIn;
+          }
         });
 
         return result;
@@ -2000,13 +2048,15 @@
       const tbody = document.getElementById('standings-tbody');
       tbody.innerHTML = data.map(r => {
         const rankStr = String(r.actualRank).padStart(2, '0');
-        const rankClass = r.actualRank <= 6 ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 dark:text-slate-500 line-through";
+        const playoffCutoff = r.numPlayoffTeams || 6;
+        const rankClass = r.actualRank <= playoffCutoff ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-400 dark:text-slate-500 line-through";
         let teamClass = "text-slate-900 dark:text-slate-100 font-semibold";
         if (r.isClinched) teamClass = "clinched-text";
         if (r.isEliminated) teamClass = "eliminated-text";
 
-        const isCutoff = r.actualRank === 6;
+        const isCutoff = r.actualRank === playoffCutoff;
         const rowClass = isCutoff ? "playoff-cutoff-row" : "";
+        const trophyHTML = getTrophyBadgeHTML(r.priorYearTrophyRank);
 
         const wBg = HEATMAPS.greenClearRed(r.winPct, wStats.min, wStats.mid, wStats.max);
         const etewBg = HEATMAPS.greenClearRed(r.ETEW_pct, etewStats.min, 0.50, etewStats.max);
@@ -2026,7 +2076,7 @@
             <td class="text-center ${rankClass}">${rankStr}</td>
             <td class="text-left cursor-pointer" onclick="toggleManagerFilter('${r.manager}')">
               <span class="text-xs font-semibold mr-1.5 border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${getManagerColor(r.manager)}">${r.manager}</span>
-              <span class="${teamClass}">${r.team_name}</span>
+              <span class="${teamClass}">${r.team_name}</span>${trophyHTML}
             </td>
             <td class="text-center font-mono font-bold" style="background-color: ${wBg}">${r.W} - ${r.L}${r.T > 0 ? ` - ${r.T}` : ''}</td>
             <td class="text-right font-mono" style="background-color: ${pfBg}">${r.PF.toFixed(1)}</td>
@@ -4385,44 +4435,49 @@
       const labels = rows.map(r => formatTimeLabel(getVal(r, ['TIME', 'time'])));
       const tmaPts = rows.map(r => Number(getVal(r, ['TMAPTS', 'team_points'])) || 0);
       const tmbPts = rows.map(r => Number(getVal(r, ['TMBPTS', 'opponent_points'])) || 0);
-      const tmaProj = rows.map(r => Number(getVal(r, ['TMAPROJ', 'team_proj_points'])) || 0);
-      const tmbProj = rows.map(r => Number(getVal(r, ['TMBPROJ', 'opponent_proj_points'])) || 0);
-      
+      const tmaProj = rows.map(r => Number(getVal(r, ['TMAPROJ'])) || 0);
+      const tmbProj = rows.map(r => Number(getVal(r, ['TMBPROJ'])) || 0);
       const tmaWpRaw = rows.map(r => Number(getVal(r, ['TMAWP'])) || 0);
-      const tmbWpRaw = rows.map(r => Number(getVal(r, ['TMBWP'])) || 0);
 
-      const tmaWpNorm = [];
-      const tmbWpNorm = [];
+      const isDecimalWp = Math.max(...tmaWpRaw) <= 1.05;
+      const tmaWpNorm = tmaWpRaw.map(v => isDecimalWp ? v * 100 : v);
+      const tmbWpNorm = tmaWpNorm.map(v => Math.max(0, 100 - v));
 
-      for (let i = 0; i < rows.length; i++) {
-        const rawA = tmaWpRaw[i];
-        const rawB = tmbWpRaw[i];
-        const sum = rawA + rawB;
-        if (sum > 0) {
-          const normA = (rawA / sum) * 100;
-          tmaWpNorm.push(normA);
-          tmbWpNorm.push(100 - normA);
-        } else {
-          tmaWpNorm.push(50);
-          tmbWpNorm.push(50);
-        }
-      }
+      const teamAName = getTeamName(tma, yr);
+      const teamBName = getTeamName(tmb, yr);
+
+      const allPts = [...tmaPts, ...tmbPts, ...tmaProj, ...tmbProj].filter(v => v > 0);
+      const maxPtsAxis = allPts.length > 0 ? Math.ceil(Math.max(...allPts) / 10) * 10 + 10 : 200;
 
       STATE.liveProb.fullSeries = {
-        tma, tmb, mgrA, mgrB, colorA, colorB,
-        labels, tmaPts, tmbPts, tmaProj, tmbProj,
-        tmaWpNorm, tmbWpNorm, tmaWpRaw, tmbWpRaw,
-        lastRow: rows[rows.length - 1]
+        labels, tmaPts, tmbPts, tmaProj, tmbProj, tmaWpNorm, tmbWpNorm,
+        teamAName, teamBName, mgrA, mgrB, colorA, colorB, maxPtsAxis
       };
 
-      const nameA = getTeamName(tma, yr);
-      const nameB = getTeamName(tmb, yr);
+      const nameAEl = document.getElementById('scorecard-tma-name');
+      const nameBEl = document.getElementById('scorecard-tmb-name');
+      if (nameAEl) nameAEl.innerText = teamAName;
+      if (nameBEl) nameBEl.innerText = teamBName;
 
-      initFixedChart(labels, nameA, nameB, colorA, colorB);
+      const mgrAEl = document.getElementById('scorecard-tma-mgr');
+      const mgrBEl = document.getElementById('scorecard-tmb-mgr');
+      if (mgrAEl) { mgrAEl.innerText = mgrA; mgrAEl.style.color = colorA; }
+      if (mgrBEl) { mgrBEl.innerText = mgrB; mgrBEl.style.color = colorB; }
+
+      const ptsAEl = document.getElementById('scorecard-tma-pts');
+      const ptsBEl = document.getElementById('scorecard-tmb-pts');
+      const wpAEl = document.getElementById('scorecard-tma-wp');
+      const wpBEl = document.getElementById('scorecard-tmb-wp');
+      if (ptsAEl) ptsAEl.style.color = colorA;
+      if (ptsBEl) ptsBEl.style.color = colorB;
+      if (wpAEl) wpAEl.style.color = colorA;
+      if (wpBEl) wpBEl.style.color = colorB;
+
+      initLiveProbChartCanvas(labels, teamAName, teamBName, colorA, colorB, maxPtsAxis);
       restartReplay();
     }
 
-    function initFixedChart(fullLabels, nameA, nameB, colorA, colorB) {
+    function initLiveProbChartCanvas(labels, teamAName, teamBName, colorA, colorB, maxPtsAxis) {
       const canvas = document.getElementById('liveWinProbChart');
       if (!canvas) return;
 
@@ -4434,88 +4489,36 @@
         STATE.liveProb.chartInstance.destroy();
       }
 
-      const emptyArray = new Array(fullLabels.length).fill(null);
+      const emptyArray = new Array(labels.length).fill(null);
 
       const ctx = canvas.getContext('2d');
       STATE.liveProb.chartInstance = new Chart(ctx, {
         type: 'line',
         plugins: [liveReplayOverlayPlugin],
         data: {
-          labels: fullLabels,
+          labels: labels,
           datasets: [
             {
-              label: `${nameA} (Actual)`,
-              data: [...emptyArray],
-              borderColor: colorA,
-              backgroundColor: colorA,
-              borderWidth: 3,
-              pointRadius: 0,
-              pointHoverRadius: 6,
-              yAxisID: 'y',
-              tension: 0.15,
-              spanGaps: false
+              label: `${teamAName} Pts`, data: [...emptyArray], borderColor: colorA,
+              backgroundColor: hexToRgba(colorA, 0.1), borderWidth: 3, pointRadius: 0, pointHoverRadius: 5, tension: 0.2, yAxisID: 'y'
             },
             {
-              label: `${nameB} (Actual)`,
-              data: [...emptyArray],
-              borderColor: colorB,
-              backgroundColor: colorB,
-              borderWidth: 3,
-              pointRadius: 0,
-              pointHoverRadius: 6,
-              yAxisID: 'y',
-              tension: 0.15,
-              spanGaps: false
+              label: `${teamBName} Pts`, data: [...emptyArray], borderColor: colorB,
+              backgroundColor: hexToRgba(colorB, 0.1), borderWidth: 3, pointRadius: 0, pointHoverRadius: 5, tension: 0.2, yAxisID: 'y'
             },
             {
-              label: `${nameA} (Proj)`,
-              data: [...emptyArray],
-              borderColor: colorA,
-              borderWidth: 2,
-              borderDash: [6, 4],
-              pointRadius: 0,
-              pointHoverRadius: 4,
-              yAxisID: 'y',
-              tension: 0.15,
-              spanGaps: false
+              label: `${teamAName} Proj`, data: [...emptyArray], borderColor: colorA,
+              borderDash: [5, 5], borderWidth: 1.5, pointRadius: 0, tension: 0.2, yAxisID: 'y'
             },
             {
-              label: `${nameB} (Proj)`,
-              data: [...emptyArray],
-              borderColor: colorB,
-              borderWidth: 2,
-              borderDash: [6, 4],
-              pointRadius: 0,
-              pointHoverRadius: 4,
-              yAxisID: 'y',
-              tension: 0.15,
-              spanGaps: false
+              label: `${teamBName} Proj`, data: [...emptyArray], borderColor: colorB,
+              borderDash: [5, 5], borderWidth: 1.5, pointRadius: 0, tension: 0.2, yAxisID: 'y'
             },
             {
-              label: `${nameA} Win %`,
-              data: [...emptyArray],
-              borderColor: hexToRgba(colorA, 0.4),
-              backgroundColor: hexToRgba(colorA, 0.25),
-              fill: 'origin',
-              borderWidth: 1.5,
-              pointRadius: 0,
-              yAxisID: 'y1',
-              stack: 'winprob',
-              tension: 0.2,
-              spanGaps: false
-            },
-            {
-              label: `${nameB} Win %`,
-              data: [...emptyArray],
-              borderColor: hexToRgba(colorB, 0.4),
-              backgroundColor: hexToRgba(colorB, 0.25),
-              fill: '-1',
-              borderWidth: 1.5,
-              pointRadius: 0,
-              yAxisID: 'y1',
-              stack: 'winprob',
-              tension: 0.2,
-              spanGaps: false
+              label: `${teamAName} Win Prob %`, data: [...emptyArray], borderColor: colorA,
+              backgroundColor: hexToRgba(colorA, 0.18), fill: { target: { value: 50 }, above: hexToRgba(colorA, 0.18), below: hexToRgba(colorB, 0.18) },
+              borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25, yAxisID: 'y1',
+              segment: { borderColor: ctx => (ctx.p0.parsed.y >= 50 && ctx.p1.parsed.y >= 50) ? colorA : colorB }
             }
           ]
         },
@@ -4526,24 +4529,29 @@
           interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: {
-              position: 'top',
-              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14 }
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 15 }
             },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               titleColor: isDark ? '#f8fafc' : '#0f172a',
               bodyColor: isDark ? '#cbd5e1' : '#334155',
               borderColor: isDark ? '#334155' : '#cbd5e1',
-              borderWidth: 1,
-              padding: 10,
+              borderWidth: 1, padding: 10,
               callbacks: {
-                label: function(ctx) {
-                  let label = ctx.dataset.label || '';
-                  if (label) label += ': ';
-                  if (ctx.parsed.y !== null && ctx.parsed.y !== undefined) {
-                    label += ctx.dataset.yAxisID === 'y1' ? `${ctx.parsed.y.toFixed(0)}%` : ctx.parsed.y.toFixed(2);
+                label: (ctx) => {
+                  const val = ctx.parsed.y;
+                  if (val === null || val === undefined) return null;
+                  if (ctx.dataset.yAxisID === 'y1') {
+                    const probA = val;
+                    const probB = Math.max(0, 100 - probA);
+                    const s = STATE.liveProb.fullSeries;
+                    if (probA >= 50) {
+                      return `Win Prob: ${s.teamAName} ${probA.toFixed(1)}%`;
+                    } else {
+                      return `Win Prob: ${s.teamBName} ${probB.toFixed(1)}%`;
+                    }
                   }
-                  return label;
+                  return `${ctx.dataset.label}: ${val.toFixed(2)}`;
                 }
               }
             }
@@ -4551,27 +4559,19 @@
           scales: {
             x: {
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 14 }
+              ticks: { color: textColor, maxTicksLimit: 12, font: { size: 10 } }
             },
             y: {
-              type: 'linear',
-              display: true,
-              position: 'left',
-              title: { display: true, text: 'Points Scored', color: textColor, font: { size: 11, weight: '700' } },
+              type: 'linear', display: true, position: 'left', min: 0, max: maxPtsAxis,
+              title: { display: true, text: 'Fantasy Points', color: textColor, font: { size: 11, weight: '700' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 10 } },
-              min: 0
+              ticks: { color: textColor, font: { size: 11 } }
             },
             y1: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              stacked: true,
-              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '700' } },
+              type: 'linear', display: true, position: 'right', min: 0, max: 100,
+              title: { display: true, text: 'Win Probability %', color: textColor, font: { size: 11, weight: '700' } },
               grid: { drawOnChartArea: false },
-              ticks: { color: textColor, font: { size: 10 }, callback: v => `${v}%` },
-              min: 0,
-              max: 100
+              ticks: { color: textColor, font: { size: 11 }, callback: v => v + '%' }
             }
           }
         }
@@ -4584,98 +4584,75 @@
 
       const total = s.labels.length;
       const validIdx = Math.min(total, Math.max(1, idx));
+      const padLen = total - validIdx;
+      const padArr = new Array(padLen).fill(null);
 
-      const yr = STATE.filters.year;
-      const nameA = getTeamName(s.tma, yr);
-      const mgrA = s.mgrA;
-      const nameB = getTeamName(s.tmb, yr);
-      const mgrB = s.mgrB;
+      const chart = STATE.liveProb.chartInstance;
+      chart.data.datasets[0].data = s.tmaPts.slice(0, validIdx).concat(padArr);
+      chart.data.datasets[1].data = s.tmbPts.slice(0, validIdx).concat(padArr);
+      chart.data.datasets[2].data = s.tmaProj.slice(0, validIdx).concat(padArr);
+      chart.data.datasets[3].data = s.tmbProj.slice(0, validIdx).concat(padArr);
+      chart.data.datasets[4].data = s.tmaWpNorm.slice(0, validIdx).concat(padArr);
 
-      const idx0 = validIdx - 1;
-      const wpA = s.tmaWpNorm[idx0];
-      const wpB = s.tmbWpNorm[idx0];
+      const lastIdx = validIdx - 1;
+      const wpA = s.tmaWpNorm[lastIdx];
+      const wpB = s.tmbWpNorm[lastIdx];
 
-      document.getElementById('scorecard-tma-name').innerText = nameA;
-      document.getElementById('scorecard-tma-mgr').innerText = mgrA ? `Manager: ${mgrA}` : '';
-      document.getElementById('scorecard-tma-pts').innerText = s.tmaPts[idx0].toFixed(2);
-      document.getElementById('scorecard-tma-pts').style.color = s.colorA;
-      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.tmaProj[idx0].toFixed(2)}`;
-      document.getElementById('scorecard-tma-wp').innerText = `${wpA.toFixed(0)}%`;
-      document.getElementById('scorecard-tma-wp').style.color = s.colorA;
-
-      document.getElementById('scorecard-tmb-name').innerText = nameB;
-      document.getElementById('scorecard-tmb-mgr').innerText = mgrB ? `Manager: ${mgrB}` : '';
-      document.getElementById('scorecard-tmb-pts').innerText = s.tmbPts[idx0].toFixed(2);
-      document.getElementById('scorecard-tmb-pts').style.color = s.colorB;
-      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[idx0].toFixed(2)}`;
-      document.getElementById('scorecard-tmb-wp').innerText = `${wpB.toFixed(0)}%`;
-      document.getElementById('scorecard-tmb-wp').style.color = s.colorB;
+      document.getElementById('scorecard-tma-pts').innerText = s.tmaPts[lastIdx].toFixed(2);
+      document.getElementById('scorecard-tmb-pts').innerText = s.tmbPts[lastIdx].toFixed(2);
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.tmaProj[lastIdx].toFixed(2)}`;
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[lastIdx].toFixed(2)}`;
+      document.getElementById('scorecard-tma-wp').innerText = `${wpA.toFixed(1)}%`;
+      document.getElementById('scorecard-tmb-wp').innerText = `${wpB.toFixed(1)}%`;
 
       const cardA = document.getElementById('scorecard-card-tma');
       const cardB = document.getElementById('scorecard-card-tmb');
-      const chartContainer = document.getElementById('live-prob-chart-container');
+      const chartBox = document.getElementById('live-prob-chart-container');
 
-      if (wpA > 50) {
-        const intensity = Math.min(1, (wpA - 50) / 50);
-        cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08 + 0.22 * intensity);
-        cardA.style.borderColor = hexToRgba(s.colorA, 0.3 + 0.4 * intensity);
-        cardB.style.backgroundColor = '';
-        cardB.style.borderColor = '';
+      const isLeaderA = wpA >= wpB;
+      const leaderColor = isLeaderA ? s.colorA : s.colorB;
 
-        if (chartContainer) {
-          chartContainer.style.backgroundColor = hexToRgba(s.colorA, 0.06 + 0.14 * intensity);
-          chartContainer.style.borderColor = hexToRgba(s.colorA, 0.25 + 0.35 * intensity);
+      if (cardA && cardB) {
+        if (isLeaderA) {
+          cardA.style.borderColor = s.colorA;
+          cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08);
+          cardB.style.borderColor = '';
+          cardB.style.backgroundColor = '';
+        } else {
+          cardB.style.borderColor = s.colorB;
+          cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08);
+          cardA.style.borderColor = '';
+          cardA.style.backgroundColor = '';
         }
-      } else if (wpB > 50) {
-        const intensity = Math.min(1, (wpB - 50) / 50);
-        cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08 + 0.22 * intensity);
-        cardB.style.borderColor = hexToRgba(s.colorB, 0.3 + 0.4 * intensity);
-        cardA.style.backgroundColor = '';
-        cardA.style.borderColor = '';
+      }
 
-        if (chartContainer) {
-          chartContainer.style.backgroundColor = hexToRgba(s.colorB, 0.06 + 0.14 * intensity);
-          chartContainer.style.borderColor = hexToRgba(s.colorB, 0.25 + 0.35 * intensity);
-        }
-      } else {
-        cardA.style.backgroundColor = ''; cardA.style.borderColor = '';
-        cardB.style.backgroundColor = ''; cardB.style.borderColor = '';
-        if (chartContainer) { chartContainer.style.backgroundColor = ''; chartContainer.style.borderColor = ''; }
+      if (chartBox) {
+        chartBox.style.borderColor = hexToRgba(leaderColor, 0.55);
       }
 
       const scrubber = document.getElementById('replay-scrubber');
-      if (scrubber) scrubber.value = Math.round((validIdx / total) * 100);
-
-      const padNull = (arr) => arr.slice(0, validIdx).concat(new Array(total - validIdx).fill(null));
-      const extendRight = (arr) => {
-        const sliced = arr.slice(0, validIdx);
-        const lastVal = sliced[sliced.length - 1];
-        return sliced.concat(new Array(total - validIdx).fill(lastVal));
-      };
-
-      const chart = STATE.liveProb.chartInstance;
-      chart.data.datasets[0].data = padNull(s.tmaPts);
-      chart.data.datasets[1].data = padNull(s.tmbPts);
-      chart.data.datasets[2].data = extendRight(s.tmaProj);
-      chart.data.datasets[3].data = extendRight(s.tmbProj);
-      chart.data.datasets[4].data = padNull(s.tmaWpNorm);
-      chart.data.datasets[5].data = padNull(s.tmbWpNorm);
+      if (scrubber) {
+        scrubber.value = Math.round((validIdx / total) * 100);
+      }
 
       chart.update('none');
     }
 
     function togglePlayPause() {
-      if (STATE.liveProb.isPlaying) pauseReplay();
-      else {
+      if (STATE.liveProb.isPlaying) {
+        pauseReplay();
+      } else {
         const s = STATE.liveProb.fullSeries;
-        if (s && STATE.liveProb.currentIdx >= s.labels.length) STATE.liveProb.currentIdx = 1;
+        if (s && STATE.liveProb.currentIdx >= s.labels.length) {
+          STATE.liveProb.currentIdx = 1;
+        }
         startReplay();
       }
     }
 
     function startReplay() {
       STATE.liveProb.isPlaying = true;
-      updatePlayPauseUI();
+      updatePlayPauseButtonUI();
       restartIntervalTimer();
     }
 
@@ -4685,7 +4662,7 @@
         clearInterval(STATE.liveProb.animationTimer);
         STATE.liveProb.animationTimer = null;
       }
-      updatePlayPauseUI();
+      updatePlayPauseButtonUI();
     }
 
     function restartReplay() {
@@ -4696,8 +4673,9 @@
 
     function restartIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
+
       const mult = STATE.liveProb.speedMultiplier || 3;
-      const intervalMs = Math.max(10, Math.round(120 / mult));
+      const intervalMs = Math.max(15, Math.round(90 / mult));
 
       STATE.liveProb.animationTimer = setInterval(() => {
         const s = STATE.liveProb.fullSeries;
@@ -4714,10 +4692,11 @@
       }, intervalMs);
     }
 
-    function updatePlayPauseUI() {
+    function updatePlayPauseButtonUI() {
       const icon = document.getElementById('play-pause-icon');
       const text = document.getElementById('play-pause-text');
       const btn = document.getElementById('btn-play-pause-replay');
+      if (!icon || !text || !btn) return;
 
       if (STATE.liveProb.isPlaying) {
         icon.className = 'fa-solid fa-pause'; text.innerText = 'Pause';
@@ -4729,28 +4708,14 @@
     }
 
     function updateChartThemeColors() {
-      const chart = STATE.liveProb.chartInstance;
-      if (!chart) return;
-      const isDark = document.documentElement.classList.contains('dark');
-      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-      const textColor = isDark ? '#94a3b8' : '#475569';
-
-      chart.options.scales.x.grid.color = gridColor;
-      chart.options.scales.x.ticks.color = textColor;
-      chart.options.scales.y.grid.color = gridColor;
-      chart.options.scales.y.ticks.color = textColor;
-      chart.options.scales.y.title.color = textColor;
-      chart.options.scales.y1.ticks.color = textColor;
-      chart.options.scales.y1.title.color = textColor;
-      chart.options.plugins.legend.labels.color = textColor;
-      chart.update('none');
+      renderLiveProbMatchup();
     }
 
     function downloadChartPNG() {
       const chart = STATE.liveProb.chartInstance;
       if (!chart) return;
       const link = document.createElement('a');
-      link.download = `NDL_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
+      link.download = `NDL_WinProb_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
       link.href = chart.toBase64Image();
       link.click();
     }
@@ -4758,123 +4723,90 @@
     function downloadChartCSV() {
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
-      const yr = STATE.filters.year;
-      const nameA = getTeamName(s.tma, yr);
-      const nameB = getTeamName(s.tmb, yr);
-
-      const rows = s.labels.map((lbl, i) => ({
+      const rows = s.labels.map((lbl, idx) => ({
         Time: lbl,
-        [`${nameA}_Actual`]: s.tmaPts[i],
-        [`${nameB}_Actual`]: s.tmbPts[i],
-        [`${nameA}_Proj`]: s.tmaProj[i],
-        [`${nameB}_Proj`]: s.tmbProj[i],
-        [`${nameA}_WinProb_Pct`]: s.tmaWpNorm[i].toFixed(2),
-        [`${nameB}_WinProb_Pct`]: s.tmbWpNorm[i].toFixed(2)
+        [s.teamAName + '_Pts']: s.tmaPts[idx],
+        [s.teamBName + '_Pts']: s.tmbPts[idx],
+        [s.teamAName + '_Proj']: s.tmaProj[idx],
+        [s.teamBName + '_Proj']: s.tmbProj[idx],
+        [s.teamAName + '_WinProb']: s.tmaWpNorm[idx].toFixed(2),
+        [s.teamBName + '_WinProb']: s.tmbWpNorm[idx].toFixed(2)
       }));
-
       const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `NDL_Matchup_Data_${yr}_Wk${STATE.filters.weekMax}.csv`);
+      link.setAttribute("download", `NDL_WinProb_${STATE.filters.year}_Wk${STATE.filters.weekMax}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
-    // ==========================================
-    // SECTION 10: EVENT LISTENERS & BOOTSTRAP
-    // ==========================================
-    function setupTableSorting() {
-      document.querySelectorAll('.standings-table th[data-sort]').forEach(th => {
+    function setupEventListeners() {
+      document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
           const field = th.getAttribute('data-sort');
-          if (STATE.sort.field === field) {
-            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
-          } else {
-            STATE.sort.field = field;
-            STATE.sort.dir = field === 'actualRank' || field === 'team_name' ? 'asc' : 'desc';
-          }
+          if (STATE.sort.field === field) STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          else { STATE.sort.field = field; STATE.sort.dir = field === 'actualRank' || field === 'team_name' ? 'asc' : 'desc'; }
           renderStandingsTable();
         });
       });
-    }
 
-    function setupSparklineTooltips() {
+      document.getElementById('clear-manager-filter').addEventListener('click', () => {
+        STATE.filters.selectedManager = null; renderStandingsTable(); updateFilterBadge(); updateUrlHash();
+      });
+
+      document.getElementById('btn-export-standings-csv').addEventListener('click', () => {
+        if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
+        const rows = STATE.computedStandings.map(r => ({
+          Rank: r.actualRank, Manager: r.manager, Team: r.team_name, Record: `${r.W}-${r.L}-${r.T}`,
+          PF: r.PF.toFixed(1), PA: r.PA.toFixed(1), ETEW_Pct: (r.ETEW_pct * 100).toFixed(1) + '%',
+          WABL: r.WABL.toFixed(2), RABL: r.RABL, Best_Wk: `${r.bestScore.toFixed(2)} (Wk ${r.bestWk})`,
+          Worst_Wk: `${r.worstScore.toFixed(2)} (Wk ${r.worstWk})`, AVG: r.AVG.toFixed(2),
+          AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
+        }));
+        const csv = Papa.unparse(rows);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_W${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      });
+
       const tooltip = document.getElementById('sparkline-tooltip');
       document.addEventListener('mouseover', (e) => {
         if (e.target.classList.contains('sparkline-dot')) {
-          const info = e.target.getAttribute('data-info');
-          if (info) {
-            tooltip.innerHTML = info;
-            tooltip.classList.remove('hidden');
-          }
+          tooltip.innerHTML = e.target.getAttribute('data-info');
+          tooltip.classList.remove('hidden');
         }
       });
       document.addEventListener('mousemove', (e) => {
         if (!tooltip.classList.contains('hidden')) {
-          const leftPos = Math.min(window.innerWidth - 260, e.clientX + 12);
-          tooltip.style.left = `${leftPos}px`;
-          tooltip.style.top = `${e.clientY - 48}px`;
+          tooltip.style.left = `${e.clientX + 12}px`; tooltip.style.top = `${e.clientY - 28}px`;
         }
       });
       document.addEventListener('mouseout', (e) => {
-        if (e.target.classList.contains('sparkline-dot')) {
-          tooltip.classList.add('hidden');
-        }
+        if (e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden');
       });
     }
 
-    function downloadCSV() {
-      const data = STATE.computedStandings;
-      if (!data || data.length === 0) return;
-      const rows = data.map(r => ({
-        Rank: r.actualRank, Manager: r.manager, Team: r.team_name,
-        W: r.W, L: r.L, T: r.T, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
-        ETEW_Pct: (r.ETEW_pct * 100).toFixed(2) + '%', WABL: r.WABL.toFixed(2), RABL: r.RABL,
-        Best_Wk: `${r.bestScore.toFixed(2)} (Wk ${r.bestWk})`,
-        Worst_Wk: `${r.worstScore.toFixed(2)} (Wk ${r.worstWk})`,
-        AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
-      }));
-      const csv = Papa.unparse(rows);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_Wk${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    document.addEventListener('DOMContentLoaded', async () => {
+      initTheme();
+      setupTabNavigation();
+      setupFilterControls();
+      setupEventListeners();
+      parseUrlHash();
+      await loadDataPipeline();
+      startLivePolling();
+    });
 
     window.addEventListener('hashchange', () => {
       if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
       STATE._selfHash = null;
-      if (!STATE.loaded) { parseUrlHash(); return; }
+      if (!STATE.loaded) return;
       applyUrlToState();
       syncFilterUI();
       renderActiveTab();
-    });
-
-    window.addEventListener('DOMContentLoaded', () => {
-      initTheme();
-      setupTabNavigation();
-      setupFilterControls();
-      setupTableSorting();
-      setupSparklineTooltips();
-
-      document.getElementById('clear-manager-filter').addEventListener('click', () => {
-        STATE.filters.selectedManager = null;
-        updateFilterBadge();
-        renderStandingsTable();
-        updateUrlHash();
-      });
-
-      document.getElementById('btn-export-standings-csv').addEventListener('click', downloadCSV);
-
-      parseUrlHash();
-      applyTabFilterVisibility(FilterEngine.activeTab());
-      loadDataPipeline();
-      startLivePolling();
     });
   </script>
 </body>
