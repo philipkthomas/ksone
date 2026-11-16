@@ -185,6 +185,17 @@
       min-width: 100%;
     }
 
+    .survivor-table th:not(:first-child), .survivor-table td:not(:first-child) {
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+    .survivor-table .survivor-cell-box {
+      padding: 4px 3px;
+      gap: 3px;
+      font-size: 0.75rem;
+      min-width: max-content;
+    }
+
     @keyframes survivorBarReveal {
       0% {
         opacity: 0;
@@ -1133,16 +1144,19 @@
 
     // Manager Signature Color Palette
     const MANAGER_COLORS = {
-      'Brad': '#dc2626',      // Red
-      'Christian': '#16a34a', // Green
-      'Cole': '#9a3412',      // Brown
-      'Dan': '#94a3b8',       // Silver / Light Grey
-      'Fish': '#7c3aed',      // Purple
-      'Jare': '#000000',      // Black (Light) / White (Dark)
-      'Ken': '#0284c7',       // Royal Blue
-      'Mike': '#eab308',      // Gold / Yellow
-      'Pax': '#84cc16',       // Lime Green
-      'Phil': '#0ea5e9'       // Light Blue / Cyan
+      'Phil': '#2A9DF4',
+      'Cole': '#B04A38',
+      'Mike': '#CC9400',
+      'Fish': '#7B4BFF',
+      'Ken': '#0066F0',
+      'Christian': '#1E7B47',
+      'Brad': '#E02D3C',
+      'Pax': '#5EB800',
+      'Dan': '#7D8590',
+      'Jare': '#000000',      // White in dark mode (handled in getManagerColor)
+      'Lil': '#F0509A',
+      'Dead': '#14A89A',
+      'Evan': '#E8651A'
     };
 
     const DIVISIONS = {
@@ -1223,21 +1237,23 @@
       const isDark = document.documentElement.classList.contains('dark');
       const mgrStr = String(mgr || '').trim();
 
-      if (mgrStr === 'Dan') return isDark ? '#e2e8f0' : '#94a3b8';
-      if (mgrStr === 'Jare') return isDark ? '#f8fafc' : '#000000';
+      if (mgrStr === 'Jare') return isDark ? '#FFFFFF' : '#000000';
       if (MANAGER_COLORS[mgrStr]) return MANAGER_COLORS[mgrStr];
 
       const lower = mgrStr.toLowerCase();
-      if (lower.includes('brad')) return '#dc2626';
-      if (lower.includes('christian')) return '#16a34a';
-      if (lower.includes('cole')) return '#9a3412';
-      if (lower.includes('dan')) return isDark ? '#e2e8f0' : '#94a3b8';
-      if (lower.includes('fish') || lower.includes('matt')) return '#7c3aed';
-      if (lower.includes('jare')) return isDark ? '#f8fafc' : '#000000';
-      if (lower.includes('ken')) return '#0284c7';
-      if (lower.includes('mike') || lower.includes('michael')) return '#eab308';
-      if (lower.includes('pax')) return '#84cc16';
-      if (lower.includes('phil')) return '#0ea5e9';
+      if (lower.includes('jare')) return isDark ? '#FFFFFF' : '#000000';
+      if (lower.includes('christian')) return MANAGER_COLORS['Christian'];
+      if (lower.includes('brad')) return MANAGER_COLORS['Brad'];
+      if (lower.includes('cole')) return MANAGER_COLORS['Cole'];
+      if (lower.includes('dead')) return MANAGER_COLORS['Dead'];
+      if (lower.includes('evan')) return MANAGER_COLORS['Evan'];
+      if (lower.includes('fish') || lower.includes('matt')) return MANAGER_COLORS['Fish'];
+      if (lower.includes('ken')) return MANAGER_COLORS['Ken'];
+      if (lower.includes('lil')) return MANAGER_COLORS['Lil'];
+      if (lower.includes('mike') || lower.includes('michael')) return MANAGER_COLORS['Mike'];
+      if (lower.includes('pax')) return MANAGER_COLORS['Pax'];
+      if (lower.includes('phil')) return MANAGER_COLORS['Phil'];
+      if (lower.includes('dan')) return MANAGER_COLORS['Dan'];
 
       const fallback = ['#0ea5e9', '#f97316', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4', '#6366f1', '#14b8a6', '#d97706'];
       return fallback[idx % fallback.length];
@@ -2996,9 +3012,9 @@
       const curWk = getSurvivorCurrentWeek();
 
       // Fixed column widths so the grid NEVER stretches or shifts during left-to-right animation
-      let colHtml = `<col style="width: 195px;">`;
+      let colHtml = `<col style="width: 170px;">`;
       for (let w = 1; w <= s.maxWeek; w++) {
-        colHtml += `<col style="width: 112px;">`;
+        colHtml += `<col style="width: 88px;">`;
       }
       colgroup.innerHTML = colHtml;
 
@@ -3009,7 +3025,7 @@
           ? 'survivor-th-current text-center font-extrabold px-2 py-2'
           : 'text-center font-bold px-2 py-2 text-slate-600 dark:text-slate-400';
         const badgeHtml = isCurrent
-          ? `<span class="ml-1 inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>NOW</span>`
+          ? `<span class="mt-0.5 mx-auto w-fit flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>NOW</span>`
           : '';
         headHtml += `<th class="${thClass}">WK ${w}${badgeHtml}</th>`;
       }
@@ -3159,8 +3175,8 @@
         STATE.survivor.chartInstance.destroy();
       }
 
-      const weeksLabels = Array.from({ length: s.maxWeek + 1 }, (_, i) => i);
-      const emptyArray = new Array(s.maxWeek + 1).fill(null);
+      const weeksLabels = Array.from({ length: s.maxWeek + 2 }, (_, i) => (i <= s.maxWeek ? i : ''));
+      const emptyArray = new Array(s.maxWeek + 2).fill(null);
 
       const datasets = s.orderedTeams.map((t) => {
         const mgrColor = getManagerColor(t.manager);
@@ -3175,7 +3191,7 @@
           borderWidth: 2.5,
           pointRadius: 0,
           pointHoverRadius: 5,
-          tension: 0.15,
+          tension: 0,
           spanGaps: false
         };
       });
@@ -3222,10 +3238,10 @@
           scales: {
             x: {
               title: { display: true, text: 'Week', color: textColor, font: { size: 13, weight: '700' } },
-              grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 12, weight: '700' } },
+              grid: { color: (c) => (c.index > s.maxWeek ? 'transparent' : gridColor) },
+              ticks: { color: textColor, font: { size: 12, weight: '700' }, callback: (v, i) => (i > s.maxWeek ? '' : i) },
               min: 0,
-              max: s.maxWeek
+              max: s.maxWeek + 1
             },
             y: {
               min: 0,
@@ -3916,7 +3932,7 @@
         pointStyle: 'rect',
         pointRadius: 6,
         pointHoverRadius: 8,
-        tension: 0.1,
+        tension: 0,
         order: 1
       });
 
@@ -4388,7 +4404,7 @@
           pointRadius: 3.5,
           pointHoverRadius: 6.5,
           clip: false,
-          tension: 0.1
+          tension: 0
         };
       });
 
@@ -4973,7 +4989,7 @@
               pointRadius: 0,
               pointHoverRadius: 6,
               yAxisID: 'y',
-              tension: 0.15,
+              tension: 0,
               spanGaps: false
             },
             {
@@ -4985,7 +5001,7 @@
               pointRadius: 0,
               pointHoverRadius: 6,
               yAxisID: 'y',
-              tension: 0.15,
+              tension: 0,
               spanGaps: false
             },
             {
@@ -4997,7 +5013,7 @@
               pointRadius: 0,
               pointHoverRadius: 4,
               yAxisID: 'y',
-              tension: 0.15,
+              tension: 0,
               spanGaps: false
             },
             {
@@ -5009,7 +5025,7 @@
               pointRadius: 0,
               pointHoverRadius: 4,
               yAxisID: 'y',
-              tension: 0.15,
+              tension: 0,
               spanGaps: false
             },
             {
@@ -5022,7 +5038,7 @@
               pointRadius: 0,
               yAxisID: 'y1',
               stack: 'winprob',
-              tension: 0.2,
+              tension: 0,
               spanGaps: false
             },
             {
@@ -5035,7 +5051,7 @@
               pointRadius: 0,
               yAxisID: 'y1',
               stack: 'winprob',
-              tension: 0.2,
+              tension: 0,
               spanGaps: false
             }
           ]
