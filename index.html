@@ -186,13 +186,14 @@
     }
 
     .survivor-table th:not(:first-child), .survivor-table td:not(:first-child) {
-      padding-left: 4px;
-      padding-right: 4px;
+      padding-left: 2px;
+      padding-right: 2px;
     }
+    .survivor-table th:not(:first-child) { font-size: 0.68rem; letter-spacing: 0; }
     .survivor-table .survivor-cell-box {
-      padding: 4px 3px;
-      gap: 3px;
-      font-size: 0.75rem;
+      padding: 4px 2px;
+      gap: 2px;
+      font-size: 0.7rem;
       min-width: max-content;
     }
 
@@ -1164,6 +1165,13 @@
     // ==========================================
     // SECTION 1: GLOBAL STATE, MANAGER LOOKUP & COLORS
     // ==========================================
+    // All line graphs use sharp, point-to-point segments (no curve smoothing) on every tab
+    if (window.Chart) {
+      Chart.defaults.elements.line.tension = 0;
+      Chart.defaults.elements.line.cubicInterpolationMode = 'default';
+      Chart.defaults.elements.line.stepped = false;
+    }
+
     const STATE = {
       data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
       filters: { year: 2026, weekMin: 1, weekMax: 8, hideCW: false, selectedManager: null, matchup: null },
@@ -1214,7 +1222,7 @@
       'Brad': '#E02D3C',
       'Pax': '#5EB800',
       'Dan': '#7D8590',
-      'Jare': '#000000',      // White in dark mode (handled in getManagerColor)
+      'Jare': '#000000',      // Light mode value; #FFFFFF in dark mode (handled in getManagerColor)
       'Lil': '#F0509A',
       'Dead': '#14A89A',
       'Evan': '#E8651A'
@@ -3079,9 +3087,9 @@
       const curWk = getSurvivorCurrentWeek();
 
       // Fixed column widths so the grid NEVER stretches or shifts during left-to-right animation
-      let colHtml = `<col style="width: 170px;">`;
+      let colHtml = `<col style="width: 140px;">`;
       for (let w = 1; w <= s.maxWeek; w++) {
-        colHtml += `<col style="width: 88px;">`;
+        colHtml += `<col style="width: 66px;">`;
       }
       colgroup.innerHTML = colHtml;
 
@@ -3242,8 +3250,8 @@
         STATE.survivor.chartInstance.destroy();
       }
 
-      const weeksLabels = Array.from({ length: s.maxWeek + 2 }, (_, i) => (i <= s.maxWeek ? i : ''));
-      const emptyArray = new Array(s.maxWeek + 2).fill(null);
+      const weeksLabels = Array.from({ length: s.maxWeek + 3 }, (_, i) => (i <= s.maxWeek ? i : ''));
+      const emptyArray = new Array(s.maxWeek + 3).fill(null);
 
       const datasets = s.orderedTeams.map((t) => {
         const mgrColor = getManagerColor(t.manager);
@@ -3258,7 +3266,7 @@
           borderWidth: 2.5,
           pointRadius: 0,
           pointHoverRadius: 5,
-          tension: 0,
+          tension: 0, cubicInterpolationMode: 'default',
           spanGaps: false
         };
       });
@@ -3276,6 +3284,7 @@
           maintainAspectRatio: false,
           animation: false,
           interaction: { mode: 'index', intersect: false },
+          layout: { padding: { right: 16, top: 6 } },
           plugins: {
             title: {
               display: false
@@ -3308,7 +3317,7 @@
               grid: { color: (c) => (c.index > s.maxWeek ? 'transparent' : gridColor) },
               ticks: { color: textColor, font: { size: 12, weight: '700' }, callback: (v, i) => (i > s.maxWeek ? '' : i) },
               min: 0,
-              max: s.maxWeek + 1
+              max: s.maxWeek + 2
             },
             y: {
               min: 0,
@@ -3999,7 +4008,7 @@
         pointStyle: 'rect',
         pointRadius: 6,
         pointHoverRadius: 8,
-        tension: 0,
+        tension: 0, cubicInterpolationMode: 'default',
         order: 1
       });
 
@@ -4471,7 +4480,7 @@
           pointRadius: 3.5,
           pointHoverRadius: 6.5,
           clip: false,
-          tension: 0
+          tension: 0, cubicInterpolationMode: 'default'
         };
       });
 
@@ -5056,7 +5065,7 @@
               pointRadius: 0,
               pointHoverRadius: 6,
               yAxisID: 'y',
-              tension: 0,
+              tension: 0, cubicInterpolationMode: 'default',
               spanGaps: false
             },
             {
@@ -5068,7 +5077,7 @@
               pointRadius: 0,
               pointHoverRadius: 6,
               yAxisID: 'y',
-              tension: 0,
+              tension: 0, cubicInterpolationMode: 'default',
               spanGaps: false
             },
             {
@@ -5080,7 +5089,7 @@
               pointRadius: 0,
               pointHoverRadius: 4,
               yAxisID: 'y',
-              tension: 0,
+              tension: 0, cubicInterpolationMode: 'default',
               spanGaps: false
             },
             {
@@ -5092,7 +5101,7 @@
               pointRadius: 0,
               pointHoverRadius: 4,
               yAxisID: 'y',
-              tension: 0,
+              tension: 0, cubicInterpolationMode: 'default',
               spanGaps: false
             },
             {
@@ -5105,7 +5114,7 @@
               pointRadius: 0,
               yAxisID: 'y1',
               stack: 'winprob',
-              tension: 0,
+              tension: 0, cubicInterpolationMode: 'default',
               spanGaps: false
             },
             {
@@ -5118,7 +5127,7 @@
               pointRadius: 0,
               yAxisID: 'y1',
               stack: 'winprob',
-              tension: 0,
+              tension: 0, cubicInterpolationMode: 'default',
               spanGaps: false
             }
           ]
