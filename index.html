@@ -476,12 +476,19 @@
        POINTS BY POSITION TAB
        ============================================================ */
     .pos-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
-    .pos-table th, .pos-table td { padding: 5px 6px; font-size: 0.8125rem; text-align: center; color: #0f172a; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pos-table .pos-label-col { width: 58px; min-width: 58px; max-width: 58px; text-align: left; position: sticky; left: 0; z-index: 1; background: #f1f5f9; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.04em; padding-left: 8px; padding-right: 4px; }
-    .pos-team-th { background: #f1f5f9; vertical-align: bottom; cursor: pointer; white-space: normal !important; word-break: break-word; }
+    .pos-table th, .pos-table td { padding: 4px 3px; font-size: 0.68rem; text-align: center; color: #0f172a; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pos-table .pos-label-col { width: 46px; min-width: 46px; max-width: 46px; text-align: left; position: sticky; left: 0; z-index: 2; background: #f1f5f9; font-weight: 700; font-size: 0.66rem; letter-spacing: 0.03em; padding-left: 6px; padding-right: 3px; }
+    .pos-team-th { background: #f1f5f9; vertical-align: bottom; cursor: pointer; white-space: normal !important; word-break: break-word; padding: 6px 2px !important; }
     .pos-team-th:hover { background: #e2e8f0; }
-    .pos-team-name { font-weight: 700; font-size: 0.72rem; line-height: 1.15; color: #334155; }
-    .pos-team-mgr { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+    .pos-team-name { display: none; font-weight: 700; font-size: 0.72rem; line-height: 1.15; color: #334155; }
+    .pos-team-mgr { font-size: 0.66rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; margin-top: 0; line-height: 1.1; }
+    @media (min-width: 640px) {
+      .pos-table th, .pos-table td { padding: 5px 6px; font-size: 0.8125rem; }
+      .pos-table .pos-label-col { width: 58px; min-width: 58px; max-width: 58px; font-size: 0.72rem; letter-spacing: 0.04em; padding-left: 8px; padding-right: 4px; }
+      .pos-team-th { padding: 5px 6px !important; }
+      .pos-team-name { display: block; }
+      .pos-team-mgr { font-size: 0.62rem; letter-spacing: 0.06em; margin-top: 2px; }
+    }
     .pos-total-row th, .pos-total-row td { font-weight: 800; border-top: 2px solid #94a3b8; }
     .pos-spacer td { height: 12px; padding: 0; border: none; background: transparent; }
     .pos-dim { opacity: 0.35; }
@@ -6367,13 +6374,28 @@
 
     function posFmt(v) { return (typeof v === 'number' && !isNaN(v)) ? v.toFixed(2) : '-'; }
 
-    // Align the table's team columns right underneath the Chart.js bar columns
+    // Align the table's team columns right underneath the Chart.js bar columns on desktop;
+    // on mobile (< 640px), give each team column enough width so numbers stay readable with horizontal scroll.
     function alignPositionsTableToChart() {
       const P = STATE.positions;
       const chart = P.chartInstance;
       const tbl = document.getElementById('pos-table');
       const wrap = document.getElementById('pos-table-wrap');
-      if (!chart || !chart.chartArea || !tbl || !wrap) return;
+      if (!tbl || !wrap) return;
+
+      const isMobile = window.innerWidth < 640;
+      if (isMobile) {
+        const teamCount = P.last ? P.last.teams.length : 10;
+        const labelColWidth = 46;
+        const minTeamColWidth = 48;
+        const mobileWidth = labelColWidth + (teamCount * minTeamColWidth);
+        wrap.style.paddingLeft = '0px';
+        tbl.style.width = `${mobileWidth}px`;
+        tbl.style.minWidth = `${mobileWidth}px`;
+        return;
+      }
+
+      if (!chart || !chart.chartArea) return;
       const ca = chart.chartArea;
       const canvasRect = chart.canvas.getBoundingClientRect();
       const wrapRect = wrap.getBoundingClientRect();
@@ -6405,8 +6427,17 @@
       if (csv) csv.addEventListener('click', downloadPositionsCSV);
       const png = document.getElementById('btn-export-pos-png');
       if (png) png.addEventListener('click', downloadPositionsPNG);
+      let lastIsMobile = window.innerWidth < 640;
       window.addEventListener('resize', () => {
-        if (FilterEngine.activeTab() === 'positions') alignPositionsTableToChart();
+        if (FilterEngine.activeTab() === 'positions') {
+          const nowMobile = window.innerWidth < 640;
+          if (nowMobile !== lastIsMobile) {
+            lastIsMobile = nowMobile;
+            renderPositionsTab();
+          } else {
+            alignPositionsTableToChart();
+          }
+        }
       });
     }
 
@@ -6459,6 +6490,7 @@
       if (!canvas || typeof Chart === 'undefined') return;
       if (P.chartInstance) { P.chartInstance.destroy(); P.chartInstance = null; }
 
+      const isMobile = window.innerWidth < 640;
       const isDark = document.documentElement.classList.contains('dark');
       const textColor = isDark ? '#94a3b8' : '#475569';
       const gridFaint = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
@@ -6482,7 +6514,7 @@
           borderColor: surface,
           borderWidth: 0.75,
           stack: 'pos',
-          barPercentage: 0.62,
+          barPercentage: isMobile ? 0.72 : 0.62,
           categoryPercentage: 0.9
         };
       };
@@ -6511,9 +6543,13 @@
         }
       };
 
+      const xLabels = isMobile
+        ? view.teams.map(t => t.manager)
+        : view.teams.map(t => posWrapLabel(t.team_name));
+
       P.chartInstance = new Chart(canvas.getContext('2d'), {
         type: 'bar',
-        data: { labels: view.teams.map(t => posWrapLabel(t.team_name)), datasets },
+        data: { labels: xLabels, datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -6530,19 +6566,30 @@
               border: { display: false },
               ticks: {
                 color: ctx => { const t = view.teams[ctx.index]; return t ? (dimmed[ctx.index] ? hexToRgba(t.color, 0.4) : t.color) : textColor; },
-                font: { size: 11, weight: '700' },
-                maxRotation: 0, autoSkip: false
+                font: { size: isMobile ? 9 : 11, weight: '700' },
+                maxRotation: isMobile ? 35 : 0,
+                minRotation: isMobile ? 35 : 0,
+                autoSkip: false
               }
             },
             y: {
               stacked: true,
-              title: { display: true, text: view.singleWeek ? 'Points' : 'Avg points per week', color: textColor, font: { weight: '600' } },
+              title: {
+                display: !isMobile,
+                text: view.singleWeek ? 'Points' : 'Avg points per week',
+                color: textColor,
+                font: { weight: '600' }
+              },
               grid: {
                 color: c => c.tick && c.tick.value === 0 ? gridStrong : gridFaint,
                 lineWidth: c => c.tick && c.tick.value === 0 ? 1.5 : 1
               },
               border: { display: false },
-              ticks: { color: textColor, callback: v => Math.abs(v) }
+              ticks: {
+                color: textColor,
+                font: { size: isMobile ? 10 : 12 },
+                callback: v => Math.abs(v)
+              }
             }
           },
           plugins: {
@@ -6601,7 +6648,8 @@
       const showBench = P.showBench && view.benchSlots.length > 0;
       const teams = view.teams;
 
-      const colgroup = `<colgroup><col style="width:58px">${teams.map(() => '<col>').join('')}</colgroup>`;
+      const labelW = window.innerWidth < 640 ? 46 : 58;
+      const colgroup = `<colgroup><col style="width:${labelW}px">${teams.map(() => '<col>').join('')}</colgroup>`;
 
       const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t) => {
         const dim = selMgr && t.manager !== selMgr;
