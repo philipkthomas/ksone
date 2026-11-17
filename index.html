@@ -177,7 +177,7 @@
     }
 
     /* ============================================================
-       SURVIVOR TAB: COMPACT FIXED LEFT-TO-RIGHT GRID (FITS 14 WEEKS)
+       SURVIVOR TAB: FIXED LEFT-TO-RIGHT GRID, CURRENT WEEK & ICE BLOCKS
        ============================================================ */
     .survivor-table {
       table-layout: fixed;
@@ -186,13 +186,13 @@
     }
 
     .survivor-table th:not(:first-child), .survivor-table td:not(:first-child) {
-      padding-left: 3px;
-      padding-right: 3px;
+      padding-left: 4px;
+      padding-right: 4px;
     }
     .survivor-table .survivor-cell-box {
-      padding: 3px 2px;
-      gap: 2px;
-      font-size: 0.7rem;
+      padding: 4px 3px;
+      gap: 3px;
+      font-size: 0.75rem;
       min-width: max-content;
     }
 
@@ -247,9 +247,9 @@
       overflow: hidden;
       border: 1.5px solid #1e293b;
       border-radius: 5px;
-      padding: 3px 2px;
+      padding: 4px 6px;
       font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-      font-size: 0.7rem;
+      font-size: 0.8125rem;
       font-weight: 800;
       white-space: nowrap;
       text-align: center;
@@ -257,7 +257,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 4px;
       transform-origin: left center;
     }
     .dark .survivor-cell-box {
@@ -324,7 +324,7 @@
       pointer-events: none;
     }
 
-    /* Lowest-PF red text must beat the ice-block text colors */
+    /* Lowest-PF red text must beat the ice-block text colors (the weekly lowest is always the frozen/eliminated cell from W6 on) */
     .survivor-ice-solid.survivor-lowest-pf,
     .survivor-ice-freezing.survivor-lowest-pf { color: #b91c1c !important; }
     .dark .survivor-ice-solid.survivor-lowest-pf,
@@ -383,6 +383,7 @@
     .survivor-fire-ignite {
       animation: fireIgnite 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards, fireFlicker 1.3s ease-in-out 0.7s infinite;
     }
+    /* heat glow rising from the bottom of the block */
     .survivor-fire::before {
       content: "";
       position: absolute;
@@ -393,6 +394,7 @@
       animation: fireGlowPulse 0.9s ease-in-out infinite;
       pointer-events: none;
     }
+    /* drifting embers */
     .survivor-fire::after {
       content: "";
       position: absolute;
@@ -534,7 +536,7 @@
 
     </div>
 
-    <!-- GLOBAL FILTER BAR -->
+    <!-- GLOBAL FILTER BAR (identical position on every tab; contents adapt per tab) -->
     <div id="global-filter-bar" class="bg-slate-200/50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800/80 py-1.5 px-4">
       <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs">
         <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -667,7 +669,7 @@
       </div>
 
       <!-- SURVIVOR TABULAR VIEW -->
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-xl overflow-x-auto" id="survivor-table-container">
+      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xl overflow-x-auto" id="survivor-table-container">
         <div class="overflow-x-auto">
           <table class="survivor-table" id="survivor-table">
             <colgroup id="survivor-colgroup"></colgroup>
@@ -1212,7 +1214,7 @@
       'Brad': '#E02D3C',
       'Pax': '#5EB800',
       'Dan': '#7D8590',
-      'Jare': '#000000',      // #FFFFFF in dark mode, #000000 in light mode
+      'Jare': '#000000',      // White in dark mode (handled in getManagerColor)
       'Lil': '#F0509A',
       'Dead': '#14A89A',
       'Evan': '#E8651A'
@@ -1314,7 +1316,7 @@
       if (lower.includes('phil')) return MANAGER_COLORS['Phil'];
       if (lower.includes('dan')) return MANAGER_COLORS['Dan'];
 
-      const fallback = ['#2A9DF4', '#E8651A', '#1E7B47', '#7B4BFF', '#F0509A', '#CC9400', '#14A89A', '#0066F0', '#5EB800', '#E02D3C'];
+      const fallback = ['#0ea5e9', '#f97316', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4', '#6366f1', '#14b8a6', '#d97706'];
       return fallback[idx % fallback.length];
     }
 
@@ -1327,6 +1329,7 @@
       const r = (num >> 16) & 255;
       const g = (num >> 8) & 255;
       const b = num & 255;
+      // Perceived luminance
       const yiq = (r * 299 + g * 587 + b * 114) / 1000;
       return yiq >= 145 ? '#0f172a' : '#ffffff';
     }
@@ -1647,7 +1650,7 @@
 
 
     // ==========================================
-    // SECTION 1C: FINAL RANK ENGINE
+    // SECTION 1C: FINAL RANK ENGINE (PORTED FROM final_rank_engine.py)
     // ==========================================
     function computeFinalRanks(year) {
       const yr = Number(year);
@@ -1683,12 +1686,14 @@
       const league = sampleTeam.league;
       const totalTeams = teamList.length;
 
+      // Active only IF current week is on/after playoff_start_week OR selected year is prior to current year
       const isPriorYear = curYear !== null && yr < curYear;
       const isCurrentYearPlayoffs = curYear !== null && yr === curYear && curWeek !== null && curWeek >= playoffStartWeek;
       if (!isPriorYear && !isCurrentYearPlayoffs) {
         return null;
       }
 
+      // Select distinct matchup rows from points for the year and league
       const matchups = {};
       (STATE.data.points || []).forEach(row => {
         if (Number(getVal(row, ['year', 'YR'])) !== yr) return;
@@ -1709,6 +1714,7 @@
         }
       });
 
+      // Compute regular-season standings (weeks 1 .. playoff_start_week - 1)
       const stats = {};
       Object.keys(teamsById).forEach(tid => {
         stats[tid] = { wins: 0, ties: 0, pf: 0.0 };
@@ -1758,6 +1764,7 @@
       const w2 = playoffStartWeek + 1;
       const w3 = playoffStartWeek + 2;
 
+      // Championship Bracket
       if (numPlayoffTeams === 4) {
         const [pm1W, pm1L] = resolveMatch(w1, seedToId[1], seedToId[4]);
         const [pm2W, pm2L] = resolveMatch(w1, seedToId[2], seedToId[3]);
@@ -1772,6 +1779,7 @@
         const [pm1W, pm1L] = resolveMatch(w1, seedToId[4], seedToId[5]);
         const [pm2W, pm2L] = resolveMatch(w1, seedToId[3], seedToId[6]);
 
+        // Re-seed Semifinals so Seed 1 faces lowest remaining seed and Seed 2 faces highest remaining seed
         const qfWinners = [pm1W, pm2W].sort((a, b) => idToSeed[a] - idToSeed[b]);
         const m1 = matchups[`${w2}_${seedToId[1]}`];
         let sf1Opp = m1 ? m1.opponent_team_id : 0;
@@ -1799,6 +1807,7 @@
         return null;
       }
 
+      // Consolation Bracket
       if (numPlayoffTeams === 6 && totalTeams === 10) {
         const [cm1W, cm1L] = resolveMatch(w2, seedToId[7], seedToId[10]);
         const [cm2W, cm2L] = resolveMatch(w2, seedToId[8], seedToId[9]);
@@ -1843,11 +1852,15 @@
       return `
         <span class="inline-flex items-center ml-1.5 align-middle" title="${s.title}">
           <svg width="16" height="14" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="inline-block drop-shadow-sm">
+            <!-- Trophy Handles -->
             <path d="M5 4H2.5C1.9 4 1.5 4.4 1.5 5V7C1.5 8.7 2.8 10 4.5 10H6" stroke="${s.stroke}" stroke-width="1.6" stroke-linecap="round"/>
             <path d="M19 4H21.5C22.1 4 22.5 4.4 22.5 5V7C22.5 8.7 21.2 10 19.5 10H18" stroke="${s.stroke}" stroke-width="1.6" stroke-linecap="round"/>
+            <!-- Stem & Pedestal -->
             <path d="M12 12.5V16" stroke="${s.stroke}" stroke-width="2.2" stroke-linecap="round"/>
             <path d="M7.5 18.5H16.5L15.5 16H8.5L7.5 18.5Z" fill="${s.fill}" stroke="${s.stroke}" stroke-width="1.3" stroke-linejoin="round"/>
+            <!-- Football-shaped Cup -->
             <ellipse cx="12" cy="7.2" rx="6.6" ry="4.8" fill="${s.fill}" stroke="${s.stroke}" stroke-width="1.5"/>
+            <!-- Football Laces -->
             <line x1="9.2" y1="7.2" x2="14.8" y2="7.2" stroke="${s.lace}" stroke-width="1.2" stroke-linecap="round"/>
             <line x1="10.4" y1="5.8" x2="10.4" y2="8.6" stroke="${s.lace}" stroke-width="1.1" stroke-linecap="round"/>
             <line x1="12" y1="5.8" x2="12" y2="8.6" stroke="${s.lace}" stroke-width="1.1" stroke-linecap="round"/>
@@ -1905,6 +1918,7 @@
           const wkNum = Number(wk);
           const teamList = byWeek[wk];
           const n = teamList.length;
+          // For years prior to currentweek year, ignore W-L-T from matchups for weeks >= playoff_start_week
           const ignoreMatchupWLT = isPriorYear && wkNum >= playoffStartWeek;
 
           teamList.forEach(t => {
@@ -1958,6 +1972,7 @@
           const pa = group.reduce((acc, r) => acc + r.opponent_points, 0);
           const games = group.length;
 
+          // Exclude 0-point non-matchup playoff weeks (byes / eliminated teams) from worst_wk & per-game scoring stats
           const activeScoringGroup = group.filter(r => !r.isPlayoffByeOrNoMatchup);
           const scoringGames = activeScoringGroup.length;
 
@@ -2026,6 +2041,7 @@
         result.sort((a, b) => (b.W - a.W) || (b.T - a.T) || (b.PF - a.PF));
         result.forEach((r, idx) => r.regularRank = idx + 1);
 
+        // Compute final_rank whenever active; supplant rank ONLY when weekMax >= playoff_start_week
         const finalRanksMap = computeFinalRanks(year);
         const useFinalRankForSorting = finalRanksMap !== null && effWeekMax >= playoffStartWeek;
         result.forEach(r => {
@@ -2808,7 +2824,7 @@
         ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.08)' : 'rgba(241, 245, 249, 0.75)';
         ctx.fillRect(x0, chartArea.top, x5 - x0, chartArea.height);
 
-        // Elimination Zone (Weeks 5..chartArea.right for right-side padding)
+        // Elimination Zone (Weeks 5..maxWk)
         const xRight = chartArea.right;
         if (xRight > x5) {
           ctx.fillStyle = isDark ? 'rgba(234, 88, 12, 0.08)' : 'rgba(255, 237, 213, 0.55)';
@@ -2844,6 +2860,7 @@
           ctx.lineTo(xCur, chartArea.bottom);
           ctx.stroke();
 
+          // Current Week Pill Label at top of line
           ctx.setLineDash([]);
           const labelText = `NOW • W${curWk}`;
           ctx.font = 'bold 10px ui-sans-serif, system-ui, sans-serif';
@@ -2870,11 +2887,13 @@
 
     function drawFireSurvivorMarker(ctx, x, y, size, color) {
       ctx.save();
+      // Warm halo (no outline)
       ctx.beginPath();
       ctx.arc(x, y, size + 3.5, 0, 2 * Math.PI);
       ctx.fillStyle = 'rgba(249, 115, 22, 0.30)';
       ctx.fill();
 
+      // Core circle
       ctx.beginPath();
       ctx.arc(x, y, size, 0, 2 * Math.PI);
       ctx.fillStyle = '#fff7ed';
@@ -2883,6 +2902,7 @@
       ctx.strokeStyle = color;
       ctx.stroke();
 
+      // Flame (vector so it stays crisp and needs no image/emoji font)
       const k = size * 0.72;
       const flame = (scale, dy, fill) => {
         ctx.beginPath();
@@ -2906,11 +2926,13 @@
 
     function drawIceEliminationMarker(ctx, x, y, size, color) {
       ctx.save();
+      // Outer icy halo ring
       ctx.beginPath();
       ctx.arc(x, y, size + 3.5, 0, 2 * Math.PI);
       ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
       ctx.fill();
 
+      // Core ice crystal circle
       ctx.beginPath();
       ctx.arc(x, y, size, 0, 2 * Math.PI);
       ctx.fillStyle = '#e0f2fe';
@@ -2919,6 +2941,7 @@
       ctx.strokeStyle = color;
       ctx.stroke();
 
+      // Snowflake / Frost Crosshairs inside marker
       ctx.strokeStyle = '#0284c7';
       ctx.lineWidth = 1.6;
       const r = size * 0.62;
@@ -3055,21 +3078,21 @@
 
       const curWk = getSurvivorCurrentWeek();
 
-      // Compact fixed column widths so 14 weeks fit cleanly on screen
-      let colHtml = `<col style="width: 145px;">`;
+      // Fixed column widths so the grid NEVER stretches or shifts during left-to-right animation
+      let colHtml = `<col style="width: 170px;">`;
       for (let w = 1; w <= s.maxWeek; w++) {
-        colHtml += `<col style="width: 64px;">`;
+        colHtml += `<col style="width: 88px;">`;
       }
       colgroup.innerHTML = colHtml;
 
-      let headHtml = `<tr><th class="text-left font-extrabold px-2 py-2.5 text-slate-700 dark:text-slate-300 sticky left-0 z-10 bg-slate-100 dark:bg-slate-900">TEAM</th>`;
+      let headHtml = `<tr><th class="text-left font-extrabold px-3 py-2.5 text-slate-700 dark:text-slate-300 sticky left-0 z-10 bg-slate-100 dark:bg-slate-900">TEAM</th>`;
       for (let w = 1; w <= s.maxWeek; w++) {
         const isCurrent = curWk !== null && w === curWk;
         const thClass = isCurrent
-          ? 'survivor-th-current text-center font-extrabold px-1 py-2'
-          : 'text-center font-bold px-1 py-2 text-slate-600 dark:text-slate-400';
+          ? 'survivor-th-current text-center font-extrabold px-2 py-2'
+          : 'text-center font-bold px-2 py-2 text-slate-600 dark:text-slate-400';
         const badgeHtml = isCurrent
-          ? `<span class="mt-0.5 mx-auto w-fit flex items-center gap-1 px-1 py-0.2 rounded-full text-[8px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-sm"><span class="w-1 h-1 rounded-full bg-white animate-ping"></span>NOW</span>`
+          ? `<span class="mt-0.5 mx-auto w-fit flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>NOW</span>`
           : '';
         headHtml += `<th class="${thClass}">WK ${w}${badgeHtml}</th>`;
       }
@@ -3105,6 +3128,7 @@
 
       if (ptsYr.length === 0) return null;
 
+      // Survivor never extends past the week prior to playoff_start_week
       const prePlayoffCap = Math.max(1, getPlayoffStartWeek(year) - 1);
       const maxWeek = Math.min(FilterEngine.effectiveMax(year), getMaxWeekForYear(year), prePlayoffCap);
       if (maxWeek < 1) return null;
@@ -3163,6 +3187,8 @@
         }
       }
 
+      // Fire: the team(s) still standing after the last regular-season week (week before playoff_start_week).
+      // Only once that week is complete (not while it is still the in-progress current week).
       const lastRegWeek = prePlayoffCap;
       const curRealWkForFire = getSurvivorCurrentWeek();
       const regSeasonComplete = curRealWkForFire === null || curRealWkForFire > lastRegWeek;
@@ -3216,7 +3242,6 @@
         STATE.survivor.chartInstance.destroy();
       }
 
-      // Include +1 trailing tick slot for right-side breathing room beyond maxWeek
       const weeksLabels = Array.from({ length: s.maxWeek + 2 }, (_, i) => (i <= s.maxWeek ? i : ''));
       const emptyArray = new Array(s.maxWeek + 2).fill(null);
 
@@ -3309,6 +3334,7 @@
         tickLbl.innerText = `Week ${validWk} / ${s.maxWeek}`;
       }
 
+      // Render Fixed-Layout Table View Frame (Always renders all 1..maxWeek columns so nothing stretches!)
       const tbody = document.getElementById('survivor-tbody');
       if (tbody) {
         const isDark = document.documentElement.classList.contains('dark');
@@ -3321,26 +3347,28 @@
             : 'text-slate-900 dark:text-slate-100 font-semibold text-xs';
 
           let rowHtml = `<tr>
-            <td class="text-left font-medium px-2 py-1.5 border-r border-slate-200 dark:border-slate-800 sticky left-0 z-10 bg-white dark:bg-slate-950 truncate">
-              <span class="text-xs font-semibold mr-1 inline-block border-r border-slate-300 dark:border-slate-700 pr-1" style="color: ${mgrColor}">${escapeHTML(t.manager)}</span>
+            <td class="text-left font-medium px-3 py-2 border-r border-slate-200 dark:border-slate-800 sticky left-0 z-10 bg-white dark:bg-slate-950 truncate">
+              <span class="text-xs font-semibold mr-1.5 inline-block border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${mgrColor}">${escapeHTML(t.manager)}</span>
               <span class="${teamNameClass}">${escapeHTML(t.teamName)}</span>
             </td>`;
 
+          // Loop through ALL weeks 1..s.maxWeek so columns remain fixed in place and fill left-to-right
           for (let w = 1; w <= s.maxWeek; w++) {
             const isCurrentCol = curRealWk !== null && w === curRealWk;
             const tdCurrentClass = isCurrentCol ? 'survivor-td-current' : '';
 
+            // Future weeks beyond current replay tick: render blank unrevealed slot
             if (w > validWk) {
               rowHtml += `
-                <td class="text-left px-1 py-1 ${tdCurrentClass}">
-                  <div class="h-[22px] rounded border border-dashed border-slate-200/70 dark:border-slate-800/70 bg-slate-50/40 dark:bg-slate-900/30"></div>
+                <td class="text-left px-1.5 py-1.5 ${tdCurrentClass}">
+                  <div class="h-[26px] rounded border border-dashed border-slate-200/70 dark:border-slate-800/70 bg-slate-50/40 dark:bg-slate-900/30"></div>
                 </td>`;
               continue;
             }
 
             const score = s.teamScores[t.teamId]?.[w];
             if (score === undefined || score === null) {
-              rowHtml += `<td class="text-center px-1 py-1 text-slate-400 font-mono text-xs ${tdCurrentClass}">--</td>`;
+              rowHtml += `<td class="text-center px-1 py-1.5 text-slate-400 font-mono text-xs ${tdCurrentClass}">--</td>`;
               continue;
             }
 
@@ -3350,6 +3378,7 @@
             const isFrozenCell = isEliminationWeek || isPostEliminationFrozen;
             const isFireCell = s.fireWeek !== null && s.fireWeek !== undefined && w === s.fireWeek && s.fireTeamIds.includes(t.teamId);
 
+            // Newly revealed cell on the advancing tick gets entrance / freeze-solidify animation
             const isNewlyRevealed = isAnimatingStep && w === validWk;
 
             let bgColor = '';
@@ -3359,6 +3388,7 @@
             let iconHtml = '';
 
             if (isFrozenCell) {
+              // Ice block styling: animates solidifying on the elimination tick, stays locked-in solid ice afterward
               if (isNewlyRevealed && isEliminationWeek) {
                 extraBoxClasses = 'survivor-ice-freezing';
               } else {
@@ -3367,13 +3397,14 @@
               }
 
               if (isEliminationWeek) {
-                iconHtml = `<i class="fa-solid fa-snowflake text-[10px] ${isDark ? 'text-sky-200' : 'text-sky-700'} shrink-0"></i>`;
+                iconHtml = `<i class="fa-solid fa-snowflake text-[11px] ${isDark ? 'text-sky-200' : 'text-sky-700'} shrink-0"></i>`;
               } else {
-                iconHtml = `<i class="fa-regular fa-snowflake text-[9px] opacity-75 shrink-0"></i>`;
+                iconHtml = `<i class="fa-regular fa-snowflake text-[10px] opacity-75 shrink-0"></i>`;
               }
             } else if (isFireCell) {
+              // Survivor on fire: final regular-season week, still standing
               extraBoxClasses = isNewlyRevealed ? 'survivor-fire survivor-fire-ignite' : 'survivor-fire';
-              iconHtml = `<i class="fa-solid fa-fire survivor-flame-icon text-[11px] shrink-0"></i>`;
+              iconHtml = `<i class="fa-solid fa-fire survivor-flame-icon text-[12px] shrink-0"></i>`;
             } else if (isGrayedOut) {
               bgColor = isDark ? '#334155' : '#e2e8f0';
               if (isNewlyRevealed) extraBoxClasses = 'survivor-bar-newly-revealed';
@@ -3400,7 +3431,7 @@
               : `width: ${widthPct}%; background-color: ${bgColor}; border-color: ${borderColor};`;
 
             rowHtml += `
-              <td class="text-left px-1 py-1 ${tdCurrentClass}">
+              <td class="text-left px-1.5 py-1.5 ${tdCurrentClass}">
                 <div class="survivor-cell-box ${textColorClass} ${extraBoxClasses}" style="${inlineStyle}" title="${isFireCell ? `Survivor! Still standing after Week ${w}` : isEliminationWeek ? `Eliminated & Frozen in Week ${w}` : (isPostEliminationFrozen ? `Frozen (Eliminated W${t.eliminatedWeek})` : `Week ${w}: ${score.toFixed(2)} PF`)}">
                   ${iconHtml}<span>${score.toFixed(2)}</span>
                 </div>
@@ -3412,6 +3443,7 @@
         }).join('');
       }
 
+      // Render Chart View Frame
       const chart = STATE.survivor.chartInstance;
       if (chart) {
         chart.data.datasets.forEach((ds) => {
@@ -3419,7 +3451,7 @@
           const endWk = (elimWk !== null && elimWk < validWk) ? elimWk : validWk;
 
           const ptsArr = [0];
-          for (let w = 1; w <= s.maxWeek + 1; w++) {
+          for (let w = 1; w <= s.maxWeek; w++) {
             if (w <= endWk) {
               ptsArr.push(s.teamScores[ds.teamId]?.[w] ?? null);
             } else {
@@ -3592,6 +3624,7 @@
     function computePropsData() {
       const yr = STATE.filters.year;
       const pts = STATE.data.points || [];
+      // Props never extend past the week prior to playoff_start_week
       const prePlayoffCap = Math.max(1, getPlayoffStartWeek(yr) - 1);
       const wkMax = Math.min(FilterEngine.effectiveMax(yr), prePlayoffCap);
       const wkMin = Math.min(FilterEngine.effectiveMin(yr), wkMax);
@@ -3847,6 +3880,7 @@
       const pts = STATE.data.points || [];
       const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
 
+      // Divisional Prop Bet stops the week prior to playoff_start_week
       const prePlayoffCap = Math.max(1, getPlayoffStartWeek(yr) - 1);
       const maxWk = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr), prePlayoffCap);
       if (ptsYr.length === 0 || maxWk < 1) {
@@ -4143,35 +4177,38 @@
         TopLoss_PF: r.topLoss.pf, TopLoss_Opponent: r.topLoss.oppName, TopLoss_PA: r.topLoss.pa, TopLoss_WK: r.topLoss.wk, TopLoss_Rank: r.rankTopLoss,
         TopStarter_Player: r.topStarter.player, TopStarter_PF: r.topStarter.pf, TopStarter_WK: r.topStarter.wk, TopStarter_Rank: r.rankTopStarter,
         TopBench_Player: r.topBench.player, TopBench_PF: r.topBench.pf, TopBench_WK: r.topBench.wk, TopBench_Rank: r.rankTopBench,
-        AverageRank: r.avgRank.toFixed(1), Rank: r.rankAvgRank
+        AvgRank: r.avgRank, OverallRank: r.rankAvgRank
       }));
 
       const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `NDL_Props_${STATE.filters.year}.csv`);
+      link.setAttribute("download", `NDL_Prop_Bets_${STATE.filters.year}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
     function downloadDivChartPNG() {
-      if (!STATE.props.chartInstance) return;
+      const chart = STATE.props.chartInstance;
+      if (!chart) return;
       const link = document.createElement('a');
-      link.download = `NDL_Divisional_Prop_${STATE.filters.year}.png`;
-      link.href = STATE.props.chartInstance.toBase64Image();
+      link.download = `Divisional_Prop_Bet_${STATE.filters.year}.png`;
+      link.href = chart.toBase64Image();
       link.click();
     }
 
     // ==========================================
-    // SECTION 8: WINS ABOVE EVEN & RANK CHART ENGINE
+    // SECTION 8: UNIFIED WINS ABOVE EVEN & RANK TAB ENGINE
     // ==========================================
     function initWinsAboveTab() {
       const btnMetricWae = document.getElementById('btn-toggle-metric-wae');
       const btnMetricRank = document.getElementById('btn-toggle-metric-rank');
+
       const btnMatchup = document.getElementById('btn-toggle-wae-matchup');
       const btnEtew = document.getElementById('btn-toggle-wae-etew');
+
       const playPauseBtn = document.getElementById('btn-wae-play-pause');
       const restartBtn = document.getElementById('btn-wae-restart');
       const speedSlider = document.getElementById('wae-speed-slider');
@@ -4181,27 +4218,21 @@
 
       if (btnMetricWae && btnMetricRank) {
         btnMetricWae.addEventListener('click', () => {
-          STATE.wae.metric = 'wae';
-          updateWaeToggleUI();
-          renderWinsAboveChart();
+          STATE.wae.metric = 'wae'; updateMetricToggleUI(); renderWinsAboveChart();
         });
+
         btnMetricRank.addEventListener('click', () => {
-          STATE.wae.metric = 'rank';
-          updateWaeToggleUI();
-          renderWinsAboveChart();
+          STATE.wae.metric = 'rank'; updateMetricToggleUI(); renderWinsAboveChart();
         });
       }
 
       if (btnMatchup && btnEtew) {
         btnMatchup.addEventListener('click', () => {
-          STATE.wae.mode = 'matchup';
-          updateWaeToggleUI();
-          renderWinsAboveChart();
+          STATE.wae.mode = 'matchup'; updateBaselineToggleUI(); renderWinsAboveChart();
         });
+
         btnEtew.addEventListener('click', () => {
-          STATE.wae.mode = 'etew';
-          updateWaeToggleUI();
-          renderWinsAboveChart();
+          STATE.wae.mode = 'etew'; updateBaselineToggleUI(); renderWinsAboveChart();
         });
       }
 
@@ -4228,248 +4259,188 @@
         });
       }
 
-      if (pngBtn) pngBtn.addEventListener('click', downloadWaeChartPNG);
-      if (csvBtn) csvBtn.addEventListener('click', downloadWaeChartCSV);
+      if (pngBtn) pngBtn.addEventListener('click', downloadWaePNG);
+      if (csvBtn) csvBtn.addEventListener('click', downloadWaeCSV);
     }
 
-    function updateWaeToggleUI() {
-      const btnMetricWae = document.getElementById('btn-toggle-metric-wae');
-      const btnMetricRank = document.getElementById('btn-toggle-metric-rank');
+    function updateMetricToggleUI() {
+      const btnWae = document.getElementById('btn-toggle-metric-wae');
+      const btnRank = document.getElementById('btn-toggle-metric-rank');
+
+      if (!btnWae || !btnRank) return;
+
+      if (STATE.wae.metric === 'wae') {
+        btnWae.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+        btnRank.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+      } else {
+        btnRank.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+        btnWae.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+      }
+    }
+
+    function updateBaselineToggleUI() {
       const btnMatchup = document.getElementById('btn-toggle-wae-matchup');
       const btnEtew = document.getElementById('btn-toggle-wae-etew');
-      const headerTitle = document.getElementById('wae-chart-header-title');
 
-      if (btnMetricWae && btnMetricRank) {
-        if (STATE.wae.metric === 'wae') {
-          btnMetricWae.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
-          btnMetricRank.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
-          if (headerTitle) headerTitle.innerHTML = '<i class="fa-solid fa-chart-line text-brand-500"></i> Wins Above Even';
-        } else {
-          btnMetricRank.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
-          btnMetricWae.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
-          if (headerTitle) headerTitle.innerHTML = '<i class="fa-solid fa-chart-line text-brand-500"></i> Standings Rank';
-        }
-      }
+      if (!btnMatchup || !btnEtew) return;
 
-      if (btnMatchup && btnEtew) {
-        if (STATE.wae.mode === 'matchup') {
-          btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
-          btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
-        } else {
-          btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
-          btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
-        }
+      if (STATE.wae.mode === 'matchup') {
+        btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+        btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+      } else {
+        btnEtew.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-brand-600 text-white shadow';
+        btnMatchup.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
       }
     }
-
-    const playoffZonePlugin = {
-      id: 'playoffZone',
-      beforeDraw(chart) {
-        const { ctx, chartArea, scales } = chart;
-        if (!chartArea || !scales.x || !scales.y) return;
-
-        const isDark = document.documentElement.classList.contains('dark');
-        const isRank = STATE.wae.metric === 'rank';
-
-        let yCutoff;
-        if (isRank) {
-          yCutoff = scales.y.getPixelForValue(6.5);
-          ctx.save();
-          ctx.fillStyle = isDark ? 'rgba(34, 197, 94, 0.08)' : 'rgba(134, 239, 172, 0.25)';
-          ctx.fillRect(chartArea.left, chartArea.top, chartArea.width, yCutoff - chartArea.top);
-          ctx.fillStyle = isDark ? 'rgba(239, 68, 68, 0.08)' : 'rgba(254, 202, 202, 0.25)';
-          ctx.fillRect(chartArea.left, yCutoff, chartArea.width, chartArea.bottom - yCutoff);
-        } else {
-          yCutoff = scales.y.getPixelForValue(0);
-          ctx.save();
-          ctx.fillStyle = isDark ? 'rgba(34, 197, 94, 0.08)' : 'rgba(134, 239, 172, 0.25)';
-          ctx.fillRect(chartArea.left, chartArea.top, chartArea.width, yCutoff - chartArea.top);
-          ctx.fillStyle = isDark ? 'rgba(239, 68, 68, 0.08)' : 'rgba(254, 202, 202, 0.25)';
-          ctx.fillRect(chartArea.left, yCutoff, chartArea.width, chartArea.bottom - yCutoff);
-        }
-
-        const xWeeks = chart.data.labels || [];
-        const playoffStart = getPlayoffStartWeek(STATE.filters.year);
-        const playoffIdx = xWeeks.indexOf(playoffStart);
-        if (playoffIdx !== -1) {
-          const xPlayoff = scales.x.getPixelForValue(playoffIdx);
-          if (xPlayoff < chartArea.right) {
-            ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.14)' : 'rgba(203, 213, 225, 0.35)';
-            ctx.fillRect(xPlayoff, chartArea.top, chartArea.right - xPlayoff, chartArea.height);
-          }
-        }
-
-        ctx.beginPath();
-        ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)';
-        ctx.lineWidth = 1;
-        ctx.moveTo(chartArea.left, yCutoff);
-        ctx.lineTo(chartArea.right, yCutoff);
-        ctx.stroke();
-
-        ctx.restore();
-      }
-    };
 
     function renderWinsAboveChart() {
       const yr = STATE.filters.year;
       const pts = STATE.data.points || [];
-      const cw = getCurrentYearAndWeek();
-      const isPriorYear = cw && Number(yr) < Number(cw.curYear);
-      const playoffStartWeek = getPlayoffStartWeek(yr);
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr));
 
       const maxWk = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
-      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === Number(yr) && Number(getVal(r, ['week', 'WK'])) <= maxWk);
-
       if (ptsYr.length === 0 || maxWk < 1) {
         clearChartState(STATE.wae);
-        setChartEmpty('winsAboveEvenChart', emptyScopeMessage('standings trend data'));
+        setChartEmpty('winsAboveEvenChart', emptyScopeMessage('wins-above-even data'));
         return;
       }
       setChartEmpty('winsAboveEvenChart', null);
 
       const weeks = Array.from({length: maxWk + 1}, (_, i) => i);
 
-      const teamIds = [...new Set(ptsYr.map(r => Number(getVal(r, ['team_id', 'TMA', 'team']))))].filter(t => !isNaN(t) && t !== 0);
+      const teamIds = [...new Set(ptsYr.map(r => Number(getVal(r, ['team_id', 'TMA', 'team']))))].filter(t => !isNaN(t) && t !== 0).sort((a,b) => a - b);
+      const numTeams = teamIds.length || 10;
 
-      const weeklyTeamMap = {};
-      ptsYr.forEach(r => {
-        const w = Number(getVal(r, ['week', 'WK']));
-        const tId = Number(getVal(r, ['team_id', 'TMA', 'team']));
-        const key = `${w}_${tId}`;
-        if (!weeklyTeamMap[key]) {
-          weeklyTeamMap[key] = {
-            week: w, team_id: tId,
-            pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
-            pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
-            oppId: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0
-          };
-        }
-      });
+      const seriesMap = {};
+      const teamMetaList = [];
 
-      const byWeek = {};
-      Object.values(weeklyTeamMap).forEach(r => {
-        if (!byWeek[r.week]) byWeek[r.week] = [];
-        byWeek[r.week].push(r);
-      });
+      teamIds.forEach((tId, idx) => {
+        const mgrName = getManagerName(tId, yr);
+        const color = getManagerColor(mgrName, idx);
+        teamMetaList.push({ team_id: tId, manager: mgrName, color });
 
-      Object.keys(byWeek).forEach(wk => {
-        const wkNum = Number(wk);
-        const list = byWeek[wk];
-        const n = list.length;
-        const ignoreMatchupWLT = isPriorYear && wkNum >= playoffStartWeek;
-        list.forEach(t => {
-          let beats = 0, ties = 0;
-          list.forEach(o => {
-            if (t.team_id !== o.team_id) {
-              if (t.pf > o.pf) beats++;
-              else if (t.pf === o.pf) ties++;
-            }
-          });
-          t.etewShare = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0.5;
-          if (ignoreMatchupWLT || t.oppId === 0) {
-            t.winShare = 0;
-            t.countedForRecord = false;
-          } else {
-            t.winShare = t.pf > t.pa ? 1 : (t.pf === t.pa ? 0.5 : 0);
-            t.countedForRecord = true;
-          }
-        });
-      });
-
-      const teamSeries = {};
-      teamIds.forEach(tId => {
-        const mgr = getManagerName(tId, yr);
-        const tName = getTeamName(tId, yr);
-        teamSeries[tId] = {
-          team_id: tId, manager: mgr, team_name: tName,
-          cumWae: [0], cumEtewWae: [0],
-          cumWins: [0], cumEtewWins: [0],
-          cumPF: [0],
-          rankMatchup: [null], rankEtew: [null]
+        seriesMap[tId] = {
+          cumMatchup: [0], cumEtew: [0],
+          cumMatchupDisplay: [], cumEtewDisplay: [],
+          matchupRank: [numTeams], etewRank: [numTeams]
         };
       });
 
+      teamMetaList.sort((a, b) => a.manager.localeCompare(b.manager));
+
       for (let w = 1; w <= maxWk; w++) {
-        const wkRecords = byWeek[w] || [];
-        const wkMap = {};
-        wkRecords.forEach(r => wkMap[r.team_id] = r);
+        const wkPoints = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) === w);
+        const n = wkPoints.length;
 
-        teamIds.forEach(tId => {
-          const rec = wkMap[tId];
-          const prevWae = teamSeries[tId].cumWae[w - 1];
-          const prevEtewWae = teamSeries[tId].cumEtewWae[w - 1];
-          const prevWins = teamSeries[tId].cumWins[w - 1];
-          const prevEtewWins = teamSeries[tId].cumEtewWins[w - 1];
-          const prevPF = teamSeries[tId].cumPF[w - 1];
+        teamMetaList.forEach(meta => {
+          const tId = meta.team_id;
+          const s = seriesMap[tId];
+          const prevMatchup = s.cumMatchup[w - 1];
+          const prevEtew = s.cumEtew[w - 1];
 
-          if (rec) {
-            const waeDelta = rec.countedForRecord ? (rec.winShare - 0.5) : 0;
-            const winDelta = rec.countedForRecord ? rec.winShare : 0;
-            teamSeries[tId].cumWae.push(Number((prevWae + waeDelta).toFixed(2)));
-            teamSeries[tId].cumEtewWae.push(Number((prevEtewWae + (rec.etewShare - 0.5)).toFixed(2)));
-            teamSeries[tId].cumWins.push(prevWins + winDelta);
-            teamSeries[tId].cumEtewWins.push(prevEtewWins + rec.etewShare);
-            teamSeries[tId].cumPF.push(prevPF + rec.pf);
+          const teamRow = wkPoints.find(r => Number(getVal(r, ['team_id', 'TMA', 'team'])) === tId);
+
+          if (teamRow) {
+            const pf = Number(getVal(teamRow, ['team_points', 'points', 'TMAPTS'])) || 0;
+            const pa = Number(getVal(teamRow, ['opponent_points', 'TMBPTS'])) || 0;
+
+            const winVal = pf > pa ? 1 : (pf === pa ? 0.5 : 0);
+            s.cumMatchup.push(prevMatchup + (winVal - 0.5));
+
+            let beats = 0, ties = 0;
+            wkPoints.forEach(o => {
+              if (Number(getVal(o, ['team_id', 'TMA', 'team'])) !== tId) {
+                const oPf = Number(getVal(o, ['team_points', 'points', 'TMAPTS'])) || 0;
+                if (pf > oPf) beats++;
+                else if (pf === oPf) ties++;
+              }
+            });
+            const etewShare = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0.5;
+            s.cumEtew.push(prevEtew + (etewShare - 0.5));
           } else {
-            teamSeries[tId].cumWae.push(prevWae);
-            teamSeries[tId].cumEtewWae.push(prevEtewWae);
-            teamSeries[tId].cumWins.push(prevWins);
-            teamSeries[tId].cumEtewWins.push(prevEtewWins);
-            teamSeries[tId].cumPF.push(prevPF);
+            s.cumMatchup.push(prevMatchup);
+            s.cumEtew.push(prevEtew);
           }
-        });
-
-        const matchupSorted = [...teamIds].sort((a, b) => {
-          const diffW = teamSeries[b].cumWins[w] - teamSeries[a].cumWins[w];
-          if (diffW !== 0) return diffW;
-          return teamSeries[b].cumPF[w] - teamSeries[a].cumPF[w];
-        });
-        matchupSorted.forEach((tId, idx) => {
-          teamSeries[tId].rankMatchup.push(idx + 1);
-        });
-
-        const etewSorted = [...teamIds].sort((a, b) => {
-          const diffEW = teamSeries[b].cumEtewWins[w] - teamSeries[a].cumEtewWins[w];
-          if (Math.abs(diffEW) > 0.0001) return diffEW;
-          return teamSeries[b].cumPF[w] - teamSeries[a].cumPF[w];
-        });
-        etewSorted.forEach((tId, idx) => {
-          teamSeries[tId].rankEtew.push(idx + 1);
         });
       }
 
-      const finalRanksMap = computeFinalRanks(yr);
-      const isRank = STATE.wae.metric === 'rank';
-      const isMatchup = STATE.wae.mode === 'matchup';
+      for (let w = 1; w <= maxWk; w++) {
+        const wkStandings = teamMetaList.map(meta => {
+          const tId = meta.team_id;
+          const group = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) <= w && Number(getVal(r, ['team_id', 'TMA', 'team'])) === tId);
+          const pfSum = group.reduce((acc, r) => acc + (Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0), 0);
+          return {
+            team_id: tId,
+            matchupVal: seriesMap[tId].cumMatchup[w],
+            etewVal: seriesMap[tId].cumEtew[w],
+            pf: pfSum
+          };
+        });
 
-      let teamArray = Object.values(teamSeries);
-      teamArray.forEach(t => {
-        t.final_rank = finalRanksMap && finalRanksMap[t.team_id] !== undefined ? finalRanksMap[t.team_id] : null;
-        if (isPriorYear && isRank && isMatchup && t.final_rank !== null) {
-          for (let w = playoffStartWeek; w <= maxWk; w++) {
-            t.rankMatchup[w] = t.final_rank;
-          }
-        }
-      });
+        const matchupSorted = [...wkStandings].sort((a, b) => (b.matchupVal - a.matchupVal) || (b.pf - a.pf));
+        matchupSorted.forEach((item, rIdx) => {
+          seriesMap[item.team_id].matchupRank[w] = rIdx + 1;
+        });
 
-      teamArray.sort((a, b) => {
-        if (isPriorYear && isRank && isMatchup && a.final_rank !== null && b.final_rank !== null) {
-          return a.final_rank - b.final_rank;
-        }
-        const valA = isMatchup ? a.cumWae[maxWk] : a.cumEtewWae[maxWk];
-        const valB = isMatchup ? b.cumWae[maxWk] : b.cumEtewWae[maxWk];
-        if (Math.abs(valB - valA) > 0.001) return valB - valA;
-        return b.cumPF[maxWk] - a.cumPF[maxWk];
-      });
+        const etewSorted = [...wkStandings].sort((a, b) => (b.etewVal - a.etewVal) || (b.pf - a.pf));
+        etewSorted.forEach((item, rIdx) => {
+          seriesMap[item.team_id].etewRank[w] = rIdx + 1;
+        });
+      }
 
-      STATE.wae.fullSeries = { weeks, teams: teamArray };
+      let globalMin = 0;
+      let globalMax = 0;
 
-      initWaeChartCanvas(weeks, teamArray);
+      for (let w = 0; w <= maxWk; w++) {
+        const mGroups = {};
+        teamMetaList.forEach(meta => {
+          const val = seriesMap[meta.team_id].cumMatchup[w];
+          if (val < globalMin) globalMin = val;
+          if (val > globalMax) globalMax = val;
+          const k = val.toFixed(4);
+          if (!mGroups[k]) mGroups[k] = [];
+          mGroups[k].push(meta.team_id);
+        });
+
+        Object.values(mGroups).forEach(group => {
+          const count = group.length;
+          group.forEach((tId, gIdx) => {
+            const rawVal = seriesMap[tId].cumMatchup[w];
+            const offset = count > 1 ? (gIdx - (count - 1) / 2) * 0.025 : 0;
+            seriesMap[tId].cumMatchupDisplay[w] = rawVal + offset;
+          });
+        });
+
+        const eGroups = {};
+        teamMetaList.forEach(meta => {
+          const val = seriesMap[meta.team_id].cumEtew[w];
+          if (val < globalMin) globalMin = val;
+          if (val > globalMax) globalMax = val;
+          const k = val.toFixed(4);
+          if (!eGroups[k]) eGroups[k] = [];
+          eGroups[k].push(meta.team_id);
+        });
+
+        Object.values(eGroups).forEach(group => {
+          const count = group.length;
+          group.forEach((tId, gIdx) => {
+            const rawVal = seriesMap[tId].cumEtew[w];
+            const offset = count > 1 ? (gIdx - (count - 1) / 2) * 0.025 : 0;
+            seriesMap[tId].cumEtewDisplay[w] = rawVal + offset;
+          });
+        });
+      }
+
+      const yMinFixed = Math.floor(globalMin - 0.5);
+      const yMaxFixed = Math.ceil(globalMax + 0.5);
+
+      STATE.wae.fullSeries = { weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed, numTeams };
+
+      initWaeChartCanvas(weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed, numTeams);
       restartWaeReplay();
     }
 
-    function initWaeChartCanvas(weeks, teamArray) {
+    function initWaeChartCanvas(weeks, teamMetaList, seriesMap, yMinFixed, yMaxFixed, numTeams) {
       const canvas = document.getElementById('winsAboveEvenChart');
       if (!canvas) return;
 
@@ -4477,54 +4448,54 @@
       const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const textColor = isDark ? '#94a3b8' : '#475569';
 
-      const isRank = STATE.wae.metric === 'rank';
-      const isMatchup = STATE.wae.mode === 'matchup';
-      const metricTitle = isRank ? 'Standings Rank' : 'Wins Above Even';
-      const modeTitle = isMatchup ? 'Matchup' : 'ETEW';
-
       if (STATE.wae.chartInstance) {
         STATE.wae.chartInstance.destroy();
       }
 
-      const emptyArray = new Array(weeks.length).fill(null);
+      const isRank = STATE.wae.metric === 'rank';
+      const isMatchup = STATE.wae.mode === 'matchup';
 
-      const datasets = teamArray.map((t, idx) => {
-        const mgrColor = getManagerColor(t.manager, idx);
+      const chartTitle = isRank 
+        ? `Rank (by Week) - NDL ${STATE.filters.year} (${isMatchup ? 'Matchup Results' : 'ETEW Standings'})` 
+        : `Wins Above Even (by Week) - ${isMatchup ? 'Matchup Results' : 'ETEW Expected Wins'}`;
+
+      const emptyArray = new Array(weeks.length).fill(null);
+      const datasets = teamMetaList.map((meta) => {
         return {
-          label: `${t.manager}`,
+          label: `${meta.manager}`,
           data: [...emptyArray],
-          borderColor: mgrColor,
-          backgroundColor: mgrColor,
+          rawValues: [...emptyArray],
+          borderColor: meta.color,
+          backgroundColor: meta.color,
           borderWidth: 2.5,
           pointRadius: 3.5,
-          pointHoverRadius: 6,
-          tension: 0,
-          spanGaps: false
+          pointHoverRadius: 6.5,
+          clip: false,
+          tension: 0
         };
       });
-
-      let minY, maxY, stepSizeY;
-      if (isRank) {
-        minY = 1;
-        maxY = teamArray.length || 10;
-        stepSizeY = 1;
-      } else {
-        let maxAbs = 5;
-        teamArray.forEach(t => {
-          const arr = isMatchup ? t.cumWae : t.cumEtewWae;
-          arr.forEach(v => {
-            if (Math.abs(v) > maxAbs) maxAbs = Math.ceil(Math.abs(v));
-          });
-        });
-        minY = -maxAbs;
-        maxY = maxAbs;
-        stepSizeY = 1;
-      }
 
       const ctx = canvas.getContext('2d');
       STATE.wae.chartInstance = new Chart(ctx, {
         type: 'line',
-        plugins: [playoffZonePlugin],
+        plugins: [{
+          id: 'zeroMidlinePlugin',
+          afterDraw(chart) {
+            if (STATE.wae.metric !== 'wae') return;
+            const { ctx, chartArea, scales } = chart;
+            if (!chartArea || !scales.y) return;
+            const y0 = scales.y.getPixelForValue(0);
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(100, 116, 139, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.moveTo(chartArea.left, y0);
+            ctx.lineTo(chartArea.right, y0);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }],
         data: {
           labels: weeks,
           datasets: datasets
@@ -4533,24 +4504,19 @@
           responsive: true,
           maintainAspectRatio: false,
           animation: false,
+          layout: { padding: { top: 12, bottom: 12 } },
           interaction: { mode: 'index', intersect: false },
           plugins: {
             title: {
               display: true,
-              text: `${metricTitle} (${modeTitle}) - NDL ${STATE.filters.year}`,
+              text: chartTitle,
               color: textColor,
-              font: { size: 16, weight: '800' },
-              padding: { bottom: 15 }
+              font: { size: 16, weight: '700' },
+              padding: { bottom: 16 }
             },
             legend: {
               position: 'right',
-              labels: {
-                color: textColor,
-                font: { size: 11, weight: '600' },
-                usePointStyle: true,
-                pointStyle: 'line',
-                padding: 14
-              }
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 12 }
             },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
@@ -4562,35 +4528,36 @@
               callbacks: {
                 title: (items) => `Week ${items[0].label}`,
                 label: (ctx) => {
-                  const val = ctx.parsed.y;
-                  if (val === null || val === undefined) return null;
-                  if (isRank) return `${ctx.dataset.label}: #${val}`;
-                  return `${ctx.dataset.label}: ${val > 0 ? '+' : ''}${val.toFixed(2)}`;
+                  const idx = ctx.dataIndex;
+                  if (isRank && idx === 0) return `${ctx.dataset.label}: Preseason`;
+                  const trueVal = ctx.dataset.rawValues[idx];
+                  if (trueVal === null || trueVal === undefined) return null;
+                  
+                  if (isRank) {
+                    return `${ctx.dataset.label}: #${trueVal}`;
+                  } else {
+                    return `${ctx.dataset.label}: ${trueVal > 0 ? '+' : ''}${trueVal.toFixed(2)} WAE`;
+                  }
                 }
               }
             }
           },
           scales: {
             x: {
-              title: { display: true, text: 'Week', color: textColor, font: { size: 13, weight: '700' } },
+              title: { display: true, text: 'Week', color: textColor, font: { size: 12, weight: '700' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 12, weight: '700' } }
+              ticks: { color: textColor, font: { size: 11, weight: '600' } }
             },
-            y: {
-              reverse: isRank,
-              min: minY,
-              max: maxY,
-              title: { display: true, text: metricTitle, color: textColor, font: { size: 13, weight: '700' } },
+            y: isRank ? {
+              min: 1, max: numTeams, reverse: true,
+              title: { display: true, text: 'Rank', color: textColor, font: { size: 12, weight: '700' } },
               grid: { color: gridColor },
-              ticks: {
-                color: textColor,
-                font: { size: 12, weight: '700' },
-                stepSize: stepSizeY,
-                callback: v => {
-                  if (isRank) return `#${v}`;
-                  return v > 0 ? `+${v}` : v;
-                }
-              }
+              ticks: { color: textColor, font: { size: 11, weight: '600' }, stepSize: 1 }
+            } : {
+              min: yMinFixed, max: yMaxFixed,
+              title: { display: true, text: 'Wins Above Even', color: textColor, font: { size: 12, weight: '700' } },
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 11, weight: '600' }, stepSize: 1 }
             }
           }
         }
@@ -4607,16 +4574,27 @@
       const isRank = STATE.wae.metric === 'rank';
       const isMatchup = STATE.wae.mode === 'matchup';
 
-      s.teams.forEach((team, tIdx) => {
-        let sourceArr;
+      s.teamMetaList.forEach((meta, mIdx) => {
+        const teamData = s.seriesMap[meta.team_id];
+
         if (isRank) {
-          sourceArr = isMatchup ? team.rankMatchup : team.rankEtew;
+          const fullRankArr = isMatchup ? teamData.matchupRank : teamData.etewRank;
+          const sliced = [null].concat(fullRankArr.slice(1, validIdx + 1));
+          const padded = sliced.concat(new Array(total - sliced.length).fill(null));
+          chart.data.datasets[mIdx].data = padded;
+          chart.data.datasets[mIdx].rawValues = padded;
         } else {
-          sourceArr = isMatchup ? team.cumWae : team.cumEtewWae;
+          const fullRawArr = isMatchup ? teamData.cumMatchup : teamData.cumEtew;
+          const fullDisplayArr = isMatchup ? teamData.cumMatchupDisplay : teamData.cumEtewDisplay;
+
+          const slicedDisplay = fullDisplayArr.slice(0, validIdx + 1);
+          const paddedDisplay = slicedDisplay.concat(new Array(total - (validIdx + 1)).fill(null));
+          chart.data.datasets[mIdx].data = paddedDisplay;
+
+          const slicedRaw = fullRawArr.slice(0, validIdx + 1);
+          const paddedRaw = slicedRaw.concat(new Array(total - (validIdx + 1)).fill(null));
+          chart.data.datasets[mIdx].rawValues = paddedRaw;
         }
-        const slicedData = sourceArr.slice(0, validIdx + 1);
-        const paddedData = slicedData.concat(new Array(total - (validIdx + 1)).fill(null));
-        chart.data.datasets[tIdx].data = paddedData;
       });
 
       const scrubber = document.getElementById('wae-scrubber');
@@ -4695,40 +4673,39 @@
       }
     }
 
-    function downloadWaeChartPNG() {
-      if (!STATE.wae.chartInstance) return;
+    function downloadWaePNG() {
+      const chart = STATE.wae.chartInstance;
+      if (!chart) return;
       const link = document.createElement('a');
-      const filePrefix = STATE.wae.metric === 'rank' ? 'NDL_Rank' : 'NDL_Wins_Above_Even';
-      link.download = `${filePrefix}_${STATE.wae.mode}_${STATE.filters.year}.png`;
-      link.href = STATE.wae.chartInstance.toBase64Image();
+      link.download = `NDL_${STATE.wae.metric === 'rank' ? 'Rank' : 'Wins_Above_Even'}_${STATE.filters.year}_${STATE.wae.mode}.png`;
+      link.href = chart.toBase64Image();
       link.click();
     }
 
-    function downloadWaeChartCSV() {
+    function downloadWaeCSV() {
       const s = STATE.wae.fullSeries;
-      if (!s || !s.teams || s.teams.length === 0) return;
+      if (!s) return;
 
       const isRank = STATE.wae.metric === 'rank';
       const isMatchup = STATE.wae.mode === 'matchup';
-      const csvRows = [];
-
-      s.weeks.forEach((wk, wIdx) => {
-        const rowObj = { Week: wk };
-        s.teams.forEach(t => {
-          let val;
-          if (isRank) val = isMatchup ? t.rankMatchup[wIdx] : t.rankEtew[wIdx];
-          else val = isMatchup ? t.cumWae[wIdx] : t.cumEtewWae[wIdx];
-          rowObj[t.manager] = val !== null ? val : '';
+      const csvRows = s.weeks.map((wk, wIdx) => {
+        const row = { Week: wk };
+        s.teamMetaList.forEach(meta => {
+          const teamData = s.seriesMap[meta.team_id];
+          if (isRank) {
+            row[meta.manager] = wIdx === 0 ? '' : (isMatchup ? teamData.matchupRank[wIdx] : teamData.etewRank[wIdx]);
+          } else {
+            row[meta.manager] = (isMatchup ? teamData.cumMatchup[wIdx] : teamData.cumEtew[wIdx]).toFixed(4);
+          }
         });
-        csvRows.push(rowObj);
+        return row;
       });
 
       const csv = Papa.unparse(csvRows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      const filePrefix = isRank ? 'NDL_Rank' : 'NDL_Wins_Above_Even';
-      link.setAttribute("download", `${filePrefix}_${STATE.wae.mode}_${STATE.filters.year}.csv`);
+      link.setAttribute("download", `NDL_${isRank ? 'Rank' : 'WAE'}_${STATE.filters.year}_${STATE.wae.mode}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -4737,69 +4714,122 @@
     // ==========================================
     // SECTION 9: LIVE WIN PROBABILITY REPLAY ENGINE
     // ==========================================
-    const verticalMidpointLinePlugin = {
-      id: 'verticalMidpointLine',
-      afterDraw(chart) {
+    const liveReplayOverlayPlugin = {
+      id: 'liveReplayOverlay',
+      afterDatasetsDraw(chart) {
         const { ctx, chartArea, scales } = chart;
-        if (!chartArea || !scales.x) return;
+        if (!chartArea || !scales.y1 || !STATE.liveProb.fullSeries) return;
 
-        const labels = chart.data.labels || [];
-        let xMid = chartArea.left + chartArea.width / 2;
-        if (labels.length > 0) {
-          const midIdx = Math.floor(labels.length / 2);
-          const px = scales.x.getPixelForValue(midIdx);
-          if (px >= chartArea.left && px <= chartArea.right) xMid = px;
+        const s = STATE.liveProb.fullSeries;
+        const curIdx0 = STATE.liveProb.currentIdx - 1;
+        if (curIdx0 < 0) return;
+
+        ctx.save();
+        const y50 = scales.y1.getPixelForValue(50);
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(chartArea.left, y50);
+        ctx.lineTo(chartArea.right, y50);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const meta0 = chart.getDatasetMeta(0);
+        const meta1 = chart.getDatasetMeta(1);
+        const meta4 = chart.getDatasetMeta(4);
+
+        const ptA = meta0?.data[curIdx0];
+        const ptB = meta1?.data[curIdx0];
+        const ptWP = meta4?.data[curIdx0];
+
+        if (ptA && !ptA.skip && ptA.x && ptA.y) {
+          ctx.beginPath();
+          ctx.arc(ptA.x, ptA.y, 5.5, 0, 2 * Math.PI);
+          ctx.fillStyle = s.colorA;
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
         }
 
-        const isDark = document.documentElement.classList.contains('dark');
-        ctx.save();
-        ctx.beginPath();
-        ctx.setLineDash([5, 5]);
-        ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.35)' : 'rgba(100, 116, 139, 0.35)';
-        ctx.lineWidth = 1.25;
-        ctx.moveTo(xMid, chartArea.top);
-        ctx.lineTo(xMid, chartArea.bottom);
-        ctx.stroke();
+        if (ptB && !ptB.skip && ptB.x && ptB.y) {
+          ctx.beginPath();
+          ctx.arc(ptB.x, ptB.y, 5.5, 0, 2 * Math.PI);
+          ctx.fillStyle = s.colorB;
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
 
-        ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.6)' : 'rgba(100, 116, 139, 0.7)';
-        ctx.font = '600 10px ui-sans-serif, system-ui';
-        ctx.textAlign = 'center';
-        ctx.fillText('MIDPOINT', xMid, chartArea.top + 12);
+        if (ptWP && ptWP.x && ptWP.y) {
+          const wpCur = s.tmaWpNorm[curIdx0];
+          const wpPrev = curIdx0 > 0 ? s.tmaWpNorm[curIdx0 - 1] : wpCur;
+          const diff = wpCur - wpPrev;
+
+          let dir = 'flat';
+          if (diff > 0.1) dir = 'up';
+          else if (diff < -0.1) dir = 'down';
+
+          const favoriteColor = wpCur >= 50 ? s.colorA : s.colorB;
+          const caretX = ptWP.x;
+          const caretY = ptWP.y;
+          const size = 6.5;
+
+          ctx.beginPath();
+          if (dir === 'up') {
+            ctx.moveTo(caretX, caretY - size - 2);
+            ctx.lineTo(caretX - size, caretY + size);
+            ctx.lineTo(caretX + size, caretY + size);
+          } else if (dir === 'down') {
+            ctx.moveTo(caretX, caretY + size + 2);
+            ctx.lineTo(caretX - size, caretY - size);
+            ctx.lineTo(caretX + size, caretY - size);
+          } else {
+            ctx.moveTo(caretX + size + 2, caretY);
+            ctx.lineTo(caretX - size, caretY - size);
+            ctx.lineTo(caretX - size, caretY + size);
+          }
+          ctx.closePath();
+          ctx.fillStyle = favoriteColor;
+          ctx.fill();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
         ctx.restore();
       }
     };
 
     function initLiveProbTab() {
-      const mSelect = document.getElementById('live-prob-matchup');
-      const replayBtn = document.getElementById('btn-replay-animation');
+      const matchupSelect = document.getElementById('live-prob-matchup');
       const playPauseBtn = document.getElementById('btn-play-pause-replay');
+      const restartBtn = document.getElementById('btn-replay-animation');
       const speedSlider = document.getElementById('replay-speed-slider');
       const scrubber = document.getElementById('replay-scrubber');
-      const exportPngBtn = document.getElementById('btn-export-chart-png');
-      const exportCsvBtn = document.getElementById('btn-export-chart-csv');
+      const pngBtn = document.getElementById('btn-export-chart-png');
+      const csvBtn = document.getElementById('btn-export-chart-csv');
 
-      if (!mSelect) return;
+      if (!matchupSelect) return;
 
-      mSelect.addEventListener('change', () => { STATE.filters.matchup = mSelect.value; updateUrlHash(); renderLiveProbMatchup(); });
+      populateLiveProbMatchups();
 
-      if (replayBtn) {
-        replayBtn.addEventListener('click', () => {
-          if (STATE.liveProb.fullSeries) {
-            STATE.liveProb.currentIdx = 0;
-            renderFrameAtIdx(0);
-            startLiveProbReplay();
-          }
-        });
-      }
+      matchupSelect.addEventListener('change', () => {
+        STATE.filters.matchup = matchupSelect.value || null;
+        updateUrlHash();
+        renderLiveProbMatchup();
+      });
 
-      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleLiveProbPlayPause);
+      if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+      if (restartBtn) restartBtn.addEventListener('click', restartReplay);
 
       if (speedSlider) {
         speedSlider.addEventListener('input', (e) => {
           const mult = Number(e.target.value);
           STATE.liveProb.speedMultiplier = mult;
           document.getElementById('replay-speed-val').innerText = `${mult}x`;
-          if (STATE.liveProb.isPlaying) restartLiveProbIntervalTimer();
+          if (STATE.liveProb.isPlaying) restartIntervalTimer();
         });
       }
 
@@ -4808,204 +4838,344 @@
           const pct = Number(e.target.value);
           const total = STATE.liveProb.fullSeries ? STATE.liveProb.fullSeries.labels.length : 0;
           if (total === 0) return;
-          const targetIdx = Math.round((pct / 100) * (total - 1));
+          const targetIdx = Math.max(1, Math.round((pct / 100) * total));
           STATE.liveProb.currentIdx = targetIdx;
           renderFrameAtIdx(targetIdx);
         });
       }
 
-      if (exportPngBtn) exportPngBtn.addEventListener('click', downloadChartPNG);
-      if (exportCsvBtn) exportCsvBtn.addEventListener('click', downloadChartCSV);
-
-      populateLiveProbMatchups();
+      if (pngBtn) pngBtn.addEventListener('click', downloadChartPNG);
+      if (csvBtn) csvBtn.addEventListener('click', downloadChartCSV);
     }
 
+    function populateLiveProbWeeks() { populateLiveProbMatchups(); }
+
     function populateLiveProbMatchups() {
-      const mSelect = document.getElementById('live-prob-matchup');
-      if (!mSelect) return;
-      const prev = STATE.filters.matchup || mSelect.value;
+      const matchupSelect = document.getElementById('live-prob-matchup');
+      if (!matchupSelect) return;
 
       const yr = STATE.filters.year;
       const wk = Number(STATE.filters.weekMax);
-      const scores = STATE.data.scores || [];
-      const filtered = scores.filter(r => Number(getVal(r, ['YR', 'year'])) === Number(yr) && Number(getVal(r, ['WK', 'week'])) === wk);
 
-      const matchupMap = {};
-      filtered.forEach(r => {
-        const tma = Number(getVal(r, ['TMA']));
-        const tmb = Number(getVal(r, ['TMB']));
+      const sc = STATE.data.scores || [];
+
+      // One entry per matchup: the score table can hold both orientations (A vs B and B vs A).
+      const seen = new Set();
+      const matchupList = [];
+      sc.forEach(r => {
+        if (Number(getVal(r, ['YR', 'year'])) !== Number(yr) || Number(getVal(r, ['WK', 'week'])) !== wk) return;
+        const tma = Number(getVal(r, ['TMA', 'team_id']));
+        const tmb = Number(getVal(r, ['TMB', 'opponent_team_id']));
         if (!tma || !tmb) return;
-
-        const key = `${tma}_${tmb}`;
-        const reverseKey = `${tmb}_${tma}`;
-        if (!matchupMap[key] && !matchupMap[reverseKey]) {
-          const mgrA = getManagerName(tma, yr);
-          const mgrB = getManagerName(tmb, yr);
-          const nameA = getTeamName(tma, yr);
-          const nameB = getTeamName(tmb, yr);
-          matchupMap[key] = { key, tma, tmb, label: `${mgrA} (${nameA}) vs ${mgrB} (${nameB})` };
-        }
+        if (seen.has(`${tma}_${tmb}`) || seen.has(`${tmb}_${tma}`)) return;
+        seen.add(`${tma}_${tmb}`);
+        matchupList.push({ tma, tmb });
       });
 
-      const list = Object.values(matchupMap);
-      mSelect.innerHTML = list.length > 0
-        ? list.map(m => `<option value="${m.key}">${m.label}</option>`).join('')
-        : `<option value="">No Matchups Available</option>`;
-      if (prev && list.some(m => m.key === prev)) mSelect.value = prev;
-      STATE.filters.matchup = mSelect.value || null;
+      if (matchupList.length === 0) {
+        matchupSelect.innerHTML = `<option value="">No Matchups Found</option>`;
+        return;
+      }
+
+      matchupSelect.innerHTML = matchupList.map(m => {
+        const nameA = getTeamName(m.tma, yr);
+        const mgrA = getManagerName(m.tma, yr);
+        const nameB = getTeamName(m.tmb, yr);
+        const mgrB = getManagerName(m.tmb, yr);
+        return `<option value="${m.tma}_${m.tmb}">${nameA} (${mgrA}) vs ${nameB} (${mgrB})</option>`;
+      }).join('');
+
+      // A saved/URL matchup may be in either orientation.
+      const wanted = STATE.filters.matchup;
+      const hit = wanted ? matchupList.find(m => `${m.tma}_${m.tmb}` === wanted || `${m.tmb}_${m.tma}` === wanted) : null;
+      matchupSelect.value = hit ? `${hit.tma}_${hit.tmb}` : `${matchupList[0].tma}_${matchupList[0].tmb}`;
+      STATE.filters.matchup = matchupSelect.value;
+    }
+
+    function renderLiveProbEmpty(msg) {
+      clearChartState(STATE.liveProb);
+      setChartEmpty('liveWinProbChart', msg);
+      ['tma', 'tmb'].forEach(k => {
+        const set = (id, v) => { const el = document.getElementById(`scorecard-${k}-${id}`); if (el) el.innerText = v; };
+        set('name', '--'); set('mgr', ''); set('pts', '0.00'); set('proj', 'Proj: --'); set('wp', '--%');
+      });
+    }
+
+    function formatTimeLabel(tsStr) {
+      if (tsStr === undefined || tsStr === null || tsStr === '') return '';
+      try {
+        let dt;
+        if (typeof tsStr === 'number') dt = new Date(tsStr < 1e12 ? tsStr * 1000 : tsStr);
+        else dt = new Date(String(tsStr).replace(' ', 'T'));
+        if (isNaN(dt.getTime())) return String(tsStr);
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const day = days[dt.getDay()];
+        let hours = dt.getHours();
+        const mins = String(dt.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${day} ${hours}:${mins} ${ampm}`;
+      } catch (e) {
+        return String(tsStr);
+      }
+    }
+
+    // Builds the ordered, de-duplicated replay points for one matchup.
+    // - Accepts rows in either orientation (TMA/TMB swapped) and flips them so side A is always the selected team A.
+    // - Win prob is only ever the ratio A/(A+B) of the two stored values, so it is independent of 0-1 vs 0-100 storage.
+    //   Rows without BOTH win-prob values (or with a zero sum) are skipped; they are never turned into a neutral 50/50 row.
+    // - Rows sharing the same TIME+RUN (e.g. both orientations of the same snapshot) collapse to one point.
+    function buildLiveProbPoints(scores, yr, wk, tma, tmb) {
+      const num = v => (v === undefined || v === null || v === '') ? NaN : Number(v);
+      const timeOf = r => getVal(r, ['TIME', 'time', 'TS', 'timestamp', 'ts']);
+      const runOf = r => Number(getVal(r, ['RUN', 'run']) || 0);
+
+      const rows = scores.filter(r => {
+        if (Number(getVal(r, ['YR', 'year'])) !== Number(yr) || Number(getVal(r, ['WK', 'week'])) !== Number(wk)) return false;
+        const a = Number(getVal(r, ['TMA', 'team_id']));
+        const b = Number(getVal(r, ['TMB', 'opponent_team_id']));
+        return (a === tma && b === tmb) || (a === tmb && b === tma);
+      }).sort((x, y) => {
+        const tx = timeOf(x), ty = timeOf(y);
+        let c = 0;
+        if (typeof tx === 'number' && typeof ty === 'number') c = tx - ty;
+        else c = String(tx === undefined ? '' : tx).localeCompare(String(ty === undefined ? '' : ty));
+        return c || (runOf(x) - runOf(y));
+      });
+
+      const points = [];
+      const byKey = new Map();
+      rows.forEach(r => {
+        const flipped = Number(getVal(r, ['TMA', 'team_id'])) === tmb;
+        const A = (fa, fb) => getVal(r, flipped ? fb : fa);
+
+        const wpA = num(A(['TMAWP'], ['TMBWP']));
+        const wpB = num(A(['TMBWP'], ['TMAWP']));
+        if (!isFinite(wpA) || !isFinite(wpB) || (wpA + wpB) <= 0) return;
+
+        const normA = (wpA / (wpA + wpB)) * 100;
+        const pt = {
+          time: timeOf(r),
+          ptsA: Number(A(['TMAPTS', 'team_points'], ['TMBPTS', 'opponent_points'])) || 0,
+          ptsB: Number(A(['TMBPTS', 'opponent_points'], ['TMAPTS', 'team_points'])) || 0,
+          projA: Number(A(['TMAPROJ', 'team_proj_points'], ['TMBPROJ', 'opponent_proj_points'])) || 0,
+          projB: Number(A(['TMBPROJ', 'opponent_proj_points'], ['TMAPROJ', 'team_proj_points'])) || 0,
+          wpRawA: wpA, wpRawB: wpB,
+          wpA: normA, wpB: 100 - normA
+        };
+
+        const key = `${pt.time}|${runOf(r)}`;
+        if (byKey.has(key)) {
+          const i = byKey.get(key);
+          if ((pt.ptsA + pt.ptsB) > (points[i].ptsA + points[i].ptsB)) points[i] = pt;
+        } else {
+          byKey.set(key, points.length);
+          points.push(pt);
+        }
+      });
+      return points;
     }
 
     function renderLiveProbMatchup() {
+      const matchupSelect = document.getElementById('live-prob-matchup');
+      if (!matchupSelect) return;
+
       const yr = STATE.filters.year;
       const wk = Number(STATE.filters.weekMax);
-      const mKey = document.getElementById('live-prob-matchup')?.value;
+      const val = matchupSelect.value;
 
-      if (!mKey) {
-        clearChartState(STATE.liveProb);
-        setChartEmpty('liveWinProbChart', `No live win probability data for NDL ${yr} Week ${wk}. Use the ◀ ▶ arrows in the filter bar to pick another week.`);
+      if (!val) {
+        renderLiveProbEmpty(`No live scoring data for NDL ${yr} Week ${wk}. Use the \u25C0 \u25B6 arrows in the filter bar to pick another week.`);
+        return;
+      }
+      const [tma, tmb] = val.split('_').map(Number);
+
+      const pts = buildLiveProbPoints(STATE.data.scores || [], yr, wk, tma, tmb);
+
+      if (pts.length === 0) {
+        renderLiveProbEmpty(`No live scoring rows for that matchup in Week ${wk}.`);
         return;
       }
       setChartEmpty('liveWinProbChart', null);
 
-      const [tmaStr, tmbStr] = mKey.split('_');
-      const tma = Number(tmaStr);
-      const tmb = Number(tmbStr);
-
-      const scores = STATE.data.scores || [];
-      const rows = scores.filter(r => {
-        const rYr = Number(getVal(r, ['YR', 'year']));
-        const rWk = Number(getVal(r, ['WK', 'week']));
-        const rTma = Number(getVal(r, ['TMA']));
-        const rTmb = Number(getVal(r, ['TMB']));
-        return rYr === Number(yr) && rWk === Number(wk) && ((rTma === tma && rTmb === tmb) || (rTma === tmb && rTmb === tma));
-      });
-
-      if (rows.length === 0) return;
-
-      rows.sort((a, b) => {
-        const tA = new Date(getVal(a, ['TMSTMP', 'timestamp'])).getTime();
-        const tB = new Date(getVal(b, ['TMSTMP', 'timestamp'])).getTime();
-        return tA - tB;
-      });
-
-      const seriesLabels = [];
-      const seriesTmaPts = [];
-      const seriesTmbPts = [];
-      const seriesTmaProj = [];
-      const seriesTmbProj = [];
-      const seriesTmaWp = [];
-      const seriesTmbWp = [];
-
-      rows.forEach(r => {
-        const rTma = Number(getVal(r, ['TMA']));
-        const isNormalOrientation = rTma === tma;
-
-        const ptsA = Number(getVal(r, [isNormalOrientation ? 'TMAPTS' : 'TMBPTS'])) || 0;
-        const ptsB = Number(getVal(r, [isNormalOrientation ? 'TMBPTS' : 'TMAPTS'])) || 0;
-        const projA = Number(getVal(r, [isNormalOrientation ? 'TMAPROJ' : 'TMBPROJ'])) || 0;
-        const projB = Number(getVal(r, [isNormalOrientation ? 'TMBPROJ' : 'TMAPROJ'])) || 0;
-
-        let wpA = Number(getVal(r, [isNormalOrientation ? 'TMAWINPROB' : 'TMBWINPROB'])) || 0;
-        let wpB = Number(getVal(r, [isNormalOrientation ? 'TMBWINPROB' : 'TMAWINPROB'])) || 0;
-        if (wpA > 0 && wpA <= 1 && wpB > 0 && wpB <= 1) { wpA *= 100; wpB *= 100; }
-
-        const rawTs = getVal(r, ['TMSTMP', 'timestamp']) || '';
-        let shortTime = rawTs;
-        const d = new Date(rawTs);
-        if (!isNaN(d.getTime())) {
-          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-          shortTime = `${days[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-        }
-
-        seriesLabels.push(shortTime);
-        seriesTmaPts.push(ptsA);
-        seriesTmbPts.push(ptsB);
-        seriesTmaProj.push(projA);
-        seriesTmbProj.push(projB);
-        seriesTmaWp.push(Number(wpA.toFixed(1)));
-        seriesTmbWp.push(Number(wpB.toFixed(1)));
-      });
-
       const mgrA = getManagerName(tma, yr);
       const mgrB = getManagerName(tmb, yr);
-      const nameA = getTeamName(tma, yr);
-      const nameB = getTeamName(tmb, yr);
-
       const colorA = getManagerColor(mgrA, 0);
       const colorB = getManagerColor(mgrB, 1);
 
-      document.getElementById('scorecard-tma-mgr').innerText = mgrA;
-      document.getElementById('scorecard-tma-mgr').style.color = colorA;
-      document.getElementById('scorecard-tma-name').innerText = nameA;
-
-      document.getElementById('scorecard-tmb-mgr').innerText = mgrB;
-      document.getElementById('scorecard-tmb-mgr').style.color = colorB;
-      document.getElementById('scorecard-tmb-name').innerText = nameB;
+      const labels = pts.map(p => formatTimeLabel(p.time));
+      const tmaPts = pts.map(p => p.ptsA);
+      const tmbPts = pts.map(p => p.ptsB);
+      const tmaProj = pts.map(p => p.projA);
+      const tmbProj = pts.map(p => p.projB);
+      const tmaWpRaw = pts.map(p => p.wpRawA);
+      const tmbWpRaw = pts.map(p => p.wpRawB);
+      const tmaWpNorm = pts.map(p => p.wpA);
+      const tmbWpNorm = pts.map(p => p.wpB);
 
       STATE.liveProb.fullSeries = {
-        labels: seriesLabels, tmaPts: seriesTmaPts, tmbPts: seriesTmbPts,
-        tmaProj: seriesTmaProj, tmbProj: seriesTmbProj, tmaWp: seriesTmaWp, tmbWp: seriesTmbWp,
-        mgrA, mgrB, nameA, nameB, colorA, colorB,
-        maxPts: Math.max(...seriesTmaPts, ...seriesTmbPts, ...seriesTmaProj, ...seriesTmbProj, 150) + 15
+        tma, tmb, mgrA, mgrB, colorA, colorB,
+        labels, tmaPts, tmbPts, tmaProj, tmbProj,
+        tmaWpNorm, tmbWpNorm, tmaWpRaw, tmbWpRaw
       };
 
-      initChartCanvas();
-      STATE.liveProb.currentIdx = 0;
-      renderFrameAtIdx(0);
-      startLiveProbReplay();
+      const nameA = getTeamName(tma, yr);
+      const nameB = getTeamName(tmb, yr);
+
+      initFixedChart(labels, nameA, nameB, colorA, colorB);
+      restartReplay();
     }
 
-    function initChartCanvas() {
-      const s = STATE.liveProb.fullSeries;
-      if (!s) return;
+    function initFixedChart(fullLabels, nameA, nameB, colorA, colorB) {
+      const canvas = document.getElementById('liveWinProbChart');
+      if (!canvas) return;
 
       const isDark = document.documentElement.classList.contains('dark');
       const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const textColor = isDark ? '#94a3b8' : '#475569';
-      const totalLen = s.labels.length;
-      const emptyArray = new Array(totalLen).fill(null);
 
-      if (STATE.liveProb.chartInstance) STATE.liveProb.chartInstance.destroy();
+      if (STATE.liveProb.chartInstance) {
+        STATE.liveProb.chartInstance.destroy();
+      }
 
-      const ctx = document.getElementById('liveWinProbChart').getContext('2d');
+      const emptyArray = new Array(fullLabels.length).fill(null);
+
+      const ctx = canvas.getContext('2d');
       STATE.liveProb.chartInstance = new Chart(ctx, {
         type: 'line',
-        plugins: [verticalMidpointLinePlugin],
+        plugins: [liveReplayOverlayPlugin],
         data: {
-          labels: s.labels,
+          labels: fullLabels,
           datasets: [
-            { label: `${s.mgrA} Win Prob (%)`, data: [...emptyArray], borderColor: s.colorA, backgroundColor: hexToRgba(s.colorA, 0.12), borderWidth: 3, yAxisID: 'yWinProb', tension: 0, pointRadius: 0, pointHoverRadius: 5, fill: true, spanGaps: false },
-            { label: `${s.mgrB} Win Prob (%)`, data: [...emptyArray], borderColor: s.colorB, backgroundColor: hexToRgba(s.colorB, 0.12), borderWidth: 3, yAxisID: 'yWinProb', tension: 0, pointRadius: 0, pointHoverRadius: 5, fill: true, spanGaps: false },
-            { label: `${s.mgrA} Score`, data: [...emptyArray], borderColor: hexToRgba(s.colorA, 0.8), borderDash: [6, 3], borderWidth: 2, yAxisID: 'yScore', tension: 0, pointRadius: 0, pointHoverRadius: 4, spanGaps: false },
-            { label: `${s.mgrB} Score`, data: [...emptyArray], borderColor: hexToRgba(s.colorB, 0.8), borderDash: [6, 3], borderWidth: 2, yAxisID: 'yScore', tension: 0, pointRadius: 0, pointHoverRadius: 4, spanGaps: false },
-            { label: `${s.mgrA} Proj`, data: [...emptyArray], borderColor: hexToRgba(s.colorA, 0.5), borderDash: [2, 2], borderWidth: 1.5, yAxisID: 'yScore', tension: 0, pointRadius: 0, spanGaps: false },
-            { label: `${s.mgrB} Proj`, data: [...emptyArray], borderColor: hexToRgba(s.colorB, 0.5), borderDash: [2, 2], borderWidth: 1.5, yAxisID: 'yScore', tension: 0, pointRadius: 0, spanGaps: false }
+            {
+              label: `${nameA} (Actual)`,
+              data: [...emptyArray],
+              borderColor: colorA,
+              backgroundColor: colorA,
+              borderWidth: 3,
+              pointRadius: 0,
+              pointHoverRadius: 6,
+              yAxisID: 'y',
+              tension: 0,
+              spanGaps: false
+            },
+            {
+              label: `${nameB} (Actual)`,
+              data: [...emptyArray],
+              borderColor: colorB,
+              backgroundColor: colorB,
+              borderWidth: 3,
+              pointRadius: 0,
+              pointHoverRadius: 6,
+              yAxisID: 'y',
+              tension: 0,
+              spanGaps: false
+            },
+            {
+              label: `${nameA} (Proj)`,
+              data: [...emptyArray],
+              borderColor: colorA,
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              yAxisID: 'y',
+              tension: 0,
+              spanGaps: false
+            },
+            {
+              label: `${nameB} (Proj)`,
+              data: [...emptyArray],
+              borderColor: colorB,
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              yAxisID: 'y',
+              tension: 0,
+              spanGaps: false
+            },
+            {
+              label: `${nameA} Win %`,
+              data: [...emptyArray],
+              borderColor: hexToRgba(colorA, 0.4),
+              backgroundColor: hexToRgba(colorA, 0.25),
+              fill: 'origin',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              yAxisID: 'y1',
+              stack: 'winprob',
+              tension: 0,
+              spanGaps: false
+            },
+            {
+              label: `${nameB} Win %`,
+              data: [...emptyArray],
+              borderColor: hexToRgba(colorB, 0.4),
+              backgroundColor: hexToRgba(colorB, 0.25),
+              fill: '-1',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              yAxisID: 'y1',
+              stack: 'winprob',
+              tension: 0,
+              spanGaps: false
+            }
           ]
         },
         options: {
-          responsive: true, maintainAspectRatio: false, animation: false,
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 15 } },
+            legend: {
+              position: 'top',
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14 }
+            },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               titleColor: isDark ? '#f8fafc' : '#0f172a',
               bodyColor: isDark ? '#cbd5e1' : '#334155',
               borderColor: isDark ? '#334155' : '#cbd5e1',
-              borderWidth: 1, padding: 10
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: function(ctx) {
+                  let label = ctx.dataset.label || '';
+                  if (label) label += ': ';
+                  if (ctx.parsed.y !== null && ctx.parsed.y !== undefined) {
+                    label += ctx.dataset.yAxisID === 'y1' ? `${ctx.parsed.y.toFixed(0)}%` : ctx.parsed.y.toFixed(2);
+                  }
+                  return label;
+                }
+              }
             }
           },
           scales: {
-            x: { grid: { color: gridColor }, ticks: { color: textColor, maxTicksLimit: 12, font: { size: 10 } } },
-            yWinProb: {
-              type: 'linear', position: 'left', min: 0, max: 100,
-              title: { display: true, text: 'Win Probability (%)', color: s.colorA, font: { size: 11, weight: '700' } },
-              grid: { color: gridColor }, ticks: { color: textColor, callback: v => `${v}%` }
+            x: {
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 14 }
             },
-            yScore: {
-              type: 'linear', position: 'right', min: 0, max: Math.ceil(s.maxPts / 10) * 10,
-              title: { display: true, text: 'Fantasy Points', color: s.colorB, font: { size: 11, weight: '700' } },
-              grid: { drawOnChartArea: false }, ticks: { color: textColor }
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: { display: true, text: 'Points Scored', color: textColor, font: { size: 11, weight: '700' } },
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 10 } },
+              min: 0
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              stacked: true,
+              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '700' } },
+              grid: { drawOnChartArea: false },
+              ticks: { color: textColor, font: { size: 10 }, callback: v => `${v}%` },
+              min: 0,
+              max: 100
             }
           }
         }
@@ -5017,134 +5187,135 @@
       if (!s || !STATE.liveProb.chartInstance) return;
 
       const total = s.labels.length;
-      const validIdx = Math.min(total - 1, Math.max(0, idx));
-      const sliceEnd = validIdx + 1;
+      const validIdx = Math.min(total, Math.max(1, idx));
 
-      const pad = (arr) => arr.slice(0, sliceEnd).concat(new Array(total - sliceEnd).fill(null));
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const mgrA = s.mgrA;
+      const nameB = getTeamName(s.tmb, yr);
+      const mgrB = s.mgrB;
 
-      const chart = STATE.liveProb.chartInstance;
-      chart.data.datasets[0].data = pad(s.tmaWp);
-      chart.data.datasets[1].data = pad(s.tmbWp);
-      chart.data.datasets[2].data = pad(s.tmaPts);
-      chart.data.datasets[3].data = pad(s.tmbPts);
-      chart.data.datasets[4].data = pad(s.tmaProj);
-      chart.data.datasets[5].data = pad(s.tmbProj);
+      const idx0 = validIdx - 1;
+      const wpA = s.tmaWpNorm[idx0];
+      const wpB = s.tmbWpNorm[idx0];
 
-      const ptsAEl = document.getElementById('scorecard-tma-pts');
-      ptsAEl.innerText = s.tmaPts[validIdx].toFixed(2);
-      ptsAEl.style.color = s.colorA;
+      document.getElementById('scorecard-tma-name').innerText = nameA;
+      document.getElementById('scorecard-tma-mgr').innerText = mgrA ? `Manager: ${mgrA}` : '';
+      document.getElementById('scorecard-tma-pts').innerText = s.tmaPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tma-pts').style.color = s.colorA;
+      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.tmaProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tma-wp').innerText = `${wpA.toFixed(0)}%`;
+      document.getElementById('scorecard-tma-wp').style.color = s.colorA;
 
-      document.getElementById('scorecard-tma-proj').innerText = `Proj: ${s.tmaProj[validIdx].toFixed(2)}`;
-
-      const wpAEl = document.getElementById('scorecard-tma-wp');
-      wpAEl.innerText = `${s.tmaWp[validIdx].toFixed(1)}%`;
-      wpAEl.style.color = s.colorA;
-
-      const ptsBEl = document.getElementById('scorecard-tmb-pts');
-      ptsBEl.innerText = s.tmbPts[validIdx].toFixed(2);
-      ptsBEl.style.color = s.colorB;
-
-      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[validIdx].toFixed(2)}`;
-
-      const wpBEl = document.getElementById('scorecard-tmb-wp');
-      wpBEl.innerText = `${s.tmbWp[validIdx].toFixed(1)}%`;
-      wpBEl.style.color = s.colorB;
+      document.getElementById('scorecard-tmb-name').innerText = nameB;
+      document.getElementById('scorecard-tmb-mgr').innerText = mgrB ? `Manager: ${mgrB}` : '';
+      document.getElementById('scorecard-tmb-pts').innerText = s.tmbPts[idx0].toFixed(2);
+      document.getElementById('scorecard-tmb-pts').style.color = s.colorB;
+      document.getElementById('scorecard-tmb-proj').innerText = `Proj: ${s.tmbProj[idx0].toFixed(2)}`;
+      document.getElementById('scorecard-tmb-wp').innerText = `${wpB.toFixed(0)}%`;
+      document.getElementById('scorecard-tmb-wp').style.color = s.colorB;
 
       const cardA = document.getElementById('scorecard-card-tma');
       const cardB = document.getElementById('scorecard-card-tmb');
       const chartContainer = document.getElementById('live-prob-chart-container');
 
-      const wpA = s.tmaWp[validIdx];
-      const wpB = s.tmbWp[validIdx];
-      const isFinished = validIdx >= total - 1;
-      const isDark = document.documentElement.classList.contains('dark');
+      if (wpA > 50) {
+        const intensity = Math.min(1, (wpA - 50) / 50);
+        cardA.style.backgroundColor = hexToRgba(s.colorA, 0.08 + 0.22 * intensity);
+        cardA.style.borderColor = hexToRgba(s.colorA, 0.3 + 0.4 * intensity);
+        cardB.style.backgroundColor = '';
+        cardB.style.borderColor = '';
 
-      const leaderColor = wpA > wpB ? s.colorA : (wpB > wpA ? s.colorB : null);
-
-      cardA.style.borderColor = '';
-      cardA.style.boxShadow = '';
-      cardA.style.backgroundColor = '';
-      cardB.style.borderColor = '';
-      cardB.style.boxShadow = '';
-      cardB.style.backgroundColor = '';
-
-      if (chartContainer) {
-        if (leaderColor) {
-          chartContainer.style.borderColor = leaderColor;
-          chartContainer.style.boxShadow = isFinished ? `0 0 28px ${hexToRgba(leaderColor, 0.35)}` : `0 4px 20px ${hexToRgba(leaderColor, 0.15)}`;
-        } else {
-          chartContainer.style.borderColor = '';
-          chartContainer.style.boxShadow = '';
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = hexToRgba(s.colorA, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorA, 0.25 + 0.35 * intensity);
         }
-      }
+      } else if (wpB > 50) {
+        const intensity = Math.min(1, (wpB - 50) / 50);
+        cardB.style.backgroundColor = hexToRgba(s.colorB, 0.08 + 0.22 * intensity);
+        cardB.style.borderColor = hexToRgba(s.colorB, 0.3 + 0.4 * intensity);
+        cardA.style.backgroundColor = '';
+        cardA.style.borderColor = '';
 
-      if (isFinished) {
-        if (wpA > wpB) {
-          cardA.style.borderColor = s.colorA;
-          cardA.style.backgroundColor = hexToRgba(s.colorA, isDark ? 0.18 : 0.12);
-          cardA.style.boxShadow = `0 0 20px ${hexToRgba(s.colorA, 0.45)}`;
-        } else if (wpB > wpA) {
-          cardB.style.borderColor = s.colorB;
-          cardB.style.backgroundColor = hexToRgba(s.colorB, isDark ? 0.18 : 0.12);
-          cardB.style.boxShadow = `0 0 20px ${hexToRgba(s.colorB, 0.45)}`;
+        if (chartContainer) {
+          chartContainer.style.backgroundColor = hexToRgba(s.colorB, 0.06 + 0.14 * intensity);
+          chartContainer.style.borderColor = hexToRgba(s.colorB, 0.25 + 0.35 * intensity);
         }
       } else {
-        if (wpA > wpB) {
-          cardA.style.borderColor = hexToRgba(s.colorA, 0.6);
-          cardA.style.backgroundColor = hexToRgba(s.colorA, isDark ? 0.1 : 0.06);
-        } else if (wpB > wpA) {
-          cardB.style.borderColor = hexToRgba(s.colorB, 0.6);
-          cardB.style.backgroundColor = hexToRgba(s.colorB, isDark ? 0.1 : 0.06);
-        }
+        cardA.style.backgroundColor = ''; cardA.style.borderColor = '';
+        cardB.style.backgroundColor = ''; cardB.style.borderColor = '';
+        if (chartContainer) { chartContainer.style.backgroundColor = ''; chartContainer.style.borderColor = ''; }
       }
 
       const scrubber = document.getElementById('replay-scrubber');
-      if (scrubber && total > 1) scrubber.value = Math.round((validIdx / (total - 1)) * 100);
+      if (scrubber) scrubber.value = Math.round((validIdx / total) * 100);
+
+      const padNull = (arr) => arr.slice(0, validIdx).concat(new Array(total - validIdx).fill(null));
+      const extendRight = (arr) => {
+        const sliced = arr.slice(0, validIdx);
+        const lastVal = sliced[sliced.length - 1];
+        return sliced.concat(new Array(total - validIdx).fill(lastVal));
+      };
+
+      const chart = STATE.liveProb.chartInstance;
+      chart.data.datasets[0].data = padNull(s.tmaPts);
+      chart.data.datasets[1].data = padNull(s.tmbPts);
+      chart.data.datasets[2].data = extendRight(s.tmaProj);
+      chart.data.datasets[3].data = extendRight(s.tmbProj);
+      chart.data.datasets[4].data = padNull(s.tmaWpNorm);
+      chart.data.datasets[5].data = padNull(s.tmbWpNorm);
 
       chart.update('none');
     }
 
-    function toggleLiveProbPlayPause() {
-      if (STATE.liveProb.isPlaying) pauseLiveProbReplay();
+    function togglePlayPause() {
+      if (STATE.liveProb.isPlaying) pauseReplay();
       else {
         const s = STATE.liveProb.fullSeries;
-        if (s && STATE.liveProb.currentIdx >= s.labels.length - 1) STATE.liveProb.currentIdx = 0;
-        startLiveProbReplay();
+        if (s && STATE.liveProb.currentIdx >= s.labels.length) STATE.liveProb.currentIdx = 1;
+        startReplay();
       }
     }
 
-    function startLiveProbReplay() {
+    function startReplay() {
       STATE.liveProb.isPlaying = true;
       updatePlayPauseUI();
-      restartLiveProbIntervalTimer();
+      restartIntervalTimer();
     }
 
-    function pauseLiveProbReplay() {
+    function pauseReplay() {
       STATE.liveProb.isPlaying = false;
-      if (STATE.liveProb.animationTimer) { clearInterval(STATE.liveProb.animationTimer); STATE.liveProb.animationTimer = null; }
+      if (STATE.liveProb.animationTimer) {
+        clearInterval(STATE.liveProb.animationTimer);
+        STATE.liveProb.animationTimer = null;
+      }
       updatePlayPauseUI();
     }
 
-    function restartLiveProbIntervalTimer() {
+    function restartReplay() {
+      STATE.liveProb.currentIdx = 1;
+      renderFrameAtIdx(1);
+      startReplay();
+    }
+
+    function restartIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
-
-      const s = STATE.liveProb.fullSeries;
-      if (!s) return;
-
-      const total = s.labels.length;
       const mult = STATE.liveProb.speedMultiplier || 3;
-      const stepSize = Math.max(1, Math.ceil((total / 120) * (mult / 3)));
+      const intervalMs = Math.max(10, Math.round(120 / mult));
 
       STATE.liveProb.animationTimer = setInterval(() => {
-        STATE.liveProb.currentIdx += stepSize;
-        if (STATE.liveProb.currentIdx >= total - 1) {
-          STATE.liveProb.currentIdx = total - 1;
+        const s = STATE.liveProb.fullSeries;
+        if (!s) return;
+
+        STATE.liveProb.currentIdx += 1;
+        if (STATE.liveProb.currentIdx >= s.labels.length) {
+          STATE.liveProb.currentIdx = s.labels.length;
           renderFrameAtIdx(STATE.liveProb.currentIdx);
-          pauseLiveProbReplay();
+          pauseReplay();
         } else {
           renderFrameAtIdx(STATE.liveProb.currentIdx);
         }
-      }, 30);
+      }, intervalMs);
     }
 
     function updatePlayPauseUI() {
@@ -5162,52 +5333,209 @@
     }
 
     function updateChartThemeColors() {
+      const chart = STATE.liveProb.chartInstance;
+      if (!chart) return;
       const isDark = document.documentElement.classList.contains('dark');
       const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const textColor = isDark ? '#94a3b8' : '#475569';
-      const c = STATE.liveProb.chartInstance;
-      if (!c) return;
 
-      c.options.plugins.legend.labels.color = textColor;
-      c.options.scales.x.grid.color = gridColor;
-      c.options.scales.x.ticks.color = textColor;
-      c.options.scales.yWinProb.grid.color = gridColor;
-      c.options.scales.yWinProb.ticks.color = textColor;
-      c.options.scales.yScore.ticks.color = textColor;
-      c.update('none');
+      chart.options.scales.x.grid.color = gridColor;
+      chart.options.scales.x.ticks.color = textColor;
+      chart.options.scales.y.grid.color = gridColor;
+      chart.options.scales.y.ticks.color = textColor;
+      chart.options.scales.y.title.color = textColor;
+      chart.options.scales.y1.ticks.color = textColor;
+      chart.options.scales.y1.title.color = textColor;
+      chart.options.plugins.legend.labels.color = textColor;
+      chart.update('none');
     }
 
     function downloadChartPNG() {
-      if (!STATE.liveProb.chartInstance) return;
+      const chart = STATE.liveProb.chartInstance;
+      if (!chart) return;
       const link = document.createElement('a');
-      link.download = `NDL_WinProb_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
-      link.href = STATE.liveProb.chartInstance.toBase64Image();
+      link.download = `NDL_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
+      link.href = chart.toBase64Image();
       link.click();
     }
 
     function downloadChartCSV() {
       const s = STATE.liveProb.fullSeries;
       if (!s) return;
+      const yr = STATE.filters.year;
+      const nameA = getTeamName(s.tma, yr);
+      const nameB = getTeamName(s.tmb, yr);
 
-      const csvRows = s.labels.map((ts, i) => ({
-        Timestamp: ts,
-        [`${s.mgrA}_Pts`]: s.tmaPts[i], [`${s.mgrA}_Proj`]: s.tmaProj[i], [`${s.mgrA}_WinProb`]: s.tmaWp[i],
-        [`${s.mgrB}_Pts`]: s.tmbPts[i], [`${s.mgrB}_Proj`]: s.tmbProj[i], [`${s.mgrB}_WinProb`]: s.tmbWp[i]
+      const rows = s.labels.map((lbl, i) => ({
+        Time: lbl,
+        [`${nameA}_Actual`]: s.tmaPts[i],
+        [`${nameB}_Actual`]: s.tmbPts[i],
+        [`${nameA}_Proj`]: s.tmaProj[i],
+        [`${nameB}_Proj`]: s.tmbProj[i],
+        [`${nameA}_WinProb_Pct`]: s.tmaWpNorm[i].toFixed(2),
+        [`${nameB}_WinProb_Pct`]: s.tmbWpNorm[i].toFixed(2)
       }));
 
-      const csv = Papa.unparse(csvRows);
+      const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `NDL_WinProb_${STATE.filters.year}_Wk${STATE.filters.weekMax}.csv`);
+      link.setAttribute("download", `NDL_Matchup_Data_${yr}_Wk${STATE.filters.weekMax}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
-
     // ==========================================
     // SECTION 10: BELT TAB ENGINE (LINEAL CHAMPIONSHIP BELT)
     // ==========================================
+    function getPriorYearChampionTeamId(year) {
+      const prevYear = Number(year) - 1;
+      const prevFinalRanks = computeFinalRanks(prevYear);
+      if (prevFinalRanks) {
+        const prevChampEntry = Object.entries(prevFinalRanks).find(([, rank]) => Number(rank) === 1);
+        if (prevChampEntry) {
+          const prevChampTid = Number(prevChampEntry[0]);
+          const prevChampMgr = getManagerName(prevChampTid, prevYear);
+          const curTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(year));
+          // Match by manager name first (in case team_id changed across seasons), then fallback to team_id
+          const byMgr = curTeams.find(t => getManagerName(Number(getVal(t, ['team_id'])), year).toLowerCase() === String(prevChampMgr).toLowerCase());
+          if (byMgr) return Number(getVal(byMgr, ['team_id']));
+          const byTid = curTeams.find(t => Number(getVal(t, ['team_id'])) === prevChampTid);
+          if (byTid) return prevChampTid;
+        }
+      }
+
+      // Fallback: check teams table for champion / rank=1 in prevYear, or default to Fish's team
+      const prevTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === prevYear);
+      const champRow = prevTeams.find(t => Number(getVal(t, ['final_rank', 'rank', 'champion'])) === 1);
+      if (champRow) {
+        const mgr = getManagerName(Number(getVal(champRow, ['team_id'])), prevYear);
+        const curTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(year));
+        const matchCur = curTeams.find(t => getManagerName(Number(getVal(t, ['team_id'])), year).toLowerCase() === String(mgr).toLowerCase());
+        if (matchCur) return Number(getVal(matchCur, ['team_id']));
+      }
+
+      const curTeams = (STATE.data.teams || []).filter(t => Number(getVal(t, ['year', 'YR'])) === Number(year));
+      const fishRow = curTeams.find(t => getManagerName(Number(getVal(t, ['team_id'])), year).toLowerCase() === 'fish');
+      if (fishRow) return Number(getVal(fishRow, ['team_id']));
+      return curTeams[0] ? Number(getVal(curTeams[0], ['team_id'])) : 1;
+    }
+
+    function computeBeltLineage(year) {
+      const yr = Number(year);
+      const pts = STATE.data.points || [];
+      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === yr);
+      if (ptsYr.length === 0) return null;
+
+      const maxWeek = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
+      if (maxWeek < 1) return null;
+
+      const startingHolderTid = getPriorYearChampionTeamId(yr);
+      const startingHolderMgr = getManagerName(startingHolderTid, yr);
+
+      // Build lookup of weekly matchups per team
+      const weeklyMatchup = {};
+      ptsYr.forEach(r => {
+        const w = Number(getVal(r, ['week', 'WK']));
+        const tid = Number(getVal(r, ['team_id', 'TMA', 'team']));
+        if (w < 1 || w > maxWeek || (!tid && tid !== 0)) return;
+        const key = `${w}_${tid}`;
+        if (!weeklyMatchup[key]) {
+          weeklyMatchup[key] = {
+            week: w,
+            team_id: tid,
+            pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
+            opp_id: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0,
+            pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0
+          };
+        }
+      });
+
+      const rows = [];
+      let currentHolderTid = startingHolderTid;
+
+      for (let w = 1; w <= maxWeek; w++) {
+        const m = weeklyMatchup[`${w}_${currentHolderTid}`];
+        const holderMgr = getManagerName(currentHolderTid, yr);
+
+        if (!m || !m.opp_id || m.opp_id === 0) {
+          // Bye week or unscheduled playoff week — belt stays with holder
+          const pfVal = m ? m.pf : 0;
+          rows.push({
+            week: w,
+            holderTid: currentHolderTid,
+            holderMgr,
+            pf: pfVal,
+            oppTid: null,
+            oppMgr: 'BYE',
+            pa: null,
+            result: 'BYE',
+            nextHolderTid: currentHolderTid,
+            nextHolderMgr: holderMgr,
+            beltChanged: false
+          });
+          continue;
+        }
+
+        const oppMgr = getManagerName(m.opp_id, yr);
+        let result = 'T';
+        let nextHolderTid = currentHolderTid;
+        let beltChanged = false;
+
+        if (m.pf > m.pa) {
+          result = 'W';
+          nextHolderTid = currentHolderTid;
+        } else if (m.pf < m.pa) {
+          result = 'L';
+          nextHolderTid = m.opp_id;
+          beltChanged = true;
+        } else {
+          // Tie retains belt
+          result = 'T';
+          nextHolderTid = currentHolderTid;
+        }
+
+        rows.push({
+          week: w,
+          holderTid: currentHolderTid,
+          holderMgr,
+          pf: m.pf,
+          oppTid: m.opp_id,
+          oppMgr,
+          pa: m.pa,
+          result,
+          nextHolderTid,
+          nextHolderMgr: getManagerName(nextHolderTid, yr),
+          beltChanged
+        });
+
+        currentHolderTid = nextHolderTid;
+      }
+
+      // Compute summary metrics across full lineage
+      const defensesByMgr = {};
+      const weeksHeldByMgr = {};
+      rows.forEach(r => {
+        weeksHeldByMgr[r.holderMgr] = (weeksHeldByMgr[r.holderMgr] || 0) + 1;
+        if (r.result === 'W') {
+          defensesByMgr[r.holderMgr] = (defensesByMgr[r.holderMgr] || 0) + 1;
+        }
+      });
+
+      const finalHolderMgr = rows.length > 0 ? rows[rows.length - 1].nextHolderMgr : startingHolderMgr;
+
+      return {
+        year: yr,
+        startingHolderTid,
+        startingHolderMgr,
+        finalHolderMgr,
+        maxWeek,
+        rows,
+        defensesByMgr,
+        weeksHeldByMgr
+      };
+    }
+
     function initBeltTab() {
       const playPauseBtn = document.getElementById('btn-belt-play-pause');
       const restartBtn = document.getElementById('btn-belt-restart');
@@ -5223,8 +5551,7 @@
         speedSlider.addEventListener('input', (e) => {
           const mult = Number(e.target.value);
           STATE.belt.speedMultiplier = mult;
-          const valEl = document.getElementById('belt-speed-val');
-          if (valEl) valEl.innerText = `${mult}x`;
+          document.getElementById('belt-speed-val').innerText = `${mult}x`;
           if (STATE.belt.isPlaying) restartBeltIntervalTimer();
         });
       }
@@ -5235,208 +5562,22 @@
           const total = STATE.belt.lineage ? STATE.belt.lineage.rows.length : 0;
           if (total === 0) return;
           pauseBeltReplay();
-          const targetIdx = Math.min(total - 1, Math.max(0, Math.round((pct / 100) * (total - 1))));
+          const targetIdx = Math.max(0, Math.min(total - 1, Math.round((pct / 100) * (total - 1))));
           STATE.belt.currentIdx = targetIdx;
-          STATE.belt.activeCol = 'mgr';
-          renderBeltFrameAtIdx(targetIdx, false, 'mgr');
+          const row = STATE.belt.lineage.rows[targetIdx];
+          STATE.belt.activeCol = row && row.beltChanged ? 'opp' : 'mgr';
+          renderBeltFrameAtIdx(targetIdx, STATE.belt.activeCol, false);
         });
       }
 
       if (csvBtn) csvBtn.addEventListener('click', downloadBeltCSV);
-      if (pngBtn) pngBtn.addEventListener('click', downloadBeltPNG);
+      if (pngBtn) pngBtn.addEventListener('click', () => window.print());
 
       window.addEventListener('resize', () => {
-        const beltSection = document.getElementById('tab-belt');
-        if (beltSection && !beltSection.classList.contains('hidden')) {
-          positionFloatingBelt(STATE.belt.currentIdx, false, STATE.belt.activeCol || 'mgr');
+        if (document.querySelector('.tab-btn[data-tab="belt"]')?.classList.contains('active')) {
+          positionFloatingBelt(STATE.belt.currentIdx, STATE.belt.activeCol, false);
         }
       });
-    }
-
-    function getStartingBeltHolderForYear(year) {
-      const yr = Number(year);
-      const pts = STATE.data.points || [];
-      const teams = STATE.data.teams || [];
-
-      const curYearTeams = teams.filter(t => Number(getVal(t, ['year', 'YR'])) === yr);
-      const validCurTeamIds = new Set(curYearTeams.map(t => Number(getVal(t, ['team_id']))).filter(id => !isNaN(id) && id !== 0));
-
-      const prevYr = yr - 1;
-      const prevFinalRanks = computeFinalRanks(prevYr);
-      if (prevFinalRanks) {
-        const champEntry = Object.entries(prevFinalRanks).find(([, rank]) => rank === 1);
-        if (champEntry) {
-          const prevChampTid = Number(champEntry[0]);
-          const prevChampMgr = getManagerName(prevChampTid, prevYr);
-          if (prevChampMgr) {
-            const matchedCur = curYearTeams.find(t => {
-              const tid = Number(getVal(t, ['team_id']));
-              return getManagerName(tid, yr).toLowerCase() === prevChampMgr.toLowerCase();
-            });
-            if (matchedCur) {
-              return Number(getVal(matchedCur, ['team_id']));
-            }
-          }
-        }
-      }
-
-      const yr1Match = curYearTeams.find(t => Number(getVal(t, ['final_rank', 'rank', 'prior_rank', 'seed'])) === 1);
-      if (yr1Match) {
-        return Number(getVal(yr1Match, ['team_id']));
-      }
-
-      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === yr);
-      const allIds = validCurTeamIds.size > 0
-        ? [...validCurTeamIds]
-        : [...new Set(ptsYr.map(r => Number(getVal(r, ['team_id', 'TMA', 'team']))))].filter(id => !isNaN(id) && id !== 0);
-
-      const jareId = allIds.find(id => getManagerName(id, yr).toLowerCase().includes('jare'));
-      if (jareId) return jareId;
-
-      return allIds.length > 0 ? allIds[0] : null;
-    }
-
-    function computeBeltLineage(year) {
-      const yr = Number(year);
-      const pts = STATE.data.points || [];
-      const ptsYr = pts.filter(r => Number(getVal(r, ['year', 'YR'])) === yr);
-      if (ptsYr.length === 0) return null;
-
-      const maxWk = Math.min(FilterEngine.effectiveMax(yr), getMaxWeekForYear(yr));
-      if (maxWk < 1) return null;
-
-      const weeklyMatchups = {};
-      ptsYr.forEach(r => {
-        const wk = Number(getVal(r, ['week', 'WK']));
-        const tid = Number(getVal(r, ['team_id', 'TMA', 'team']));
-        if (!wk || wk > maxWk || !tid) return;
-        const key = `${wk}_${tid}`;
-        if (!weeklyMatchups[key]) {
-          const oppRaw = getVal(r, ['opponent_team_id', 'TMB']);
-          const oppTid = (oppRaw !== undefined && oppRaw !== null && oppRaw !== '') ? Number(oppRaw) : 0;
-          weeklyMatchups[key] = {
-            week: wk,
-            team_id: tid,
-            pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
-            pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
-            opp_team_id: isNaN(oppTid) ? 0 : oppTid
-          };
-        }
-      });
-
-      const startHolderId = getStartingBeltHolderForYear(yr);
-      if (!startHolderId) return null;
-
-      const startHolderMgr = getManagerName(startHolderId, yr);
-      const startHolderTeam = getTeamName(startHolderId, yr);
-
-      let currentHolderId = startHolderId;
-      const rows = [];
-      const holderStats = {};
-      const ensureStat = (tid) => {
-        if (!holderStats[tid]) {
-          holderStats[tid] = {
-            team_id: tid,
-            manager: getManagerName(tid, yr),
-            team_name: getTeamName(tid, yr),
-            weeksHeld: 0,
-            defenses: 0,
-            captures: 0
-          };
-        }
-      };
-      ensureStat(startHolderId);
-
-      for (let w = 1; w <= maxWk; w++) {
-        const m = weeklyMatchups[`${w}_${currentHolderId}`];
-        const holderMgr = getManagerName(currentHolderId, yr);
-        const holderTeam = getTeamName(currentHolderId, yr);
-
-        if (!m || m.opp_team_id === 0) {
-          ensureStat(currentHolderId);
-          holderStats[currentHolderId].weeksHeld += 1;
-          rows.push({
-            week: w,
-            holderId: currentHolderId,
-            holderMgr,
-            holderTeam,
-            pf: m ? m.pf : null,
-            oppId: 0,
-            oppMgr: 'BYE',
-            oppTeam: 'Bye Week',
-            pa: null,
-            result: 'BYE',
-            nextHolderId: currentHolderId,
-            nextHolderMgr: holderMgr,
-            beltChanged: false
-          });
-          continue;
-        }
-
-        const oppId = m.opp_team_id;
-        const oppMgr = getManagerName(oppId, yr);
-        const oppTeam = getTeamName(oppId, yr);
-        const pf = m.pf;
-        const pa = m.pa;
-
-        let result = 'T';
-        let nextHolderId = currentHolderId;
-        let beltChanged = false;
-
-        if (pf > pa) {
-          result = 'W';
-          nextHolderId = currentHolderId;
-          ensureStat(currentHolderId);
-          holderStats[currentHolderId].weeksHeld += 1;
-          holderStats[currentHolderId].defenses += 1;
-        } else if (pf < pa) {
-          result = 'L';
-          nextHolderId = oppId;
-          beltChanged = true;
-          ensureStat(oppId);
-          holderStats[oppId].weeksHeld += 1;
-          holderStats[oppId].captures += 1;
-        } else {
-          result = 'T';
-          nextHolderId = currentHolderId;
-          ensureStat(currentHolderId);
-          holderStats[currentHolderId].weeksHeld += 1;
-        }
-
-        const nextHolderMgr = getManagerName(nextHolderId, yr);
-
-        rows.push({
-          week: w,
-          holderId: currentHolderId,
-          holderMgr,
-          holderTeam,
-          pf,
-          oppId,
-          oppMgr,
-          oppTeam,
-          pa,
-          result,
-          nextHolderId,
-          nextHolderMgr,
-          beltChanged
-        });
-
-        currentHolderId = nextHolderId;
-      }
-
-      const leaderboard = Object.values(holderStats)
-        .filter(s => s.weeksHeld > 0)
-        .sort((a, b) => (b.weeksHeld - a.weeksHeld) || (b.defenses - a.defenses));
-
-      return {
-        year: yr,
-        maxWk,
-        startHolderId,
-        startHolderMgr,
-        startHolderTeam,
-        rows,
-        leaderboard
-      };
     }
 
     function renderBeltTab() {
@@ -5446,185 +5587,207 @@
 
       const tbody = document.getElementById('belt-tbody');
       const startBadge = document.getElementById('belt-starting-holder-badge');
-      const pillsContainer = document.getElementById('belt-summary-pills');
-      const floatingBelt = document.getElementById('floating-championship-belt');
+      const pillsBox = document.getElementById('belt-summary-pills');
+      const beltEl = document.getElementById('floating-championship-belt');
 
       if (!lineage || lineage.rows.length === 0) {
         pauseBeltReplay();
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 dark:text-slate-400">${emptyScopeMessage('belt lineage data')}</td></tr>`;
-        }
+        if (beltEl) beltEl.classList.add('hidden');
         if (startBadge) startBadge.innerText = 'Start: --';
-        if (pillsContainer) pillsContainer.innerHTML = '';
-        if (floatingBelt) floatingBelt.classList.add('hidden');
+        if (pillsBox) pillsBox.innerHTML = '';
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 dark:text-slate-400">${emptyScopeMessage('belt matchup data')}</td></tr>`;
         return;
+      }
+
+      const startColor = getManagerColor(lineage.startingHolderMgr);
+      if (startBadge) {
+        startBadge.innerHTML = `Start: <strong style="color:${startColor}">${escapeHTML(lineage.startingHolderMgr)}</strong>`;
       }
 
       if (tbody) tbody.innerHTML = '';
 
-      if (startBadge) {
-        const sColor = getManagerColor(lineage.startHolderMgr);
-        startBadge.innerHTML = `Start: <strong style="color: ${sColor}">${escapeHTML(lineage.startHolderMgr)}</strong>`;
-      }
-
-      if (pillsContainer) {
-        pillsContainer.innerHTML = lineage.leaderboard.slice(0, 5).map(stat => {
-          const c = getManagerColor(stat.manager);
-          const txt = getContrastTextColor(c);
-          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[11px] shadow-sm border border-black/15" style="background-color: ${c}; color: ${txt};">
-            ${escapeHTML(stat.manager)} <span class="opacity-85 font-mono">(${stat.weeksHeld}w)</span>
-          </span>`;
-        }).join('');
-      }
-
+      // Start replay from Week 1
       restartBeltReplay();
     }
 
-    function buildBeltTableRowHTML(r, idx) {
-      const isDark = document.documentElement.classList.contains('dark');
+    function updateBeltSummaryPills(upToIdx) {
+      const lineage = STATE.belt.lineage;
+      const pillsBox = document.getElementById('belt-summary-pills');
+      if (!lineage || !pillsBox) return;
+
+      const slice = lineage.rows.slice(0, upToIdx + 1);
+      const lastRow = slice[slice.length - 1];
+      const activeHolder = (STATE.belt.activeCol === 'opp' && lastRow.beltChanged)
+        ? lastRow.nextHolderMgr
+        : lastRow.holderMgr;
+
+      const defenses = {};
+      slice.forEach(r => {
+        if (r.result === 'W') defenses[r.holderMgr] = (defenses[r.holderMgr] || 0) + 1;
+      });
+      const topDefenderEntry = Object.entries(defenses).sort((a, b) => b[1] - a[1])[0];
+
+      const holderColor = getManagerColor(activeHolder);
+      const topDefHtml = topDefenderEntry
+        ? `<span class="bg-slate-200/80 dark:bg-slate-800 px-2.5 py-0.5 rounded-full text-slate-700 dark:text-slate-300">Most Defenses: <strong style="color:${getManagerColor(topDefenderEntry[0])}">${escapeHTML(topDefenderEntry[0])}</strong> (${topDefenderEntry[1]})</span>`
+        : '';
+
+      pillsBox.innerHTML = `
+        <span class="bg-amber-500/15 border border-amber-500/40 px-2.5 py-0.5 rounded-full text-slate-800 dark:text-slate-100">
+          Holder: <strong style="color:${holderColor}">${escapeHTML(activeHolder)}</strong>
+        </span>
+        ${topDefHtml}
+      `;
+    }
+
+    function createBeltRowElement(r, rowIdx, isNewlyRevealed) {
       const mgrBg = getManagerColor(r.holderMgr);
       const mgrText = getContrastTextColor(mgrBg);
 
-      const isBye = r.result === 'BYE';
-      const oppBg = isBye ? (isDark ? '#1e293b' : '#e2e8f0') : getManagerColor(r.oppMgr);
-      const oppText = isBye ? (isDark ? '#94a3b8' : '#475569') : getContrastTextColor(oppBg);
+      const oppBg = r.oppMgr === 'BYE' ? '#64748b' : getManagerColor(r.oppMgr);
+      const oppText = r.oppMgr === 'BYE' ? '#ffffff' : getContrastTextColor(oppBg);
 
-      let resBg = 'transparent';
-      let resTextClass = 'text-slate-500 dark:text-slate-400 font-bold';
-      if (r.result === 'W') {
-        resBg = isDark ? 'rgba(34, 197, 94, 0.28)' : 'rgba(134, 239, 172, 0.55)';
-        resTextClass = 'text-emerald-800 dark:text-emerald-200 font-extrabold';
-      } else if (r.result === 'L') {
-        resBg = isDark ? 'rgba(239, 68, 68, 0.28)' : 'rgba(254, 202, 202, 0.65)';
-        resTextClass = 'text-rose-800 dark:text-rose-200 font-extrabold';
-      } else if (r.result === 'T') {
-        resBg = isDark ? 'rgba(245, 158, 11, 0.25)' : 'rgba(254, 240, 138, 0.65)';
-        resTextClass = 'text-amber-800 dark:text-amber-200 font-extrabold';
-      }
+      const resBg = r.result === 'W'
+        ? '#16a34a'
+        : (r.result === 'L' ? '#dc2626' : '#64748b');
 
-      const pfDisplay = r.pf !== null ? r.pf.toFixed(2) : '--';
-      const paDisplay = r.pa !== null ? r.pa.toFixed(2) : '--';
+      const tr = document.createElement('tr');
+      tr.dataset.rowIdx = String(rowIdx);
+      if (isNewlyRevealed) tr.classList.add('belt-row-revealed');
 
-      return `
-        <tr id="belt-row-${idx}" class="belt-row-revealed transition-all duration-200">
-          <td class="text-right font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/50">${r.week}</td>
-          <td id="belt-cell-mgr-${idx}" class="text-center font-extrabold tracking-tight" style="background-color: ${mgrBg}; color: ${mgrText};">
-            <span class="truncate block">${escapeHTML(r.holderMgr)}</span>
-          </td>
-          <td class="text-right font-mono font-bold">${pfDisplay}</td>
-          <td id="belt-cell-opp-${idx}" class="text-center font-extrabold tracking-tight" style="background-color: ${oppBg}; color: ${oppText};">
-            <span class="truncate block">${escapeHTML(r.oppMgr)}</span>
-          </td>
-          <td class="text-right font-mono font-bold">${paDisplay}</td>
-          <td class="text-center font-mono ${resTextClass}" style="background-color: ${resBg};">${r.result}</td>
-        </tr>`;
+      tr.innerHTML = `
+        <td class="text-right font-mono font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/70">${r.week}</td>
+        <td data-col="mgr" class="text-center font-bold tracking-tight transition-all duration-300" style="background-color: ${mgrBg}; color: ${mgrText};">
+          ${escapeHTML(r.holderMgr)}
+        </td>
+        <td class="text-right font-mono font-semibold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950">
+          ${r.pf !== null ? r.pf.toFixed(2) : '--'}
+        </td>
+        <td data-col="opp" class="text-center font-bold tracking-tight transition-all duration-300" style="background-color: ${oppBg}; color: ${oppText};">
+          ${escapeHTML(r.oppMgr)}
+        </td>
+        <td class="text-right font-mono font-semibold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950">
+          ${r.pa !== null ? r.pa.toFixed(2) : '--'}
+        </td>
+        <td class="text-center font-mono font-extrabold text-white" style="background-color: ${resBg};">
+          ${r.result}
+        </td>
+      `;
+      return tr;
     }
 
-    function renderBeltFrameAtIdx(idx, isAnimatingStep = false, targetCol = 'mgr') {
+    function positionFloatingBelt(rowIdx, colKey, animateGlide = true) {
+      const stage = document.getElementById('belt-stage');
+      const tbody = document.getElementById('belt-tbody');
+      const beltEl = document.getElementById('floating-championship-belt');
+      if (!stage || !tbody || !beltEl) return;
+
+      const targetRow = tbody.querySelector(`tr[data-row-idx="${rowIdx}"]`);
+      if (!targetRow) {
+        beltEl.classList.add('hidden');
+        return;
+      }
+
+      const targetCell = targetRow.querySelector(`td[data-col="${colKey}"]`) || targetRow.querySelector('td[data-col="mgr"]');
+      if (!targetCell) return;
+
+      // Clear previous holder glow and apply to active holder cell
+      tbody.querySelectorAll('tr.belt-row-active').forEach(tr => tr.classList.remove('belt-row-active'));
+      tbody.querySelectorAll('td.belt-cell-holder-glow').forEach(td => td.classList.remove('belt-cell-holder-glow'));
+      targetRow.classList.add('belt-row-active');
+      targetCell.classList.add('belt-cell-holder-glow');
+
+      const stageRect = stage.getBoundingClientRect();
+      const cellRect = targetCell.getBoundingClientRect();
+
+      const centerX = (cellRect.left - stageRect.left) + (cellRect.width / 2);
+
+      // Measure the belt while visible so its real height is used on the very first placement.
+      beltEl.classList.remove('hidden');
+      const beltH = beltEl.offsetHeight || 22;
+
+      // The newest row plays a translateY slide-in animation, which shifts getBoundingClientRect().
+      // Layout offsets ignore transforms, so the belt lands on the cell's final resting position.
+      let cellTop = 0;
+      for (let el = targetCell; el && el !== stage; el = el.offsetParent) cellTop += el.offsetTop;
+      const bottomY = (cellTop + targetCell.offsetHeight) - beltH - 1;
+
+      if (animateGlide) {
+        const mult = STATE.belt.speedMultiplier || 1.0;
+        const glideMs = Math.max(150, Math.round(420 / mult));
+        beltEl.style.transition = `left ${glideMs}ms cubic-bezier(0.22, 1, 0.36, 1), top ${glideMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+      } else {
+        beltEl.style.transition = 'none';
+      }
+
+      beltEl.classList.remove('hidden');
+      beltEl.style.left = `${centerX}px`;
+      beltEl.style.top = `${Math.max(0, bottomY)}px`;
+    }
+
+    function renderBeltFrameAtIdx(idx, colKey = 'mgr', animateStep = true) {
       const lineage = STATE.belt.lineage;
-      if (!lineage || !lineage.rows.length) return;
+      const tbody = document.getElementById('belt-tbody');
+      if (!lineage || !tbody) return;
 
       const total = lineage.rows.length;
       const validIdx = Math.min(total - 1, Math.max(0, idx));
-      const row = lineage.rows[validIdx];
-      STATE.belt.activeCol = targetCol;
+      const desiredCount = validIdx + 1;
 
-      const tickLbl = document.getElementById('belt-tick-label');
-      if (tickLbl) {
-        tickLbl.innerText = `Week ${row.week} / ${lineage.maxWk}`;
-      }
-
-      const tbody = document.getElementById('belt-tbody');
-      if (!tbody) return;
-
-      const targetCount = validIdx + 1;
-      if (STATE.belt.renderedCount > targetCount) {
+      // Incrementally append rows when advancing forward so existing rows stay put and belt glides smoothly
+      if (STATE.belt.renderedCount > desiredCount) {
         tbody.innerHTML = '';
         STATE.belt.renderedCount = 0;
       }
 
-      for (let i = STATE.belt.renderedCount; i < targetCount; i++) {
-        tbody.insertAdjacentHTML('beforeend', buildBeltTableRowHTML(lineage.rows[i], i));
+      for (let i = STATE.belt.renderedCount; i < desiredCount; i++) {
+        const isLastNew = animateStep && (i === desiredCount - 1);
+        const tr = createBeltRowElement(lineage.rows[i], i, isLastNew);
+        tbody.appendChild(tr);
       }
-      STATE.belt.renderedCount = targetCount;
+      STATE.belt.renderedCount = desiredCount;
+      STATE.belt.currentIdx = validIdx;
+      STATE.belt.activeCol = colKey;
 
-      for (let i = 0; i < targetCount; i++) {
-        const tr = document.getElementById(`belt-row-${i}`);
-        const mgrCell = document.getElementById(`belt-cell-mgr-${i}`);
-        const oppCell = document.getElementById(`belt-cell-opp-${i}`);
-        const isCurrent = i === validIdx;
-
-        if (tr) {
-          tr.classList.toggle('belt-row-active', isCurrent);
-        }
-        if (mgrCell) {
-          mgrCell.classList.toggle('belt-cell-holder-glow', isCurrent && targetCol === 'mgr');
-        }
-        if (oppCell) {
-          oppCell.classList.toggle('belt-cell-holder-glow', isCurrent && targetCol === 'opp');
-        }
+      const tickLbl = document.getElementById('belt-tick-label');
+      if (tickLbl) {
+        tickLbl.innerText = `Week ${lineage.rows[validIdx].week} / ${lineage.maxWeek}`;
       }
 
       const scrubber = document.getElementById('belt-scrubber');
-      if (scrubber) {
-        scrubber.value = total > 1 ? Math.round((validIdx / (total - 1)) * 100) : 100;
+      if (scrubber && total > 1) {
+        scrubber.value = Math.round((validIdx / (total - 1)) * 100);
+      } else if (scrubber) {
+        scrubber.value = 100;
       }
 
+      updateBeltSummaryPills(validIdx);
+
       requestAnimationFrame(() => {
-        positionFloatingBelt(validIdx, isAnimatingStep, targetCol);
+        positionFloatingBelt(validIdx, colKey, animateStep);
       });
     }
 
-    function positionFloatingBelt(idx, animate = true, targetCol = 'mgr') {
-      const lineage = STATE.belt.lineage;
-      const floatingBelt = document.getElementById('floating-championship-belt');
-      const stage = document.getElementById('belt-stage');
-      if (!lineage || !floatingBelt || !stage) return;
-
-      const row = lineage.rows[idx];
-      if (!row) {
-        floatingBelt.classList.add('hidden');
-        return;
+    function scheduleBeltWinnerTransfer(rowIdx) {
+      if (STATE.belt.subTimer) {
+        clearTimeout(STATE.belt.subTimer);
+        STATE.belt.subTimer = null;
       }
-
-      const targetCellId = (targetCol === 'opp' && row.beltChanged && row.oppId !== 0)
-        ? `belt-cell-opp-${idx}`
-        : `belt-cell-mgr-${idx}`;
-      const targetCell = document.getElementById(targetCellId) || document.getElementById(`belt-cell-mgr-${idx}`);
-
-      if (!targetCell) return;
-
-      const stageRect = stage.getBoundingClientRect();
-      const cellRect = targetCell.getBoundingClientRect();
-      if (stageRect.width === 0 || cellRect.width === 0) return;
-
-      const centerX = (cellRect.left - stageRect.left) + (cellRect.width / 2);
-      const beltHeight = floatingBelt.offsetHeight || 22;
-      const bottomEdgeY = (cellRect.bottom - stageRect.top) - beltHeight - 2;
+      const lineage = STATE.belt.lineage;
+      if (!lineage) return;
+      const row = lineage.rows[rowIdx];
+      if (!row || !row.beltChanged) return;
 
       const mult = STATE.belt.speedMultiplier || 1.0;
-      const glideDurationMs = Math.max(140, Math.round(420 / mult));
+      const transferDelay = Math.max(130, Math.round(380 / mult));
 
-      floatingBelt.classList.remove('hidden');
-      if (animate) {
-        floatingBelt.style.transition = `left ${glideDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), top ${glideDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${glideDurationMs}ms ease`;
-      } else {
-        floatingBelt.style.transition = 'none';
-      }
-
-      floatingBelt.style.left = `${centerX}px`;
-      floatingBelt.style.top = `${bottomEdgeY}px`;
-      floatingBelt.style.transform = animate
-        ? 'translate(-50%, 0%) scale(1.08)'
-        : 'translate(-50%, 0%) scale(1)';
-
-      if (animate) {
-        setTimeout(() => {
-          if (floatingBelt) {
-            floatingBelt.style.transform = 'translate(-50%, 0%) scale(1)';
-          }
-        }, glideDurationMs);
-      }
+      STATE.belt.subTimer = setTimeout(() => {
+        if (STATE.belt.currentIdx === rowIdx) {
+          STATE.belt.activeCol = 'opp';
+          updateBeltSummaryPills(rowIdx);
+          positionFloatingBelt(rowIdx, 'opp', true);
+        }
+      }, transferDelay);
     }
 
     function toggleBeltPlayPause() {
@@ -5667,50 +5830,41 @@
       STATE.belt.currentIdx = 0;
       STATE.belt.activeCol = 'mgr';
 
-      renderBeltFrameAtIdx(0, false, 'mgr');
-      scheduleBeltLossSlideIfNeeded(0);
-      startBeltReplay();
-    }
+      renderBeltFrameAtIdx(0, 'mgr', true);
+      scheduleBeltWinnerTransfer(0);
 
-    function scheduleBeltLossSlideIfNeeded(idx) {
-      if (STATE.belt.subTimer) {
-        clearTimeout(STATE.belt.subTimer);
-        STATE.belt.subTimer = null;
-      }
       const lineage = STATE.belt.lineage;
-      if (!lineage || !lineage.rows[idx]) return;
-      const row = lineage.rows[idx];
-      if (!row.beltChanged || row.oppId === 0) return;
-
-      const mult = STATE.belt.speedMultiplier || 1.0;
-      const stepIntervalMs = Math.max(260, Math.round(950 / mult));
-      const slideDelayMs = Math.round(stepIntervalMs * 0.46);
-
-      STATE.belt.subTimer = setTimeout(() => {
-        if (!STATE.belt.isPlaying || STATE.belt.currentIdx !== idx) return;
-        renderBeltFrameAtIdx(idx, true, 'opp');
-      }, slideDelayMs);
+      if (lineage && lineage.rows.length > 1) {
+        startBeltReplay();
+      } else {
+        updateBeltPlayPauseUI();
+      }
     }
 
     function restartBeltIntervalTimer() {
       if (STATE.belt.animationTimer) clearInterval(STATE.belt.animationTimer);
       const mult = STATE.belt.speedMultiplier || 1.0;
-      const intervalMs = Math.max(260, Math.round(950 / mult));
-
-      scheduleBeltLossSlideIfNeeded(STATE.belt.currentIdx);
+      const intervalMs = Math.max(240, Math.round(920 / mult));
 
       STATE.belt.animationTimer = setInterval(() => {
         const lineage = STATE.belt.lineage;
         if (!lineage) return;
 
-        if (STATE.belt.currentIdx >= lineage.rows.length - 1) {
+        const nextIdx = STATE.belt.currentIdx + 1;
+        if (nextIdx >= lineage.rows.length) {
           pauseBeltReplay();
           return;
         }
 
-        STATE.belt.currentIdx += 1;
-        renderBeltFrameAtIdx(STATE.belt.currentIdx, true, 'mgr');
-        scheduleBeltLossSlideIfNeeded(STATE.belt.currentIdx);
+        renderBeltFrameAtIdx(nextIdx, 'mgr', true);
+        scheduleBeltWinnerTransfer(nextIdx);
+
+        if (nextIdx === lineage.rows.length - 1) {
+          const finishDelay = Math.max(180, Math.round(480 / mult));
+          setTimeout(() => {
+            if (STATE.belt.currentIdx === nextIdx) pauseBeltReplay();
+          }, finishDelay);
+        }
       }, intervalMs);
     }
 
@@ -5721,34 +5875,30 @@
       if (!icon || !text || !btn) return;
 
       if (STATE.belt.isPlaying) {
-        icon.className = 'fa-solid fa-pause';
-        text.innerText = 'Pause';
+        icon.className = 'fa-solid fa-pause'; text.innerText = 'Pause';
         btn.className = 'bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       } else {
-        icon.className = 'fa-solid fa-play';
-        text.innerText = 'Play';
+        icon.className = 'fa-solid fa-play'; text.innerText = 'Play';
         btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1.5';
       }
     }
 
     function downloadBeltCSV() {
       const lineage = STATE.belt.lineage;
-      if (!lineage || !lineage.rows.length) return;
+      if (!lineage || !lineage.rows) return;
 
-      const csvRows = lineage.rows.map(r => ({
+      const rows = lineage.rows.map(r => ({
         Year: lineage.year,
-        Week: r.week,
-        Belt_Holder_Manager: r.holderMgr,
-        Belt_Holder_Team: r.holderTeam,
+        WK: r.week,
+        MGR: r.holderMgr,
         PF: r.pf !== null ? r.pf.toFixed(2) : '',
-        Opponent_Manager: r.oppMgr,
-        Opponent_Team: r.oppTeam,
+        O_MGR: r.oppMgr,
         PA: r.pa !== null ? r.pa.toFixed(2) : '',
-        Result: r.result,
-        Next_Holder: r.nextHolderMgr
+        RES: r.result,
+        BELT_AFTER_WEEK: r.nextHolderMgr
       }));
 
-      const csv = Papa.unparse(csvRows);
+      const csv = Papa.unparse(rows);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -5758,498 +5908,720 @@
       document.body.removeChild(link);
     }
 
-    function downloadBeltPNG() {
-      window.print();
-    }
-
     // ==========================================
-    // SECTION 11: POINTS BY POSITION TAB ENGINE
+    // SECTION 11: TOOLTIPS, SORTING, CSV & INIT
     // ==========================================
-    const POS_COLORS = {
-      QB:      '#e11d48',
-      RB:      '#16a34a',
-      WR:      '#0284c7',
-      TE:      '#d97706',
-      'W/R/T': '#0d9488',
-      K:       '#7c3aed',
-      DEF:     '#475569',
-      BN:      '#94a3b8',
-      IR:      '#cbd5e1',
-    };
-    const POS_ORDER = ['QB', 'RB', 'WR', 'TE', 'W/R/T', 'K', 'DEF'];
-
-    function normSlot(raw) {
-      const s = String(raw ?? '').trim().toUpperCase();
-      if (!s) return null;
-      if (s === 'QB') return 'QB';
-      if (s === 'RB') return 'RB';
-      if (s === 'WR') return 'WR';
-      if (s === 'TE') return 'TE';
-      if (s === 'K' || s === 'PK') return 'K';
-      if (s === 'DEF' || s === 'DST' || s === 'D/ST') return 'DEF';
-      if (s === 'BN' || s === 'BE' || s === 'BENCH') return 'BN';
-      if (s === 'IR' || s === 'IR+' || s === 'IR-R' || s === 'NA' || s === 'TAXI') return 'IR';
-      if (s === 'W/R/T' || s === 'W/R' || s === 'W/T' || s === 'R/W/T' || s === 'FLEX' || s === 'W/R/T/Q' || s === 'SUPERFLEX' || s === 'SUPER_FLEX' || s === 'OP') return 'W/R/T';
-      return s;
-    }
-
-    function computePositionsData() {
-      const year = STATE.filters.year;
-      const wkMin = FilterEngine.effectiveMin(year);
-      const wkMax = FilterEngine.effectiveMax(year);
-      const key = `${STATE.dataVersion}:${year}:${wkMin}:${wkMax}`;
-      if (STATE.positions._v !== STATE.dataVersion) {
-        STATE.positions._v = STATE.dataVersion;
-        STATE.positions._cache = {};
-      }
-      if (STATE.positions._cache[key]) return STATE.positions._cache[key];
-
-      const pts = STATE.data.points || [];
-      const rows = pts.filter(r => {
-        if (Number(getVal(r, ['year', 'YR'])) !== Number(year)) return false;
-        const w = Number(getVal(r, ['week', 'WK']));
-        return w >= wkMin && w <= wkMax;
-      });
-      if (rows.length === 0) return null;
-
-      const byTeam = {};
-      const wkTeamTotals = {};
-      const unmapped = new Set();
-      let noSlotRows = 0;
-
-      rows.forEach(r => {
-        const tid = Number(getVal(r, ['team_id', 'TMA', 'team']));
-        if (!tid && tid !== 0) return;
-        const wk = Number(getVal(r, ['week', 'WK']));
-
-        if (!byTeam[tid]) {
-          byTeam[tid] = {
-            team_id: tid,
-            manager: getManagerName(tid, year, getVal(r, ['manager_name', 'manager'])),
-            team_name: getTeamName(tid, year, getVal(r, ['team_name', 'name'])),
-            slots: {},
-          };
+    function setupSparklineTooltips() {
+      const tooltip = document.getElementById('sparkline-tooltip');
+      document.addEventListener('mouseover', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) {
+          tooltip.innerHTML = e.target.getAttribute('data-info');
+          tooltip.classList.remove('hidden');
         }
-
-        const tp = Number(getVal(r, ['team_points', 'TMAPTS']));
-        if (!isNaN(tp)) wkTeamTotals[`${wk}_${tid}`] = tp;
-
-        const rawSlot = getVal(r, ['selected_position', 'selected_pos', 'slot', 'SLOT', 'roster_slot', 'lineup_slot']);
-        const slot = normSlot(rawSlot);
-        if (!slot) { noSlotRows++; return; }
-
-        let pPtsRaw = getVal(r, ['player_pts', 'player_points', 'playerpts', 'pts', 'PTS', 'player_score', 'actual_pts']);
-        if (pPtsRaw === undefined || pPtsRaw === null) {
-          pPtsRaw = (r.points !== undefined && r.points !== tp) ? r.points : getVal(r, ['points']);
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!tooltip.classList.contains('hidden')) {
+          tooltip.style.left = `${e.clientX + 12}px`; tooltip.style.top = `${e.clientY - 35}px`;
         }
-        const pPts = Number(pPtsRaw);
-        if (isNaN(pPts)) return;
-
-        byTeam[tid].slots[slot] = (byTeam[tid].slots[slot] || 0) + pPts;
-        if (!POS_COLORS[slot]) unmapped.add(slot);
       });
-
-      const teams = Object.values(byTeam);
-      if (teams.length === 0) return null;
-
-      const present = new Set();
-      teams.forEach(t => Object.keys(t.slots).forEach(s => present.add(s)));
-
-      const starterSlots = POS_ORDER.filter(s => present.has(s));
-      const extras = [...present].filter(s => !POS_ORDER.includes(s) && s !== 'BN' && s !== 'IR').sort();
-      starterSlots.push(...extras);
-      const benchSlots = ['BN', 'IR'].filter(s => present.has(s));
-      const allSlots = [...starterSlots, ...benchSlots];
-
-      teams.forEach(t => {
-        t.starterTotal = starterSlots.reduce((a, s) => a + (t.slots[s] || 0), 0);
-        t.benchTotal = benchSlots.reduce((a, s) => a + (t.slots[s] || 0), 0);
-        t.reportedTotal = Object.entries(wkTeamTotals)
-          .filter(([k]) => k.endsWith(`_${t.team_id}`))
-          .reduce((a, [, v]) => a + v, 0);
+      document.addEventListener('mouseout', (e) => {
+        if (e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden');
       });
-
-      teams.sort((a, b) => (b.starterTotal - a.starterTotal) || (b.reportedTotal - a.reportedTotal));
-
-      const mismatchTeams = teams.filter(t => t.reportedTotal > 0 && Math.abs(t.starterTotal - t.reportedTotal) > 0.25);
-
-      const out = { year, wkMin, wkMax, teams, starterSlots, benchSlots, allSlots, unmapped: [...unmapped], noSlotRows, mismatchTeams };
-      STATE.positions._cache[key] = out;
-      return out;
     }
 
-    function initPositionsTab() {
-      const cb = document.getElementById('pos-show-bench');
-      if (cb) {
-        cb.checked = !!STATE.positions.showBench;
-        cb.addEventListener('change', () => {
-          STATE.positions.showBench = cb.checked;
-          updateUrlHash();
-          renderPositionsTab();
-        });
-      }
-      document.getElementById('btn-export-pos-csv')?.addEventListener('click', downloadPositionsCSV);
-      document.getElementById('btn-export-pos-png')?.addEventListener('click', downloadPositionsPNG);
-    }
-
-    function renderPositionsTab() {
-      const cb = document.getElementById('pos-show-bench');
-      if (cb) cb.checked = !!STATE.positions.showBench;
-
-      const data = computePositionsData();
-      STATE.positions.last = data;
-
-      const emptyEl = document.getElementById('pos-empty');
-      const hostEl = document.getElementById('pos-chart-host');
-      const warnEl = document.getElementById('pos-warnings');
-      const tableEl = document.getElementById('pos-table');
-
-      if (!data || data.allSlots.length === 0) {
-        if (STATE.positions.chartInstance) { STATE.positions.chartInstance.destroy(); STATE.positions.chartInstance = null; }
-        if (emptyEl) { emptyEl.textContent = emptyScopeMessage('positional scoring data'); emptyEl.classList.remove('hidden'); }
-        if (hostEl) hostEl.classList.add('hidden');
-        if (warnEl) warnEl.classList.add('hidden');
-        if (tableEl) tableEl.innerHTML = '';
-        return;
-      }
-
-      if (emptyEl) emptyEl.classList.add('hidden');
-      if (hostEl) hostEl.classList.remove('hidden');
-
-      const warnings = [];
-      if (data.unmapped.length > 0) warnings.push(`Unmapped roster slot(s) included: ${data.unmapped.join(', ')}.`);
-      if (data.mismatchTeams.length > 0) {
-        const list = data.mismatchTeams.map(t => `${t.manager} (${t.starterTotal.toFixed(1)} vs ${t.reportedTotal.toFixed(1)})`).join(', ');
-        warnings.push(`Starter sum differs from team_points for: ${list}.`);
-      }
-      if (warnEl) {
-        if (warnings.length > 0) { warnEl.textContent = warnings.join(' '); warnEl.classList.remove('hidden'); }
-        else { warnEl.classList.add('hidden'); }
-      }
-
-      renderPositionsChart(data);
-      renderPositionsLegend(data);
-      renderPositionsTable(data);
-    }
-
-    const posTotalsPlugin = {
-      id: 'posTotals',
-      afterDatasetsDraw(chart) {
-        const isDark = document.documentElement.classList.contains('dark');
-        const { ctx, scales } = chart;
-        const n = chart.data.labels.length;
-        ctx.save();
-        ctx.font = '700 10px ui-monospace, SFMono-Regular, Menlo, monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillStyle = isDark ? '#cbd5e1' : '#334155';
-        for (let i = 0; i < n; i++) {
-          let sum = 0, topY = scales.y.bottom;
-          chart.data.datasets.forEach((ds, di) => {
-            if (!chart.isDatasetVisible(di)) return;
-            const v = Number(ds.data[i]) || 0;
-            if (v <= 0) return;
-            sum += v;
-            const el = chart.getDatasetMeta(di).data[i];
-            if (el && el.y < topY) topY = el.y;
-          });
-          if (sum > 0) ctx.fillText(Math.round(sum).toLocaleString(), scales.x.getPixelForValue(i), topY - 4);
-        }
-        ctx.restore();
-      }
-    };
-
-    const posManagerLabelsPlugin = {
-      id: 'posManagerLabels',
-      afterDraw(chart) {
-        const sfx = STATE.positions._sfx;
-        if (!sfx) return;
-        const { ctx, scales, chartArea } = chart;
-        const teams = sfx.teams;
-        ctx.save();
-        ctx.font = '800 10px ui-sans-serif, system-ui, -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        const y = chartArea.bottom + sfx.yOff;
-        teams.forEach((t, i) => {
-          ctx.fillStyle = getManagerColor(t.manager);
-          ctx.fillText(t.manager, scales.x.getPixelForValue(i), y);
-        });
-        ctx.restore();
-      }
-    };
-
-    function renderPositionsChart(data) {
-      const subEl = document.getElementById('pos-chart-subtitle');
-      if (subEl) {
-        subEl.textContent = data.wkMin === data.wkMax
-          ? `NDL ${data.year}, Week ${data.wkMax}`
-          : `NDL ${data.year}, Weeks ${data.wkMin}–${data.wkMax}`;
-      }
-
-      const canvas = document.getElementById('posChart');
-      if (!canvas) return;
-      if (STATE.positions.chartInstance) { STATE.positions.chartInstance.destroy(); STATE.positions.chartInstance = null; }
-
-      const isDark = document.documentElement.classList.contains('dark');
-      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-      const textColor = isDark ? '#94a3b8' : '#475569';
-
-      const visibleSlots = data.allSlots.filter(s => STATE.positions.showBench || !data.benchSlots.includes(s));
-
-      const sortedTeams = [...data.teams].sort((a, b) => {
-        const sumA = visibleSlots.reduce((acc, s) => STATE.positions.hidden.has(s) ? acc : acc + (a.slots[s] || 0), 0);
-        const sumB = visibleSlots.reduce((acc, s) => STATE.positions.hidden.has(s) ? acc : acc + (b.slots[s] || 0), 0);
-        return (sumB - sumA) || (b.starterTotal - a.starterTotal);
-      });
-
-      const datasets = visibleSlots.map(slot => {
-        const isBench = data.benchSlots.includes(slot);
-        return {
-          label: slot,
-          data: sortedTeams.map(t => Number((t.slots[slot] || 0).toFixed(2))),
-          backgroundColor: POS_COLORS[slot] || '#64748b',
-          borderColor: isDark ? '#020617' : '#ffffff',
-          borderWidth: 1,
-          borderDash: isBench ? [3, 2] : undefined,
-          stack: 'pos',
-          hidden: STATE.positions.hidden.has(slot),
-        };
-      });
-
-      const totals = sortedTeams.map(t => visibleSlots.reduce((a, s) => STATE.positions.hidden.has(s) ? a : a + (t.slots[s] || 0), 0));
-      const maxTotal = Math.max(...totals, 10);
-
-      const narrow = (canvas.parentElement?.clientWidth || 900) < 640;
-      const lines = sortedTeams.map(t => {
-        const words = t.team_name.split(/\s+/);
-        if (words.length <= 1 || t.team_name.length <= (narrow ? 10 : 14)) return [t.team_name];
-        const mid = Math.ceil(words.length / 2);
-        return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
-      });
-      const maxLines = Math.max(...lines.map(l => l.length));
-      STATE.positions._sfx = { teams: sortedTeams, yOff: 8 + maxLines * 12 };
-
-      STATE.positions.chartInstance = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        plugins: [posTotalsPlugin, posManagerLabelsPlugin],
-        data: { labels: lines, datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
-          layout: { padding: { top: 20, bottom: 20 } },
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-              titleColor: isDark ? '#f8fafc' : '#0f172a',
-              bodyColor: isDark ? '#cbd5e1' : '#334155',
-              borderColor: isDark ? '#334155' : '#cbd5e1',
-              borderWidth: 1,
-              padding: 10,
-              callbacks: {
-                title: items => {
-                  const t = sortedTeams[items[0].dataIndex];
-                  return `${t.team_name} (${t.manager})`;
-                },
-                label: ctx => {
-                  const v = Number(ctx.parsed.y) || 0;
-                  if (v === 0) return null;
-                  const total = ctx.chart.data.datasets.reduce((sum, ds, di) =>
-                    ctx.chart.isDatasetVisible(di) ? sum + (Number(ds.data[ctx.dataIndex]) || 0) : sum, 0);
-                  const pct = total > 0 ? ` (${((v / total) * 100).toFixed(1)}%)` : '';
-                  return `${ctx.dataset.label}: ${v.toFixed(1)}${pct}`;
-                },
-                footer: items => {
-                  const sum = items.reduce((a, it) => a + (Number(it.parsed.y) || 0), 0);
-                  return `Total: ${sum.toFixed(1)}`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              stacked: true,
-              grid: { display: false },
-              ticks: { color: textColor, font: { size: narrow ? 9 : 10, weight: '600' }, autoSkip: false, maxRotation: 0 }
-            },
-            y: {
-              stacked: true,
-              beginAtZero: true,
-              suggestedMax: maxTotal * 1.07,
-              title: { display: true, text: 'Points', color: textColor, font: { size: 12, weight: '700' } },
-              grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 11 } }
-            }
+    function setupTableSorting() {
+      document.querySelectorAll('.standings-table th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.getAttribute('data-sort');
+          if (STATE.sort.field === field) {
+            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            STATE.sort.field = field; STATE.sort.dir = (field === 'actualRank' || field === 'team_name') ? 'asc' : 'desc';
           }
-        }
-      });
-    }
-
-    function renderPositionsLegend(data) {
-      const host = document.getElementById('pos-legend');
-      if (!host) return;
-      const visibleSlots = data.allSlots.filter(s => STATE.positions.showBench || !data.benchSlots.includes(s));
-      host.innerHTML = visibleSlots.map(slot => {
-        const off = STATE.positions.hidden.has(slot);
-        const color = POS_COLORS[slot] || '#64748b';
-        return `<button type="button" data-pos-slot="${escapeHTML(slot)}" class="pos-chip ${off ? 'pos-chip-off' : ''}">
-          <span class="pos-chip-dot" style="background:${color}"></span>${escapeHTML(slot)}
-        </button>`;
-      }).join('');
-      host.querySelectorAll('[data-pos-slot]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const slot = btn.getAttribute('data-pos-slot');
-          if (STATE.positions.hidden.has(slot)) STATE.positions.hidden.delete(slot);
-          else STATE.positions.hidden.add(slot);
-          renderPositionsTab();
+          renderStandingsTable();
         });
       });
     }
 
-    function renderPositionsTable(data) {
-      const table = document.getElementById('pos-table');
-      if (!table) return;
-      const teams = data.teams;
-
-      const header = `<thead><tr>
-        <th class="pos-label-col">POSITION</th>
-        ${teams.map(t => `<th class="pos-team-th" onclick="toggleManagerFilter('${escapeHTML(t.manager)}')" title="Click to filter Standings by ${escapeHTML(t.manager)}">
-          <div class="pos-team-name">${escapeHTML(t.team_name)}</div>
-          <div class="pos-team-mgr" style="color:${getManagerColor(t.manager)}">${escapeHTML(t.manager)}</div>
-        </th>`).join('')}
-      </tr></thead>`;
-
-      const rowHTML = (label, values, opts = {}) => {
-        const { bold = false, totalRow = false, dim = false } = opts;
-        const st = getColStats(values.map(v => ({ v })), d => d.v);
-        const cells = values.map(v => {
-          const bg = HEATMAPS.greenClearRed(v, st.min, st.mid, st.max);
-          return `<td class="font-mono ${bold ? 'font-bold' : ''}" style="background-color:${bg}">${v.toFixed(1)}</td>`;
-        }).join('');
-        return `<tr class="${totalRow ? 'pos-total-row' : ''} ${dim ? 'pos-dim' : ''}">
-          <th class="pos-label-col">${escapeHTML(label)}</th>${cells}
-        </tr>`;
-      };
-
-      const body = [];
-      data.starterSlots.forEach(slot => {
-        body.push(rowHTML(slot, teams.map(t => t.slots[slot] || 0), { dim: STATE.positions.hidden.has(slot) }));
-      });
-      body.push(rowHTML('TOTAL', teams.map(t => t.starterTotal), { bold: true, totalRow: true }));
-
-      if (data.benchSlots.length > 0) {
-        body.push(`<tr class="pos-spacer"><td colspan="${teams.length + 1}"></td></tr>`);
-        data.benchSlots.forEach(slot => {
-          body.push(rowHTML(slot, teams.map(t => t.slots[slot] || 0), { dim: !STATE.positions.showBench || STATE.positions.hidden.has(slot) }));
-        });
-        body.push(rowHTML('TOTAL', teams.map(t => t.benchTotal), { bold: true, totalRow: true, dim: !STATE.positions.showBench }));
-      }
-
-      table.innerHTML = `${header}<tbody>${body.join('')}</tbody>`;
-    }
-
-    function downloadPositionsCSV() {
-      const data = STATE.positions.last;
-      if (!data) return;
-      const rows = [];
-      const pushRow = (slot, group, getV) => {
-        const row = { Position: slot, Group: group };
-        data.teams.forEach(t => { row[`${t.team_name} (${t.manager})`] = Number(getV(t).toFixed(2)); });
-        rows.push(row);
-      };
-      data.starterSlots.forEach(s => pushRow(s, 'Starters', t => t.slots[s] || 0));
-      pushRow('TOTAL', 'Starters', t => t.starterTotal);
-      data.benchSlots.forEach(s => pushRow(s, 'Bench', t => t.slots[s] || 0));
-      if (data.benchSlots.length > 0) pushRow('TOTAL', 'Bench', t => t.benchTotal);
-
-      const csv = Papa.unparse(rows);
+    function downloadStandingsCSV() {
+      if (!STATE.computedStandings.length) return;
+      const csv = Papa.unparse(STATE.computedStandings.map(r => ({
+        Rank: r.actualRank, Manager: r.manager, Team: r.team_name,
+        W: r.W, L: r.L, T: r.T, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
+        ETEW_Pct: (r.ETEW_pct * 100).toFixed(1) + '%', WABL: r.WABL.toFixed(2), RABL: r.RABL,
+        Best_Wk: `${r.bestScore.toFixed(2)} (Wk ${r.bestWk})`,
+        Worst_Wk: `${r.worstScore.toFixed(2)} (Wk ${r.worstWk})`,
+        AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
+      })));
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', `NDL_Points_By_Position_${data.year}_W${data.wkMin}-${data.wkMax}.csv`);
+      link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_Wk${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
-    function downloadPositionsPNG() {
-      const ch = STATE.positions.chartInstance;
-      const data = STATE.positions.last;
-      if (!ch || !data) return;
-      const link = document.createElement('a');
-      link.download = `NDL_Points_By_Position_${data.year}_W${data.wkMin}-${data.wkMax}.png`;
-      link.href = ch.toBase64Image();
-      link.click();
+    // ==========================================
+    // SECTION 9: POINTS BY POSITION - NORMALIZED POSITION ENGINE
+    // ==========================================
+    const NP_CORE_CAPS = { QB: 1, RB: 2, WR: 2, TE: 1 };
+    const NP_BENCH_CAPS = { QB: 2, RB: 3, WR: 3, TE: 2 };
+    const NP_BENCH_PREFIX = { QB: 'BQB', RB: 'BRB', WR: 'BWR', TE: 'BTE' };
+    const NP_CORE_SLOTS = ['QB1', 'RB1', 'RB2', 'WR1', 'WR2', 'TE1'];
+    const NP_NOT_STARTED = new Set(['', 'BN', 'BE', 'BENCH', 'IR', 'IR+', 'TAXI', 'RESERVE', 'NA', 'INACTIVE']);
+    const NP_IR = new Set(['IR', 'IR+', 'TAXI', 'RESERVE', 'NA', 'INACTIVE']);
+    const NP_SUPERFLEX = new Set(['Q/W/R/T', 'W/R/T/Q', 'Q/W/R/T/', 'SUPER_FLEX', 'SUPERFLEX', 'SFLX', 'SFX', 'OP']);
+    const NP_GENERIC_STARTER = new Set(['STARTER', 'START', 'ACTIVE']);
+    const NP_BRUTE_LIMIT = 12;
+
+    // Fast field read: direct key first, then the site's case-insensitive getVal fallback.
+    function npF(row, key, alts) {
+      const v = row[key];
+      if (v !== undefined && v !== null) return v;
+      return getVal(row, alts ? [key, ...alts] : [key]);
     }
 
-    // ==========================================
-    // SECTION 12: INITIALIZATION & EVENT LISTENERS
-    // ==========================================
-    document.addEventListener('DOMContentLoaded', () => {
-      initTheme();
-      setupTabNavigation();
-      parseUrlHash();
-      setupFilterControls();
+    function npNum(v) { const n = Number(v); return isNaN(n) ? 0 : n; }
 
-      document.querySelectorAll('#standings-table th[data-sort]').forEach(th => {
-        th.addEventListener('click', () => {
-          const field = th.getAttribute('data-sort');
-          STATE.sort.dir = (STATE.sort.field === field && STATE.sort.dir === 'asc') ? 'desc' : 'asc';
-          STATE.sort.field = field;
-          renderStandingsTable();
+    function npEligibility(row) {
+      const raw = String(npF(row, 'position', ['eligible_positions', 'eligible_position']) || '').toUpperCase();
+      let toks = raw.split(/[,\/\s]+/).filter(t => NP_CORE_CAPS[t]);
+      if (toks.length === 0) {
+        const sel = String(npF(row, 'selected_position') || '').toUpperCase().trim();
+        if (NP_CORE_CAPS[sel]) toks = [sel];
+      }
+      toks = [...new Set(toks)];
+      // Multi-position players: RB counts only with > 1 rush attempt. Single-position RBs are always RBs.
+      if (toks.length > 1 && toks.includes('RB') && !(npNum(npF(row, 'rushing_att', ['rush_att'])) > 1)) {
+        toks = toks.filter(t => t !== 'RB');
+      }
+      return toks;
+    }
+
+    function npCmp(a, b) {
+      return (b.pts - a.pts) || (b.vol - a.vol) ||
+        String(a.name).localeCompare(String(b.name)) ||
+        String(a.id).localeCompare(String(b.id));
+    }
+
+    // Enumerate role choices for multi-eligible players, calling visit(roleOf) for each combo.
+    function npForEachRoleCombo(multi, visit) {
+      const limited = multi.slice(0, NP_BRUTE_LIMIT);
+      const roles = new Map();
+      multi.forEach(p => roles.set(p, p.elig[0]));
+      const rec = (i) => {
+        if (i === limited.length) { visit(roles); return; }
+        for (const r of limited[i].elig) { roles.set(limited[i], r); rec(i + 1); }
+      };
+      rec(0);
+    }
+
+    function npFillStarters(S, roles, sfxCount) {
+      const by = { QB: [], RB: [], WR: [], TE: [] };
+      S.forEach(p => by[roles.get(p) || p.elig[0]].push(p));
+      Object.values(by).forEach(a => a.sort(npCmp));
+      const slots = {};
+      let coreFilled = 0, coreTotal = 0;
+      Object.keys(NP_CORE_CAPS).forEach(pos => {
+        for (let i = 0; i < NP_CORE_CAPS[pos]; i++) {
+          const p = by[pos][i];
+          if (p) { slots[`${pos}${i + 1}`] = p; coreFilled++; coreTotal += p.pts; }
+        }
+      });
+      const remQB = by.QB.slice(NP_CORE_CAPS.QB);
+      const remOther = [...by.RB.slice(NP_CORE_CAPS.RB), ...by.WR.slice(NP_CORE_CAPS.WR), ...by.TE.slice(NP_CORE_CAPS.TE)].sort(npCmp);
+      // SFX is filled BEFORE the FX slots; a leftover started QB is forced into SFX.
+      for (let i = 1; i <= sfxCount; i++) {
+        const p = remQB.length ? remQB.shift() : remOther.shift();
+        if (p) slots[`SFX${i}`] = p;
+      }
+      remOther.forEach((p, i) => { slots[`FX${i + 1}`] = p; });
+      return { slots, unplaced: remQB, coreFilled, coreTotal };
+    }
+
+    function npAssignStarters(S, sfxCount) {
+      let best = null;
+      const multi = S.filter(p => p.elig.length > 1).sort(npCmp);
+      npForEachRoleCombo(multi, (roles) => {
+        const res = npFillStarters(S, roles, sfxCount);
+        if (!best ||
+          res.coreFilled > best.coreFilled ||
+          (res.coreFilled === best.coreFilled && (res.unplaced.length < best.unplaced.length ||
+            (res.unplaced.length === best.unplaced.length && res.coreTotal > best.coreTotal + 1e-9)))) {
+          best = res;
+        }
+      });
+      return best;
+    }
+
+    function npAssignBench(B) {
+      const multi = B.filter(p => p.elig.length > 1).sort(npCmp);
+      let best = null;
+      npForEachRoleCombo(multi, (roles) => {
+        const by = { QB: [], RB: [], WR: [], TE: [] };
+        B.forEach(p => by[roles.get(p) || p.elig[0]].push(p));
+        Object.values(by).forEach(a => a.sort(npCmp));
+        let filled = 0, pts = 0, rankSum = 0;
+        Object.keys(NP_BENCH_CAPS).forEach(pos => {
+          filled += Math.min(NP_BENCH_CAPS[pos], by[pos].length);
+          by[pos].slice(0, NP_BENCH_CAPS[pos]).forEach(p => { pts += p.pts; });
+        });
+        multi.forEach(p => { rankSum += by[roles.get(p)].indexOf(p); });
+        if (!best || filled > best.filled ||
+          (filled === best.filled && (rankSum < best.rankSum ||
+            (rankSum === best.rankSum && pts > best.pts + 1e-9)))) {
+          best = { by, filled, rankSum, pts };
+        }
+      });
+      const slots = {}, overflow = [];
+      Object.keys(NP_BENCH_CAPS).forEach(pos => {
+        best.by[pos].forEach((p, i) => {
+          if (i < NP_BENCH_CAPS[pos]) slots[`${NP_BENCH_PREFIX[pos]}${i + 1}`] = p;
+          else overflow.push(p);
+        });
+      });
+      return { slots, overflow };
+    }
+
+    // Number of SFLX slots per league-year (dynamic: differs by season). Derived from lineup labels;
+    // seasons that only label starters generically inherit from the nearest earlier season.
+    // descs: [{ league, year, generic: bool, sfx: count of started players in a superflex-labelled slot }]
+    function npSuperflexFromDescriptors(descs) {
+      const counts = {};
+      descs.forEach(d => {
+        if (d.generic) return;
+        const k = `${d.league}|${d.year}`;
+        (counts[k] = counts[k] || {})[d.sfx] = ((counts[k] || {})[d.sfx] || 0) + 1;
+      });
+      const modeOf = (m) => Object.keys(m).sort((a, b) => (m[b] - m[a]) || (Number(b) - Number(a)))[0];
+      const byYear = {};
+      Object.keys(counts).forEach(k => {
+        const yr = k.split('|')[1];
+        const mode = Number(modeOf(counts[k]));
+        byYear[k] = mode;
+        if (byYear[`*|${yr}`] === undefined) byYear[`*|${yr}`] = mode;
+      });
+      return (league, year) => {
+        const direct = byYear[`${league}|${year}`];
+        if (direct !== undefined) return direct;
+        for (let y = Number(year) - 1; y >= 1990; y--) {
+          if (byYear[`${league}|${y}`] !== undefined) return byYear[`${league}|${y}`];
+          if (byYear[`*|${y}`] !== undefined) return byYear[`*|${y}`];
+        }
+        return 0;
+      };
+    }
+
+    // Cheap whole-table pass so a single season can be normalised on its own while still
+    // inheriting the SFLX count from earlier seasons when a year only labels starters generically.
+    function npBuildSfxResolver(rows) {
+      const groups = new Map(), seen = new Set();
+      (rows || []).forEach(row => {
+        const year = Number(npF(row, 'year', ['YR'])), week = Number(npF(row, 'week', ['WK'])), tid = Number(npF(row, 'team_id', ['TMA']));
+        if (!year || !week || isNaN(tid)) return;
+        const league = String(npF(row, 'league') || '');
+        const pid = npF(row, 'player_id'), nm = String(npF(row, 'name', ['player_name']) || '');
+        const dk = `${league}|${year}|${week}|${tid}|${(pid !== undefined && pid !== null && pid !== '') ? pid : nm}`;
+        if (seen.has(dk)) return;
+        seen.add(dk);
+        const gk = `${league}|${year}|${week}|${tid}`;
+        let g = groups.get(gk);
+        if (!g) { g = { league, year, generic: false, sfx: 0 }; groups.set(gk, g); }
+        const sel = String(npF(row, 'selected_position') || '').toUpperCase().trim();
+        if (NP_GENERIC_STARTER.has(sel)) g.generic = true;
+        if (NP_SUPERFLEX.has(sel)) g.sfx++;
+      });
+      return npSuperflexFromDescriptors([...groups.values()]);
+    }
+
+    // rows -> { rows (normalized_position added in place), summary (per team-week slot points), warnings }
+    function assignNormalizedPositions(rows, opts) {
+      const warnings = [];
+      const groupsMap = new Map();
+      const seen = new Set();
+
+      (rows || []).forEach(row => {
+        row.normalized_position = null;
+        const year = Number(npF(row, 'year', ['YR']));
+        const week = Number(npF(row, 'week', ['WK']));
+        const tid = Number(npF(row, 'team_id', ['TMA']));
+        if (!year || !week || isNaN(tid)) return;
+        const league = String(npF(row, 'league') || '');
+        const name = String(npF(row, 'name', ['player_name']) || '');
+        const pid = npF(row, 'player_id');
+        const dupKey = `${league}|${year}|${week}|${tid}|${(pid !== undefined && pid !== null && pid !== '') ? pid : name}`;
+        if (seen.has(dupKey)) return; // exact duplicate export rows are counted once
+        seen.add(dupKey);
+
+        const gKey = `${league}|${year}|${week}|${tid}`;
+        let g = groupsMap.get(gKey);
+        if (!g) {
+          g = { league, year, week, team_id: tid, players: [], hasGenericStarter: false,
+                manager: npF(row, 'manager_name', ['manager']), team_name: npF(row, 'team_name') };
+          groupsMap.set(gKey, g);
+        }
+        const sel = String(npF(row, 'selected_position') || '').toUpperCase().trim();
+        const started = !NP_NOT_STARTED.has(sel);
+        if (started && NP_GENERIC_STARTER.has(sel)) g.hasGenericStarter = true;
+        g.players.push({
+          row, id: pid, name, selLabel: sel, started, ir: NP_IR.has(sel),
+          pts: npNum(npF(row, 'points')),
+          vol: npNum(npF(row, 'rushing_att')) + npNum(npF(row, 'receiving_rec')) + npNum(npF(row, 'passing_yds')) / 10,
+          elig: npEligibility(row)
         });
       });
 
-      document.getElementById('clear-manager-filter')?.addEventListener('click', () => {
-        STATE.filters.selectedManager = null; renderStandingsTable(); updateFilterBadge(); updateUrlHash();
+      const groups = [...groupsMap.values()];
+      const sfxFor = (opts && opts.sfxFor) || npSuperflexFromDescriptors(groups.map(g => ({
+        league: g.league, year: g.year, generic: g.hasGenericStarter,
+        sfx: g.players.filter(p => p.started && NP_SUPERFLEX.has(p.selLabel)).length
+      })));
+      const summary = [];
+
+      groups.forEach(g => {
+        const gw = [];
+        const slotsOut = {}, namesOut = {};
+        const S = g.players.filter(p => p.started && p.elig.length);
+        const sfxExplicit = g.players.filter(p => p.started && NP_SUPERFLEX.has(p.selLabel)).length;
+        const sfxCount = Math.max(sfxFor(g.league, g.year), sfxExplicit);
+
+        const place = (p, slot) => {
+          p.row.normalized_position = slot;
+          slotsOut[slot] = p.pts;
+          namesOut[slot] = p.name;
+        };
+
+        if (S.length) {
+          const res = npAssignStarters(S, sfxCount);
+          Object.entries(res.slots).forEach(([slot, p]) => place(p, slot));
+          res.unplaced.forEach(p => {
+            p.row.normalized_position = 'BN';
+            gw.push(`${p.name} (started) could not be placed in a lineup slot`);
+          });
+        }
+        const B = g.players.filter(p => !p.started && !p.ir && p.elig.length);
+        const bnExtras = g.players.filter(p => !p.started && p.ir && p.elig.length);
+        if (B.length) {
+          const res = npAssignBench(B);
+          Object.entries(res.slots).forEach(([slot, p]) => place(p, slot));
+          res.overflow.forEach(p => bnExtras.push(p));
+        }
+        bnExtras.forEach(p => {
+          p.row.normalized_position = 'BN';
+          slotsOut.BN = (slotsOut.BN || 0) + p.pts;
+        });
+        if (gw.length) {
+          const msg = `[NP] ${g.league} ${g.year} wk${g.week} team ${g.team_id}: ${gw.join('; ')}`;
+          warnings.push(msg);
+          console.warn(msg);
+        }
+        summary.push({ league: g.league, year: g.year, week: g.week, team_id: g.team_id,
+                       manager: g.manager, team_name: g.team_name, slots: slotsOut, names: namesOut, warnings: gw });
       });
 
-      document.getElementById('btn-export-standings-csv')?.addEventListener('click', () => {
-        if (!STATE.computedStandings || STATE.computedStandings.length === 0) return;
-        const rows = STATE.computedStandings.map(r => ({
-          Rank: r.actualRank, Manager: r.manager, Team: r.team_name,
-          W: r.W, L: r.L, T: r.T, PF: r.PF.toFixed(2), PA: r.PA.toFixed(2),
-          ETEW_Pct: (r.ETEW_pct * 100).toFixed(1) + '%', WABL: r.WABL.toFixed(2), RABL: r.RABL,
-          BestWk: r.bestScore.toFixed(2), WorstWk: r.worstScore.toFixed(2),
-          AVG: r.AVG.toFixed(2), AVG_Star: r.AVG_star.toFixed(2), SDEV: r.SDEV.toFixed(2), FAAB: r.faab
-        }));
-        const csv = Papa.unparse(rows);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `NDL_Standings_${STATE.filters.year}_Wk${STATE.filters.weekMin}-${STATE.filters.weekMax}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      return { rows, summary, warnings };
+    }
+
+    // ------------------------------------------
+    // Points by Position: data plumbing
+    // ------------------------------------------
+    const POS_SLOT_COLORS = {
+      QB1: '#44546A', RB1: '#ED7D31', RB2: '#F4B183', WR1: '#4472C4', WR2: '#8FAADC', TE1: '#FFC000',
+      FX1: '#70AD47', FX2: '#A9D18E', FX3: '#E2F0D9', FX4: '#C5E0B4', FX5: '#D5E8C6',
+      SFX1: '#8497B0', SFX2: '#ADB9CA',
+      BQB1: '#64748B', BQB2: '#94A3B8',
+      BRB1: '#C2662B', BRB2: '#D98F5C', BRB3: '#E8B791',
+      BWR1: '#3A5EA8', BWR2: '#6F8FCB', BWR3: '#A3B7DE',
+      BTE1: '#D9A400', BTE2: '#EAC247',
+      BN: '#9CA3AF'
+    };
+    const POS_BENCH_ORDER = ['BQB1', 'BQB2', 'BRB1', 'BRB2', 'BRB3', 'BWR1', 'BWR2', 'BWR3', 'BTE1', 'BTE2', 'BN'];
+
+    function posSlotColor(slot) { return POS_SLOT_COLORS[slot] || '#94A3B8'; }
+    function posIsBench(slot) { return slot.charAt(0) === 'B'; }
+
+    // Recomputed whenever a poll brings in a new live.db (STATE.dataVersion changes); computed per season on demand.
+    function getNormalizedForYear(yr) {
+      const P = STATE.positions;
+      if (P._v !== STATE.dataVersion) {
+        P._v = STATE.dataVersion;
+        P._cache = {};
+        P._sfx = npBuildSfxResolver(STATE.data.points || []);
+      }
+      if (!P._cache[yr]) {
+        const rows = (STATE.data.points || []).filter(r => Number(npF(r, 'year', ['YR'])) === Number(yr));
+        P._cache[yr] = assignNormalizedPositions(rows, { sfxFor: P._sfx });
+      }
+      return P._cache[yr];
+    }
+
+    // Adds normalized_position to every row of the points table (all seasons). Handy for exports/console use.
+    function normalizeAllPositions() {
+      FilterEngine.years().forEach(y => getNormalizedForYear(y));
+      return STATE.data.points;
+    }
+
+    function computePositionsView() {
+      const f = STATE.filters;
+      const yr = Number(f.year);
+      const wkMax = FilterEngine.effectiveMax(yr);
+      const wkMin = Math.min(FilterEngine.effectiveMin(yr), wkMax);
+      if (wkMax < 1) return null;
+
+      const res = getNormalizedForYear(yr);
+      const leagues = [...new Set(res.summary.map(s => s.league))];
+      const league = leagues.includes('NDL') ? 'NDL' : (leagues[0] || '');
+      const sel = res.summary.filter(s => s.league === league && s.week >= wkMin && s.week <= wkMax);
+      if (!sel.length) return null;
+
+      const singleWeek = wkMin === wkMax;
+      const teams = {};
+      const benchSeen = new Set();
+      let warnCount = 0;
+      sel.forEach(s => {
+        const t = teams[s.team_id] || (teams[s.team_id] = {
+          team_id: s.team_id, weeks: new Set(), sums: {}, filled: {}, names: {},
+          manager: getManagerName(s.team_id, yr, s.manager), team_name: getTeamName(s.team_id, yr, s.team_name)
+        });
+        t.weeks.add(s.week);
+        warnCount += s.warnings.length;
+        Object.keys(s.slots).forEach(slot => {
+          t.sums[slot] = (t.sums[slot] || 0) + s.slots[slot];
+          t.filled[slot] = (t.filled[slot] || 0) + 1;
+          if (singleWeek && s.names[slot]) t.names[slot] = s.names[slot];
+          if (posIsBench(slot)) benchSeen.add(slot);
+        });
       });
 
-      const tooltip = document.getElementById('sparkline-tooltip');
-      document.addEventListener('mouseover', (e) => {
-        if (e.target.classList.contains('sparkline-dot')) {
-          const info = e.target.getAttribute('data-info');
-          if (info) {
-            tooltip.innerHTML = info;
-            tooltip.classList.remove('hidden');
+      // Dynamic slot lists: FX/SFX counts differ by season, so only slots that exist in this view are shown.
+      const fxPresent = new Set(), sfxPresent = new Set();
+      Object.values(teams).forEach(t => Object.keys(t.sums).forEach(slot => {
+        if (/^FX\d+$/.test(slot)) fxPresent.add(Number(slot.slice(2)));
+        if (/^SFX\d+$/.test(slot)) sfxPresent.add(Number(slot.slice(3)));
+      }));
+      const startSlots = [...NP_CORE_SLOTS,
+        ...[...fxPresent].sort((a, b) => a - b).map(i => `FX${i}`),
+        ...[...sfxPresent].sort((a, b) => a - b).map(i => `SFX${i}`)];
+      const benchSlots = POS_BENCH_ORDER.filter(s => benchSeen.has(s));
+
+      const list = Object.values(teams).map(t => {
+        const n = t.weeks.size || 1;
+        const avg = {};
+        [...startSlots, ...benchSlots].forEach(slot => { avg[slot] = (t.sums[slot] || 0) / n; });
+        const total = startSlots.reduce((a, s) => a + avg[s], 0);
+        const bnTotal = benchSlots.reduce((a, s) => a + avg[s], 0);
+        return Object.assign(t, { n, avg, total, bnTotal, color: getManagerColor(t.manager) });
+      }).sort((a, b) => (b.total - a.total) || (a.team_id - b.team_id));
+
+      return { yr, league, wkMin, wkMax, singleWeek, teams: list, startSlots, benchSlots, warnCount };
+    }
+
+    function posWrapLabel(name, max = 13) {
+      const words = String(name || '').split(/\s+/).filter(Boolean);
+      const lines = [];
+      let cur = '';
+      words.forEach(w => {
+        if (!cur) { cur = w; return; }
+        if ((cur + ' ' + w).length <= max) cur += ' ' + w;
+        else { lines.push(cur); cur = w; }
+      });
+      if (cur) lines.push(cur);
+      return lines.length ? lines : [''];
+    }
+
+    function posFmt(v) { return (typeof v === 'number' && !isNaN(v)) ? v.toFixed(2) : '-'; }
+
+    // ------------------------------------------
+    // Points by Position: render
+    // ------------------------------------------
+    function initPositionsTab() {
+      const P = STATE.positions;
+      const cb = document.getElementById('pos-show-bench');
+      if (cb) {
+        cb.checked = P.showBench;
+        cb.addEventListener('change', e => {
+          P.showBench = !!e.target.checked;
+          updateUrlHash();
+          renderPositionsTab();
+        });
+      }
+      const csv = document.getElementById('btn-export-pos-csv');
+      if (csv) csv.addEventListener('click', downloadPositionsCSV);
+      const png = document.getElementById('btn-export-pos-png');
+      if (png) png.addEventListener('click', downloadPositionsPNG);
+    }
+
+    function togglePositionsManager(mgr) {
+      STATE.filters.selectedManager = STATE.filters.selectedManager === mgr ? null : mgr;
+      updateFilterBadge();
+      updateUrlHash();
+      renderPositionsTab();
+    }
+
+    function renderPositionsTab() {
+      const P = STATE.positions;
+      const cb = document.getElementById('pos-show-bench');
+      if (cb) cb.checked = P.showBench;
+
+      const view = computePositionsView();
+      P.last = view;
+      const host = document.getElementById('pos-chart-host');
+      const emptyEl = document.getElementById('pos-empty');
+      const warnEl = document.getElementById('pos-warnings');
+
+      if (!view) {
+        if (P.chartInstance) { P.chartInstance.destroy(); P.chartInstance = null; }
+        if (host) host.classList.add('hidden');
+        document.getElementById('pos-table').innerHTML = '';
+        document.getElementById('pos-legend').innerHTML = '';
+        if (emptyEl) { emptyEl.textContent = emptyScopeMessage('points data'); emptyEl.classList.remove('hidden'); }
+        if (warnEl) warnEl.classList.add('hidden');
+        return;
+      }
+      if (host) host.classList.remove('hidden');
+      if (emptyEl) emptyEl.classList.add('hidden');
+
+      const subtitle = view.singleWeek ? `${view.league} - ${view.yr} Week ${view.wkMax}` : `${view.league} - ${view.yr} · Weeks ${view.wkMin}–${view.wkMax} (avg per week)`;
+      document.getElementById('pos-chart-subtitle').textContent = subtitle;
+
+      if (warnEl) {
+        if (view.warnCount > 0) {
+          warnEl.textContent = `${view.warnCount} lineup(s) in this range had started players that could not be placed in a slot (see browser console, "[NP]").`;
+          warnEl.classList.remove('hidden');
+        } else warnEl.classList.add('hidden');
+      }
+
+      renderPositionsChart(view);
+      renderPositionsLegend(view);
+      renderPositionsTable(view);
+    }
+
+    function renderPositionsChart(view) {
+      const P = STATE.positions;
+      const canvas = document.getElementById('posChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (P.chartInstance) { P.chartInstance.destroy(); P.chartInstance = null; }
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const textColor = isDark ? '#94a3b8' : '#475569';
+      const gridFaint = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const gridStrong = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(15,23,42,0.65)';
+      const surface = isDark ? '#0f172a' : '#ffffff';
+      const selMgr = STATE.filters.selectedManager;
+      const dimmed = view.teams.map(t => !!selMgr && t.manager !== selMgr);
+      const showBench = P.showBench && view.benchSlots.length > 0;
+
+      const mk = (slot, bench) => {
+        const base = posSlotColor(slot);
+        return {
+          label: slot,
+          slot,
+          data: view.teams.map(t => { const v = Math.max(0, t.avg[slot] || 0); return bench ? -v : v; }),
+          _actual: view.teams.map(t => t.avg[slot]),
+          _names: view.teams.map(t => t.names[slot] || ''),
+          _filled: view.teams.map(t => !!t.filled[slot]),
+          backgroundColor: view.teams.map((t, i) => dimmed[i] ? hexToRgba(base, 0.22) : (bench ? hexToRgba(base, 0.82) : base)),
+          borderColor: surface,
+          borderWidth: 0.75,
+          stack: 'pos',
+          barPercentage: 0.62,
+          categoryPercentage: 0.9,
+          hidden: P.hidden.has(slot)
+        };
+      };
+      const datasets = view.startSlots.map(s => mk(s, false));
+      if (showBench) view.benchSlots.forEach(s => datasets.push(mk(s, true)));
+
+      const benchLabelPlugin = {
+        id: 'posBenchLabel',
+        afterDatasetsDraw(chart) {
+          if (!showBench) return;
+          const { ctx, chartArea, scales } = chart;
+          const y0 = scales.y.getPixelForValue(0);
+          ctx.save();
+          ctx.fillStyle = textColor;
+          ctx.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('BENCH \u25BE', chartArea.left + 6, Math.min(chartArea.bottom - 4, y0 + 14));
+          ctx.restore();
+        }
+      };
+
+      P.chartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels: view.teams.map(t => posWrapLabel(t.team_name)), datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 250 },
+          interaction: { mode: 'index', intersect: false },
+          onClick: (evt, els, chart) => {
+            const pts = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, true);
+            if (pts.length) togglePositionsManager(view.teams[pts[0].index].manager);
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: { display: false },
+              border: { display: false },
+              ticks: {
+                color: ctx => { const t = view.teams[ctx.index]; return t ? (dimmed[ctx.index] ? hexToRgba(t.color, 0.4) : t.color) : textColor; },
+                font: { size: 11, weight: '700' },
+                maxRotation: 0, autoSkip: false
+              }
+            },
+            y: {
+              stacked: true,
+              title: { display: true, text: view.singleWeek ? 'Points' : 'Avg points per week', color: textColor, font: { weight: '600' } },
+              grid: {
+                color: c => c.tick && c.tick.value === 0 ? gridStrong : gridFaint,
+                lineWidth: c => c.tick && c.tick.value === 0 ? 1.5 : 1
+              },
+              border: { display: false },
+              ticks: { color: textColor, callback: v => Math.abs(v) }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
+              filter: item => item.dataset._filled[item.dataIndex],
+              callbacks: {
+                title: items => { const t = view.teams[items[0].dataIndex]; return `${t.team_name} (${t.manager})`; },
+                label: item => {
+                  const ds = item.dataset, i = item.dataIndex;
+                  const nm = ds._names[i];
+                  return `${ds.label}: ${posFmt(ds._actual[i])}${nm ? ' \u2013 ' + nm : ''}`;
+                },
+                footer: items => { const t = view.teams[items[0].dataIndex]; return `Starters ${posFmt(t.total)}` + (showBench ? `  ·  Bench ${posFmt(t.bnTotal)}` : ''); }
+              }
+            }
           }
-        }
+        },
+        plugins: [benchLabelPlugin]
       });
-      document.addEventListener('mousemove', (e) => {
-        if (!tooltip.classList.contains('hidden')) {
-          const x = Math.min(window.innerWidth - 220, e.clientX + 12);
-          const y = Math.max(10, e.clientY - 40);
-          tooltip.style.left = `${x}px`; tooltip.style.top = `${y}px`;
-        }
+    }
+
+    function renderPositionsLegend(view) {
+      const P = STATE.positions;
+      const el = document.getElementById('pos-legend');
+      if (!el) return;
+      const slots = [...view.startSlots, ...(P.showBench ? view.benchSlots : [])];
+      el.innerHTML = slots.map(slot => {
+        const off = P.hidden.has(slot);
+        return `<button type="button" data-slot="${slot}" class="pos-chip${off ? ' pos-chip-off' : ''}" title="Click to show/hide ${slot} in the chart"><span class="pos-chip-dot" style="background:${posSlotColor(slot)}"></span>${slot}</button>`;
+      }).join('');
+      el.querySelectorAll('.pos-chip').forEach(btn => btn.addEventListener('click', () => {
+        const s = btn.getAttribute('data-slot');
+        if (P.hidden.has(s)) P.hidden.delete(s); else P.hidden.add(s);
+        renderPositionsTab();
+      }));
+    }
+
+    function renderPositionsTable(view) {
+      const P = STATE.positions;
+      const tbl = document.getElementById('pos-table');
+      if (!tbl) return;
+      const selMgr = STATE.filters.selectedManager;
+      const showBench = P.showBench && view.benchSlots.length > 0;
+      const teams = view.teams;
+
+      const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t, i) => {
+        const dim = selMgr && t.manager !== selMgr;
+        return `<th class="pos-team-th${dim ? ' pos-dim' : ''}" data-mgr="${escapeHTML(t.manager)}" style="border-top:3px solid ${t.color}" title="${escapeHTML(t.manager)} - click to highlight">
+          <div class="pos-team-name">${escapeHTML(t.team_name)}</div>
+          <div class="pos-team-mgr" style="color:${t.color}">${escapeHTML(t.manager)}</div></th>`;
+      }).join('')}</tr></thead>`;
+
+      const shadedRow = (label, color, valuesFn, filledFn, opts = {}) => {
+        const vals = teams.map(valuesFn);
+        const st = getColStats(teams.map((t, i) => (!filledFn || filledFn(t)) ? vals[i] : null), v => v);
+        const tdc = teams.map((t, i) => {
+          const dim = selMgr && t.manager !== selMgr;
+          const filled = filledFn ? filledFn(t) : true;
+          const bg = filled ? HEATMAPS.greenClearRed(vals[i], st.min, st.mid, st.max) : 'transparent';
+          return `<td class="pos-val${dim ? ' pos-dim' : ''}${opts.total ? ' pos-total' : ''}" style="background:${bg}">${filled ? posFmt(vals[i]) : '-'}</td>`;
+        }).join('');
+        const lblStyle = color ? `background:${color};color:${getContrastTextColor(color)}` : '';
+        return `<tr class="${opts.total ? 'pos-total-row' : ''}"><th class="pos-label-col pos-slot-label" style="${lblStyle}">${label}</th>${tdc}</tr>`;
+      };
+
+      const rows = [];
+      [...view.startSlots].reverse().forEach(slot => {
+        rows.push(shadedRow(slot, posSlotColor(slot), t => t.avg[slot], t => !!t.filled[slot]));
       });
-      document.addEventListener('mouseout', (e) => { if (e.target.classList.contains('sparkline-dot')) tooltip.classList.add('hidden'); });
+      rows.push(shadedRow('TOTAL', null, t => t.total, null, { total: true }));
+      if (showBench) {
+        rows.push(`<tr class="pos-spacer"><td colspan="${teams.length + 1}"></td></tr>`);
+        view.benchSlots.forEach(slot => {
+          rows.push(shadedRow(slot, posSlotColor(slot), t => t.avg[slot], t => !!t.filled[slot]));
+        });
+        rows.push(shadedRow('BNTOTAL', null, t => t.bnTotal, null, { total: true }));
+      }
+      tbl.innerHTML = head + `<tbody>${rows.join('')}</tbody>`;
+      tbl.querySelectorAll('.pos-team-th').forEach(th => th.addEventListener('click', () => togglePositionsManager(th.getAttribute('data-mgr'))));
+    }
+
+    function downloadPositionsCSV() {
+      const view = STATE.positions.last;
+      if (!view) return;
+      const slots = [...[...view.startSlots].reverse(), 'TOTAL', ...(STATE.positions.showBench ? [...view.benchSlots, 'BNTOTAL'] : [])];
+      const q = s => `"${String(s).replace(/"/g, '""')}"`;
+      const lines = [['Slot', ...view.teams.map(t => `${t.team_name} (${t.manager})`)].map(q).join(',')];
+      slots.forEach(slot => {
+        lines.push([slot, ...view.teams.map(t => {
+          const v = slot === 'TOTAL' ? t.total : slot === 'BNTOTAL' ? t.bnTotal : (t.filled[slot] ? t.avg[slot] : null);
+          return v === null ? '' : v.toFixed(2);
+        })].map(q).join(','));
+      });
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `ndl_points_by_position_${view.yr}_w${view.wkMin}-${view.wkMax}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function downloadPositionsPNG() {
+      const chart = STATE.positions.chartInstance;
+      const view = STATE.positions.last;
+      if (!chart || !view) return;
+      const a = document.createElement('a');
+      a.href = chart.toBase64Image('image/png', 1);
+      a.download = `ndl_points_by_position_${view.yr}_w${view.wkMin}-${view.wkMax}.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    window.assignNormalizedPositions = assignNormalizedPositions;
+    window.normalizeAllPositions = normalizeAllPositions;
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      setupTabNavigation();
+      setupFilterControls();
+      parseUrlHash();
+      applyTabFilterVisibility(FilterEngine.activeTab());
+      setupTableSorting();
+      setupSparklineTooltips();
+
+      const clearMgrBtn = document.getElementById('clear-manager-filter');
+      if (clearMgrBtn) clearMgrBtn.addEventListener('click', () => {
+        STATE.filters.selectedManager = null;
+        renderStandingsTable();
+        if (FilterEngine.activeTab() === 'positions') renderPositionsTab();
+        updateFilterBadge();
+        updateUrlHash();
+      });
+
+      const exportCsvBtn = document.getElementById('btn-export-standings-csv');
+      if (exportCsvBtn) exportCsvBtn.addEventListener('click', downloadStandingsCSV);
 
       window.addEventListener('hashchange', () => {
         if (STATE._selfHash && window.location.hash === STATE._selfHash) { STATE._selfHash = null; return; }
-        STATE._selfHash = null;
-        if (!STATE.loaded) return;
+        if (!STATE.loaded) { parseUrlHash(); return; }
         applyUrlToState();
+        applyTabFilterVisibility(FilterEngine.activeTab());
         syncFilterUI();
         renderActiveTab();
       });
