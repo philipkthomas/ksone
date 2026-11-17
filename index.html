@@ -475,10 +475,10 @@
     /* ============================================================
        POINTS BY POSITION TAB
        ============================================================ */
-    .pos-table { width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
-    .pos-table th, .pos-table td { padding: 5px 8px; font-size: 0.8125rem; text-align: center; color: #0f172a; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; }
-    .pos-table .pos-label-col { width: 84px; min-width: 84px; text-align: left; position: sticky; left: 0; z-index: 1; background: #f1f5f9; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.04em; }
-    .pos-team-th { background: #f1f5f9; vertical-align: bottom; cursor: pointer; white-space: normal !important; }
+    .pos-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .pos-table th, .pos-table td { padding: 5px 6px; font-size: 0.8125rem; text-align: center; color: #0f172a; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pos-table .pos-label-col { width: 58px; min-width: 58px; max-width: 58px; text-align: left; position: sticky; left: 0; z-index: 1; background: #f1f5f9; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.04em; padding-left: 8px; padding-right: 4px; }
+    .pos-team-th { background: #f1f5f9; vertical-align: bottom; cursor: pointer; white-space: normal !important; word-break: break-word; }
     .pos-team-th:hover { background: #e2e8f0; }
     .pos-team-name { font-weight: 700; font-size: 0.72rem; line-height: 1.15; color: #334155; }
     .pos-team-mgr { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
@@ -490,10 +490,8 @@
     .dark .pos-team-th:hover { background: #1e293b; }
     .dark .pos-team-name { color: #cbd5e1; }
     .dark .pos-total-row th, .dark .pos-total-row td { border-top-color: #64748b; }
-    .pos-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer; transition: opacity 0.15s ease; }
-    .pos-chip:hover { border-color: #94a3b8; }
-    .dark .pos-chip { background: #0f172a; border-color: #334155; color: #cbd5e1; }
-    .pos-chip-off { opacity: 0.4; text-decoration: line-through; }
+    .pos-legend-item { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; user-select: none; }
+    .dark .pos-legend-item { background: #0f172a; border-color: #334155; color: #cbd5e1; }
     .pos-chip-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
   </style>
 </head>
@@ -1133,27 +1131,25 @@
           <label class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold cursor-pointer select-none">
             <input type="checkbox" id="pos-show-bench" class="accent-sky-500"> Show bench
           </label>
-          <button id="btn-export-pos-csv" title="Download table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-csv"></i> CSV</button>
-          <button id="btn-export-pos-png" title="Download chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-image"></i> PNG</button>
         </div>
       </div>
 
       <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-3 sm:p-5">
         <div id="pos-empty" class="hidden p-8 text-center text-sm text-slate-500 dark:text-slate-400"></div>
         <div id="pos-chart-host">
-          <div class="text-center mb-2">
-            <div class="text-lg font-bold text-slate-700 dark:text-slate-200">Points by Position</div>
-            <div id="pos-chart-subtitle" class="text-xs italic text-slate-500 dark:text-slate-400"></div>
-          </div>
           <div class="relative w-full" style="height: clamp(380px, 64vh, 680px);">
             <canvas id="posChart"></canvas>
           </div>
-          <div id="pos-legend" class="flex flex-wrap justify-center gap-1.5 mt-3"></div>
+          <div id="pos-legend" class="flex flex-wrap justify-center gap-2 mt-3"></div>
+          <div class="flex items-center justify-end gap-2 mt-3 text-xs">
+            <button id="btn-export-pos-csv" title="Download table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-csv"></i> CSV</button>
+            <button id="btn-export-pos-png" title="Download chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-image"></i> PNG</button>
+          </div>
         </div>
         <div id="pos-warnings" class="hidden mt-3 text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded px-2.5 py-1.5"></div>
       </div>
 
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
+      <div id="pos-table-wrap" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="pos-table" id="pos-table"></table>
       </div>
     </section>
@@ -5975,9 +5971,10 @@
     // SECTION 9: POINTS BY POSITION - NORMALIZED POSITION ENGINE
     // ==========================================
     const NP_CORE_CAPS = { QB: 1, RB: 2, WR: 2, TE: 1 };
-    const NP_BENCH_CAPS = { QB: 2, RB: 3, WR: 3, TE: 2 };
-    const NP_BENCH_PREFIX = { QB: 'BQB', RB: 'BRB', WR: 'BWR', TE: 'BTE' };
+    const NP_BENCH_CAPS = { QB: 2, RB: 3, WR: 3, TE: 2, DEF: 1, K: 1 };
+    const NP_BENCH_PREFIX = { QB: 'BQB', RB: 'BRB', WR: 'BWR', TE: 'BTE', DEF: 'BDEF', K: 'BK' };
     const NP_CORE_SLOTS = ['QB1', 'RB1', 'RB2', 'WR1', 'WR2', 'TE1'];
+    const NP_SPECIAL_STARTER_SLOTS = ['DEF1', 'K1'];
     const NP_NOT_STARTED = new Set(['', 'BN', 'BE', 'BENCH', 'IR', 'IR+', 'TAXI', 'RESERVE', 'NA', 'INACTIVE']);
     const NP_IR = new Set(['IR', 'IR+', 'TAXI', 'RESERVE', 'NA', 'INACTIVE']);
     const NP_SUPERFLEX = new Set(['Q/W/R/T', 'W/R/T/Q', 'Q/W/R/T/', 'SUPER_FLEX', 'SUPERFLEX', 'SFLX', 'SFX', 'OP']);
@@ -5993,12 +5990,20 @@
 
     function npNum(v) { const n = Number(v); return isNaN(n) ? 0 : n; }
 
+    function npNormToken(tok) {
+      const t = String(tok || '').toUpperCase().trim();
+      if (t === 'D/ST' || t === 'DST' || t === 'DEF') return 'DEF';
+      if (t === 'PK' || t === 'K') return 'K';
+      if (NP_CORE_CAPS[t]) return t;
+      return '';
+    }
+
     function npEligibility(row) {
       const raw = String(npF(row, 'position', ['eligible_positions', 'eligible_position']) || '').toUpperCase();
-      let toks = raw.split(/[,\/\s]+/).filter(t => NP_CORE_CAPS[t]);
+      let toks = raw.split(/[,\/\s]+/).map(npNormToken).filter(Boolean);
       if (toks.length === 0) {
-        const sel = String(npF(row, 'selected_position') || '').toUpperCase().trim();
-        if (NP_CORE_CAPS[sel]) toks = [sel];
+        const sel = npNormToken(npF(row, 'selected_position'));
+        if (sel) toks = [sel];
       }
       toks = [...new Set(toks)];
       // Multi-position players: RB counts only with > 1 rush attempt. Single-position RBs are always RBs.
@@ -6027,8 +6032,11 @@
     }
 
     function npFillStarters(S, roles, sfxCount) {
-      const by = { QB: [], RB: [], WR: [], TE: [] };
-      S.forEach(p => by[roles.get(p) || p.elig[0]].push(p));
+      const by = { QB: [], RB: [], WR: [], TE: [], DEF: [], K: [] };
+      S.forEach(p => {
+        const r = roles.get(p) || p.elig[0];
+        if (by[r]) by[r].push(p);
+      });
       Object.values(by).forEach(a => a.sort(npCmp));
       const slots = {};
       let coreFilled = 0, coreTotal = 0;
@@ -6037,6 +6045,14 @@
           const p = by[pos][i];
           if (p) { slots[`${pos}${i + 1}`] = p; coreFilled++; coreTotal += p.pts; }
         }
+      });
+      // DEF and K starters (years where league had DEF/K slots)
+      ['DEF', 'K'].forEach(pos => {
+        by[pos].forEach((p, i) => {
+          slots[`${pos}${i + 1}`] = p;
+          coreFilled++;
+          coreTotal += p.pts;
+        });
       });
       const remQB = by.QB.slice(NP_CORE_CAPS.QB);
       const remOther = [...by.RB.slice(NP_CORE_CAPS.RB), ...by.WR.slice(NP_CORE_CAPS.WR), ...by.TE.slice(NP_CORE_CAPS.TE)].sort(npCmp);
@@ -6068,8 +6084,11 @@
       const multi = B.filter(p => p.elig.length > 1).sort(npCmp);
       let best = null;
       npForEachRoleCombo(multi, (roles) => {
-        const by = { QB: [], RB: [], WR: [], TE: [] };
-        B.forEach(p => by[roles.get(p) || p.elig[0]].push(p));
+        const by = { QB: [], RB: [], WR: [], TE: [], DEF: [], K: [] };
+        B.forEach(p => {
+          const r = roles.get(p) || p.elig[0];
+          if (by[r]) by[r].push(p);
+        });
         Object.values(by).forEach(a => a.sort(npCmp));
         let filled = 0, pts = 0, rankSum = 0;
         Object.keys(NP_BENCH_CAPS).forEach(pos => {
@@ -6239,13 +6258,16 @@
       QB1: '#44546A', RB1: '#ED7D31', RB2: '#F4B183', WR1: '#4472C4', WR2: '#8FAADC', TE1: '#FFC000',
       FX1: '#70AD47', FX2: '#A9D18E', FX3: '#E2F0D9', FX4: '#C5E0B4', FX5: '#D5E8C6',
       SFX1: '#8497B0', SFX2: '#ADB9CA',
+      DEF1: '#7E57C2', DEF2: '#B39DDB',
+      K1: '#00897B', K2: '#4DB6AC',
       BQB1: '#64748B', BQB2: '#94A3B8',
       BRB1: '#C2662B', BRB2: '#D98F5C', BRB3: '#E8B791',
       BWR1: '#3A5EA8', BWR2: '#6F8FCB', BWR3: '#A3B7DE',
       BTE1: '#D9A400', BTE2: '#EAC247',
+      BDEF1: '#5E35B1', BK1: '#00695C',
       BN: '#9CA3AF'
     };
-    const POS_BENCH_ORDER = ['BQB1', 'BQB2', 'BRB1', 'BRB2', 'BRB3', 'BWR1', 'BWR2', 'BWR3', 'BTE1', 'BTE2', 'BN'];
+    const POS_BENCH_ORDER = ['BQB1', 'BQB2', 'BRB1', 'BRB2', 'BRB3', 'BWR1', 'BWR2', 'BWR3', 'BTE1', 'BTE2', 'BDEF1', 'BK1', 'BN'];
 
     function posSlotColor(slot) { return POS_SLOT_COLORS[slot] || '#94A3B8'; }
     function posIsBench(slot) { return slot.charAt(0) === 'B'; }
@@ -6303,15 +6325,19 @@
         });
       });
 
-      // Dynamic slot lists: FX/SFX counts differ by season, so only slots that exist in this view are shown.
-      const fxPresent = new Set(), sfxPresent = new Set();
+      // Dynamic slot lists: FX/SFX/DEF/K counts differ by season, so only slots that exist in this view are shown.
+      const fxPresent = new Set(), sfxPresent = new Set(), defPresent = new Set(), kPresent = new Set();
       Object.values(teams).forEach(t => Object.keys(t.sums).forEach(slot => {
         if (/^FX\d+$/.test(slot)) fxPresent.add(Number(slot.slice(2)));
         if (/^SFX\d+$/.test(slot)) sfxPresent.add(Number(slot.slice(3)));
+        if (/^DEF\d+$/.test(slot)) defPresent.add(Number(slot.slice(3)));
+        if (/^K\d+$/.test(slot)) kPresent.add(Number(slot.slice(1)));
       }));
       const startSlots = [...NP_CORE_SLOTS,
         ...[...fxPresent].sort((a, b) => a - b).map(i => `FX${i}`),
-        ...[...sfxPresent].sort((a, b) => a - b).map(i => `SFX${i}`)];
+        ...[...sfxPresent].sort((a, b) => a - b).map(i => `SFX${i}`),
+        ...[...defPresent].sort((a, b) => a - b).map(i => `DEF${i}`),
+        ...[...kPresent].sort((a, b) => a - b).map(i => `K${i}`)];
       const benchSlots = POS_BENCH_ORDER.filter(s => benchSeen.has(s));
 
       const list = Object.values(teams).map(t => {
@@ -6323,7 +6349,7 @@
         return Object.assign(t, { n, avg, total, bnTotal, color: getManagerColor(t.manager) });
       }).sort((a, b) => (b.total - a.total) || (a.team_id - b.team_id));
 
-      return { yr, league, wkMin, wkMax, singleWeek, teams: list, startSlots, benchSlots, warnCount };
+      return { yr, league, wkMin, wkMax, singleWeek, teams: list, startSlots, benchSlots, warnCount, hasDef: defPresent.size > 0, hasK: kPresent.size > 0 };
     }
 
     function posWrapLabel(name, max = 13) {
@@ -6340,6 +6366,26 @@
     }
 
     function posFmt(v) { return (typeof v === 'number' && !isNaN(v)) ? v.toFixed(2) : '-'; }
+
+    // Align the table's team columns right underneath the Chart.js bar columns
+    function alignPositionsTableToChart() {
+      const P = STATE.positions;
+      const chart = P.chartInstance;
+      const tbl = document.getElementById('pos-table');
+      const wrap = document.getElementById('pos-table-wrap');
+      if (!chart || !chart.chartArea || !tbl || !wrap) return;
+      const ca = chart.chartArea;
+      const canvasRect = chart.canvas.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      const plotLeftOffset = Math.max(0, (canvasRect.left - wrapRect.left) + ca.left);
+      const plotWidth = ca.right - ca.left;
+      const labelColWidth = 58;
+      const padLeft = Math.max(0, Math.round(plotLeftOffset - labelColWidth));
+      const targetTableWidth = Math.round(labelColWidth + plotWidth);
+      wrap.style.paddingLeft = `${padLeft}px`;
+      tbl.style.width = `${targetTableWidth}px`;
+      tbl.style.minWidth = `${targetTableWidth}px`;
+    }
 
     // ------------------------------------------
     // Points by Position: render
@@ -6359,6 +6405,9 @@
       if (csv) csv.addEventListener('click', downloadPositionsCSV);
       const png = document.getElementById('btn-export-pos-png');
       if (png) png.addEventListener('click', downloadPositionsPNG);
+      window.addEventListener('resize', () => {
+        if (FilterEngine.activeTab() === 'positions') alignPositionsTableToChart();
+      });
     }
 
     function togglePositionsManager(mgr) {
@@ -6391,9 +6440,6 @@
       if (host) host.classList.remove('hidden');
       if (emptyEl) emptyEl.classList.add('hidden');
 
-      const subtitle = view.singleWeek ? `${view.league} - ${view.yr} Week ${view.wkMax}` : `${view.league} - ${view.yr} · Weeks ${view.wkMin}–${view.wkMax} (avg per week)`;
-      document.getElementById('pos-chart-subtitle').textContent = subtitle;
-
       if (warnEl) {
         if (view.warnCount > 0) {
           warnEl.textContent = `${view.warnCount} lineup(s) in this range had started players that could not be placed in a slot (see browser console, "[NP]").`;
@@ -6404,6 +6450,7 @@
       renderPositionsChart(view);
       renderPositionsLegend(view);
       renderPositionsTable(view);
+      requestAnimationFrame(alignPositionsTableToChart);
     }
 
     function renderPositionsChart(view) {
@@ -6426,6 +6473,7 @@
         return {
           label: slot,
           slot,
+          _isBench: bench,
           data: view.teams.map(t => { const v = Math.max(0, t.avg[slot] || 0); return bench ? -v : v; }),
           _actual: view.teams.map(t => t.avg[slot]),
           _names: view.teams.map(t => t.names[slot] || ''),
@@ -6435,8 +6483,7 @@
           borderWidth: 0.75,
           stack: 'pos',
           barPercentage: 0.62,
-          categoryPercentage: 0.9,
-          hidden: P.hidden.has(slot)
+          categoryPercentage: 0.9
         };
       };
       const datasets = view.startSlots.map(s => mk(s, false));
@@ -6454,6 +6501,13 @@
           ctx.textAlign = 'left';
           ctx.fillText('BENCH \u25BE', chartArea.left + 6, Math.min(chartArea.bottom - 4, y0 + 14));
           ctx.restore();
+        }
+      };
+
+      const alignPlugin = {
+        id: 'posAlignTable',
+        afterLayout() {
+          alignPositionsTableToChart();
         }
       };
 
@@ -6494,7 +6548,13 @@
           plugins: {
             legend: { display: false },
             tooltip: {
-              itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
+              itemSort: (a, b) => {
+                const aBench = !!a.dataset._isBench;
+                const bBench = !!b.dataset._isBench;
+                if (aBench !== bBench) return aBench ? 1 : -1;
+                if (!aBench) return b.datasetIndex - a.datasetIndex;
+                return a.datasetIndex - b.datasetIndex;
+              },
               filter: item => item.dataset._filled[item.dataIndex],
               callbacks: {
                 title: items => { const t = view.teams[items[0].dataIndex]; return `${t.team_name} (${t.manager})`; },
@@ -6508,24 +6568,29 @@
             }
           }
         },
-        plugins: [benchLabelPlugin]
+        plugins: [benchLabelPlugin, alignPlugin]
       });
     }
 
     function renderPositionsLegend(view) {
-      const P = STATE.positions;
       const el = document.getElementById('pos-legend');
       if (!el) return;
-      const slots = [...view.startSlots, ...(P.showBench ? view.benchSlots : [])];
-      el.innerHTML = slots.map(slot => {
-        const off = P.hidden.has(slot);
-        return `<button type="button" data-slot="${slot}" class="pos-chip${off ? ' pos-chip-off' : ''}" title="Click to show/hide ${slot} in the chart"><span class="pos-chip-dot" style="background:${posSlotColor(slot)}"></span>${slot}</button>`;
-      }).join('');
-      el.querySelectorAll('.pos-chip').forEach(btn => btn.addEventListener('click', () => {
-        const s = btn.getAttribute('data-slot');
-        if (P.hidden.has(s)) P.hidden.delete(s); else P.hidden.add(s);
-        renderPositionsTab();
-      }));
+      const groups = [
+        { label: 'QB/SFX', color: '#44546A' },
+        { label: 'RB', color: '#ED7D31' },
+        { label: 'WR', color: '#4472C4' },
+        { label: 'TE', color: '#FFC000' },
+        { label: 'FX', color: '#70AD47' }
+      ];
+      if (view.hasDef || view.benchSlots.some(s => s.startsWith('BDEF'))) {
+        groups.push({ label: 'DEF', color: '#7E57C2' });
+      }
+      if (view.hasK || view.benchSlots.some(s => s.startsWith('BK'))) {
+        groups.push({ label: 'K', color: '#00897B' });
+      }
+      el.innerHTML = groups.map(g =>
+        `<span class="pos-legend-item"><span class="pos-chip-dot" style="background:${g.color}"></span>${g.label}</span>`
+      ).join('');
     }
 
     function renderPositionsTable(view) {
@@ -6536,7 +6601,9 @@
       const showBench = P.showBench && view.benchSlots.length > 0;
       const teams = view.teams;
 
-      const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t, i) => {
+      const colgroup = `<colgroup><col style="width:58px">${teams.map(() => '<col>').join('')}</colgroup>`;
+
+      const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t) => {
         const dim = selMgr && t.manager !== selMgr;
         return `<th class="pos-team-th${dim ? ' pos-dim' : ''}" data-mgr="${escapeHTML(t.manager)}" style="border-top:3px solid ${t.color}" title="${escapeHTML(t.manager)} - click to highlight">
           <div class="pos-team-name">${escapeHTML(t.team_name)}</div>
@@ -6545,7 +6612,7 @@
 
       const shadedRow = (label, color, valuesFn, filledFn, opts = {}) => {
         const vals = teams.map(valuesFn);
-        const st = getColStats(teams.map((t, i) => (!filledFn || filledFn(t)) ? vals[i] : null), v => v);
+        const st = getColStats(teams.map((t) => (!filledFn || filledFn(t)) ? vals[i_idx(teams, t)] : null), v => v);
         const tdc = teams.map((t, i) => {
           const dim = selMgr && t.manager !== selMgr;
           const filled = filledFn ? filledFn(t) : true;
@@ -6568,9 +6635,11 @@
         });
         rows.push(shadedRow('BNTOTAL', null, t => t.bnTotal, null, { total: true }));
       }
-      tbl.innerHTML = head + `<tbody>${rows.join('')}</tbody>`;
+      tbl.innerHTML = colgroup + head + `<tbody>${rows.join('')}</tbody>`;
       tbl.querySelectorAll('.pos-team-th').forEach(th => th.addEventListener('click', () => togglePositionsManager(th.getAttribute('data-mgr'))));
     }
+
+    function i_idx(arr, item) { return arr.indexOf(item); }
 
     function downloadPositionsCSV() {
       const view = STATE.positions.last;
