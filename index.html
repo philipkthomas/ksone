@@ -500,6 +500,50 @@
     .pos-legend-item { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; user-select: none; }
     .dark .pos-legend-item { background: #0f172a; border-color: #334155; color: #cbd5e1; }
     .pos-chip-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+    /* Segmented View Mode Slider for Points by Position (Real / Optimal / Efficiency) */
+    .pos-mode-slider {
+      position: relative;
+      display: inline-grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: center;
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.5rem;
+      padding: 2px;
+      user-select: none;
+    }
+    .dark .pos-mode-slider {
+      background: #0f172a;
+      border-color: #334155;
+    }
+    .pos-mode-thumb {
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 2px;
+      width: calc((100% - 4px) / 3);
+      background: #0284c7;
+      border-radius: 0.375rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .pos-mode-btn {
+      position: relative;
+      z-index: 1;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-align: center;
+      color: #475569;
+      transition: color 0.18s ease;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .dark .pos-mode-btn { color: #94a3b8; }
+    .pos-mode-btn.active { color: #ffffff !important; }
   </style>
 </head>
 
@@ -1131,11 +1175,19 @@
     <!-- POINTS BY POSITION TAB CONTENT -->
     <section id="tab-positions" class="tab-content space-y-3 hidden">
       <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-          <i class="fa-solid fa-layer-group text-sky-500"></i> Points by Position
-        </h2>
-        <div class="flex flex-wrap items-center gap-2 text-xs">
-          <label class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold cursor-pointer select-none">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-sky-500"></i> Points by Position
+          </h2>
+          <div class="pos-mode-slider" id="pos-mode-slider" role="tablist" aria-label="Lineup View Mode">
+            <div class="pos-mode-thumb" id="pos-mode-thumb"></div>
+            <button type="button" class="pos-mode-btn active" data-pos-mode="real" role="tab" aria-selected="true">Real</button>
+            <button type="button" class="pos-mode-btn" data-pos-mode="optimal" role="tab" aria-selected="false">Optimal</button>
+            <button type="button" class="pos-mode-btn" data-pos-mode="efficiency" role="tab" aria-selected="false">Efficiency</button>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+          <label id="pos-show-bench-wrap" class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold cursor-pointer select-none">
             <input type="checkbox" id="pos-show-bench" class="accent-sky-500"> Show bench
           </label>
         </div>
@@ -1275,7 +1327,7 @@
         chartInstance: null, fullSeries: null, animationTimer: null,
         isPlaying: false, currentIdx: 0, prevIdx: 0, speedMultiplier: 1.0
       },
-      positions: { showBench: true, hidden: new Set(), chartInstance: null, last: null, _v: -1, _cache: {}, _sfx: null },
+      positions: { viewMode: 'real', showBench: true, hidden: new Set(), chartInstance: null, last: null, _v: -1, _cache: {}, _sfx: null },
       belt: {
         lineage: null,
         animationTimer: null,
@@ -1716,7 +1768,10 @@
       p.set('hcw', f.hideCW ? 1 : 0);
       if (f.selectedManager) p.set('mgr', f.selectedManager);
       if (tab === 'live_prob' && f.matchup) p.set('mu', f.matchup);
-      if (tab === 'positions') p.set('bench', STATE.positions.showBench ? 1 : 0);
+      if (tab === 'positions') {
+        p.set('bench', STATE.positions.showBench ? 1 : 0);
+        p.set('pmode', STATE.positions.viewMode || 'real');
+      }
       const next = '#' + p.toString();
       if (window.location.hash === next) return;
       try {
@@ -1774,6 +1829,9 @@
 
       f.selectedManager = p.get('mgr') || null;
       if (p.has('bench')) STATE.positions.showBench = !['0', 'false', 'off'].includes(String(p.get('bench')).toLowerCase());
+      if (p.has('pmode') && ['real', 'optimal', 'efficiency'].includes(String(p.get('pmode')).toLowerCase())) {
+        STATE.positions.viewMode = String(p.get('pmode')).toLowerCase();
+      }
       f.matchup = p.get('mu') || null;
     }
 
@@ -6179,7 +6237,7 @@
     }
 
     // ==========================================
-    // SECTION 9: POINTS BY POSITION - NORMALIZED POSITION ENGINE
+    // SECTION 9: POINTS BY POSITION - NORMALIZED & OPTIMAL POSITION ENGINE
     // ==========================================
     const NP_CORE_CAPS = { QB: 1, RB: 2, WR: 2, TE: 1 };
     const NP_BENCH_CAPS = { QB: 2, RB: 3, WR: 3, TE: 2, DEF: 1, K: 1 };
@@ -6189,6 +6247,7 @@
     const NP_NOT_STARTED = new Set(['', 'BN', 'BE', 'BENCH', 'IR', 'IR+', 'TAXI', 'RESERVE', 'NA', 'INACTIVE']);
     const NP_IR = new Set(['IR', 'IR+', 'TAXI', 'RESERVE', 'NA', 'INACTIVE']);
     const NP_SUPERFLEX = new Set(['Q/W/R/T', 'W/R/T/Q', 'Q/W/R/T/', 'SUPER_FLEX', 'SUPERFLEX', 'SFLX', 'SFX', 'OP']);
+    const NP_FLEX = new Set(['W/R/T', 'W/R', 'W/T', 'R/T', 'FLEX', 'FLX', 'FX']);
     const NP_GENERIC_STARTER = new Set(['STARTER', 'START', 'ACTIVE']);
     const NP_BRUTE_LIMIT = 12;
 
@@ -6323,23 +6382,141 @@
       return { slots, overflow };
     }
 
-    // Number of SFLX slots per league-year (dynamic: differs by season). Derived from lineup labels;
-    // seasons that only label starters generically inherit from the nearest earlier season.
-    // descs: [{ league, year, generic: bool, sfx: count of started players in a superflex-labelled slot }]
-    function npSuperflexFromDescriptors(descs) {
-      const counts = {};
+    // Optimal lineup solver for a single team-week across all eligible rostered players (starters + bench, excluding IR).
+    // Maximizes total starter score under the league-year's lineup slot caps (QB1, RB1..2, WR1..2, TE1, FX1..fxCap, SFX1..sfxCap, DEF1..defCap, K1..kCap).
+    function npSolveOptimalLineup(allPlayers, caps) {
+      const eligible = allPlayers.filter(p => !p.ir && p.elig.length > 0);
+      const multi = eligible.filter(p => p.elig.length > 1).sort(npCmp);
+      let best = null;
+
+      npForEachRoleCombo(multi, (roles) => {
+        const by = { QB: [], RB: [], WR: [], TE: [], DEF: [], K: [] };
+        eligible.forEach(p => {
+          const r = roles.get(p) || p.elig[0];
+          if (by[r]) by[r].push(p);
+        });
+        Object.values(by).forEach(a => a.sort(npCmp));
+
+        const slots = {};
+        const used = new Set();
+        let totalPts = 0;
+        let filledCount = 0;
+
+        // 1. Core fixed positions (QB1, RB1-2, WR1-2, TE1)
+        Object.keys(NP_CORE_CAPS).forEach(pos => {
+          for (let i = 0; i < NP_CORE_CAPS[pos]; i++) {
+            const p = by[pos][i];
+            if (p) {
+              slots[`${pos}${i + 1}`] = p;
+              used.add(p);
+              totalPts += p.pts;
+              filledCount++;
+            }
+          }
+        });
+
+        // 2. DEF and K slots (only when active in that season)
+        for (let i = 0; i < (caps.DEF || 0); i++) {
+          const p = by.DEF[i];
+          if (p) {
+            slots[`DEF${i + 1}`] = p;
+            used.add(p);
+            totalPts += p.pts;
+            filledCount++;
+          }
+        }
+        for (let i = 0; i < (caps.K || 0); i++) {
+          const p = by.K[i];
+          if (p) {
+            slots[`K${i + 1}`] = p;
+            used.add(p);
+            totalPts += p.pts;
+            filledCount++;
+          }
+        }
+
+        // 3. Regular FLEX slots (FX1..fxCap): highest-scoring remaining RB/WR/TE
+        const remFlex = [
+          ...by.RB.slice(NP_CORE_CAPS.RB),
+          ...by.WR.slice(NP_CORE_CAPS.WR),
+          ...by.TE.slice(NP_CORE_CAPS.TE)
+        ].sort(npCmp);
+
+        for (let i = 0; i < (caps.FX || 0); i++) {
+          const p = remFlex.shift();
+          if (p) {
+            slots[`FX${i + 1}`] = p;
+            used.add(p);
+            totalPts += p.pts;
+            filledCount++;
+          }
+        }
+
+        // 4. Superflex slots (SFX1..sfxCap): highest-scoring remaining QB/RB/WR/TE
+        const remSfx = [
+          ...by.QB.slice(NP_CORE_CAPS.QB),
+          ...remFlex
+        ].sort(npCmp);
+
+        for (let i = 0; i < (caps.SFX || 0); i++) {
+          const p = remSfx.shift();
+          if (p) {
+            slots[`SFX${i + 1}`] = p;
+            used.add(p);
+            totalPts += p.pts;
+            filledCount++;
+          }
+        }
+
+        if (!best ||
+          totalPts > best.totalPts + 1e-9 ||
+          (Math.abs(totalPts - best.totalPts) <= 1e-9 && filledCount > best.filledCount)) {
+          best = { slots, used, totalPts, filledCount };
+        }
+      });
+
+      const starterSlots = best ? best.slots : {};
+      const usedSet = best ? best.used : new Set();
+      const benchPool = eligible.filter(p => !usedSet.has(p));
+      const irPool = allPlayers.filter(p => p.ir && p.elig.length > 0);
+      const benchRes = benchPool.length ? npAssignBench(benchPool) : { slots: {}, overflow: [] };
+
+      return {
+        starterSlots,
+        benchSlots: benchRes.slots,
+        overflow: [...benchRes.overflow, ...irPool],
+        totalPts: best ? best.totalPts : 0
+      };
+    }
+
+    // Dynamic lineup slot counts per league-year (SFX, FX, DEF, K differ across seasons).
+    function npLineupCapsFromDescriptors(descs) {
+      const buckets = {};
       descs.forEach(d => {
         if (d.generic) return;
         const k = `${d.league}|${d.year}`;
-        (counts[k] = counts[k] || {})[d.sfx] = ((counts[k] || {})[d.sfx] || 0) + 1;
+        if (!buckets[k]) buckets[k] = { sfx: {}, fx: {}, def: {}, k: {} };
+        buckets[k].sfx[d.sfx] = (buckets[k].sfx[d.sfx] || 0) + 1;
+        buckets[k].fx[d.fx] = (buckets[k].fx[d.fx] || 0) + 1;
+        buckets[k].def[d.def] = (buckets[k].def[d.def] || 0) + 1;
+        buckets[k].k[d.k] = (buckets[k].k[d.k] || 0) + 1;
       });
-      const modeOf = (m) => Object.keys(m).sort((a, b) => (m[b] - m[a]) || (Number(b) - Number(a)))[0];
+      const modeOf = (m) => {
+        const keys = Object.keys(m);
+        if (!keys.length) return 0;
+        return Number(keys.sort((a, b) => (m[b] - m[a]) || (Number(b) - Number(a)))[0]);
+      };
       const byYear = {};
-      Object.keys(counts).forEach(k => {
+      Object.keys(buckets).forEach(k => {
         const yr = k.split('|')[1];
-        const mode = Number(modeOf(counts[k]));
-        byYear[k] = mode;
-        if (byYear[`*|${yr}`] === undefined) byYear[`*|${yr}`] = mode;
+        const caps = {
+          SFX: modeOf(buckets[k].sfx),
+          FX: modeOf(buckets[k].fx),
+          DEF: modeOf(buckets[k].def),
+          K: modeOf(buckets[k].k)
+        };
+        byYear[k] = caps;
+        if (byYear[`*|${yr}`] === undefined) byYear[`*|${yr}`] = caps;
       });
       return (league, year) => {
         const direct = byYear[`${league}|${year}`];
@@ -6348,13 +6525,11 @@
           if (byYear[`${league}|${y}`] !== undefined) return byYear[`${league}|${y}`];
           if (byYear[`*|${y}`] !== undefined) return byYear[`*|${y}`];
         }
-        return 0;
+        return { SFX: 0, FX: 2, DEF: 0, K: 0 };
       };
     }
 
-    // Cheap whole-table pass so a single season can be normalised on its own while still
-    // inheriting the SFLX count from earlier seasons when a year only labels starters generically.
-    function npBuildSfxResolver(rows) {
+    function npBuildCapsResolver(rows) {
       const groups = new Map(), seen = new Set();
       (rows || []).forEach(row => {
         const year = Number(npF(row, 'year', ['YR'])), week = Number(npF(row, 'week', ['WK'])), tid = Number(npF(row, 'team_id', ['TMA']));
@@ -6366,15 +6541,19 @@
         seen.add(dk);
         const gk = `${league}|${year}|${week}|${tid}`;
         let g = groups.get(gk);
-        if (!g) { g = { league, year, generic: false, sfx: 0 }; groups.set(gk, g); }
+        if (!g) { g = { league, year, generic: false, sfx: 0, fx: 0, def: 0, k: 0 }; groups.set(gk, g); }
         const sel = String(npF(row, 'selected_position') || '').toUpperCase().trim();
+        if (NP_NOT_STARTED.has(sel)) return;
         if (NP_GENERIC_STARTER.has(sel)) g.generic = true;
         if (NP_SUPERFLEX.has(sel)) g.sfx++;
+        else if (NP_FLEX.has(sel)) g.fx++;
+        else if (sel === 'DEF' || sel === 'D/ST' || sel === 'DST') g.def++;
+        else if (sel === 'K' || sel === 'PK') g.k++;
       });
-      return npSuperflexFromDescriptors([...groups.values()]);
+      return npLineupCapsFromDescriptors([...groups.values()]);
     }
 
-    // rows -> { rows (normalized_position added in place), summary (per team-week slot points), warnings }
+    // rows -> { rows (normalized_position & optimal_position added in place), summary (per team-week real & optimal slot points), warnings }
     function assignNormalizedPositions(rows, opts) {
       const warnings = [];
       const groupsMap = new Map();
@@ -6382,6 +6561,7 @@
 
       (rows || []).forEach(row => {
         row.normalized_position = null;
+        row.optimal_position = null;
         const year = Number(npF(row, 'year', ['YR']));
         const week = Number(npF(row, 'week', ['WK']));
         const tid = Number(npF(row, 'team_id', ['TMA']));
@@ -6412,20 +6592,36 @@
       });
 
       const groups = [...groupsMap.values()];
-      const sfxFor = (opts && opts.sfxFor) || npSuperflexFromDescriptors(groups.map(g => ({
+      const capsFor = (opts && opts.capsFor) || npLineupCapsFromDescriptors(groups.map(g => ({
         league: g.league, year: g.year, generic: g.hasGenericStarter,
-        sfx: g.players.filter(p => p.started && NP_SUPERFLEX.has(p.selLabel)).length
+        sfx: g.players.filter(p => p.started && NP_SUPERFLEX.has(p.selLabel)).length,
+        fx: g.players.filter(p => p.started && NP_FLEX.has(p.selLabel)).length,
+        def: g.players.filter(p => p.started && ['DEF', 'D/ST', 'DST'].includes(p.selLabel)).length,
+        k: g.players.filter(p => p.started && ['K', 'PK'].includes(p.selLabel)).length
       })));
       const summary = [];
 
       groups.forEach(g => {
         const gw = [];
         const slotsOut = {}, namesOut = {};
+        const optSlotsOut = {}, optNamesOut = {};
         const S = g.players.filter(p => p.started && p.elig.length);
+        const baseCaps = capsFor(g.league, g.year);
         const sfxExplicit = g.players.filter(p => p.started && NP_SUPERFLEX.has(p.selLabel)).length;
-        const sfxCount = Math.max(sfxFor(g.league, g.year), sfxExplicit);
+        const fxExplicit = g.players.filter(p => p.started && NP_FLEX.has(p.selLabel)).length;
+        const defExplicit = g.players.filter(p => p.started && ['DEF', 'D/ST', 'DST'].includes(p.selLabel)).length;
+        const kExplicit = g.players.filter(p => p.started && ['K', 'PK'].includes(p.selLabel)).length;
 
-        const place = (p, slot) => {
+        const sfxCount = Math.max(baseCaps.SFX || 0, sfxExplicit);
+        const lineupCaps = {
+          SFX: sfxCount,
+          FX: Math.max(baseCaps.FX || 0, fxExplicit),
+          DEF: Math.max(baseCaps.DEF || 0, defExplicit),
+          K: Math.max(baseCaps.K || 0, kExplicit)
+        };
+
+        // 1. Real (Normalized) Lineup Assignment
+        const placeReal = (p, slot) => {
           p.row.normalized_position = slot;
           slotsOut[slot] = p.pts;
           namesOut[slot] = p.name;
@@ -6433,7 +6629,7 @@
 
         if (S.length) {
           const res = npAssignStarters(S, sfxCount);
-          Object.entries(res.slots).forEach(([slot, p]) => place(p, slot));
+          Object.entries(res.slots).forEach(([slot, p]) => placeReal(p, slot));
           res.unplaced.forEach(p => {
             p.row.normalized_position = 'BN';
             gw.push(`${p.name} (started) could not be placed in a lineup slot`);
@@ -6443,20 +6639,40 @@
         const bnExtras = g.players.filter(p => !p.started && p.ir && p.elig.length);
         if (B.length) {
           const res = npAssignBench(B);
-          Object.entries(res.slots).forEach(([slot, p]) => place(p, slot));
+          Object.entries(res.slots).forEach(([slot, p]) => placeReal(p, slot));
           res.overflow.forEach(p => bnExtras.push(p));
         }
         bnExtras.forEach(p => {
           p.row.normalized_position = 'BN';
           slotsOut.BN = (slotsOut.BN || 0) + p.pts;
         });
+
+        // 2. Optimal Lineup Assignment (highest possible starter score across all non-IR rostered players)
+        const placeOpt = (p, slot) => {
+          p.row.optimal_position = slot;
+          optSlotsOut[slot] = p.pts;
+          optNamesOut[slot] = p.name;
+        };
+        const optRes = npSolveOptimalLineup(g.players, lineupCaps);
+        Object.entries(optRes.starterSlots).forEach(([slot, p]) => placeOpt(p, slot));
+        Object.entries(optRes.benchSlots).forEach(([slot, p]) => placeOpt(p, slot));
+        optRes.overflow.forEach(p => {
+          p.row.optimal_position = 'BN';
+          optSlotsOut.BN = (optSlotsOut.BN || 0) + p.pts;
+        });
+
         if (gw.length) {
           const msg = `[NP] ${g.league} ${g.year} wk${g.week} team ${g.team_id}: ${gw.join('; ')}`;
           warnings.push(msg);
           console.warn(msg);
         }
-        summary.push({ league: g.league, year: g.year, week: g.week, team_id: g.team_id,
-                       manager: g.manager, team_name: g.team_name, slots: slotsOut, names: namesOut, warnings: gw });
+        summary.push({
+          league: g.league, year: g.year, week: g.week, team_id: g.team_id,
+          manager: g.manager, team_name: g.team_name,
+          slots: slotsOut, names: namesOut,
+          optSlots: optSlotsOut, optNames: optNamesOut,
+          warnings: gw
+        });
       });
 
       return { rows, summary, warnings };
@@ -6489,16 +6705,16 @@
       if (P._v !== STATE.dataVersion) {
         P._v = STATE.dataVersion;
         P._cache = {};
-        P._sfx = npBuildSfxResolver(STATE.data.points || []);
+        P._sfx = npBuildCapsResolver(STATE.data.points || []);
       }
       if (!P._cache[yr]) {
         const rows = (STATE.data.points || []).filter(r => Number(npF(r, 'year', ['YR'])) === Number(yr));
-        P._cache[yr] = assignNormalizedPositions(rows, { sfxFor: P._sfx });
+        P._cache[yr] = assignNormalizedPositions(rows, { capsFor: P._sfx });
       }
       return P._cache[yr];
     }
 
-    // Adds normalized_position to every row of the points table (all seasons). Handy for exports/console use.
+    // Adds normalized_position & optimal_position to every row of the points table (all seasons).
     function normalizeAllPositions() {
       FilterEngine.years().forEach(y => getNormalizedForYear(y));
       return STATE.data.points;
@@ -6512,6 +6728,9 @@
       const wkMin = Math.min(FilterEngine.effectiveMin(yr, targetLg), wkMax);
       if (wkMax < 1) return null;
 
+      const viewMode = STATE.positions.viewMode || 'real';
+      const isOptimal = viewMode === 'optimal';
+
       const res = getNormalizedForYear(yr);
       const leagues = [...new Set(res.summary.map(s => normLeague(s.league)))];
       const league = (targetLg && leagues.includes(targetLg))
@@ -6524,29 +6743,46 @@
       const teams = {};
       const benchSeen = new Set();
       let warnCount = 0;
+
       sel.forEach(s => {
         const t = teams[s.team_id] || (teams[s.team_id] = {
-          team_id: s.team_id, weeks: new Set(), sums: {}, filled: {}, names: {},
-          manager: getManagerName(s.team_id, yr, s.manager, league), team_name: getTeamName(s.team_id, yr, s.team_name, league)
+          team_id: s.team_id, weeks: new Set(),
+          sums: {}, filled: {}, names: {},
+          realSums: {}, optSums: {},
+          manager: getManagerName(s.team_id, yr, s.manager, league),
+          team_name: getTeamName(s.team_id, yr, s.team_name, league)
         });
         t.weeks.add(s.week);
         warnCount += s.warnings.length;
-        Object.keys(s.slots).forEach(slot => {
-          t.sums[slot] = (t.sums[slot] || 0) + s.slots[slot];
+
+        // Track both Real and Optimal starter sums for Efficiency view
+        Object.keys(s.slots || {}).forEach(slot => {
+          if (!posIsBench(slot)) t.realSums[slot] = (t.realSums[slot] || 0) + s.slots[slot];
+        });
+        Object.keys(s.optSlots || {}).forEach(slot => {
+          if (!posIsBench(slot)) t.optSums[slot] = (t.optSums[slot] || 0) + s.optSlots[slot];
+        });
+
+        const activeSlots = isOptimal ? (s.optSlots || {}) : (s.slots || {});
+        const activeNames = isOptimal ? (s.optNames || {}) : (s.names || {});
+        Object.keys(activeSlots).forEach(slot => {
+          t.sums[slot] = (t.sums[slot] || 0) + activeSlots[slot];
           t.filled[slot] = (t.filled[slot] || 0) + 1;
-          if (singleWeek && s.names[slot]) t.names[slot] = s.names[slot];
+          if (singleWeek && activeNames[slot]) t.names[slot] = activeNames[slot];
           if (posIsBench(slot)) benchSeen.add(slot);
         });
       });
 
-      // Dynamic slot lists: FX/SFX/DEF/K counts differ by season, so only slots that exist in this view are shown.
+      // Dynamic slot lists across both real & optimal slots so switching modes never drops columns
       const fxPresent = new Set(), sfxPresent = new Set(), defPresent = new Set(), kPresent = new Set();
-      Object.values(teams).forEach(t => Object.keys(t.sums).forEach(slot => {
-        if (/^FX\d+$/.test(slot)) fxPresent.add(Number(slot.slice(2)));
-        if (/^SFX\d+$/.test(slot)) sfxPresent.add(Number(slot.slice(3)));
-        if (/^DEF\d+$/.test(slot)) defPresent.add(Number(slot.slice(3)));
-        if (/^K\d+$/.test(slot)) kPresent.add(Number(slot.slice(1)));
-      }));
+      Object.values(teams).forEach(t => {
+        [...Object.keys(t.sums), ...Object.keys(t.realSums), ...Object.keys(t.optSums)].forEach(slot => {
+          if (/^FX\d+$/.test(slot)) fxPresent.add(Number(slot.slice(2)));
+          if (/^SFX\d+$/.test(slot)) sfxPresent.add(Number(slot.slice(3)));
+          if (/^DEF\d+$/.test(slot)) defPresent.add(Number(slot.slice(3)));
+          if (/^K\d+$/.test(slot)) kPresent.add(Number(slot.slice(1)));
+        });
+      });
       const startSlots = [...NP_CORE_SLOTS,
         ...[...fxPresent].sort((a, b) => a - b).map(i => `FX${i}`),
         ...[...sfxPresent].sort((a, b) => a - b).map(i => `SFX${i}`),
@@ -6560,10 +6796,28 @@
         [...startSlots, ...benchSlots].forEach(slot => { avg[slot] = (t.sums[slot] || 0) / n; });
         const total = startSlots.reduce((a, s) => a + avg[s], 0);
         const bnTotal = benchSlots.reduce((a, s) => a + avg[s], 0);
-        return Object.assign(t, { n, avg, total, bnTotal, color: getManagerColor(t.manager) });
-      }).sort((a, b) => (b.total - a.total) || (a.team_id - b.team_id));
+        const realTotal = startSlots.reduce((a, s) => a + ((t.realSums[s] || 0) / n), 0);
+        const optimalTotal = startSlots.reduce((a, s) => a + ((t.optSums[s] || 0) / n), 0);
+        const efficiency = optimalTotal > 0 ? (realTotal / optimalTotal) : 0;
+        const benchLeftPts = Math.max(0, optimalTotal - realTotal);
+        return Object.assign(t, {
+          n, avg, total, bnTotal,
+          realTotal, optimalTotal, efficiency, benchLeftPts,
+          color: getManagerColor(t.manager)
+        });
+      });
 
-      return { yr, league, wkMin, wkMax, singleWeek, teams: list, startSlots, benchSlots, warnCount, hasDef: defPresent.size > 0, hasK: kPresent.size > 0 };
+      if (viewMode === 'efficiency') {
+        list.sort((a, b) => (b.efficiency - a.efficiency) || (b.realTotal - a.realTotal) || (a.team_id - b.team_id));
+      } else {
+        list.sort((a, b) => (b.total - a.total) || (a.team_id - b.team_id));
+      }
+
+      return {
+        yr, league, wkMin, wkMax, singleWeek, viewMode,
+        teams: list, startSlots, benchSlots, warnCount,
+        hasDef: defPresent.size > 0, hasK: kPresent.size > 0
+      };
     }
 
     function posWrapLabel(name, max = 13) {
@@ -6580,6 +6834,7 @@
     }
 
     function posFmt(v) { return (typeof v === 'number' && !isNaN(v)) ? v.toFixed(2) : '-'; }
+    function posPctFmt(v) { return (typeof v === 'number' && !isNaN(v)) ? `${(v * 100).toFixed(1)}%` : '-'; }
 
     // Align the table's team columns right underneath the Chart.js bar columns on desktop;
     // on mobile (< 640px), give each team column enough width so numbers stay readable with horizontal scroll.
@@ -6593,7 +6848,7 @@
       const isMobile = window.innerWidth < 640;
       if (isMobile) {
         const teamCount = P.last ? P.last.teams.length : 10;
-        const labelColWidth = 46;
+        const labelColWidth = 52;
         const minTeamColWidth = 48;
         const mobileWidth = labelColWidth + (teamCount * minTeamColWidth);
         wrap.style.paddingLeft = '0px';
@@ -6608,12 +6863,30 @@
       const wrapRect = wrap.getBoundingClientRect();
       const plotLeftOffset = Math.max(0, (canvasRect.left - wrapRect.left) + ca.left);
       const plotWidth = ca.right - ca.left;
-      const labelColWidth = 58;
+      const labelColWidth = 68;
       const padLeft = Math.max(0, Math.round(plotLeftOffset - labelColWidth));
       const targetTableWidth = Math.round(labelColWidth + plotWidth);
       wrap.style.paddingLeft = `${padLeft}px`;
       tbl.style.width = `${targetTableWidth}px`;
       tbl.style.minWidth = `${targetTableWidth}px`;
+    }
+
+    function updatePositionsModeUI() {
+      const mode = STATE.positions.viewMode || 'real';
+      const idx = mode === 'real' ? 0 : (mode === 'optimal' ? 1 : 2);
+      const thumb = document.getElementById('pos-mode-thumb');
+      if (thumb) {
+        thumb.style.transform = `translateX(${idx * 100}%)`;
+      }
+      document.querySelectorAll('#pos-mode-slider .pos-mode-btn').forEach(btn => {
+        const active = btn.getAttribute('data-pos-mode') === mode;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      const benchWrap = document.getElementById('pos-show-bench-wrap');
+      if (benchWrap) {
+        benchWrap.style.display = mode === 'efficiency' ? 'none' : '';
+      }
     }
 
     // ------------------------------------------
@@ -6630,6 +6903,18 @@
           renderPositionsTab();
         });
       }
+      document.querySelectorAll('#pos-mode-slider .pos-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const nextMode = btn.getAttribute('data-pos-mode');
+          if (!nextMode || P.viewMode === nextMode) return;
+          P.viewMode = nextMode;
+          updatePositionsModeUI();
+          updateUrlHash();
+          renderPositionsTab();
+        });
+      });
+      updatePositionsModeUI();
+
       const csv = document.getElementById('btn-export-pos-csv');
       if (csv) csv.addEventListener('click', downloadPositionsCSV);
       const png = document.getElementById('btn-export-pos-png');
@@ -6659,6 +6944,7 @@
       const P = STATE.positions;
       const cb = document.getElementById('pos-show-bench');
       if (cb) cb.checked = P.showBench;
+      updatePositionsModeUI();
 
       const view = computePositionsView();
       P.last = view;
@@ -6679,15 +6965,21 @@
       if (emptyEl) emptyEl.classList.add('hidden');
 
       if (warnEl) {
-        if (view.warnCount > 0) {
+        if (view.warnCount > 0 && view.viewMode === 'real') {
           warnEl.textContent = `${view.warnCount} lineup(s) in this range had started players that could not be placed in a slot (see browser console, "[NP]").`;
           warnEl.classList.remove('hidden');
         } else warnEl.classList.add('hidden');
       }
 
-      renderPositionsChart(view);
-      renderPositionsLegend(view);
-      renderPositionsTable(view);
+      if (view.viewMode === 'efficiency') {
+        renderPositionsEfficiencyChart(view);
+        renderPositionsEfficiencyLegend();
+        renderPositionsEfficiencyTable(view);
+      } else {
+        renderPositionsChart(view);
+        renderPositionsLegend(view);
+        renderPositionsTable(view);
+      }
       requestAnimationFrame(alignPositionsTableToChart);
     }
 
@@ -6706,6 +6998,7 @@
       const selMgr = STATE.filters.selectedManager;
       const dimmed = view.teams.map(t => !!selMgr && t.manager !== selMgr);
       const showBench = P.showBench && view.benchSlots.length > 0;
+      const modeLabel = view.viewMode === 'optimal' ? 'Optimal Starters' : 'Starters';
 
       const mk = (slot, bench) => {
         const base = posSlotColor(slot);
@@ -6817,12 +7110,167 @@
                   const nm = ds._names[i];
                   return `${ds.label}: ${posFmt(ds._actual[i])}${nm ? ' \u2013 ' + nm : ''}`;
                 },
-                footer: items => { const t = view.teams[items[0].dataIndex]; return `Starters ${posFmt(t.total)}` + (showBench ? `  ·  Bench ${posFmt(t.bnTotal)}` : ''); }
+                footer: items => {
+                  const t = view.teams[items[0].dataIndex];
+                  return `${modeLabel} ${posFmt(t.total)}` + (showBench ? `  ·  Bench ${posFmt(t.bnTotal)}` : '');
+                }
               }
             }
           }
         },
         plugins: [benchLabelPlugin, alignPlugin]
+      });
+    }
+
+    function renderPositionsEfficiencyChart(view) {
+      const P = STATE.positions;
+      const canvas = document.getElementById('posChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (P.chartInstance) { P.chartInstance.destroy(); P.chartInstance = null; }
+
+      const isMobile = window.innerWidth < 640;
+      const isDark = document.documentElement.classList.contains('dark');
+      const textColor = isDark ? '#94a3b8' : '#475569';
+      const gridFaint = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const surface = isDark ? '#0f172a' : '#ffffff';
+      const selMgr = STATE.filters.selectedManager;
+      const dimmed = view.teams.map(t => !!selMgr && t.manager !== selMgr);
+
+      const xLabels = isMobile
+        ? view.teams.map(t => t.manager)
+        : view.teams.map(t => posWrapLabel(t.team_name));
+
+      const effLineColor = isDark ? '#fbbf24' : '#d97706';
+
+      const datasets = [
+        {
+          type: 'bar',
+          label: 'Real Lineup',
+          yAxisID: 'y',
+          stack: 'effStack',
+          data: view.teams.map(t => t.realTotal),
+          backgroundColor: view.teams.map((t, i) => dimmed[i] ? hexToRgba('#0ea5e9', 0.22) : '#0ea5e9'),
+          borderColor: surface,
+          borderWidth: 0.75,
+          barPercentage: isMobile ? 0.72 : 0.62,
+          categoryPercentage: 0.9,
+          order: 2
+        },
+        {
+          type: 'bar',
+          label: 'Points Left on Bench (Optimal Gap)',
+          yAxisID: 'y',
+          stack: 'effStack',
+          data: view.teams.map(t => t.benchLeftPts),
+          backgroundColor: view.teams.map((t, i) => dimmed[i] ? hexToRgba('#94a3b8', 0.14) : (isDark ? 'rgba(148, 163, 184, 0.28)' : 'rgba(148, 163, 184, 0.38)')),
+          borderColor: isDark ? 'rgba(148, 163, 184, 0.55)' : 'rgba(100, 116, 139, 0.55)',
+          borderWidth: 1,
+          barPercentage: isMobile ? 0.72 : 0.62,
+          categoryPercentage: 0.9,
+          order: 2
+        },
+        {
+          type: 'line',
+          label: 'Efficiency (Real / Optimal)',
+          yAxisID: 'y1',
+          data: view.teams.map(t => t.efficiency * 100),
+          borderColor: effLineColor,
+          backgroundColor: effLineColor,
+          borderWidth: 2.5,
+          pointRadius: isMobile ? 4 : 5,
+          pointHoverRadius: 7,
+          pointBackgroundColor: effLineColor,
+          pointBorderColor: surface,
+          pointBorderWidth: 1.5,
+          tension: 0,
+          order: 1
+        }
+      ];
+
+      const alignPlugin = {
+        id: 'posAlignTable',
+        afterLayout() {
+          alignPositionsTableToChart();
+        }
+      };
+
+      P.chartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels: xLabels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 250 },
+          interaction: { mode: 'index', intersect: false },
+          onClick: (evt, els, chart) => {
+            const pts = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, true);
+            if (pts.length) togglePositionsManager(view.teams[pts[0].index].manager);
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: { display: false },
+              border: { display: false },
+              ticks: {
+                color: ctx => { const t = view.teams[ctx.index]; return t ? (dimmed[ctx.index] ? hexToRgba(t.color, 0.4) : t.color) : textColor; },
+                font: { size: isMobile ? 9 : 11, weight: '700' },
+                maxRotation: isMobile ? 35 : 0,
+                minRotation: isMobile ? 35 : 0,
+                autoSkip: false
+              }
+            },
+            y: {
+              stacked: true,
+              position: 'left',
+              min: 0,
+              title: {
+                display: !isMobile,
+                text: view.singleWeek ? 'Points' : 'Avg points per week',
+                color: textColor,
+                font: { weight: '600' }
+              },
+              grid: { color: gridFaint },
+              border: { display: false },
+              ticks: {
+                color: textColor,
+                font: { size: isMobile ? 10 : 12 }
+              }
+            },
+            y1: {
+              position: 'right',
+              min: 50,
+              max: 100,
+              title: {
+                display: !isMobile,
+                text: 'Efficiency (%)',
+                color: effLineColor,
+                font: { weight: '700' }
+              },
+              grid: { drawOnChartArea: false },
+              border: { display: false },
+              ticks: {
+                color: effLineColor,
+                font: { size: isMobile ? 10 : 12, weight: '700' },
+                callback: v => `${v}%`
+              }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: items => { const t = view.teams[items[0].dataIndex]; return `${t.team_name} (${t.manager})`; },
+                label: item => {
+                  const t = view.teams[item.dataIndex];
+                  if (item.datasetIndex === 0) return `Real Lineup: ${posFmt(t.realTotal)}`;
+                  if (item.datasetIndex === 1) return `Optimal Lineup: ${posFmt(t.optimalTotal)} (+${posFmt(t.benchLeftPts)} on bench)`;
+                  return `Efficiency (Real / Optimal): ${posPctFmt(t.efficiency)}`;
+                }
+              }
+            }
+          }
+        },
+        plugins: [alignPlugin]
       });
     }
 
@@ -6847,6 +7295,21 @@
       ).join('');
     }
 
+    function renderPositionsEfficiencyLegend() {
+      const el = document.getElementById('pos-legend');
+      if (!el) return;
+      const isDark = document.documentElement.classList.contains('dark');
+      const effColor = isDark ? '#fbbf24' : '#d97706';
+      const groups = [
+        { label: 'Real Lineup', color: '#0ea5e9' },
+        { label: 'Bench Gap (Optimal - Real)', color: isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(148, 163, 184, 0.55)' },
+        { label: 'Efficiency (Real / Optimal)', color: effColor }
+      ];
+      el.innerHTML = groups.map(g =>
+        `<span class="pos-legend-item"><span class="pos-chip-dot" style="background:${g.color}"></span>${g.label}</span>`
+      ).join('');
+    }
+
     function renderPositionsTable(view) {
       const P = STATE.positions;
       const tbl = document.getElementById('pos-table');
@@ -6855,7 +7318,7 @@
       const showBench = P.showBench && view.benchSlots.length > 0;
       const teams = view.teams;
 
-      const labelW = window.innerWidth < 640 ? 46 : 58;
+      const labelW = window.innerWidth < 640 ? 52 : 68;
       const colgroup = `<colgroup><col style="width:${labelW}px">${teams.map(() => '<col>').join('')}</colgroup>`;
 
       const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t) => {
@@ -6894,13 +7357,68 @@
       tbl.querySelectorAll('.pos-team-th').forEach(th => th.addEventListener('click', () => togglePositionsManager(th.getAttribute('data-mgr'))));
     }
 
+    function renderPositionsEfficiencyTable(view) {
+      const tbl = document.getElementById('pos-table');
+      if (!tbl) return;
+      const selMgr = STATE.filters.selectedManager;
+      const teams = view.teams;
+
+      const labelW = window.innerWidth < 640 ? 52 : 68;
+      const colgroup = `<colgroup><col style="width:${labelW}px">${teams.map(() => '<col>').join('')}</colgroup>`;
+
+      const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t) => {
+        const dim = selMgr && t.manager !== selMgr;
+        return `<th class="pos-team-th${dim ? ' pos-dim' : ''}" data-mgr="${escapeHTML(t.manager)}" style="border-top:3px solid ${t.color}" title="${escapeHTML(t.manager)} - click to highlight">
+          <div class="pos-team-name">${escapeHTML(t.team_name)}</div>
+          <div class="pos-team-mgr" style="color:${t.color}">${escapeHTML(t.manager)}</div></th>`;
+      }).join('')}</tr></thead>`;
+
+      const metricRow = (label, valuesFn, fmtFn, opts = {}) => {
+        const vals = teams.map(valuesFn);
+        const st = getColStats(vals, v => v);
+        const tdc = teams.map((t, i) => {
+          const dim = selMgr && t.manager !== selMgr;
+          const bg = opts.reverseHeat
+            ? HEATMAPS.redClearGreen(vals[i], st.min, st.mid, st.max)
+            : HEATMAPS.greenClearRed(vals[i], st.min, st.mid, st.max);
+          return `<td class="pos-val${dim ? ' pos-dim' : ''}${opts.total ? ' pos-total' : ''}" style="background:${bg}">${fmtFn(vals[i])}</td>`;
+        }).join('');
+        return `<tr class="${opts.total ? 'pos-total-row' : ''}"><th class="pos-label-col pos-slot-label">${label}</th>${tdc}</tr>`;
+      };
+
+      const rows = [
+        metricRow('REAL', t => t.realTotal, posFmt),
+        metricRow('OPTIMAL', t => t.optimalTotal, posFmt),
+        metricRow('BENCH GAP', t => t.benchLeftPts, posFmt, { reverseHeat: true }),
+        metricRow('EFF %', t => t.efficiency, posPctFmt, { total: true })
+      ];
+
+      tbl.innerHTML = colgroup + head + `<tbody>${rows.join('')}</tbody>`;
+      tbl.querySelectorAll('.pos-team-th').forEach(th => th.addEventListener('click', () => togglePositionsManager(th.getAttribute('data-mgr'))));
+    }
+
     function i_idx(arr, item) { return arr.indexOf(item); }
 
     function downloadPositionsCSV() {
       const view = STATE.positions.last;
       if (!view) return;
-      const slots = [...[...view.startSlots].reverse(), 'TOTAL', ...(STATE.positions.showBench ? [...view.benchSlots, 'BNTOTAL'] : [])];
       const q = s => `"${String(s).replace(/"/g, '""')}"`;
+
+      if (view.viewMode === 'efficiency') {
+        const lines = [['Metric', ...view.teams.map(t => `${t.team_name} (${t.manager})`)].map(q).join(',')];
+        lines.push(['Real_Avg', ...view.teams.map(t => t.realTotal.toFixed(2))].map(q).join(','));
+        lines.push(['Optimal_Avg', ...view.teams.map(t => t.optimalTotal.toFixed(2))].map(q).join(','));
+        lines.push(['Bench_Gap', ...view.teams.map(t => t.benchLeftPts.toFixed(2))].map(q).join(','));
+        lines.push(['Efficiency_Pct', ...view.teams.map(t => (t.efficiency * 100).toFixed(2) + '%')].map(q).join(','));
+        const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_lineup_efficiency_${view.yr}_w${view.wkMin}-${view.wkMax}.csv`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        return;
+      }
+
+      const slots = [...[...view.startSlots].reverse(), 'TOTAL', ...(STATE.positions.showBench ? [...view.benchSlots, 'BNTOTAL'] : [])];
       const lines = [['Slot', ...view.teams.map(t => `${t.team_name} (${t.manager})`)].map(q).join(',')];
       slots.forEach(slot => {
         lines.push([slot, ...view.teams.map(t => {
@@ -6911,7 +7429,7 @@
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position_${view.yr}_w${view.wkMin}-${view.wkMax}.csv`;
+      a.download = `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position_${view.viewMode}_${view.yr}_w${view.wkMin}-${view.wkMax}.csv`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
@@ -6921,7 +7439,7 @@
       if (!chart || !view) return;
       const a = document.createElement('a');
       a.href = chart.toBase64Image('image/png', 1);
-      a.download = `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position_${view.yr}_w${view.wkMin}-${view.wkMax}.png`;
+      a.download = `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position_${view.viewMode}_${view.yr}_w${view.wkMin}-${view.wkMax}.png`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
