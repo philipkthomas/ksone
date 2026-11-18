@@ -446,6 +446,97 @@
       border-right: 1.5px solid rgba(251, 191, 36, 0.28) !important;
     }
 
+    /* ---- Slideable Main Navigation Tab Bar ---- */
+    .main-nav-scroll {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 0.25rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      max-width: 100%;
+    }
+    .main-nav-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .main-nav-scroll .tab-btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    /* ---- Historical Tab Tables ---- */
+    .hist-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+    .hist-table th {
+      background-color: #f1f5f9;
+      color: #475569;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 6px 8px;
+      border-bottom: 2px solid #cbd5e1;
+      border-right: 1px solid #e2e8f0;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .hist-table td {
+      padding: 5px 8px;
+      font-size: 0.78rem;
+      border-bottom: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
+      white-space: nowrap;
+      color: #0f172a;
+    }
+    .hist-table tr:hover td { filter: brightness(0.97); }
+    .dark .hist-table th {
+      background-color: #0f172a;
+      color: #94a3b8;
+      border-bottom: 2px solid #334155;
+      border-right: 1px solid #1e293b;
+    }
+    .dark .hist-table td {
+      border-bottom: 1px solid #1e293b;
+      border-right: 1px solid #1e293b;
+      color: #f8fafc;
+    }
+    .dark .hist-table tr:hover td { filter: brightness(1.08); }
+    .hist-sticky-col {
+      position: sticky;
+      left: 0;
+      z-index: 5;
+      background-color: #f8fafc;
+    }
+    .dark .hist-sticky-col {
+      background-color: #020617;
+    }
+    .hist-summary-row td {
+      font-weight: 800;
+      border-top: 2px solid #94a3b8;
+      background-color: rgba(148, 163, 184, 0.12);
+    }
+    .dark .hist-summary-row td {
+      border-top: 2px solid #475569;
+      background-color: rgba(30, 41, 59, 0.55);
+    }
+    .hist-stat-group-th {
+      text-align: center !important;
+      font-size: 0.65rem !important;
+      padding: 3px 6px !important;
+      border-bottom: 1px solid #cbd5e1 !important;
+      background-color: #e2e8f0 !important;
+    }
+    .dark .hist-stat-group-th {
+      border-bottom: 1px solid #334155 !important;
+      background-color: #1e293b !important;
+    }
+
     /* ---- Global filter bar: year & week steppers (select + prev/next arrows) ---- */
     .wk-stepper { display: inline-flex; align-items: stretch; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: #ffffff; box-shadow: 0 1px 2px rgba(15,23,42,0.06); }
     .dark .wk-stepper { border-color: #334155; background: #020617; }
@@ -551,16 +642,16 @@
 
   <!-- TOP NAVIGATION HEADER -->
   <header class="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur sticky top-0 z-40">
-    <div class="max-w-[1700px] mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-4">
+    <div class="max-w-[1700px] mx-auto px-3 sm:px-4 py-2 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 lg:gap-4">
       
       <!-- LOGO AREA WITH STATUS & THEME TOGGLE -->
-      <div class="flex flex-col justify-center">
+      <div class="flex items-center justify-between lg:flex-col lg:items-start lg:justify-center shrink-0">
         <div class="flex items-center gap-2">
-          <i class="fa-solid fa-trophy text-amber-500 dark:text-amber-400 text-xl"></i>
-          <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-500 bg-clip-text text-transparent">NDL DATA HEAVEN</span>
+          <i class="fa-solid fa-trophy text-amber-500 dark:text-amber-400 text-lg sm:text-xl"></i>
+          <span class="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-500 bg-clip-text text-transparent">NDL DATA HEAVEN</span>
         </div>
         
-        <div class="flex items-center gap-2 mt-0.5 text-[11px]">
+        <div class="flex items-center gap-2 lg:mt-0.5 text-[11px]">
           <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium">
             <span id="status-indicator" class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
             <span id="status-text">Loading Data...</span>
@@ -572,8 +663,8 @@
         </div>
       </div>
 
-      <!-- MAIN NAVIGATION TABS -->
-      <nav class="flex flex-wrap items-center gap-1 bg-slate-200 dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs font-semibold">
+      <!-- SLIDEABLE MAIN NAVIGATION TABS -->
+      <nav id="main-tab-nav" aria-label="Primary Sections" class="main-nav-scroll bg-slate-200 dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-800 text-xs font-semibold">
         <button data-tab="standings" class="tab-btn active bg-brand-600 text-white px-3 py-1.5 rounded-md transition shadow">Standings</button>
         <button data-tab="matchups" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Matchups</button>
         <button data-tab="survivor" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Survivor</button>
@@ -582,6 +673,7 @@
         <button data-tab="live_prob" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Live Win Prob</button>
         <button data-tab="belt" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Belt</button>
         <button data-tab="positions" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Points by Position</button>
+        <button data-tab="historical" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Historical</button>
       </nav>
 
     </div>
@@ -1212,6 +1304,34 @@
         <table class="pos-table" id="pos-table"></table>
       </div>
     </section>
+
+    <!-- HISTORICAL TAB CONTENT -->
+    <section id="tab-historical" class="tab-content space-y-4 hidden">
+      <div class="flex flex-wrap items-center justify-between gap-3 px-1">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-landmark text-amber-500"></i> Historical League Archives &amp; Records
+          </h2>
+          <div class="flex items-center gap-1.5 text-xs">
+            <label for="hist-section-select" class="text-slate-500 dark:text-slate-400 font-semibold">Report:</label>
+            <select id="hist-section-select" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-md px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none">
+              <option value="all">All Reports (Full Archive)</option>
+              <option value="yearly">Yearly Matrices (ETEW, WABL, Trades)</option>
+              <option value="matchup_records">All-Time Matchup Records (Top 40 &amp; Ties)</option>
+              <option value="pos_records">All-Time Positional Records (QB, RB, WR, TE)</option>
+            </select>
+          </div>
+          <label class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 font-semibold cursor-pointer select-none">
+            <input type="checkbox" id="hist-include-playoffs" class="accent-brand-500" checked> Include Playoffs
+          </label>
+        </div>
+        <button id="btn-export-hist-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs font-semibold">
+          <i class="fa-solid fa-file-csv"></i> Export CSV
+        </button>
+      </div>
+
+      <div id="hist-content-root" class="space-y-6"></div>
+    </section>
   </main>
 
   <div id="sparkline-tooltip" class="fixed hidden pointer-events-none z-50 bg-slate-900/95 text-white text-xs px-3 py-2 rounded-lg shadow-2xl border border-slate-700 backdrop-blur font-sans"></div>
@@ -1337,6 +1457,13 @@
         activeCol: 'mgr',
         renderedCount: 0,
         speedMultiplier: 1.0
+      },
+      historical: {
+        section: 'all',
+        includePlayoffs: true,
+        _v: -1,
+        _cacheKey: null,
+        _cache: null
       }
     };
 
@@ -1513,6 +1640,7 @@
           if (document.querySelector('.tab-btn[data-tab="survivor"]').classList.contains('active')) renderSurvivorTab();
           if (document.querySelector('.tab-btn[data-tab="belt"]').classList.contains('active')) renderBeltTab();
           if (document.querySelector('.tab-btn[data-tab="positions"]').classList.contains('active')) renderPositionsTab();
+          if (document.querySelector('.tab-btn[data-tab="historical"]').classList.contains('active')) renderHistoricalTab();
         });
       }
     }
@@ -1611,7 +1739,8 @@
       matchups:   { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       live_prob:  { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       belt:       { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
-      positions:  { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: true,  label: 'W' }
+      positions:  { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: true,  label: 'W' },
+      historical: { from: false, hcw: true,  defaultHcw: true,  regularSeasonDefault: false, label: 'W', hideSeasonControls: true }
     };
 
     const FilterEngine = {
@@ -2453,6 +2582,7 @@
           initLiveProbTab();
           initBeltTab();
           initPositionsTab();
+          initHistoricalTab();
         } else {
           reconcileFiltersWithData();
         }
@@ -2501,6 +2631,9 @@
         const on = b.getAttribute('data-tab') === tabKey;
         ['bg-brand-600', 'text-white', 'shadow', 'active'].forEach(c => b.classList.toggle(c, on));
         ['hover:bg-slate-300', 'dark:hover:bg-slate-800', 'text-slate-600', 'dark:text-slate-400'].forEach(c => b.classList.toggle(c, !on));
+        if (on && b.scrollIntoView) {
+          try { b.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); } catch (e) {}
+        }
       });
       document.querySelectorAll('.tab-content').forEach(sec => sec.classList.add('hidden'));
       const activeSec = document.getElementById(`tab-${tabKey}`);
@@ -2533,7 +2666,10 @@
     function applyTabFilterVisibility(tabKey) {
       const m = TAB_FILTER_MODE[tabKey] || TAB_FILTER_MODE.standings;
       const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
-      show('wk-from-wrap', m.from);
+      const yrWrap = document.getElementById('filter-year')?.closest('.flex.items-center.gap-2');
+      if (yrWrap) yrWrap.style.display = m.hideSeasonControls ? 'none' : '';
+      show('week-filter-group', !m.hideSeasonControls);
+      show('wk-from-wrap', m.from && !m.hideSeasonControls);
       show('hcw-wrap', m.hcw);
       const lbl = document.getElementById('wk-label');
       if (lbl) lbl.textContent = `${m.label}:`;
@@ -2594,6 +2730,7 @@
           case 'live_prob':  populateLiveProbMatchups(); renderLiveProbMatchup(); break;
           case 'belt':       renderBeltTab(); break;
           case 'positions':  renderPositionsTab(); break;
+          case 'historical': renderHistoricalTab(); break;
         }
       } catch (err) {
         console.error('Render failed:', err);
@@ -2823,6 +2960,7 @@
     function toggleManagerFilter(mgr) {
       STATE.filters.selectedManager = STATE.filters.selectedManager === mgr ? null : mgr;
       renderStandingsTable();
+      if (FilterEngine.activeTab() === 'historical') renderHistoricalTab();
       updateFilterBadge();
       updateUrlHash();
     }
@@ -7447,6 +7585,842 @@
     window.normalizeAllPositions = normalizeAllPositions;
 
 
+
+    // ==========================================
+    // SECTION 12: HISTORICAL ARCHIVES & RECORDS ENGINE
+    // ==========================================
+    function initHistoricalTab() {
+      const secSel = document.getElementById('hist-section-select');
+      const poChk = document.getElementById('hist-include-playoffs');
+      const csvBtn = document.getElementById('btn-export-hist-csv');
+
+      if (secSel) {
+        secSel.value = STATE.historical.section || 'all';
+        secSel.addEventListener('change', (e) => {
+          STATE.historical.section = e.target.value;
+          renderHistoricalTab();
+        });
+      }
+      if (poChk) {
+        poChk.checked = STATE.historical.includePlayoffs !== false;
+        poChk.addEventListener('change', (e) => {
+          STATE.historical.includePlayoffs = !!e.target.checked;
+          renderHistoricalTab();
+        });
+      }
+      if (csvBtn) {
+        csvBtn.addEventListener('click', downloadHistoricalCSV);
+      }
+    }
+
+    function histSampleDev(vals) {
+      const clean = vals.filter(v => typeof v === 'number' && !isNaN(v));
+      if (clean.length < 2) return null;
+      const mean = clean.reduce((a, b) => a + b, 0) / clean.length;
+      const variance = clean.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (clean.length - 1);
+      return Math.sqrt(variance);
+    }
+
+    function histGetPrimaryPos(row) {
+      const raw = String(npF(row, 'position', ['eligible_positions', 'eligible_position', 'pos', 'POS']) || '').toUpperCase();
+      const toks = raw.split(/[,\/\s]+/).map(t => t.trim()).filter(Boolean);
+      for (const p of ['QB', 'RB', 'WR', 'TE', 'DEF', 'K']) {
+        if (toks.includes(p)) return p;
+      }
+      const sel = String(npF(row, 'selected_position') || '').toUpperCase().trim();
+      if (['QB', 'RB', 'WR', 'TE'].includes(sel)) return sel;
+      return '';
+    }
+
+    function histIsStarter(row) {
+      const sel = String(npF(row, 'selected_position', ['slot', 'SLOT', 'lineup_slot']) || '').toUpperCase().trim();
+      if (sel) {
+        return !NP_NOT_STARTED.has(sel);
+      }
+      const isSt = getVal(row, ['is_starter', 'starter', 'STARTER']);
+      if (isSt !== undefined && isSt !== null) {
+        return isSt == 1 || isSt === true || String(isSt).toLowerCase() === 'true' || String(isSt).toUpperCase() === 'STARTER';
+      }
+      return false;
+    }
+
+    function histGetSeasonsChronological() {
+      // Chronological order: 2010 OKL -> ... -> 2021 OKL -> 2021 NDL -> 2022 NDL -> ... -> current year
+      const seasons = [...FilterEngine.seasons()];
+      const leagueOrder = lg => (lg === 'OKL' ? 0 : lg === 'NDL' ? 1 : 2);
+      seasons.sort((a, b) => (a.year - b.year) || (leagueOrder(a.league) - leagueOrder(b.league)) || a.league.localeCompare(b.league));
+      return seasons;
+    }
+
+    function computeHistoricalData() {
+      const hideCW = !!STATE.filters.hideCW;
+      const includePlayoffs = STATE.historical.includePlayoffs !== false;
+      const cacheKey = `${STATE.dataVersion}|${hideCW ? 1 : 0}|${includePlayoffs ? 1 : 0}`;
+      if (STATE.historical._cache && STATE.historical._cacheKey === cacheKey) {
+        return STATE.historical._cache;
+      }
+
+      const cw = getCurrentYearAndWeek();
+      const seasons = histGetSeasonsChronological();
+      const allPoints = STATE.data.points || [];
+      const allTx = STATE.data.transactions || [];
+
+      // Filter points respecting hideCW (and optionally playoffs)
+      const validPoints = allPoints.filter(r => {
+        const yr = Number(getVal(r, ['year', 'YR']));
+        const wk = Number(getVal(r, ['week', 'WK']));
+        if (!yr || !wk || wk < 1) return false;
+        if (hideCW && cw && yr === Number(cw.curYear) && wk >= Number(cw.curWeek)) return false;
+        const lg = normLeague(getVal(r, ['league']));
+        if (!includePlayoffs) {
+          const pStart = getPlayoffStartWeek(yr, lg);
+          if (wk >= pStart) return false;
+        }
+        return true;
+      });
+
+      // Deduplicate team-week matchup records across all seasons
+      const teamWeekMap = new Map();
+      validPoints.forEach(r => {
+        const yr = Number(getVal(r, ['year', 'YR']));
+        const lg = normLeague(getVal(r, ['league']));
+        const wk = Number(getVal(r, ['week', 'WK']));
+        const tid = Number(getVal(r, ['team_id', 'TMA', 'team']));
+        if (!tid && tid !== 0) return;
+        const k = `${yr}|${lg}|${wk}|${tid}`;
+        if (!teamWeekMap.has(k)) {
+          const pf = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0;
+          const pa = Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0;
+          const oppId = Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0;
+          const isByeOrUnscheduled = (oppId === 0 && pf === 0);
+          teamWeekMap.set(k, {
+            year: yr,
+            league: lg,
+            seasonKey: makeSeasonKey(yr, lg),
+            week: wk,
+            team_id: tid,
+            manager: getManagerName(tid, yr, getVal(r, ['manager_name', 'manager']), lg),
+            opp_id: oppId,
+            opp_manager: oppId ? getManagerName(oppId, yr, '', lg) : '',
+            pf,
+            pa,
+            isByeOrUnscheduled,
+            rawRow: r
+          });
+        }
+      });
+
+      const teamWeeks = [...teamWeekMap.values()].filter(tw => !tw.isByeOrUnscheduled);
+
+      // Group teamWeeks by seasonKey + week to compute weekly ETEW share
+      const bySeasonWeek = new Map();
+      teamWeeks.forEach(tw => {
+        const swk = `${tw.seasonKey}|${tw.week}`;
+        if (!bySeasonWeek.has(swk)) bySeasonWeek.set(swk, []);
+        bySeasonWeek.get(swk).push(tw);
+      });
+
+      bySeasonWeek.forEach(list => {
+        const n = list.length;
+        list.forEach(tw => {
+          let beats = 0, ties = 0;
+          list.forEach(other => {
+            if (tw.team_id !== other.team_id) {
+              if (tw.pf > other.pf) beats++;
+              else if (tw.pf === other.pf) ties++;
+            }
+          });
+          tw.etewShare = n > 1 ? (beats + 0.5 * ties) / (n - 1) : 0.5;
+          const out = resolveMatchupOutcome(tw.year, tw.league, tw.week, tw.team_id, tw.opp_id, tw.pf, tw.pa, tw.rawRow);
+          tw.outcome = out;
+          tw.actualWinVal = tw.opp_id !== 0 ? (out.win + 0.5 * out.tie) : null;
+        });
+      });
+
+      // Collect all managers across history
+      const allManagersSet = new Set();
+      teamWeeks.forEach(tw => { if (tw.manager) allManagersSet.add(tw.manager); });
+
+      // --------------------------------------------------
+      // 1. ETEW by Year & 2. WABL by Year
+      // --------------------------------------------------
+      const etewMatrix = {}; // mgr -> { [seasonKey]: pct, totalShare, totalWeeks, grandPct }
+      const wablMatrix = {}; // mgr -> { [seasonKey]: wabl, grandWabl }
+      allManagersSet.forEach(m => {
+        etewMatrix[m] = { bySeason: {}, shareSum: 0, weeksCount: 0, grandPct: null };
+        wablMatrix[m] = { bySeason: {}, grandWabl: 0, countedSeasons: 0 };
+      });
+
+      seasons.forEach(s => {
+        const sWeeks = teamWeeks.filter(tw => rowMatchesSeason(tw, s.year, s.league));
+        const byMgr = new Map();
+        sWeeks.forEach(tw => {
+          if (!byMgr.has(tw.manager)) byMgr.set(tw.manager, []);
+          byMgr.get(tw.manager).push(tw);
+        });
+        byMgr.forEach((rows, mgr) => {
+          const shareSum = rows.reduce((a, r) => a + r.etewShare, 0);
+          const pct = rows.length > 0 ? shareSum / rows.length : null;
+          etewMatrix[mgr].bySeason[s.key] = pct;
+          etewMatrix[mgr].shareSum += shareSum;
+          etewMatrix[mgr].weeksCount += rows.length;
+
+          // WABL = actual matchup wins (incl 0.5*tie) minus ETEW expected wins over games with an opponent
+          const matchupRows = rows.filter(r => r.actualWinVal !== null);
+          if (matchupRows.length > 0) {
+            const actualWins = matchupRows.reduce((a, r) => a + r.actualWinVal, 0);
+            const expWins = matchupRows.reduce((a, r) => a + r.etewShare, 0);
+            const wabl = actualWins - expWins;
+            wablMatrix[mgr].bySeason[s.key] = wabl;
+            wablMatrix[mgr].grandWabl += wabl;
+            wablMatrix[mgr].countedSeasons += 1;
+          }
+        });
+      });
+
+      Object.values(etewMatrix).forEach(entry => {
+        entry.grandPct = entry.weeksCount > 0 ? entry.shareSum / entry.weeksCount : null;
+      });
+
+      const etewManagers = [...allManagersSet]
+        .filter(m => etewMatrix[m].weeksCount > 0)
+        .sort((a, b) => (etewMatrix[b].grandPct - etewMatrix[a].grandPct) || a.localeCompare(b));
+
+      const wablManagers = [...allManagersSet]
+        .filter(m => wablMatrix[m].countedSeasons > 0)
+        .sort((a, b) => (wablMatrix[b].grandWabl - wablMatrix[a].grandWabl) || a.localeCompare(b));
+
+      const etewSDevBySeason = {};
+      const wablSDevBySeason = {};
+      seasons.forEach(s => {
+        etewSDevBySeason[s.key] = histSampleDev(etewManagers.map(m => etewMatrix[m].bySeason[s.key]));
+        wablSDevBySeason[s.key] = histSampleDev(wablManagers.map(m => wablMatrix[m].bySeason[s.key]));
+      });
+      const etewGrandSDev = histSampleDev(etewManagers.map(m => etewMatrix[m].grandPct));
+
+      // --------------------------------------------------
+      // 3. Trades by Year (In-Season)
+      // --------------------------------------------------
+      const tradesMatrix = {};
+      allManagersSet.forEach(m => { tradesMatrix[m] = { bySeason: {}, grandTotal: 0 }; });
+
+      // Count unique trade transactions per manager per season
+      const seenTradePairs = new Set();
+      allTx.forEach(tx => {
+        const txType = String(getVal(tx, ['type', 'transaction_type', 'action']) || '').toLowerCase();
+        if (!txType.includes('trade')) return;
+        const yr = Number(getVal(tx, ['year', 'YR']));
+        if (!yr) return;
+        const lg = normLeague(getVal(tx, ['league']));
+        const sObj = FilterEngine.resolveSeason(yr, lg);
+        const sKey = sObj ? sObj.key : makeSeasonKey(yr, lg);
+
+        const txId = getVal(tx, ['transaction_id', 'tx_id', 'id', 'timestamp', 'date']);
+        const tid = Number(getVal(tx, ['team_id', 'trader_team_id', 'from_team_id', 'TMA']));
+        const oppTid = Number(getVal(tx, ['tradee_team_id', 'to_team_id', 'TMB']));
+
+        const addTradeForTeam = (teamId) => {
+          if (!teamId && teamId !== 0) return;
+          const mgr = getManagerName(teamId, yr, '', sObj ? sObj.league : lg);
+          if (!mgr || mgr.startsWith('Team ')) return;
+          if (!tradesMatrix[mgr]) tradesMatrix[mgr] = { bySeason: {}, grandTotal: 0 };
+          const dedupKey = txId !== undefined && txId !== null && txId !== ''
+            ? `${sKey}|${txId}|${mgr}`
+            : null;
+          if (dedupKey) {
+            if (seenTradePairs.has(dedupKey)) return;
+            seenTradePairs.add(dedupKey);
+          }
+          tradesMatrix[mgr].bySeason[sKey] = (tradesMatrix[mgr].bySeason[sKey] || 0) + 1;
+          tradesMatrix[mgr].grandTotal += 1;
+        };
+
+        if (tid) addTradeForTeam(tid);
+        if (oppTid) addTradeForTeam(oppTid);
+      });
+
+      const tradeManagers = Object.keys(tradesMatrix)
+        .filter(m => tradesMatrix[m].grandTotal > 0)
+        .sort((a, b) => (tradesMatrix[b].grandTotal - tradesMatrix[a].grandTotal) || a.localeCompare(b));
+
+      const tradeSeasonTotals = {};
+      let tradeGrandAll = 0;
+      seasons.forEach(s => {
+        // Each trade involves 2 managers -> total trades in league = sum of manager trade counts / 2 (or exact count if stored once)
+        const sumMgr = tradeManagers.reduce((acc, m) => acc + (tradesMatrix[m].bySeason[s.key] || 0), 0);
+        const leagueTrades = Math.round(sumMgr / 2);
+        tradeSeasonTotals[s.key] = leagueTrades;
+        tradeGrandAll += leagueTrades;
+      });
+
+      // --------------------------------------------------
+      // 4. All-Time Matchup Records (Top 40 & Ties)
+      // --------------------------------------------------
+      const matchupRows = teamWeeks
+        .filter(tw => tw.opp_id !== 0 && (tw.pf > 0 || tw.pa > 0))
+        .map(tw => ({
+          league: tw.league || 'OKL',
+          year: tw.year,
+          week: tw.week,
+          mgr: tw.manager,
+          opp: tw.opp_manager,
+          pf: tw.pf,
+          pa: tw.pa,
+          delta: tw.pf - tw.pa,
+          ptot: tw.pf + tw.pa,
+          result: tw.outcome.result
+        }));
+
+      const sortDescPf = (a, b) => (b.pf - a.pf) || (b.year - a.year) || (a.week - b.week);
+      const highestPf = [...matchupRows].sort(sortDescPf).slice(0, 40);
+      const lowestPf = [...matchupRows].sort((a, b) => (a.pf - b.pf) || (b.year - a.year) || (a.week - b.week)).slice(0, 40);
+      const biggestBlowouts = [...matchupRows].filter(r => r.result === 'W').sort((a, b) => (b.delta - a.delta) || (b.pf - a.pf)).slice(0, 40);
+      const closestLosses = [...matchupRows].filter(r => r.result === 'L').sort((a, b) => (Math.abs(a.delta) - Math.abs(b.delta)) || (b.pf - a.pf)).slice(0, 40);
+      const highestLosses = [...matchupRows].filter(r => r.result === 'L').sort(sortDescPf).slice(0, 40);
+
+      // Deduplicated matchups (one row per game, winner first) for Highest-Scoring Matchups
+      const uniqueGamesMap = new Map();
+      matchupRows.forEach(r => {
+        const pairKey = `${r.league}|${r.year}|${r.week}|${[r.mgr, r.opp].sort().join('_')}`;
+        const existing = uniqueGamesMap.get(pairKey);
+        if (!existing || r.pf > existing.pf) {
+          uniqueGamesMap.set(pairKey, r);
+        }
+      });
+      const highestMatchups = [...uniqueGamesMap.values()].sort((a, b) => (b.ptot - a.ptot) || (b.pf - a.pf)).slice(0, 40);
+
+      const ties = matchupRows
+        .filter(r => r.result === 'T')
+        .sort((a, b) => (a.year - b.year) || (a.week - b.week) || (b.pf - a.pf));
+
+      // --------------------------------------------------
+      // 5. All-Time Positional Weekly Scores (QB, RB, WR, TE Top 40)
+      // --------------------------------------------------
+      const seenPlayerWeeks = new Set();
+      const posBuckets = { QB: [], RB: [], WR: [], TE: [] };
+
+      validPoints.forEach(r => {
+        const pos = histGetPrimaryPos(r);
+        if (!posBuckets[pos]) return;
+        const yr = Number(getVal(r, ['year', 'YR']));
+        const lg = normLeague(getVal(r, ['league'])) || 'OKL';
+        const wk = Number(getVal(r, ['week', 'WK']));
+        const tid = Number(getVal(r, ['team_id', 'TMA', 'team']));
+        const pName = String(getVal(r, ['name', 'player_name', 'player', 'PLAYER']) || '').trim();
+        if (!pName) return;
+        const pid = getVal(r, ['player_id']);
+        const dk = `${lg}|${yr}|${wk}|${tid}|${pid !== undefined && pid !== null && pid !== '' ? pid : pName}`;
+        if (seenPlayerWeeks.has(dk)) return;
+        seenPlayerWeeks.add(dk);
+
+        const pPts = Number(getVal(r, ['points', 'player_pts', 'player_points', 'pts']));
+        if (isNaN(pPts)) return;
+
+        const mgr = getManagerName(tid, yr, getVal(r, ['manager_name', 'manager']), lg);
+        const st = histIsStarter(r) ? 'ST' : 'BN';
+
+        posBuckets[pos].push({
+          league: lg,
+          year: yr,
+          week: wk,
+          mgr,
+          st,
+          player: pName,
+          points: pPts,
+          pass_yds: npNum(getVal(r, ['passing_yds', 'pass_yds'])),
+          pass_td: npNum(getVal(r, ['passing_td', 'pass_td'])),
+          pass_40: npNum(getVal(r, ['passing_40_yd_td', 'pass_40_td', 'passing_40yd_td'])),
+          pass_int: npNum(getVal(r, ['passing_int', 'pass_int', 'interceptions'])),
+          rush_att: npNum(getVal(r, ['rushing_att', 'rush_att'])),
+          rush_yds: npNum(getVal(r, ['rushing_yds', 'rush_yds'])),
+          rush_fd: npNum(getVal(r, ['rushing_fd', 'rush_fd', 'rushing_1st_downs'])),
+          rush_td: npNum(getVal(r, ['rushing_td', 'rush_td'])),
+          rush_40: npNum(getVal(r, ['rushing_40_yd_td', 'rush_40_td', 'rushing_40yd_td'])),
+          rec_tgt: npNum(getVal(r, ['receiving_tgt', 'targets', 'rec_tgt'])),
+          rec_rec: npNum(getVal(r, ['receiving_rec', 'receptions', 'rec'])),
+          rec_yds: npNum(getVal(r, ['receiving_yds', 'rec_yds'])),
+          rec_fd: npNum(getVal(r, ['receiving_fd', 'rec_fd', 'receiving_1st_downs'])),
+          rec_td: npNum(getVal(r, ['receiving_td', 'rec_td'])),
+          rec_40: npNum(getVal(r, ['receiving_40_yd_td', 'rec_40_td', 'receiving_40yd_td'])),
+          ret_yds: npNum(getVal(r, ['return_yds', 'ret_yds', 'kick_punt_ret_yds'])),
+          ret_td: npNum(getVal(r, ['return_td', 'ret_td'])),
+          two_pt: npNum(getVal(r, ['two_pt', '2pt', 'two_point_conversions'])),
+          fum_lost: npNum(getVal(r, ['fumbles_lost', 'fum_lost'])),
+          fum_td: npNum(getVal(r, ['fumble_ret_td', 'fum_td', 'offensive_fumble_ret_td']))
+        });
+      });
+
+      const topPos = {};
+      ['QB', 'RB', 'WR', 'TE'].forEach(pos => {
+        topPos[pos] = posBuckets[pos]
+          .sort((a, b) => (b.points - a.points) || (b.year - a.year) || (a.week - b.week))
+          .slice(0, 40);
+      });
+
+      const computed = {
+        seasons,
+        etewManagers,
+        etewMatrix,
+        etewSDevBySeason,
+        etewGrandSDev,
+        wablManagers,
+        wablMatrix,
+        wablSDevBySeason,
+        tradeManagers,
+        tradesMatrix,
+        tradeSeasonTotals,
+        tradeGrandAll,
+        highestPf,
+        lowestPf,
+        biggestBlowouts,
+        closestLosses,
+        highestLosses,
+        highestMatchups,
+        ties,
+        topPos
+      };
+
+      STATE.historical._cacheKey = cacheKey;
+      STATE.historical._cache = computed;
+      return computed;
+    }
+
+    function histBuildYearlyMatrixCard(title, subtitle, seasons, managers, getCellFn, getGrandFn, sdevRowFn) {
+      const selMgr = STATE.filters.selectedManager;
+      const filteredMgrs = selMgr ? managers.filter(m => m === selMgr) : managers;
+
+      const yearHeaders = seasons.map(s => `<th class="text-right">${s.year}</th>`).join('');
+      const lgHeaders = seasons.map(s => `<th class="text-center text-[10px] text-slate-400 dark:text-slate-500">${escapeHTML(s.league || 'OKL')}</th>`).join('');
+
+      // Precompute column stats per season for heatmap shading
+      const colStats = {};
+      seasons.forEach(s => {
+        const vals = managers.map(m => getCellFn(m, s.key)?.val).filter(v => typeof v === 'number' && !isNaN(v));
+        if (vals.length) {
+          const min = Math.min(...vals), max = Math.max(...vals);
+          const sorted = [...vals].sort((a, b) => a - b);
+          colStats[s.key] = { min, mid: sorted[Math.floor(sorted.length / 2)], max, maxAbs: Math.max(...vals.map(Math.abs), 0.01) };
+        }
+      });
+      const grandVals = managers.map(m => getGrandFn(m)?.val).filter(v => typeof v === 'number' && !isNaN(v));
+      const grandStats = grandVals.length ? {
+        min: Math.min(...grandVals),
+        mid: [...grandVals].sort((a, b) => a - b)[Math.floor(grandVals.length / 2)],
+        max: Math.max(...grandVals),
+        maxAbs: Math.max(...grandVals.map(Math.abs), 0.01)
+      } : { min: 0, mid: 0, max: 0, maxAbs: 1 };
+
+      const bodyRows = filteredMgrs.map(mgr => {
+        const mgrColor = getManagerColor(mgr);
+        const cells = seasons.map(s => {
+          const cell = getCellFn(mgr, s.key);
+          if (!cell || cell.val === null || cell.val === undefined) {
+            return `<td class="text-right font-mono text-slate-300 dark:text-slate-700"></td>`;
+          }
+          const st = colStats[s.key];
+          let bg = 'transparent';
+          if (st) {
+            if (cell.heat === 'diverging') bg = HEATMAPS.zeroCenteredDiverging(cell.val, st.maxAbs);
+            else if (cell.heat === 'pct') bg = HEATMAPS.greenClearRed(cell.val, st.min, 0.5, st.max);
+            else if (cell.heat === 'count') bg = HEATMAPS.greenToClear(cell.val, st.min, st.max);
+          }
+          return `<td class="text-right font-mono ${cell.cls || ''}" style="background-color:${bg}">${cell.text}</td>`;
+        }).join('');
+
+        const gCell = getGrandFn(mgr);
+        let gBg = 'transparent';
+        if (gCell && gCell.val !== null && gCell.val !== undefined) {
+          if (gCell.heat === 'diverging') gBg = HEATMAPS.zeroCenteredDiverging(gCell.val, grandStats.maxAbs);
+          else if (gCell.heat === 'pct') gBg = HEATMAPS.greenClearRed(gCell.val, grandStats.min, 0.5, grandStats.max);
+          else if (gCell.heat === 'count') gBg = HEATMAPS.greenToClear(gCell.val, grandStats.min, grandStats.max);
+        }
+
+        return `
+          <tr>
+            <td class="hist-sticky-col text-left font-bold cursor-pointer border-r-2 border-slate-300 dark:border-slate-700" onclick="toggleManagerFilter('${escapeHTML(mgr)}')" title="Click to filter manager">
+              <span style="color:${mgrColor}">${escapeHTML(mgr)}</span>
+            </td>
+            ${cells}
+            <td class="text-right font-mono font-extrabold border-l-2 border-slate-300 dark:border-slate-700 ${gCell?.cls || ''}" style="background-color:${gBg}">${gCell ? gCell.text : ''}</td>
+          </tr>`;
+      }).join('');
+
+      const footerRow = sdevRowFn ? sdevRowFn(seasons) : '';
+
+      return `
+        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+          <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(title)}</h3>
+              ${subtitle ? `<p class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHTML(subtitle)}</p>` : ''}
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="hist-table">
+              <thead>
+                <tr>
+                  <th rowspan="2" class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">MGR</th>
+                  ${yearHeaders}
+                  <th rowspan="2" class="text-right border-l-2 border-slate-300 dark:border-slate-700">GRAND TOTAL</th>
+                </tr>
+                <tr>${lgHeaders}</tr>
+              </thead>
+              <tbody>
+                ${bodyRows}
+                ${footerRow}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+
+    function histBuildMatchupRecordCard(title, rows, mode = 'top40') {
+      const selMgr = STATE.filters.selectedManager;
+      const filtered = selMgr ? rows.filter(r => r.mgr === selMgr || r.opp === selMgr) : rows;
+      const pfStats = getColStats(rows, r => r.pf);
+      const paStats = getColStats(rows, r => r.pa);
+      const ptotStats = getColStats(rows, r => r.ptot);
+      const maxAbsDelta = Math.max(...rows.map(r => Math.abs(r.delta)), 1);
+
+      let prevVal = null;
+      let prevRank = 1;
+      const bodyHtml = filtered.map((r, i) => {
+        const cmpVal = mode === 'blowout' ? r.delta : mode === 'closest' ? Math.abs(r.delta) : mode === 'ptot' ? r.ptot : r.pf;
+        const rank = (prevVal !== null && Math.abs(cmpVal - prevVal) < 1e-6) ? prevRank : (i + 1);
+        prevVal = cmpVal;
+        prevRank = rank;
+
+        const pfBg = mode === 'lowest'
+          ? HEATMAPS.clearToRed(r.pf, pfStats.min, pfStats.max)
+          : HEATMAPS.greenToClear(r.pf, pfStats.min, pfStats.max);
+        const paBg = HEATMAPS.redToClear(r.pa, paStats.min, paStats.max);
+        const deltaBg = HEATMAPS.zeroCenteredDiverging(r.delta, maxAbsDelta);
+        const ptotBg = HEATMAPS.greenToClear(r.ptot, ptotStats.min, ptotStats.max);
+
+        return `
+          <tr>
+            ${mode !== 'ties' ? `<td class="text-center font-mono text-slate-400">${rank}</td>` : ''}
+            <td class="text-center font-mono text-xs text-slate-500 dark:text-slate-400">${escapeHTML(r.league)}</td>
+            <td class="text-center font-mono">${r.year}</td>
+            <td class="text-center font-mono">${r.week}</td>
+            <td class="text-left font-bold cursor-pointer" onclick="toggleManagerFilter('${escapeHTML(r.mgr)}')" style="color:${getManagerColor(r.mgr)}">${escapeHTML(r.mgr)}</td>
+            <td class="text-left font-semibold cursor-pointer" onclick="toggleManagerFilter('${escapeHTML(r.opp)}')" style="color:${getManagerColor(r.opp)}">${escapeHTML(r.opp)}</td>
+            <td class="text-right font-mono font-bold" style="background-color:${pfBg}">${r.pf.toFixed(2)}</td>
+            <td class="text-right font-mono" style="background-color:${paBg}">${r.pa.toFixed(2)}</td>
+            <td class="text-right font-mono font-semibold" style="background-color:${deltaBg}">${r.delta >= 0 ? '+' : ''}${r.delta.toFixed(2)}</td>
+            <td class="text-right font-mono font-semibold" style="background-color:${ptotBg}">${r.ptot.toFixed(2)}</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+          <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(title)}</h3>
+            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${mode === 'ties' ? `${filtered.length} rows` : 'Top 40 All-Time'}</span>
+          </div>
+          <div class="overflow-x-auto max-h-[540px]">
+            <table class="hist-table">
+              <thead class="sticky top-0 z-10">
+                <tr>
+                  ${mode !== 'ties' ? '<th class="text-center">#</th>' : ''}
+                  <th class="text-center">LG</th>
+                  <th class="text-center">YR</th>
+                  <th class="text-center">WK</th>
+                  <th class="text-left">MGR</th>
+                  <th class="text-left">OPP</th>
+                  <th class="text-right">PF</th>
+                  <th class="text-right">PA</th>
+                  <th class="text-right">Δ</th>
+                  <th class="text-right">PTOT</th>
+                </tr>
+              </thead>
+              <tbody>${bodyHtml || `<tr><td colspan="10" class="p-6 text-center text-slate-500">No records match the current filter.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+
+    function histBuildPositionalRecordCard(posLabel, rows) {
+      const selMgr = STATE.filters.selectedManager;
+      const filtered = selMgr ? rows.filter(r => r.mgr === selMgr) : rows;
+      const ptsStats = getColStats(rows, r => r.points);
+
+      let prevPts = null;
+      let prevRank = 1;
+      const fmtInt = v => (v ? String(Math.round(v)) : '0');
+
+      const bodyHtml = filtered.map((r, i) => {
+        const rank = (prevPts !== null && Math.abs(r.points - prevPts) < 1e-6) ? prevRank : (i + 1);
+        prevPts = r.points;
+        prevRank = rank;
+        const ptsBg = HEATMAPS.greenToClear(r.points, ptsStats.min, ptsStats.max);
+        const stBadge = r.st === 'BN'
+          ? `<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300">BN</span>`
+          : `<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">ST</span>`;
+
+        return `
+          <tr>
+            <td class="text-center font-mono text-slate-400">${rank}</td>
+            <td class="text-center font-mono text-xs text-slate-500 dark:text-slate-400">${escapeHTML(r.league)}</td>
+            <td class="text-center font-mono">${r.year}</td>
+            <td class="text-center font-mono">${r.week}</td>
+            <td class="text-left font-bold cursor-pointer" onclick="toggleManagerFilter('${escapeHTML(r.mgr)}')" style="color:${getManagerColor(r.mgr)}">${escapeHTML(r.mgr)}</td>
+            <td class="text-center">${stBadge}</td>
+            <td class="text-left font-semibold">${escapeHTML(r.player)}</td>
+            <td class="text-right font-mono font-extrabold border-r-2 border-slate-300 dark:border-slate-700" style="background-color:${ptsBg}">${r.points.toFixed(2)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.pass_yds)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.pass_td)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.pass_40)}</td>
+            <td class="text-right font-mono text-xs border-r-2 border-slate-300 dark:border-slate-700">${fmtInt(r.pass_int)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.rush_att)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.rush_yds)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.rush_fd)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.rush_td)}</td>
+            <td class="text-right font-mono text-xs border-r-2 border-slate-300 dark:border-slate-700">${fmtInt(r.rush_40)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.rec_tgt)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.rec_rec)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.rec_yds)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.rec_fd)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.rec_td)}</td>
+            <td class="text-right font-mono text-xs border-r-2 border-slate-300 dark:border-slate-700">${fmtInt(r.rec_40)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.ret_yds)}</td>
+            <td class="text-right font-mono text-xs border-r-2 border-slate-300 dark:border-slate-700">${fmtInt(r.ret_td)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.two_pt)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.fum_lost)}</td>
+            <td class="text-right font-mono text-xs">${fmtInt(r.fum_td)}</td>
+          </tr>`;
+      }).join('');
+
+      return `
+        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+          <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(posLabel)} Weekly Scores — Top 40 All-Time</h3>
+            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">All-Time Single-Week Performances</span>
+          </div>
+          <div class="overflow-x-auto max-h-[540px]">
+            <table class="hist-table">
+              <thead class="sticky top-0 z-10">
+                <tr>
+                  <th colspan="8" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">GAME &amp; FANTASY POINTS</th>
+                  <th colspan="4" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">PASSING</th>
+                  <th colspan="5" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">RUSHING</th>
+                  <th colspan="6" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">RECEIVING</th>
+                  <th colspan="2" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">RETURN</th>
+                  <th colspan="3" class="hist-stat-group-th">MISC</th>
+                </tr>
+                <tr>
+                  <th class="text-center">#</th>
+                  <th class="text-center">LG</th>
+                  <th class="text-center">YR</th>
+                  <th class="text-center">WK</th>
+                  <th class="text-left">MGR</th>
+                  <th class="text-center">ST</th>
+                  <th class="text-left">PLAYER</th>
+                  <th class="text-right border-r-2 border-slate-300 dark:border-slate-700">POINTS</th>
+                  <th class="text-right">YDS</th>
+                  <th class="text-right">TD</th>
+                  <th class="text-right">40TD</th>
+                  <th class="text-right border-r-2 border-slate-300 dark:border-slate-700">INT</th>
+                  <th class="text-right">ATT</th>
+                  <th class="text-right">YDS</th>
+                  <th class="text-right">FD</th>
+                  <th class="text-right">TD</th>
+                  <th class="text-right border-r-2 border-slate-300 dark:border-slate-700">40TD</th>
+                  <th class="text-right">TGT</th>
+                  <th class="text-right">REC</th>
+                  <th class="text-right">YDS</th>
+                  <th class="text-right">FD</th>
+                  <th class="text-right">TD</th>
+                  <th class="text-right border-r-2 border-slate-300 dark:border-slate-700">40TD</th>
+                  <th class="text-right">YDS</th>
+                  <th class="text-right border-r-2 border-slate-300 dark:border-slate-700">TD</th>
+                  <th class="text-right">2PC</th>
+                  <th class="text-right">FUML</th>
+                  <th class="text-right">FUMTD</th>
+                </tr>
+              </thead>
+              <tbody>${bodyHtml || `<tr><td colspan="28" class="p-6 text-center text-slate-500">No records match the current filter.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+
+    function renderHistoricalTab() {
+      const root = document.getElementById('hist-content-root');
+      if (!root) return;
+      const d = computeHistoricalData();
+      const sec = STATE.historical.section || 'all';
+      const chunks = [];
+
+      if (sec === 'all' || sec === 'yearly') {
+        // 1. ETEW by Year
+        chunks.push(histBuildYearlyMatrixCard(
+          'ETEW by Year',
+          'Every Team Every Week expected win percentage across all league seasons',
+          d.seasons,
+          d.etewManagers,
+          (mgr, sKey) => {
+            const v = d.etewMatrix[mgr]?.bySeason[sKey];
+            if (v === null || v === undefined) return null;
+            return { val: v, text: `${(v * 100).toFixed(1)}%`, heat: 'pct' };
+          },
+          (mgr) => {
+            const v = d.etewMatrix[mgr]?.grandPct;
+            if (v === null || v === undefined) return null;
+            return { val: v, text: `${(v * 100).toFixed(1)}%`, heat: 'pct' };
+          },
+          (seasons) => {
+            const cells = seasons.map(s => {
+              const sd = d.etewSDevBySeason[s.key];
+              return `<td class="text-right font-mono text-xs">${sd !== null && sd !== undefined ? `${(sd * 100).toFixed(1)}%` : ''}</td>`;
+            }).join('');
+            const gSd = d.etewGrandSDev !== null && d.etewGrandSDev !== undefined ? `${(d.etewGrandSDev * 100).toFixed(1)}%` : '';
+            return `<tr class="hist-summary-row"><td class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">SDev</td>${cells}<td class="text-right font-mono text-xs border-l-2 border-slate-300 dark:border-slate-700">${gSd}</td></tr>`;
+          }
+        ));
+
+        // 2. WABL by Year
+        chunks.push(histBuildYearlyMatrixCard(
+          'WABL by Year',
+          'Wins Added by Luck (Actual Matchup Wins minus ETEW Expected Wins)',
+          d.seasons,
+          d.wablManagers,
+          (mgr, sKey) => {
+            const v = d.wablMatrix[mgr]?.bySeason[sKey];
+            if (v === null || v === undefined) return null;
+            const cls = v > 0.005 ? 'text-emerald-700 dark:text-emerald-300' : v < -0.005 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500';
+            return { val: v, text: `${v >= 0 ? '+' : ''}${v.toFixed(2)}`, heat: 'diverging', cls };
+          },
+          (mgr) => {
+            const v = d.wablMatrix[mgr]?.grandWabl;
+            if (v === null || v === undefined) return null;
+            const cls = v > 0.005 ? 'text-emerald-700 dark:text-emerald-300' : v < -0.005 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500';
+            return { val: v, text: `${v >= 0 ? '+' : ''}${v.toFixed(2)}`, heat: 'diverging', cls };
+          },
+          (seasons) => {
+            const cells = seasons.map(s => {
+              const sd = d.wablSDevBySeason[s.key];
+              return `<td class="text-right font-mono text-xs">${sd !== null && sd !== undefined ? sd.toFixed(2) : ''}</td>`;
+            }).join('');
+            return `<tr class="hist-summary-row"><td class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">SDev</td>${cells}<td class="text-right font-mono text-xs border-l-2 border-slate-300 dark:border-slate-700"></td></tr>`;
+          }
+        ));
+
+        // 3. Trades by Year
+        if (d.tradeManagers.length > 0) {
+          chunks.push(histBuildYearlyMatrixCard(
+            'Trades by Year (In-Season)',
+            'Completed in-season trade volume per manager and total league trades',
+            d.seasons,
+            d.tradeManagers,
+            (mgr, sKey) => {
+              const v = d.tradesMatrix[mgr]?.bySeason[sKey];
+              if (!v) return null;
+              return { val: v, text: String(v), heat: 'count' };
+            },
+            (mgr) => {
+              const v = d.tradesMatrix[mgr]?.grandTotal || 0;
+              return { val: v, text: String(v), heat: 'count' };
+            },
+            (seasons) => {
+              const cells = seasons.map(s => {
+                const tot = d.tradeSeasonTotals[s.key];
+                return `<td class="text-right font-mono text-xs">${tot ? tot : ''}</td>`;
+              }).join('');
+              return `<tr class="hist-summary-row"><td class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">Grand Total</td>${cells}<td class="text-right font-mono text-xs border-l-2 border-slate-300 dark:border-slate-700">${d.tradeGrandAll}</td></tr>`;
+            }
+          ));
+        }
+      }
+
+      if (sec === 'all' || sec === 'matchup_records') {
+        chunks.push(`<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          ${histBuildMatchupRecordCard('Highest PF', d.highestPf, 'top40')}
+          ${histBuildMatchupRecordCard('Lowest PF', d.lowestPf, 'lowest')}
+          ${histBuildMatchupRecordCard('Biggest Blowouts', d.biggestBlowouts, 'blowout')}
+          ${histBuildMatchupRecordCard('Closest Losses', d.closestLosses, 'closest')}
+          ${histBuildMatchupRecordCard('Highest-Scoring Losses', d.highestLosses, 'top40')}
+          ${histBuildMatchupRecordCard('Highest-Scoring Matchups', d.highestMatchups, 'ptot')}
+        </div>`);
+        chunks.push(histBuildMatchupRecordCard('Official Ties', d.ties, 'ties'));
+      }
+
+      if (sec === 'all' || sec === 'pos_records') {
+        chunks.push(histBuildPositionalRecordCard('QB', d.topPos.QB));
+        chunks.push(histBuildPositionalRecordCard('RB', d.topPos.RB));
+        chunks.push(histBuildPositionalRecordCard('WR', d.topPos.WR));
+        chunks.push(histBuildPositionalRecordCard('TE', d.topPos.TE));
+      }
+
+      root.innerHTML = chunks.join('');
+    }
+
+    function downloadHistoricalCSV() {
+      const d = computeHistoricalData();
+      const sec = STATE.historical.section || 'all';
+      let rows = [];
+      let filename = 'Historical_Archive.csv';
+
+      if (sec === 'pos_records') {
+        filename = 'Historical_Positional_Top40.csv';
+        ['QB', 'RB', 'WR', 'TE'].forEach(pos => {
+          d.topPos[pos].forEach((r, idx) => {
+            rows.push({
+              Pos: pos, Rank: idx + 1, League: r.league, Year: r.year, Week: r.week,
+              Manager: r.mgr, Status: r.st, Player: r.player, Points: r.points.toFixed(2),
+              Pass_Yds: r.pass_yds, Pass_TD: r.pass_td, Pass_40TD: r.pass_40, Pass_INT: r.pass_int,
+              Rush_Att: r.rush_att, Rush_Yds: r.rush_yds, Rush_FD: r.rush_fd, Rush_TD: r.rush_td, Rush_40TD: r.rush_40,
+              Rec_Tgt: r.rec_tgt, Rec: r.rec_rec, Rec_Yds: r.rec_yds, Rec_FD: r.rec_fd, Rec_TD: r.rec_td, Rec_40TD: r.rec_40,
+              Ret_Yds: r.ret_yds, Ret_TD: r.ret_td, Two_Pt: r.two_pt, Fum_Lost: r.fum_lost, Fum_TD: r.fum_td
+            });
+          });
+        });
+      } else if (sec === 'matchup_records') {
+        filename = 'Historical_Matchup_Records.csv';
+        const addCat = (cat, list) => list.forEach((r, i) => rows.push({
+          Category: cat, Rank: i + 1, League: r.league, Year: r.year, Week: r.week,
+          Manager: r.mgr, Opponent: r.opp, PF: r.pf.toFixed(2), PA: r.pa.toFixed(2),
+          Delta: r.delta.toFixed(2), PTOT: r.ptot.toFixed(2)
+        }));
+        addCat('Highest PF', d.highestPf);
+        addCat('Lowest PF', d.lowestPf);
+        addCat('Biggest Blowouts', d.biggestBlowouts);
+        addCat('Closest Losses', d.closestLosses);
+        addCat('Highest-Scoring Losses', d.highestLosses);
+        addCat('Highest-Scoring Matchups', d.highestMatchups);
+        addCat('Ties', d.ties);
+      } else {
+        filename = 'Historical_Yearly_ETEW_WABL_Trades.csv';
+        d.etewManagers.forEach(mgr => {
+          const row = { Metric: 'ETEW%', Manager: mgr };
+          d.seasons.forEach(s => {
+            const v = d.etewMatrix[mgr]?.bySeason[s.key];
+            row[s.label] = (v !== null && v !== undefined) ? `${(v * 100).toFixed(1)}%` : '';
+          });
+          row['Grand Total'] = d.etewMatrix[mgr]?.grandPct !== null ? `${(d.etewMatrix[mgr].grandPct * 100).toFixed(1)}%` : '';
+          rows.push(row);
+        });
+        d.wablManagers.forEach(mgr => {
+          const row = { Metric: 'WABL', Manager: mgr };
+          d.seasons.forEach(s => {
+            const v = d.wablMatrix[mgr]?.bySeason[s.key];
+            row[s.label] = (v !== null && v !== undefined) ? v.toFixed(2) : '';
+          });
+          row['Grand Total'] = d.wablMatrix[mgr]?.grandWabl.toFixed(2);
+          rows.push(row);
+        });
+      }
+
+      const csv = Papa.unparse(rows);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
       setupTabNavigation();
@@ -7461,6 +8435,7 @@
         STATE.filters.selectedManager = null;
         renderStandingsTable();
         if (FilterEngine.activeTab() === 'positions') renderPositionsTab();
+        if (FilterEngine.activeTab() === 'historical') renderHistoricalTab();
         updateFilterBadge();
         updateUrlHash();
       });
