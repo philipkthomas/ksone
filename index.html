@@ -21,6 +21,7 @@
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
@@ -520,8 +521,11 @@
     .hist-click { cursor: pointer; }
     .hist-click:hover { text-decoration: underline; text-underline-offset: 2px; }
     .hist-table td.hist-hl-yr, .hist-table th.hist-hl-yr { background-color: rgba(245, 158, 11, 0.32) !important; font-weight: 800; }
-    .hist-table td.hist-hl-wk { background-color: rgba(56, 189, 248, 0.38) !important; font-weight: 800; }
-    .hist-table td.hist-hl-wk-prev { background-color: rgba(56, 189, 248, 0.18) !important; font-weight: 700; }
+    .hist-table td.hist-hl-wk { background-color: rgba(245, 158, 11, 0.32) !important; font-weight: 800; }
+    .hist-table td.hist-hl-wk-prev { background-color: rgba(245, 158, 11, 0.16) !important; font-weight: 700; }
+    #hist-include-playoffs:checked + .hcw-track { background: #0284c7; }
+    #hist-include-playoffs:checked + .hcw-track .hcw-thumb { transform: translateX(14px); }
+    #hist-include-playoffs:focus-visible + .hcw-track { outline: 2px solid #0ea5e9; outline-offset: 2px; }
     .hist-chip {
       display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 600;
       padding: 2px 9px; border-radius: 9999px; cursor: pointer;
@@ -729,9 +733,20 @@
             <span class="text-slate-600 dark:text-slate-400 font-medium">Hide current week</span>
           </label>
 
+          <label id="hist-po-wrap" class="flex items-center gap-2 cursor-pointer select-none" style="display:none">
+            <input type="checkbox" id="hist-include-playoffs" class="sr-only" checked>
+            <span class="hcw-track"><span class="hcw-thumb"></span></span>
+            <span class="text-slate-600 dark:text-slate-400 font-medium">Include playoffs</span>
+          </label>
+
           <div id="manager-filter-badge" class="hidden items-center gap-2 bg-brand-100 dark:bg-brand-900/60 border border-brand-300 dark:border-brand-500/40 text-brand-800 dark:text-brand-200 px-2.5 py-0.5 rounded-full">
             <span>Manager: <strong id="selected-manager-name">--</strong></span>
             <button id="clear-manager-filter" class="hover:text-slate-900 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div id="hist-chips-wrap" class="flex flex-wrap items-center gap-2" style="display:none">
+            <span id="hist-chips"  class="flex flex-wrap items-center gap-2"></span>
+            <button type="button" id="hist-clear-filters" class="text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline" style="display:none" onclick="histClearFilters()">Clear filters</button>
           </div>
         </div>
       </div>
@@ -1319,30 +1334,35 @@
 
     <!-- HISTORICAL TAB CONTENT -->
     <section id="tab-historical" class="tab-content space-y-4 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-3 px-1">
-        <div class="flex flex-wrap items-center gap-3">
-          <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-landmark text-amber-500"></i> Historical League Archives &amp; Records
-          </h2>
-          <div class="flex items-center gap-1.5 text-xs">
-            <label for="hist-section-select" class="text-slate-500 dark:text-slate-400 font-semibold">Report:</label>
-            <select id="hist-section-select" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-md px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none">
-              <option value="all">All Reports (Full Archive)</option>
-              <option value="yearly">Yearly Matrices (ETEW, Final Rank, RABL, WABL, Efficiency, Trades)</option>
-              <option value="matchup_records">All-Time Matchup Records (Top 40 &amp; Ties)</option>
-              <option value="pos_records">All-Time Positional Records (QB, RB, WR, TE)</option>
-            </select>
-          </div>
-          <label class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 font-semibold cursor-pointer select-none">
-            <input type="checkbox" id="hist-include-playoffs" class="accent-brand-500" checked> Include Playoffs
-          </label>
-        </div>
-        <button id="btn-export-hist-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs font-semibold">
-          <i class="fa-solid fa-file-csv"></i> Export CSV
-        </button>
+      <div class="flex flex-wrap items-center gap-3 px-1">
+        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-landmark text-amber-500"></i> Historical League Archives &amp; Records
+        </h2>
       </div>
 
       <div id="hist-content-root" class="space-y-6"></div>
+
+      <div id="hist-download-bar" class="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 px-1 pt-1 text-xs">
+        <span id="hist-dl-status" class="text-slate-500 dark:text-slate-400 font-mono"></span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500 dark:text-slate-400 font-semibold">CSV</span>
+          <button type="button" id="btn-hist-csv-all" class="hist-dl-btn bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 font-semibold" title="One CSV containing every table">
+            <i class="fa-solid fa-file-csv"></i> All in one file
+          </button>
+          <button type="button" id="btn-hist-csv-sep" class="hist-dl-btn bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 font-semibold" title="One CSV per table, downloaded one after another">
+            <i class="fa-solid fa-copy"></i> Separate files
+          </button>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500 dark:text-slate-400 font-semibold">PNG</span>
+          <button type="button" id="btn-hist-png-all" class="hist-dl-btn bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 font-semibold" title="One tall PNG containing every table">
+            <i class="fa-solid fa-file-image"></i> All in one image
+          </button>
+          <button type="button" id="btn-hist-png-sep" class="hist-dl-btn bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 font-semibold" title="One PNG per table, downloaded one after another">
+            <i class="fa-solid fa-images"></i> Separate images
+          </button>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -2683,6 +2703,8 @@
       show('week-filter-group', !m.hideSeasonControls);
       show('wk-from-wrap', m.from && !m.hideSeasonControls);
       show('hcw-wrap', m.hcw);
+      show('hist-po-wrap', tabKey === 'historical');
+      show('hist-chips-wrap', tabKey === 'historical');
       const lbl = document.getElementById('wk-label');
       if (lbl) lbl.textContent = `${m.label}:`;
     }
@@ -7602,17 +7624,7 @@
     // SECTION 12: HISTORICAL ARCHIVES & RECORDS ENGINE
     // ==========================================
     function initHistoricalTab() {
-      const secSel = document.getElementById('hist-section-select');
       const poChk = document.getElementById('hist-include-playoffs');
-      const csvBtn = document.getElementById('btn-export-hist-csv');
-
-      if (secSel) {
-        secSel.value = STATE.historical.section || 'all';
-        secSel.addEventListener('change', (e) => {
-          STATE.historical.section = e.target.value;
-          renderHistoricalTab();
-        });
-      }
       if (poChk) {
         poChk.checked = STATE.historical.includePlayoffs !== false;
         poChk.addEventListener('change', (e) => {
@@ -7620,9 +7632,11 @@
           renderHistoricalTab();
         });
       }
-      if (csvBtn) {
-        csvBtn.addEventListener('click', downloadHistoricalCSV);
-      }
+      const bind = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+      bind('btn-hist-csv-all', () => histDownloadCSV('all'));
+      bind('btn-hist-csv-sep', () => histDownloadCSV('separate'));
+      bind('btn-hist-png-all', () => histDownloadPNG('all'));
+      bind('btn-hist-png-sep', () => histDownloadPNG('separate'));
     }
 
     function histSampleDev(vals) {
@@ -7827,6 +7841,23 @@
       seasons.forEach(s => {
         let fr = null;
         try { fr = computeFinalRanks(s.year, s.league); } catch (e) { fr = null; }
+        // Current season, playoffs not finished: fall back to the regular-season rank (W, T, PF)
+        if (!fr && cw && Number(s.year) === Number(cw.curYear)) {
+          const psw = getPlayoffStartWeek(s.year, s.league);
+          const st = {};
+          teamWeeks.forEach(tw => {
+            if (tw.seasonKey !== s.key || tw.week >= psw) return;
+            const e = st[tw.team_id] || (st[tw.team_id] = { wins: 0, ties: 0, pf: 0, g: 0 });
+            e.pf += tw.pf;
+            if (tw.opp_id !== 0) { e.wins += tw.outcome.win; e.ties += tw.outcome.tie; e.g += 1; }
+          });
+          const ids = Object.keys(st).map(Number);
+          if (ids.some(id => st[id].g > 0)) {
+            ids.sort((a, b) => (st[b].wins - st[a].wins) || (st[b].ties - st[a].ties) || (st[b].pf - st[a].pf) || (a - b));
+            fr = {};
+            ids.forEach((id, i) => { fr[id] = i + 1; });
+          }
+        }
         if (!fr) return;
         const mgrsInSeason = Object.keys(etewMatrix).filter(m => etewMatrix[m].bySeason[s.key] !== undefined && etewMatrix[m].bySeason[s.key] !== null);
         const pfMap = seasonPf[s.key] || {};
@@ -7863,6 +7894,7 @@
         [...new Set(seasons.map(s => s.year))].forEach(yr => {
           const norm = getNormalizedForYear(yr);
           ((norm && norm.summary) || []).forEach(sm => {
+            if (is2021Okl(sm.year, normLeague(sm.league))) return; // 2021 OKL excluded from efficiency
             const tw = twByKey.get(`${makeSeasonKey(sm.year, normLeague(sm.league))}|${sm.week}|${sm.team_id}`);
             if (!tw || !tw.manager) return;
             let real = 0, opt = 0;
@@ -8114,21 +8146,20 @@
       return '';
     }
 
-    function histBuildFilterBar() {
+    // Active column-value filter chips live in the global filter bar (next to the manager badge)
+    function histRenderChips() {
+      const host = document.getElementById('hist-chips');
+      const clr = document.getElementById('hist-clear-filters');
+      if (!host) return;
       const f = histFilters();
-      const sm = STATE.filters.selectedManager;
       const chips = [];
-      const chip = (label, val, onclick) => `<button type="button" class="hist-chip" data-val="${escapeHTML(String(val))}" onclick="${onclick}">${label}: <b>${escapeHTML(String(val))}</b> <i class="fa-solid fa-xmark text-[10px]"></i></button>`;
-      if (sm) chips.push(chip('MGR', sm, 'toggleManagerFilter(this.dataset.val)'));
       [['lg', 'LG'], ['year', 'YR'], ['week', 'WK'], ['opp', 'OPP'], ['st', 'ST'], ['player', 'PLAYER']].forEach(([k, label]) => {
-        if (f[k] !== null && f[k] !== undefined) chips.push(chip(label, f[k], `histToggleFilter('${k}', this.dataset.val)`));
+        if (f[k] !== null && f[k] !== undefined) {
+          chips.push(`<button type="button" class="hist-chip" data-val="${escapeHTML(String(f[k]))}" onclick="histToggleFilter('${k}', this.dataset.val)">${label}: <b>${escapeHTML(String(f[k]))}</b> <i class="fa-solid fa-xmark text-[10px]"></i></button>`);
+        }
       });
-      if (!chips.length) return '';
-      return `<div class="flex flex-wrap items-center gap-2 px-1">
-        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Filters</span>
-        ${chips.join('')}
-        <button type="button" class="text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline" onclick="histClearFilters()">Clear all</button>
-      </div>`;
+      host.innerHTML = chips.join('');
+      if (clr) clr.style.display = histActiveFilterCount() ? '' : 'none';
     }
 
     // Applies the active filters BEFORE ranking/slicing, so every table is a true Top 40 within the filter
@@ -8171,8 +8202,17 @@
     }
 
     function histHeat(cell, st) {
-      if (!cell || cell.val === null || cell.val === undefined || !st) return 'transparent';
+      if (!cell || cell.val === null || cell.val === undefined) return 'transparent';
+      if (cell.heat === 'medalRank') {
+        if (cell.val === 1) return 'rgba(250, 204, 21, 0.62)';   // gold
+        if (cell.val === 2) return 'rgba(203, 213, 225, 0.62)';  // silver
+        if (cell.val === 3) return 'rgba(217, 119, 6, 0.55)';    // bronze
+        if (!st) return 'transparent';
+        return HEATMAPS.redClearGreen(cell.val, st.min, st.mid, st.max); // 4th..last: green > clear > red
+      }
+      if (!st) return 'transparent';
       switch (cell.heat) {
+        case 'rankGCR': return HEATMAPS.redClearGreen(cell.val, st.min, st.mid, st.max); // lower rank = greener
         case 'diverging': return HEATMAPS.zeroCenteredDiverging(cell.val, st.maxAbs);
         case 'pct': return HEATMAPS.greenClearRed(cell.val, st.min, 0.5, st.max);
         case 'median': return HEATMAPS.greenClearRed(cell.val, st.min, st.mid, st.max);
@@ -8182,11 +8222,11 @@
       return 'transparent';
     }
 
-    function histBuildYearlyMatrixCard(title, subtitle, allSeasons, managers, getCellFn, getGrandFn, sdevRowFn, opts = {}) {
+    function histBuildYearlyMatrixCard(title, allSeasons, managers, getCellFn, getGrandFn, sdevRowFn, opts = {}) {
       const f = histFilters();
       const selMgr = STATE.filters.selectedManager;
       const filteredMgrs = selMgr ? managers.filter(m => m === selMgr) : managers;
-      const seasons = allSeasons.filter(s => (!f.lg || (s.league || 'OKL') === f.lg) && (!f.year || s.year === f.year));
+      const seasons = allSeasons.filter(s => (!f.lg || (s.league || 'OKL') === f.lg) && (!f.year || s.year === f.year) && !(opts.excludeSeason && opts.excludeSeason(s)));
       const grandLabel = opts.grandLabel || 'GRAND TOTAL';
 
       const yearHeaders = seasons.map(s => `<th class="text-right hist-click ${histYrCls(s.year)}" ${histClickAttr('year', s.year)}>${s.year}</th>`).join('');
@@ -8196,7 +8236,8 @@
       }).join('');
 
       const colStats = {};
-      seasons.forEach(s => { colStats[s.key] = histStats(managers.map(m => getCellFn(m, s.key)?.val)); });
+      const statPass = opts.statFilter || (() => true);
+      seasons.forEach(s => { colStats[s.key] = histStats(managers.map(m => getCellFn(m, s.key)?.val).filter(v => typeof v === 'number' && statPass(v))); });
       const grandStats = histStats(managers.map(m => getGrandFn(m)?.val)) || { min: 0, mid: 0, max: 0, maxAbs: 1 };
 
       const bodyRows = filteredMgrs.map(mgr => {
@@ -8223,12 +8264,9 @@
       const footerRow = sdevRowFn ? sdevRowFn(seasons) : '';
 
       return `
-        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+        <div class="hist-card bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-title="${escapeHTML(title)}">
           <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(title)}</h3>
-              ${subtitle ? `<p class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHTML(subtitle)}</p>` : ''}
-            </div>
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(title)}</h3>
           </div>
           <div class="overflow-x-auto">
             <table class="hist-table">
@@ -8287,10 +8325,9 @@
       }).join('');
 
       return `
-        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+        <div class="hist-card bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-title="${escapeHTML(title)}">
           <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(title)}</h3>
-            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${mode === 'ties' ? `${rows.length} rows` : (histActiveFilterCount() ? 'Top 40 (filtered)' : 'Top 40 All-Time')}</span>
           </div>
           <div class="overflow-x-auto max-h-[540px]">
             <table class="hist-table">
@@ -8371,16 +8408,15 @@
       }).join('');
 
       return `
-        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+        <div class="hist-card bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-title="${escapeHTML(posLabel)} Weekly Scores — Top 40 ${histActiveFilterCount() ? '(Filtered)' : 'All-Time'}">
           <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(posLabel)} Weekly Scores — Top 40 ${histActiveFilterCount() ? '(Filtered)' : 'All-Time'}</h3>
-            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">Single-Week Performances</span>
           </div>
           <div class="overflow-x-auto max-h-[540px]">
             <table class="hist-table">
               <thead class="sticky top-0 z-10">
                 <tr>
-                  <th colspan="8" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">GAME &amp; FANTASY POINTS</th>
+                  <th colspan="8" data-csv-skip="1" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">GAME &amp; FANTASY POINTS</th>
                   <th colspan="4" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">PASSING</th>
                   <th colspan="5" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">RUSHING</th>
                   <th colspan="6" class="hist-stat-group-th border-r-2 border-slate-300 dark:border-slate-700">RECEIVING</th>
@@ -8432,17 +8468,29 @@
       const root = document.getElementById('hist-content-root');
       if (!root) return;
       const d = computeHistoricalData();
-      const sec = STATE.historical.section || 'all';
-      const chunks = [histBuildFilterBar()];
+      const sec = 'all';
+      histRenderChips();
+      const chunks = [];
       const sdevCell = (txt) => `<td class="text-right font-mono text-xs">${txt}</td>`;
       const sdevRow = (label, cellsHtml, grandHtml) => `<tr class="hist-summary-row"><td class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">${label}</td>${cellsHtml}<td class="text-right font-mono text-xs border-l-2 border-slate-300 dark:border-slate-700">${grandHtml}</td></tr>`;
+      // SDev cells shaded green > clear > red across the row's season values (high = green)
+      const sdevCells = (seasons, valFn, fmt) => {
+        const vals = seasons.map(valFn);
+        const st = histStats(vals);
+        return seasons.map((s, i) => {
+          const v = vals[i];
+          const has = v !== null && v !== undefined && !isNaN(v);
+          const bg = (has && st) ? HEATMAPS.greenClearRed(v, st.min, st.mid, st.max) : 'transparent';
+          return `<td class="text-right font-mono text-xs"${bg !== 'transparent' ? ` style="background-color:${bg}"` : ''}>${has ? fmt(v) : ''}</td>`;
+        }).join('');
+      };
       const pctTxt = v => (v !== null && v !== undefined) ? `${(v * 100).toFixed(1)}%` : '';
+      const dec2 = v => (v !== null && v !== undefined) ? v.toFixed(2) : '';
 
       if (sec === 'all' || sec === 'yearly') {
         // 1. ETEW by Year
         chunks.push(histBuildYearlyMatrixCard(
           'ETEW by Year',
-          'Every Team Every Week expected win percentage across all league seasons',
           d.seasons, d.etewManagers,
           (mgr, sKey) => {
             const v = d.etewMatrix[mgr]?.bySeason[sKey];
@@ -8454,32 +8502,30 @@
             if (v === null || v === undefined) return null;
             return { val: v, text: pctTxt(v), heat: 'pct' };
           },
-          (seasons) => sdevRow('SDev', seasons.map(s => sdevCell(pctTxt(d.etewSDevBySeason[s.key]))).join(''), pctTxt(d.etewGrandSDev))
+          (seasons) => sdevRow('SDev', sdevCells(seasons, s => d.etewSDevBySeason[s.key], pctTxt), pctTxt(d.etewGrandSDev))
         ));
 
-        // 2. FINAL_RANK by Year
+        // 2. FINAL_RANK by Year (current season falls back to regular-season rank until playoffs finish)
         chunks.push(histBuildYearlyMatrixCard(
           'FINAL_RANK by Year',
-          'Final league finish (playoff results included) for completed seasons; grand column is the average finish',
           d.seasons, d.finalRankManagers,
           (mgr, sKey) => {
             const v = d.finalRankMatrix[mgr]?.bySeason[sKey];
             if (v === null || v === undefined) return null;
-            return { val: v, text: String(v), heat: 'rank' };
+            return { val: v, text: String(v), heat: 'medalRank' };
           },
           (mgr) => {
             const v = d.finalRankMatrix[mgr]?.avg;
             if (v === null || v === undefined) return null;
-            return { val: v, text: v.toFixed(2), heat: 'rank' };
+            return { val: v, text: v.toFixed(2), heat: 'rankGCR' };
           },
           null,
-          { grandLabel: 'AVG' }
+          { grandLabel: 'AVG', statFilter: v => v >= 4 }
         ));
 
         // 3. RABL by Year
         chunks.push(histBuildYearlyMatrixCard(
           'RABL by Year',
-          'Rank Above Bottom Line: ETEW rank minus final rank (positive = finished higher than ETEW rank)',
           d.seasons, d.rablManagers,
           (mgr, sKey) => {
             const v = d.rablRankMatrix[mgr]?.bySeason[sKey];
@@ -8497,7 +8543,6 @@
         // 4. WABL by Year
         chunks.push(histBuildYearlyMatrixCard(
           'WABL by Year',
-          'Wins Added by Luck (Actual Matchup Wins minus ETEW Expected Wins)',
           d.seasons, d.wablManagers,
           (mgr, sKey) => {
             const v = d.wablMatrix[mgr]?.bySeason[sKey];
@@ -8509,17 +8554,13 @@
             if (v === null || v === undefined) return null;
             return { val: v, text: `${v >= 0 ? '+' : ''}${v.toFixed(2)}`, heat: 'diverging', cls: histSignedCls(v) };
           },
-          (seasons) => sdevRow('SDev', seasons.map(s => {
-            const sd = d.wablSDevBySeason[s.key];
-            return sdevCell(sd !== null && sd !== undefined ? sd.toFixed(2) : '');
-          }).join(''), '')
+          (seasons) => sdevRow('SDev', sdevCells(seasons, s => d.wablSDevBySeason[s.key], dec2), '')
         ));
 
-        // 5. Efficiency by Year
+        // 5. Efficiency by Year (2021 OKL excluded)
         if (d.effManagers.length > 0) {
           chunks.push(histBuildYearlyMatrixCard(
             'Efficiency by Year',
-            'Starter points scored as a share of the optimal lineup from the full roster (Σ actual ÷ Σ optimal)',
             d.seasons, d.effManagers,
             (mgr, sKey) => {
               const v = d.effMatrix[mgr]?.bySeason[sKey];
@@ -8531,7 +8572,8 @@
               if (v === null || v === undefined) return null;
               return { val: v, text: pctTxt(v), heat: 'median' };
             },
-            (seasons) => sdevRow('SDev', seasons.map(s => sdevCell(pctTxt(d.effSDevBySeason[s.key]))).join(''), pctTxt(d.effGrandSDev))
+            (seasons) => sdevRow('SDev', sdevCells(seasons, s => d.effSDevBySeason[s.key], pctTxt), pctTxt(d.effGrandSDev)),
+            { excludeSeason: s => is2021Okl(s.year, s.league || 'OKL') }
           ));
         }
 
@@ -8539,7 +8581,6 @@
         if (d.tradeManagers.length > 0) {
           chunks.push(histBuildYearlyMatrixCard(
             'Trades by Year (In-Season)',
-            'Completed in-season trade volume per manager and total league trades',
             d.seasons, d.tradeManagers,
             (mgr, sKey) => {
               const v = d.tradesMatrix[mgr]?.bySeason[sKey];
@@ -8579,67 +8620,132 @@
       root.innerHTML = chunks.join('');
     }
 
-    function downloadHistoricalCSV() {
-      const d = computeHistoricalData();
-      const sec = STATE.historical.section || 'all';
-      const v = histGetViewLists(d);
-      let rows = [];
-      let filename = 'Historical_Archive.csv';
+    // ---------- Historical downloads (bottom bar): CSV / PNG, all-in-one or separate ----------
+    function histSetStatus(msg) {
+      const el = document.getElementById('hist-dl-status');
+      if (el) el.textContent = msg || '';
+    }
+    function histSetBusy(on) {
+      STATE.historical._busy = !!on;
+      document.querySelectorAll('.hist-dl-btn').forEach(b => { b.disabled = !!on; b.style.opacity = on ? '0.5' : ''; b.style.cursor = on ? 'wait' : ''; });
+    }
+    function histCards() { return [...document.querySelectorAll('#hist-content-root .hist-card')]; }
+    function histSlug(t) { return String(t || 'table').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+    function histSaveBlob(blob, name) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
+    const histWait = ms => new Promise(r => setTimeout(r, ms));
 
-      if (sec === 'pos_records') {
-        filename = 'Historical_Positional_Top40.csv';
-        ['QB', 'RB', 'WR', 'TE'].forEach(pos => {
-          v.pos[pos].forEach((r, idx) => {
-            rows.push({
-              Pos: pos, Rank: idx + 1, League: r.league, Year: r.year, Week: r.week,
-              Manager: r.mgr, Status: r.st, Player: r.player, Points: r.points.toFixed(2),
-              Pass_Yds: r.pass_yds, Pass_TD: r.pass_td, Pass_40TD: r.pass_40, Pass_INT: r.pass_int,
-              Rush_Att: r.rush_att, Rush_Yds: r.rush_yds, Rush_FD: r.rush_fd, Rush_TD: r.rush_td, Rush_40TD: r.rush_40,
-              Rec_Tgt: r.rec_tgt, Rec: r.rec_rec, Rec_Yds: r.rec_yds, Rec_FD: r.rec_fd, Rec_TD: r.rec_td, Rec_40TD: r.rec_40,
-              Ret_Yds: r.ret_yds, Ret_TD: r.ret_td, Two_Pt: r.two_pt, Fum_Lost: r.fum_lost, Fum_TD: r.fum_td
-            });
-          });
+    // Reads a rendered card's table (what you see, incl. active filters) as [header, ...rows]
+    function histTableToRows(card) {
+      const table = card.querySelector('table');
+      if (!table) return [];
+      const grid = [];
+      [...table.tHead.rows].forEach((tr, r) => {
+        grid[r] = grid[r] || [];
+        let c = 0;
+        [...tr.cells].forEach(cell => {
+          while (grid[r][c] !== undefined) c++;
+          const txt = cell.dataset.csvSkip ? '' : cell.textContent.replace(/\s+/g, ' ').trim();
+          for (let i = 0; i < (cell.rowSpan || 1); i++) {
+            grid[r + i] = grid[r + i] || [];
+            for (let j = 0; j < (cell.colSpan || 1); j++) grid[r + i][c + j] = txt;
+          }
+          c += (cell.colSpan || 1);
         });
-      } else if (sec === 'matchup_records') {
-        filename = 'Historical_Matchup_Records.csv';
-        const addCat = (cat, list) => list.forEach((r, i) => rows.push({
-          Category: cat, Rank: i + 1, League: r.league, Year: r.year, Week: r.week,
-          Manager: r.mgr, Opponent: r.opp, PF: r.pf.toFixed(2), PA: r.pa.toFixed(2),
-          Delta: r.delta.toFixed(2), PTOT: r.ptot.toFixed(2)
-        }));
-        addCat('Highest PF', v.highestPf);
-        addCat('Lowest PF', v.lowestPf);
-        addCat('Biggest Blowouts', v.biggestBlowouts);
-        addCat('Closest Losses', v.closestLosses);
-        addCat('Highest-Scoring Losses', v.highestLosses);
-        addCat('Highest-Scoring Matchups', v.highestMatchups);
-        addCat('Ties', v.ties);
-      } else {
-        filename = 'Historical_Yearly_Matrices.csv';
-        const addMatrix = (metric, mgrs, getCell, getGrand) => mgrs.forEach(mgr => {
-          const row = { Metric: metric, Manager: mgr };
-          d.seasons.forEach(s => { const c = getCell(mgr, s.key); row[s.label || s.key] = c === null || c === undefined ? '' : c; });
-          const g = getGrand(mgr);
-          row['Grand Total'] = g === null || g === undefined ? '' : g;
-          rows.push(row);
-        });
-        const pct = x => (x === null || x === undefined) ? null : `${(x * 100).toFixed(1)}%`;
-        const f2 = x => (x === null || x === undefined) ? null : x.toFixed(2);
-        addMatrix('ETEW%', d.etewManagers, (m, k) => pct(d.etewMatrix[m]?.bySeason[k]), m => pct(d.etewMatrix[m]?.grandPct));
-        addMatrix('FINAL_RANK', d.finalRankManagers, (m, k) => d.finalRankMatrix[m]?.bySeason[k], m => f2(d.finalRankMatrix[m]?.avg));
-        addMatrix('RABL', d.rablManagers, (m, k) => d.rablRankMatrix[m]?.bySeason[k], m => d.rablRankMatrix[m]?.total);
-        addMatrix('WABL', d.wablManagers, (m, k) => f2(d.wablMatrix[m]?.bySeason[k]), m => f2(d.wablMatrix[m]?.grandWabl));
-        addMatrix('Efficiency', d.effManagers, (m, k) => pct(d.effMatrix[m]?.bySeason[k]), m => pct(d.effMatrix[m]?.grand));
+      });
+      const ncols = Math.max(...grid.map(row => row.length));
+      const header = [];
+      for (let c = 0; c < ncols; c++) {
+        const parts = [];
+        grid.forEach(row => { const t = row[c]; if (t && parts[parts.length - 1] !== t) parts.push(t); });
+        header.push(parts.join(' '));
       }
+      const body = [...table.tBodies[0].rows]
+        .filter(tr => !(tr.cells.length === 1 && tr.cells[0].colSpan > 1))
+        .map(tr => [...tr.cells].map(td => td.textContent.replace(/\s+/g, ' ').trim()));
+      return [header, ...body];
+    }
 
-      const csv = Papa.unparse(rows);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    function histDownloadCSV(mode) {
+      if (STATE.historical._busy) return;
+      const cards = histCards();
+      if (!cards.length) return;
+      const bom = '\ufeff';
+      if (mode === 'all') {
+        const parts = cards.map(c => Papa.unparse([[c.dataset.title]]) + '\r\n' + Papa.unparse(histTableToRows(c)));
+        histSaveBlob(new Blob([bom + parts.join('\r\n\r\n')], { type: 'text/csv;charset=utf-8;' }), 'NDL_Historical_All.csv');
+        return;
+      }
+      histSetBusy(true);
+      (async () => {
+        try {
+          for (let i = 0; i < cards.length; i++) {
+            histSetStatus(`CSV ${i + 1}/${cards.length}`);
+            histSaveBlob(new Blob([bom + Papa.unparse(histTableToRows(cards[i]))], { type: 'text/csv;charset=utf-8;' }), `NDL_Historical_${String(i + 1).padStart(2, '0')}_${histSlug(cards[i].dataset.title)}.csv`);
+            await histWait(350);
+          }
+        } finally { histSetStatus(''); histSetBusy(false); }
+      })();
+    }
+
+    // Renders an element to a canvas with scroll/sticky constraints removed so the whole table is captured
+    async function histElementToCanvas(el, opts) {
+      const isDark = document.documentElement.classList.contains('dark');
+      const width = Math.ceil(opts.width);
+      return html2canvas(el, {
+        backgroundColor: isDark ? '#020617' : '#ffffff',
+        scale: opts.scale || 1.5,
+        useCORS: true,
+        logging: false,
+        windowWidth: Math.max(opts.windowWidth || 0, width + 64),
+        onclone: (doc, clone) => {
+          const win = doc.defaultView;
+          clone.style.width = width + 'px';
+          clone.style.maxWidth = 'none';
+          clone.querySelectorAll('.overflow-x-auto, [class*="max-h-"]').forEach(n => { n.style.overflow = 'visible'; n.style.maxHeight = 'none'; });
+          clone.querySelectorAll('*').forEach(n => { if (win.getComputedStyle(n).position === 'sticky') n.style.position = 'static'; });
+        }
+      });
+    }
+    function histCanvasToBlob(canvas) {
+      return new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('Canvas export failed')), 'image/png'));
+    }
+
+    function histDownloadPNG(mode) {
+      if (STATE.historical._busy) return;
+      if (typeof html2canvas !== 'function') { alert('PNG export library failed to load (html2canvas). Check your connection and reload.'); return; }
+      const cards = histCards();
+      if (!cards.length) return;
+      histSetBusy(true);
+      (async () => {
+        try {
+          if (mode === 'all') {
+            histSetStatus('Rendering image…');
+            const root = document.getElementById('hist-content-root');
+            const maxAll = Math.max(0, ...[...root.querySelectorAll('.hist-card table')].map(t => t.scrollWidth));
+            const gridMax = Math.max(0, ...[...root.querySelectorAll('.grid .hist-card table')].map(t => t.scrollWidth));
+            const width = Math.max(1400, maxAll + 2, gridMax * 2 + 18);
+            const canvas = await histElementToCanvas(root, { width, scale: 1, windowWidth: 1600 });
+            histSaveBlob(await histCanvasToBlob(canvas), 'NDL_Historical_All.png');
+          } else {
+            for (let i = 0; i < cards.length; i++) {
+              histSetStatus(`PNG ${i + 1}/${cards.length}`);
+              const w = Math.max(560, ...[...cards[i].querySelectorAll('table')].map(t => t.scrollWidth + 2));
+              const canvas = await histElementToCanvas(cards[i], { width: w, scale: 2 });
+              histSaveBlob(await histCanvasToBlob(canvas), `NDL_Historical_${String(i + 1).padStart(2, '0')}_${histSlug(cards[i].dataset.title)}.png`);
+              await histWait(450);
+            }
+          }
+        } catch (e) {
+          console.error('[Historical] PNG export failed', e);
+          alert('PNG export failed: ' + (e && e.message ? e.message : e));
+        } finally { histSetStatus(''); histSetBusy(false); }
+      })();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
