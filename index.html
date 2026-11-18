@@ -762,12 +762,12 @@
         <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
           <i class="fa-solid fa-list-ol text-brand-500"></i> League Standings
         </h2>
-        <button id="btn-export-standings-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
+        <div class="flex items-center gap-2"><button id="btn-export-standings-png" title="Download as PNG image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> PNG</button><button id="btn-export-standings-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
           <i class="fa-solid fa-download text-xs"></i> CSV
-        </button>
+        </button></div>
       </div>
 
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
+      <div id="standings-table-wrap" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="standings-table" id="standings-table">
           <thead>
             <tr>
@@ -799,12 +799,12 @@
         <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
           <i class="fa-solid fa-gamepad text-brand-500"></i> Weekly Matchup Results
         </h2>
-        <button id="btn-export-matchups-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
+        <div class="flex items-center gap-2"><button id="btn-export-matchups-png" title="Download as PNG image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> PNG</button><button id="btn-export-matchups-csv" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
           <i class="fa-solid fa-download text-xs"></i> CSV
-        </button>
+        </button></div>
       </div>
 
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
+      <div id="matchups-table-wrap" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="matchup-table" id="matchups-table">
           <thead>
             <tr>
@@ -882,8 +882,8 @@
           </div>
 
           <div class="flex items-center gap-1.5">
-            <button id="btn-export-survivor-png" title="Print/Export Survivor View" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-file-image"></i> PNG / Print
+            <button id="btn-export-survivor-png" title="Download Survivor view as PNG" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
+              <i class="fa-solid fa-file-image"></i> PNG
             </button>
             <button id="btn-export-survivor-csv" title="Download Survivor CSV" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
               <i class="fa-solid fa-file-csv"></i> CSV
@@ -901,6 +901,7 @@
           <i class="fa-solid fa-sack-dollar text-emerald-500"></i> Season Prop Bets
         </h2>
         <div class="flex items-center gap-2 text-xs">
+          <button id="btn-export-props-table-png" title="Download as PNG image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> Table PNG</button>
           <button id="btn-export-props-csv" title="Download Props Table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
             <i class="fa-solid fa-file-csv"></i> Table CSV
           </button>
@@ -911,7 +912,7 @@
       </div>
 
       <!-- PROPS SUMMARY TABLE CONTAINER -->
-      <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
+      <div id="props-table-wrap" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="props-table" id="props-table">
           <thead>
             <tr>
@@ -1280,8 +1281,8 @@
           </div>
 
           <div class="flex items-center gap-1.5">
-            <button id="btn-export-belt-png" title="Print/Export Belt View" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
-              <i class="fa-solid fa-file-image"></i> PNG / Print
+            <button id="btn-export-belt-png" title="Download Belt (final frame) as PNG" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
+              <i class="fa-solid fa-file-image"></i> PNG
             </button>
             <button id="btn-export-belt-csv" title="Download Belt CSV" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
               <i class="fa-solid fa-file-csv"></i> CSV
@@ -1321,12 +1322,13 @@
           <div id="pos-legend" class="flex flex-wrap justify-center gap-2 mt-3"></div>
           <div class="flex items-center justify-end gap-2 mt-3 text-xs">
             <button id="btn-export-pos-csv" title="Download table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-csv"></i> CSV</button>
-            <button id="btn-export-pos-png" title="Download chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-image"></i> PNG</button>
+            <button id="btn-export-pos-png" title="Download chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-image"></i> Chart PNG</button>
           </div>
         </div>
         <div id="pos-warnings" class="hidden mt-3 text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded px-2.5 py-1.5"></div>
       </div>
 
+      <div class="flex items-center justify-end px-1 text-xs"><button id="btn-export-pos-table-png" title="Download as PNG image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> Table PNG</button></div>
       <div id="pos-table-wrap" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="pos-table" id="pos-table"></table>
       </div>
@@ -1537,6 +1539,20 @@
       const match = teams.find(t => rowMatchesSeason(t, year, league) && getVal(t, ['playoff_start_week']) !== undefined);
       const val = match ? Number(getVal(match, ['playoff_start_week'])) : NaN;
       return (!isNaN(val) && val > 1) ? val : 15;
+    }
+
+    // True once the season's playoffs are over. Past seasons: always. Current season: only after
+    // the week following the championship week has begun (curWeek > final playoff week).
+    function isPlayoffsFinished(year, league = STATE.filters.league) {
+      const cw = getCurrentYearAndWeek();
+      if (!cw || Number(year) < Number(cw.curYear)) return true;
+      if (Number(year) > Number(cw.curYear)) return false;
+      const psw = getPlayoffStartWeek(year, league);
+      const t = (STATE.data.teams || []).find(r => rowMatchesSeason(r, year, league) && getVal(r, ['num_playoff_teams']) !== undefined);
+      const npt = t ? Number(getVal(t, ['num_playoff_teams'])) : 6;
+      let finalWeek = psw + (npt === 4 ? 1 : 2);
+      if (is2021Okl(Number(year), normLeague(league))) finalWeek = 17;
+      return Number(cw.curWeek) > finalWeek;
     }
 
     function getMaxWeekForYear(yr, league = STATE.filters.league) {
@@ -3497,7 +3513,7 @@
       }
 
       if (csvBtn) csvBtn.addEventListener('click', downloadSurvivorCSV);
-      if (pngBtn) pngBtn.addEventListener('click', downloadSurvivorPNG);
+      if (pngBtn) pngBtn.addEventListener('click', () => ndlWithBusy(pngBtn, downloadSurvivorPNG));
     }
 
     function updateSurvivorViewToggleUI() {
@@ -4023,14 +4039,11 @@
     }
 
     function downloadSurvivorPNG() {
+      const yr = STATE.filters.year;
       if (STATE.survivor.viewMode === 'chart' && STATE.survivor.chartInstance) {
-        const link = document.createElement('a');
-        link.download = `${activeSeasonFilePrefix()}_Survivor_Chart_${STATE.filters.year}.png`;
-        link.href = STATE.survivor.chartInstance.toBase64Image();
-        link.click();
-      } else {
-        window.print();
+        return ndlChartToPNG(STATE.survivor.chartInstance, `${activeSeasonFilePrefix()}_Survivor_Chart_${yr}.png`);
       }
+      return ndlElementToPNG(document.getElementById('survivor-table-container'), `${activeSeasonFilePrefix()}_Survivor_Table_${yr}.png`);
     }
 
     // ==========================================
@@ -4653,10 +4666,7 @@
     function downloadDivChartPNG() {
       const chart = STATE.props.chartInstance;
       if (!chart) return;
-      const link = document.createElement('a');
-      link.download = `Divisional_Prop_Bet_${STATE.filters.year}.png`;
-      link.href = chart.toBase64Image();
-      link.click();
+      ndlChartToPNG(chart, `Divisional_Prop_Bet_${STATE.filters.year}.png`);
     }
 
     // ==========================================
@@ -5139,10 +5149,7 @@
     function downloadWaePNG() {
       const chart = STATE.wae.chartInstance;
       if (!chart) return;
-      const link = document.createElement('a');
-      link.download = `${activeSeasonFilePrefix()}_${STATE.wae.metric === 'rank' ? 'Rank' : 'Wins_Above_Even'}_${STATE.filters.year}_${STATE.wae.mode}.png`;
-      link.href = chart.toBase64Image();
-      link.click();
+      ndlChartToPNG(chart, `${activeSeasonFilePrefix()}_${STATE.wae.metric === 'rank' ? 'Rank' : 'Wins_Above_Even'}_${STATE.filters.year}_${STATE.wae.mode}.png`);
     }
 
     function downloadWaeCSV() {
@@ -5819,10 +5826,7 @@
     function downloadChartPNG() {
       const chart = STATE.liveProb.chartInstance;
       if (!chart) return;
-      const link = document.createElement('a');
-      link.download = `${activeSeasonFilePrefix()}_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`;
-      link.href = chart.toBase64Image();
-      link.click();
+      ndlChartToPNG(chart, `${activeSeasonFilePrefix()}_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`);
     }
 
     function downloadChartCSV() {
@@ -6041,7 +6045,7 @@
       }
 
       if (csvBtn) csvBtn.addEventListener('click', downloadBeltCSV);
-      if (pngBtn) pngBtn.addEventListener('click', () => window.print());
+      if (pngBtn) pngBtn.addEventListener('click', () => ndlWithBusy(pngBtn, downloadBeltPNG));
 
       window.addEventListener('resize', () => {
         if (document.querySelector('.tab-btn[data-tab="belt"]')?.classList.contains('active')) {
@@ -7633,10 +7637,7 @@
       const chart = STATE.positions.chartInstance;
       const view = STATE.positions.last;
       if (!chart || !view) return;
-      const a = document.createElement('a');
-      a.href = chart.toBase64Image('image/png', 1);
-      a.download = `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position_${view.viewMode}_${view.yr}_w${view.wkMin}-${view.wkMax}.png`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      ndlChartToPNG(chart, `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position_${view.viewMode}_${view.yr}_w${view.wkMin}-${view.wkMax}.png`);
     }
 
     window.assignNormalizedPositions = assignNormalizedPositions;
@@ -7860,6 +7861,7 @@
       // 2b. FINAL_RANK, RABL (ETEW rank - final rank) and Efficiency (real / optimal starter points)
       // --------------------------------------------------
       const finalRankMatrix = {};
+      const finalRankProvisional = {};
       const rablRankMatrix = {};
       const effMatrix = {};
       allManagersSet.forEach(m => {
@@ -7889,6 +7891,7 @@
           }
         }
         if (!fr) return;
+        if (!isPlayoffsFinished(s.year, s.league)) finalRankProvisional[s.key] = true;
         const mgrsInSeason = Object.keys(etewMatrix).filter(m => etewMatrix[m].bySeason[s.key] !== undefined && etewMatrix[m].bySeason[s.key] !== null);
         const pfMap = seasonPf[s.key] || {};
         mgrsInSeason.sort((a, b) => (etewMatrix[b].bySeason[s.key] - etewMatrix[a].bySeason[s.key]) || ((pfMap[b] || 0) - (pfMap[a] || 0)));
@@ -8109,6 +8112,7 @@
         etewGrandSDev,
         finalRankManagers,
         finalRankMatrix,
+        finalRankProvisional,
         rablManagers,
         rablRankMatrix,
         wablManagers,
@@ -8537,7 +8541,7 @@
           (mgr, sKey) => {
             const v = d.finalRankMatrix[mgr]?.bySeason[sKey];
             if (v === null || v === undefined) return null;
-            return { val: v, text: String(v), html: `${v <= 3 ? getTrophyBadgeHTML(v).replace('ml-1.5', 'mr-1') : ''}${v}`, heat: 'medalRank' };
+            return { val: v, text: String(v), html: `${(v <= 3 && !d.finalRankProvisional[sKey]) ? getTrophyBadgeHTML(v).replace('ml-1.5', 'mr-1') : ''}${v}`, heat: 'medalRank' };
           },
           (mgr) => {
             const v = d.finalRankMatrix[mgr]?.avg;
@@ -8734,6 +8738,9 @@
           clone.style.maxWidth = 'none';
           clone.querySelectorAll('.overflow-x-auto, [class*="max-h-"]').forEach(n => { n.style.overflow = 'visible'; n.style.maxHeight = 'none'; });
           clone.querySelectorAll('*').forEach(n => { if (win.getComputedStyle(n).position === 'sticky') n.style.position = 'static'; });
+          if (opts.flat) { clone.style.boxShadow = 'none'; clone.style.borderRadius = '0'; }
+          ndlInlineSvgStyles(doc, clone);
+          if (typeof opts.onclone === 'function') opts.onclone(doc, clone);
         }
       });
     }
@@ -8773,6 +8780,105 @@
       })();
     }
 
+    // ---------- Shared PNG export (table / chart only, full colour, current theme background) ----------
+    function ndlBg() { return document.documentElement.classList.contains('dark') ? '#020617' : '#ffffff'; }
+
+    // html2canvas serialises inline SVGs without page CSS, so bake computed paint styles into the clone
+    function ndlInlineSvgStyles(doc, clone) {
+      const win = doc.defaultView;
+      const paint = ['fill', 'stroke', 'stroke-width', 'stroke-opacity', 'fill-opacity', 'opacity', 'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray'];
+      clone.querySelectorAll('svg *').forEach(n => {
+        const cs = win.getComputedStyle(n);
+        paint.forEach(p => { const v = cs.getPropertyValue(p); if (v && !/url\(/.test(v)) n.style.setProperty(p, v); });
+        if (n.tagName && n.tagName.toLowerCase() === 'text') {
+          ['font-size', 'font-weight', 'font-family'].forEach(p => n.style.setProperty(p, cs.getPropertyValue(p)));
+        }
+      });
+    }
+
+    async function ndlElementToPNG(el, filename, opts = {}) {
+      if (!el) return;
+      if (typeof html2canvas !== 'function') { alert('PNG export library failed to load (html2canvas). Check your connection and reload.'); return; }
+      const tables = [...el.querySelectorAll('table')];
+      const w = opts.width || Math.max(el.scrollWidth, el.offsetWidth, ...tables.map(t => t.scrollWidth + 2), 320);
+      const canvas = await histElementToCanvas(el, { width: w, scale: opts.scale || 2, flat: true, onclone: opts.onclone });
+      histSaveBlob(await histCanvasToBlob(canvas), filename);
+    }
+
+    // Chart.js canvases are transparent; paint the theme background so the PNG is readable anywhere
+    function ndlChartToPNG(chart, filename) {
+      if (!chart || !chart.canvas) return;
+      const src = chart.canvas;
+      const c = document.createElement('canvas');
+      c.width = src.width; c.height = src.height;
+      const g = c.getContext('2d');
+      g.fillStyle = ndlBg(); g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(src, 0, 0);
+      c.toBlob(b => { if (b) histSaveBlob(b, filename); }, 'image/png');
+    }
+
+    function ndlWithBusy(btn, fn) {
+      if (!btn || btn.dataset.busy) return;
+      btn.dataset.busy = '1';
+      const old = btn.innerHTML;
+      btn.disabled = true; btn.style.opacity = '0.6';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PNG';
+      Promise.resolve().then(fn).catch(e => {
+        console.error('[PNG export] failed', e);
+        alert('PNG export failed: ' + (e && e.message ? e.message : e));
+      }).finally(() => {
+        btn.disabled = false; btn.style.opacity = ''; btn.innerHTML = old; delete btn.dataset.busy;
+      });
+    }
+
+    // Belt: renders the FINAL animation frame (all weeks, belt under the current holder) without touching the live view
+    async function downloadBeltPNG() {
+      const lineage = STATE.belt.lineage;
+      if (!lineage || !lineage.rows || !lineage.rows.length) return;
+      const stage = document.getElementById('belt-stage');
+      const rows = lineage.rows;
+      const lastIdx = rows.length - 1;
+      const col = rows[lastIdx].beltChanged ? 'opp' : 'mgr';
+      await ndlElementToPNG(stage, `${activeSeasonFilePrefix()}_Belt_${STATE.filters.year}.png`, {
+        width: stage.offsetWidth,
+        onclone: (doc, clone) => {
+          const tb = clone.querySelector('#belt-tbody');
+          if (!tb) return;
+          tb.innerHTML = '';
+          rows.forEach((r, i) => tb.appendChild(createBeltRowElement(r, i, false)));
+          const tr = tb.querySelector(`tr[data-row-idx="${lastIdx}"]`);
+          const cell = tr && (tr.querySelector(`td[data-col="${col}"]`) || tr.querySelector('td[data-col="mgr"]'));
+          const belt = clone.querySelector('#floating-championship-belt');
+          if (!cell || !belt) return;
+          tr.classList.add('belt-row-active');
+          cell.classList.add('belt-cell-holder-glow');
+          belt.classList.remove('hidden', 'belt-shine-active');
+          belt.style.animation = 'none';
+          belt.style.transition = 'none';
+          const beltH = belt.offsetHeight || 22;
+          let top = 0, left = 0;
+          for (let el = cell; el && el !== clone; el = el.offsetParent) { top += el.offsetTop; left += el.offsetLeft; }
+          belt.style.left = `${left + cell.offsetWidth / 2}px`;
+          belt.style.top = `${Math.max(0, top + cell.offsetHeight - beltH - 1)}px`;
+        }
+      });
+    }
+
+    function ndlSetupPngButtons() {
+      const bind = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', () => ndlWithBusy(b, fn)); };
+      const f = STATE.filters;
+      bind('btn-export-standings-png', () => ndlElementToPNG(document.getElementById('standings-table-wrap'), `${activeSeasonFilePrefix()}_Standings_${f.year}_Wk${f.weekMin}-${f.weekMax}.png`));
+      bind('btn-export-matchups-png', () => ndlElementToPNG(document.getElementById('matchups-table-wrap'), `${activeSeasonFilePrefix()}_Matchups_${f.year}_Week_${f.weekMax}.png`));
+      bind('btn-export-props-table-png', () => ndlElementToPNG(document.getElementById('props-table-wrap'), `${activeSeasonFilePrefix()}_Prop_Bets_${f.year}.png`));
+      bind('btn-export-pos-table-png', () => {
+        const v = STATE.positions.last;
+        const name = v
+          ? `${activeSeasonFilePrefix(v.yr, v.league).toLowerCase()}_points_by_position_table_${v.viewMode}_${v.yr}_w${v.wkMin}-${v.wkMax}.png`
+          : `${activeSeasonFilePrefix().toLowerCase()}_points_by_position_table.png`;
+        return ndlElementToPNG(document.getElementById('pos-table-wrap'), name);
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
       setupTabNavigation();
@@ -8781,6 +8887,7 @@
       applyTabFilterVisibility(FilterEngine.activeTab());
       setupTableSorting();
       setupSparklineTooltips();
+      ndlSetupPngButtons();
 
       const clearMgrBtn = document.getElementById('clear-manager-filter');
       if (clearMgrBtn) clearMgrBtn.addEventListener('click', () => {
