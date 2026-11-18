@@ -516,6 +516,18 @@
     .dark .hist-sticky-col {
       background-color: #020617;
     }
+    /* ---- Historical: clickable filters & current year/week highlights ---- */
+    .hist-click { cursor: pointer; }
+    .hist-click:hover { text-decoration: underline; text-underline-offset: 2px; }
+    .hist-table td.hist-hl-yr, .hist-table th.hist-hl-yr { background-color: rgba(245, 158, 11, 0.32) !important; font-weight: 800; }
+    .hist-table td.hist-hl-wk { background-color: rgba(56, 189, 248, 0.38) !important; font-weight: 800; }
+    .hist-table td.hist-hl-wk-prev { background-color: rgba(56, 189, 248, 0.18) !important; font-weight: 700; }
+    .hist-chip {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 600;
+      padding: 2px 9px; border-radius: 9999px; cursor: pointer;
+      background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+    .hist-chip:hover { background: rgba(245, 158, 11, 0.28); }
     .hist-summary-row td {
       font-weight: 800;
       border-top: 2px solid #94a3b8;
@@ -1316,7 +1328,7 @@
             <label for="hist-section-select" class="text-slate-500 dark:text-slate-400 font-semibold">Report:</label>
             <select id="hist-section-select" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-md px-2.5 py-1 focus:ring-1 focus:ring-brand-500 outline-none">
               <option value="all">All Reports (Full Archive)</option>
-              <option value="yearly">Yearly Matrices (ETEW, WABL, Trades)</option>
+              <option value="yearly">Yearly Matrices (ETEW, Final Rank, RABL, WABL, Efficiency, Trades)</option>
               <option value="matchup_records">All-Time Matchup Records (Top 40 &amp; Ties)</option>
               <option value="pos_records">All-Time Positional Records (QB, RB, WR, TE)</option>
             </select>
@@ -7751,6 +7763,7 @@
         wablMatrix[m] = { bySeason: {}, grandWabl: 0, countedSeasons: 0 };
       });
 
+      const seasonPf = {}; // seasonKey -> { mgr: total PF } (ETEW-rank tiebreak for RABL)
       seasons.forEach(s => {
         const sWeeks = teamWeeks.filter(tw => rowMatchesSeason(tw, s.year, s.league));
         const byMgr = new Map();
@@ -7760,6 +7773,7 @@
         });
         byMgr.forEach((rows, mgr) => {
           const shareSum = rows.reduce((a, r) => a + r.etewShare, 0);
+          (seasonPf[s.key] = seasonPf[s.key] || {})[mgr] = rows.reduce((a, r) => a + r.pf, 0);
           const pct = rows.length > 0 ? shareSum / rows.length : null;
           etewMatrix[mgr].bySeason[s.key] = pct;
           etewMatrix[mgr].shareSum += shareSum;
@@ -7797,6 +7811,86 @@
         wablSDevBySeason[s.key] = histSampleDev(wablManagers.map(m => wablMatrix[m].bySeason[s.key]));
       });
       const etewGrandSDev = histSampleDev(etewManagers.map(m => etewMatrix[m].grandPct));
+
+      // --------------------------------------------------
+      // 2b. FINAL_RANK, RABL (ETEW rank - final rank) and Efficiency (real / optimal starter points)
+      // --------------------------------------------------
+      const finalRankMatrix = {};
+      const rablRankMatrix = {};
+      const effMatrix = {};
+      allManagersSet.forEach(m => {
+        finalRankMatrix[m] = { bySeason: {}, sum: 0, n: 0, avg: null };
+        rablRankMatrix[m] = { bySeason: {}, total: 0, n: 0 };
+        effMatrix[m] = { bySeason: {}, real: 0, opt: 0, grand: null };
+      });
+
+      seasons.forEach(s => {
+        let fr = null;
+        try { fr = computeFinalRanks(s.year, s.league); } catch (e) { fr = null; }
+        if (!fr) return;
+        const mgrsInSeason = Object.keys(etewMatrix).filter(m => etewMatrix[m].bySeason[s.key] !== undefined && etewMatrix[m].bySeason[s.key] !== null);
+        const pfMap = seasonPf[s.key] || {};
+        mgrsInSeason.sort((a, b) => (etewMatrix[b].bySeason[s.key] - etewMatrix[a].bySeason[s.key]) || ((pfMap[b] || 0) - (pfMap[a] || 0)));
+        const etewRank = {};
+        mgrsInSeason.forEach((m, i) => { etewRank[m] = i + 1; });
+        Object.entries(fr).forEach(([tidStr, rank]) => {
+          const mgr = getManagerName(Number(tidStr), s.year, '', s.league);
+          if (!mgr || !finalRankMatrix[mgr]) return;
+          finalRankMatrix[mgr].bySeason[s.key] = Number(rank);
+          finalRankMatrix[mgr].sum += Number(rank);
+          finalRankMatrix[mgr].n += 1;
+          if (etewRank[mgr] !== undefined) {
+            const rabl = etewRank[mgr] - Number(rank);
+            rablRankMatrix[mgr].bySeason[s.key] = rabl;
+            rablRankMatrix[mgr].total += rabl;
+            rablRankMatrix[mgr].n += 1;
+          }
+        });
+      });
+      Object.values(finalRankMatrix).forEach(e => { e.avg = e.n > 0 ? e.sum / e.n : null; });
+
+      const finalRankManagers = [...allManagersSet]
+        .filter(m => finalRankMatrix[m].n > 0)
+        .sort((a, b) => (finalRankMatrix[a].avg - finalRankMatrix[b].avg) || a.localeCompare(b));
+      const rablManagers = [...allManagersSet]
+        .filter(m => rablRankMatrix[m].n > 0)
+        .sort((a, b) => (rablRankMatrix[b].total - rablRankMatrix[a].total) || a.localeCompare(b));
+
+      try {
+        const twByKey = new Map();
+        teamWeeks.forEach(tw => twByKey.set(`${tw.seasonKey}|${tw.week}|${tw.team_id}`, tw));
+        const accum = {};
+        [...new Set(seasons.map(s => s.year))].forEach(yr => {
+          const norm = getNormalizedForYear(yr);
+          ((norm && norm.summary) || []).forEach(sm => {
+            const tw = twByKey.get(`${makeSeasonKey(sm.year, normLeague(sm.league))}|${sm.week}|${sm.team_id}`);
+            if (!tw || !tw.manager) return;
+            let real = 0, opt = 0;
+            Object.entries(sm.slots || {}).forEach(([slot, v]) => { if (!posIsBench(slot)) real += Number(v) || 0; });
+            Object.entries(sm.optSlots || {}).forEach(([slot, v]) => { if (!posIsBench(slot)) opt += Number(v) || 0; });
+            if (opt <= 0) return;
+            const k = `${tw.manager}|${tw.seasonKey}`;
+            if (!accum[k]) accum[k] = { mgr: tw.manager, sKey: tw.seasonKey, real: 0, opt: 0 };
+            accum[k].real += real;
+            accum[k].opt += opt;
+          });
+        });
+        Object.values(accum).forEach(a => {
+          if (!effMatrix[a.mgr]) return;
+          const sObj = seasons.find(s => s.key === a.sKey);
+          const key = sObj ? sObj.key : a.sKey;
+          effMatrix[a.mgr].bySeason[key] = a.real / a.opt;
+          effMatrix[a.mgr].real += a.real;
+          effMatrix[a.mgr].opt += a.opt;
+        });
+      } catch (e) { console.warn('[Historical] efficiency matrix failed', e); }
+      Object.values(effMatrix).forEach(e => { e.grand = e.opt > 0 ? e.real / e.opt : null; });
+      const effManagers = [...allManagersSet]
+        .filter(m => effMatrix[m].grand !== null)
+        .sort((a, b) => (effMatrix[b].grand - effMatrix[a].grand) || a.localeCompare(b));
+      const effSDevBySeason = {};
+      seasons.forEach(s => { effSDevBySeason[s.key] = histSampleDev(effManagers.map(m => effMatrix[m].bySeason[s.key])); });
+      const effGrandSDev = histSampleDev(effManagers.map(m => effMatrix[m].grand));
 
       // --------------------------------------------------
       // 3. Trades by Year (In-Season)
@@ -7871,13 +7965,6 @@
           result: tw.outcome.result
         }));
 
-      const sortDescPf = (a, b) => (b.pf - a.pf) || (b.year - a.year) || (a.week - b.week);
-      const highestPf = [...matchupRows].sort(sortDescPf).slice(0, 40);
-      const lowestPf = [...matchupRows].sort((a, b) => (a.pf - b.pf) || (b.year - a.year) || (a.week - b.week)).slice(0, 40);
-      const biggestBlowouts = [...matchupRows].filter(r => r.result === 'W').sort((a, b) => (b.delta - a.delta) || (b.pf - a.pf)).slice(0, 40);
-      const closestLosses = [...matchupRows].filter(r => r.result === 'L').sort((a, b) => (Math.abs(a.delta) - Math.abs(b.delta)) || (b.pf - a.pf)).slice(0, 40);
-      const highestLosses = [...matchupRows].filter(r => r.result === 'L').sort(sortDescPf).slice(0, 40);
-
       // Deduplicated matchups (one row per game, winner first) for Highest-Scoring Matchups
       const uniqueGamesMap = new Map();
       matchupRows.forEach(r => {
@@ -7887,11 +7974,7 @@
           uniqueGamesMap.set(pairKey, r);
         }
       });
-      const highestMatchups = [...uniqueGamesMap.values()].sort((a, b) => (b.ptot - a.ptot) || (b.pf - a.pf)).slice(0, 40);
-
-      const ties = matchupRows
-        .filter(r => r.result === 'T')
-        .sort((a, b) => (a.year - b.year) || (a.week - b.week) || (b.pf - a.pf));
+      const uniqueGames = [...uniqueGamesMap.values()];
 
       // --------------------------------------------------
       // 5. All-Time Positional Weekly Scores (QB, RB, WR, TE Top 40)
@@ -7950,11 +8033,9 @@
         });
       });
 
-      const topPos = {};
+      const posAll = {};
       ['QB', 'RB', 'WR', 'TE'].forEach(pos => {
-        topPos[pos] = posBuckets[pos]
-          .sort((a, b) => (b.points - a.points) || (b.year - a.year) || (a.week - b.week))
-          .slice(0, 40);
+        posAll[pos] = posBuckets[pos].sort((a, b) => (b.points - a.points) || (b.year - a.year) || (a.week - b.week));
       });
 
       const computed = {
@@ -7963,21 +8044,24 @@
         etewMatrix,
         etewSDevBySeason,
         etewGrandSDev,
+        finalRankManagers,
+        finalRankMatrix,
+        rablManagers,
+        rablRankMatrix,
         wablManagers,
         wablMatrix,
         wablSDevBySeason,
+        effManagers,
+        effMatrix,
+        effSDevBySeason,
+        effGrandSDev,
         tradeManagers,
         tradesMatrix,
         tradeSeasonTotals,
         tradeGrandAll,
-        highestPf,
-        lowestPf,
-        biggestBlowouts,
-        closestLosses,
-        highestLosses,
-        highestMatchups,
-        ties,
-        topPos
+        matchupRows,
+        uniqueGames,
+        posAll
       };
 
       STATE.historical._cacheKey = cacheKey;
@@ -7985,30 +8069,135 @@
       return computed;
     }
 
-    function histBuildYearlyMatrixCard(title, subtitle, seasons, managers, getCellFn, getGrandFn, sdevRowFn) {
+    // ---------- Historical: clickable column filters & current year/week highlights ----------
+    function histFilters() {
+      const H = STATE.historical;
+      if (!H.filters) H.filters = { lg: null, year: null, week: null, opp: null, st: null, player: null };
+      return H.filters;
+    }
+
+    function histToggleFilter(key, raw) {
+      const f = histFilters();
+      const val = (key === 'year' || key === 'week') ? Number(raw) : String(raw);
+      f[key] = (f[key] === val) ? null : val;
+      renderHistoricalTab();
+    }
+
+    function histClearFilters() {
+      const f = histFilters();
+      Object.keys(f).forEach(k => { f[k] = null; });
+      STATE.filters.selectedManager = null;
+      renderStandingsTable();
+      updateFilterBadge();
+      updateUrlHash();
+      renderHistoricalTab();
+    }
+
+    function histClickAttr(key, val) {
+      return `data-val="${escapeHTML(String(val))}" onclick="histToggleFilter('${key}', this.dataset.val)" title="Click to filter"`;
+    }
+
+    function histCW() {
+      const cw = getCurrentYearAndWeek();
+      return cw ? { y: Number(cw.curYear), w: Number(cw.curWeek) } : null;
+    }
+    function histYrCls(yr) {
+      const c = histCW();
+      return c && Number(yr) === c.y ? 'hist-hl-yr' : '';
+    }
+    // Week highlight applies to the current week and the week before it, within the current year
+    function histWkCls(yr, wk) {
+      const c = histCW();
+      if (!c || Number(yr) !== c.y) return '';
+      if (Number(wk) === c.w) return 'hist-hl-wk';
+      if (Number(wk) === c.w - 1) return 'hist-hl-wk-prev';
+      return '';
+    }
+
+    function histBuildFilterBar() {
+      const f = histFilters();
+      const sm = STATE.filters.selectedManager;
+      const chips = [];
+      const chip = (label, val, onclick) => `<button type="button" class="hist-chip" data-val="${escapeHTML(String(val))}" onclick="${onclick}">${label}: <b>${escapeHTML(String(val))}</b> <i class="fa-solid fa-xmark text-[10px]"></i></button>`;
+      if (sm) chips.push(chip('MGR', sm, 'toggleManagerFilter(this.dataset.val)'));
+      [['lg', 'LG'], ['year', 'YR'], ['week', 'WK'], ['opp', 'OPP'], ['st', 'ST'], ['player', 'PLAYER']].forEach(([k, label]) => {
+        if (f[k] !== null && f[k] !== undefined) chips.push(chip(label, f[k], `histToggleFilter('${k}', this.dataset.val)`));
+      });
+      if (!chips.length) return '';
+      return `<div class="flex flex-wrap items-center gap-2 px-1">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Filters</span>
+        ${chips.join('')}
+        <button type="button" class="text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline" onclick="histClearFilters()">Clear all</button>
+      </div>`;
+    }
+
+    // Applies the active filters BEFORE ranking/slicing, so every table is a true Top 40 within the filter
+    function histGetViewLists(d) {
+      const f = histFilters();
+      const sm = STATE.filters.selectedManager;
+      const pass = (r, game) => {
+        if (sm && !(game ? (r.mgr === sm || r.opp === sm) : r.mgr === sm)) return false;
+        if (f.lg && r.league !== f.lg) return false;
+        if (f.year && r.year !== f.year) return false;
+        if (f.week && r.week !== f.week) return false;
+        if (f.opp && r.opp !== undefined && !(game ? (r.opp === f.opp || r.mgr === f.opp) : r.opp === f.opp)) return false;
+        if (f.st && r.st !== undefined && r.st !== f.st) return false;
+        if (f.player && r.player !== undefined && r.player !== f.player) return false;
+        return true;
+      };
+      const mr = d.matchupRows.filter(r => pass(r, false));
+      const sortDescPf = (a, b) => (b.pf - a.pf) || (b.year - a.year) || (a.week - b.week);
+      const isDead = r => String(r.mgr || '').trim().toLowerCase() === 'dead';
+      const pos = {};
+      ['QB', 'RB', 'WR', 'TE'].forEach(p => { pos[p] = d.posAll[p].filter(r => pass(r, false)).slice(0, 40); });
+      return {
+        highestPf: [...mr].sort(sortDescPf).slice(0, 40),
+        lowestPf: mr.filter(r => !isDead(r)).sort((a, b) => (a.pf - b.pf) || (b.year - a.year) || (a.week - b.week)).slice(0, 40),
+        biggestBlowouts: mr.filter(r => r.result === 'W').sort((a, b) => (b.delta - a.delta) || (b.pf - a.pf)).slice(0, 40),
+        closestLosses: mr.filter(r => r.result === 'L').sort((a, b) => (Math.abs(a.delta) - Math.abs(b.delta)) || (b.pf - a.pf)).slice(0, 40),
+        highestLosses: mr.filter(r => r.result === 'L').sort(sortDescPf).slice(0, 40),
+        highestMatchups: d.uniqueGames.filter(r => pass(r, true)).sort((a, b) => (b.ptot - a.ptot) || (b.pf - a.pf)).slice(0, 40),
+        ties: mr.filter(r => r.result === 'T').sort((a, b) => (a.year - b.year) || (a.week - b.week) || (b.pf - a.pf)),
+        pos
+      };
+    }
+
+    // ---------- Yearly matrices ----------
+    function histStats(vals) {
+      const clean = vals.filter(v => typeof v === 'number' && !isNaN(v));
+      if (!clean.length) return null;
+      const sorted = [...clean].sort((a, b) => a - b);
+      return { min: sorted[0], mid: sorted[Math.floor(sorted.length / 2)], max: sorted[sorted.length - 1], maxAbs: Math.max(...clean.map(Math.abs), 0.01) };
+    }
+
+    function histHeat(cell, st) {
+      if (!cell || cell.val === null || cell.val === undefined || !st) return 'transparent';
+      switch (cell.heat) {
+        case 'diverging': return HEATMAPS.zeroCenteredDiverging(cell.val, st.maxAbs);
+        case 'pct': return HEATMAPS.greenClearRed(cell.val, st.min, 0.5, st.max);
+        case 'median': return HEATMAPS.greenClearRed(cell.val, st.min, st.mid, st.max);
+        case 'count': return HEATMAPS.greenToClear(cell.val, st.min, st.max);
+        case 'rank': return HEATMAPS.greenToClear(st.max + st.min - cell.val, st.min, st.max); // lower rank = greener
+      }
+      return 'transparent';
+    }
+
+    function histBuildYearlyMatrixCard(title, subtitle, allSeasons, managers, getCellFn, getGrandFn, sdevRowFn, opts = {}) {
+      const f = histFilters();
       const selMgr = STATE.filters.selectedManager;
       const filteredMgrs = selMgr ? managers.filter(m => m === selMgr) : managers;
+      const seasons = allSeasons.filter(s => (!f.lg || (s.league || 'OKL') === f.lg) && (!f.year || s.year === f.year));
+      const grandLabel = opts.grandLabel || 'GRAND TOTAL';
 
-      const yearHeaders = seasons.map(s => `<th class="text-right">${s.year}</th>`).join('');
-      const lgHeaders = seasons.map(s => `<th class="text-center text-[10px] text-slate-400 dark:text-slate-500">${escapeHTML(s.league || 'OKL')}</th>`).join('');
+      const yearHeaders = seasons.map(s => `<th class="text-right hist-click ${histYrCls(s.year)}" ${histClickAttr('year', s.year)}>${s.year}</th>`).join('');
+      const lgHeaders = seasons.map(s => {
+        const lg = s.league || 'OKL';
+        return `<th class="text-center text-[10px] text-slate-400 dark:text-slate-500 hist-click ${histYrCls(s.year)}" ${histClickAttr('lg', lg)}>${escapeHTML(lg)}</th>`;
+      }).join('');
 
-      // Precompute column stats per season for heatmap shading
       const colStats = {};
-      seasons.forEach(s => {
-        const vals = managers.map(m => getCellFn(m, s.key)?.val).filter(v => typeof v === 'number' && !isNaN(v));
-        if (vals.length) {
-          const min = Math.min(...vals), max = Math.max(...vals);
-          const sorted = [...vals].sort((a, b) => a - b);
-          colStats[s.key] = { min, mid: sorted[Math.floor(sorted.length / 2)], max, maxAbs: Math.max(...vals.map(Math.abs), 0.01) };
-        }
-      });
-      const grandVals = managers.map(m => getGrandFn(m)?.val).filter(v => typeof v === 'number' && !isNaN(v));
-      const grandStats = grandVals.length ? {
-        min: Math.min(...grandVals),
-        mid: [...grandVals].sort((a, b) => a - b)[Math.floor(grandVals.length / 2)],
-        max: Math.max(...grandVals),
-        maxAbs: Math.max(...grandVals.map(Math.abs), 0.01)
-      } : { min: 0, mid: 0, max: 0, maxAbs: 1 };
+      seasons.forEach(s => { colStats[s.key] = histStats(managers.map(m => getCellFn(m, s.key)?.val)); });
+      const grandStats = histStats(managers.map(m => getGrandFn(m)?.val)) || { min: 0, mid: 0, max: 0, maxAbs: 1 };
 
       const bodyRows = filteredMgrs.map(mgr => {
         const mgrColor = getManagerColor(mgr);
@@ -8017,24 +8206,10 @@
           if (!cell || cell.val === null || cell.val === undefined) {
             return `<td class="text-right font-mono text-slate-300 dark:text-slate-700"></td>`;
           }
-          const st = colStats[s.key];
-          let bg = 'transparent';
-          if (st) {
-            if (cell.heat === 'diverging') bg = HEATMAPS.zeroCenteredDiverging(cell.val, st.maxAbs);
-            else if (cell.heat === 'pct') bg = HEATMAPS.greenClearRed(cell.val, st.min, 0.5, st.max);
-            else if (cell.heat === 'count') bg = HEATMAPS.greenToClear(cell.val, st.min, st.max);
-          }
-          return `<td class="text-right font-mono ${cell.cls || ''}" style="background-color:${bg}">${cell.text}</td>`;
+          return `<td class="text-right font-mono ${cell.cls || ''}" style="background-color:${histHeat(cell, colStats[s.key])}">${cell.text}</td>`;
         }).join('');
-
         const gCell = getGrandFn(mgr);
-        let gBg = 'transparent';
-        if (gCell && gCell.val !== null && gCell.val !== undefined) {
-          if (gCell.heat === 'diverging') gBg = HEATMAPS.zeroCenteredDiverging(gCell.val, grandStats.maxAbs);
-          else if (gCell.heat === 'pct') gBg = HEATMAPS.greenClearRed(gCell.val, grandStats.min, 0.5, grandStats.max);
-          else if (gCell.heat === 'count') gBg = HEATMAPS.greenToClear(gCell.val, grandStats.min, grandStats.max);
-        }
-
+        const gBg = gCell ? histHeat(gCell, grandStats) : 'transparent';
         return `
           <tr>
             <td class="hist-sticky-col text-left font-bold cursor-pointer border-r-2 border-slate-300 dark:border-slate-700" onclick="toggleManagerFilter('${escapeHTML(mgr)}')" title="Click to filter manager">
@@ -8061,7 +8236,7 @@
                 <tr>
                   <th rowspan="2" class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">MGR</th>
                   ${yearHeaders}
-                  <th rowspan="2" class="text-right border-l-2 border-slate-300 dark:border-slate-700">GRAND TOTAL</th>
+                  <th rowspan="2" class="text-right border-l-2 border-slate-300 dark:border-slate-700">${escapeHTML(grandLabel)}</th>
                 </tr>
                 <tr>${lgHeaders}</tr>
               </thead>
@@ -8074,9 +8249,8 @@
         </div>`;
     }
 
+    // ---------- Matchup record tables (rows arrive already filtered + sliced) ----------
     function histBuildMatchupRecordCard(title, rows, mode = 'top40') {
-      const selMgr = STATE.filters.selectedManager;
-      const filtered = selMgr ? rows.filter(r => r.mgr === selMgr || r.opp === selMgr) : rows;
       const pfStats = getColStats(rows, r => r.pf);
       const paStats = getColStats(rows, r => r.pa);
       const ptotStats = getColStats(rows, r => r.ptot);
@@ -8084,7 +8258,7 @@
 
       let prevVal = null;
       let prevRank = 1;
-      const bodyHtml = filtered.map((r, i) => {
+      const bodyHtml = rows.map((r, i) => {
         const cmpVal = mode === 'blowout' ? r.delta : mode === 'closest' ? Math.abs(r.delta) : mode === 'ptot' ? r.ptot : r.pf;
         const rank = (prevVal !== null && Math.abs(cmpVal - prevVal) < 1e-6) ? prevRank : (i + 1);
         prevVal = cmpVal;
@@ -8100,11 +8274,11 @@
         return `
           <tr>
             ${mode !== 'ties' ? `<td class="text-center font-mono text-slate-400">${rank}</td>` : ''}
-            <td class="text-center font-mono text-xs text-slate-500 dark:text-slate-400">${escapeHTML(r.league)}</td>
-            <td class="text-center font-mono">${r.year}</td>
-            <td class="text-center font-mono">${r.week}</td>
-            <td class="text-left font-bold cursor-pointer" onclick="toggleManagerFilter('${escapeHTML(r.mgr)}')" style="color:${getManagerColor(r.mgr)}">${escapeHTML(r.mgr)}</td>
-            <td class="text-left font-semibold cursor-pointer" onclick="toggleManagerFilter('${escapeHTML(r.opp)}')" style="color:${getManagerColor(r.opp)}">${escapeHTML(r.opp)}</td>
+            <td class="text-center font-mono text-xs text-slate-500 dark:text-slate-400 hist-click" ${histClickAttr('lg', r.league)}>${escapeHTML(r.league)}</td>
+            <td class="text-center font-mono hist-click ${histYrCls(r.year)}" ${histClickAttr('year', r.year)}>${r.year}</td>
+            <td class="text-center font-mono hist-click ${histWkCls(r.year, r.week)}" ${histClickAttr('week', r.week)}>${r.week}</td>
+            <td class="text-left font-bold cursor-pointer hist-click" onclick="toggleManagerFilter('${escapeHTML(r.mgr)}')" style="color:${getManagerColor(r.mgr)}">${escapeHTML(r.mgr)}</td>
+            <td class="text-left font-semibold hist-click" ${histClickAttr('opp', r.opp)} style="color:${getManagerColor(r.opp)}">${escapeHTML(r.opp)}</td>
             <td class="text-right font-mono font-bold" style="background-color:${pfBg}">${r.pf.toFixed(2)}</td>
             <td class="text-right font-mono" style="background-color:${paBg}">${r.pa.toFixed(2)}</td>
             <td class="text-right font-mono font-semibold" style="background-color:${deltaBg}">${r.delta >= 0 ? '+' : ''}${r.delta.toFixed(2)}</td>
@@ -8116,7 +8290,7 @@
         <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
           <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(title)}</h3>
-            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${mode === 'ties' ? `${filtered.length} rows` : 'Top 40 All-Time'}</span>
+            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${mode === 'ties' ? `${rows.length} rows` : (histActiveFilterCount() ? 'Top 40 (filtered)' : 'Top 40 All-Time')}</span>
           </div>
           <div class="overflow-x-auto max-h-[540px]">
             <table class="hist-table">
@@ -8140,16 +8314,33 @@
         </div>`;
     }
 
+    function histActiveFilterCount() {
+      const f = histFilters();
+      return Object.values(f).filter(v => v !== null && v !== undefined).length + (STATE.filters.selectedManager ? 1 : 0);
+    }
+
+    // ---------- Positional tables ----------
+    // kind: 'g' = green>clear, 'r' = red>clear (INT, FUML)
+    const HIST_POS_STAT_COLS = [
+      ['pass_yds', 'g', false], ['pass_td', 'g', false], ['pass_40', 'g', false], ['pass_int', 'r', true],
+      ['rush_att', 'g', false], ['rush_yds', 'g', false], ['rush_fd', 'g', false], ['rush_td', 'g', false], ['rush_40', 'g', true],
+      ['rec_tgt', 'g', false], ['rec_rec', 'g', false], ['rec_yds', 'g', false], ['rec_fd', 'g', false], ['rec_td', 'g', false], ['rec_40', 'g', true],
+      ['ret_yds', 'g', false], ['ret_td', 'g', true],
+      ['two_pt', 'g', false], ['fum_lost', 'r', false], ['fum_td', 'g', false]
+    ];
+
     function histBuildPositionalRecordCard(posLabel, rows) {
-      const selMgr = STATE.filters.selectedManager;
-      const filtered = selMgr ? rows.filter(r => r.mgr === selMgr) : rows;
       const ptsStats = getColStats(rows, r => r.points);
+      const colStats = {};
+      HIST_POS_STAT_COLS.forEach(([k]) => {
+        const vals = rows.map(r => Number(r[k]) || 0);
+        colStats[k] = vals.length ? { min: Math.min(...vals), max: Math.max(...vals) } : { min: 0, max: 0 };
+      });
+      const border = 'border-r-2 border-slate-300 dark:border-slate-700';
 
       let prevPts = null;
       let prevRank = 1;
-      const fmtInt = v => (v ? String(Math.round(v)) : '0');
-
-      const bodyHtml = filtered.map((r, i) => {
+      const bodyHtml = rows.map((r, i) => {
         const rank = (prevPts !== null && Math.abs(r.points - prevPts) < 1e-6) ? prevRank : (i + 1);
         prevPts = r.points;
         prevRank = rank;
@@ -8158,44 +8349,32 @@
           ? `<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300">BN</span>`
           : `<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">ST</span>`;
 
+        const statCells = HIST_POS_STAT_COLS.map(([k, kind, hasBorder]) => {
+          const v = Number(r[k]) || 0;
+          const st = colStats[k];
+          const bg = kind === 'r' ? HEATMAPS.redToClear(v, st.min, st.max) : HEATMAPS.greenToClear(v, st.min, st.max);
+          return `<td class="text-right font-mono text-xs ${hasBorder ? border : ''}" style="background-color:${bg}">${Math.round(v)}</td>`;
+        }).join('');
+
         return `
           <tr>
             <td class="text-center font-mono text-slate-400">${rank}</td>
-            <td class="text-center font-mono text-xs text-slate-500 dark:text-slate-400">${escapeHTML(r.league)}</td>
-            <td class="text-center font-mono">${r.year}</td>
-            <td class="text-center font-mono">${r.week}</td>
-            <td class="text-left font-bold cursor-pointer" onclick="toggleManagerFilter('${escapeHTML(r.mgr)}')" style="color:${getManagerColor(r.mgr)}">${escapeHTML(r.mgr)}</td>
-            <td class="text-center">${stBadge}</td>
-            <td class="text-left font-semibold">${escapeHTML(r.player)}</td>
-            <td class="text-right font-mono font-extrabold border-r-2 border-slate-300 dark:border-slate-700" style="background-color:${ptsBg}">${r.points.toFixed(2)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.pass_yds)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.pass_td)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.pass_40)}</td>
-            <td class="text-right font-mono text-xs border-r-2 border-slate-300 dark:border-slate-700">${fmtInt(r.pass_int)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.rush_att)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.rush_yds)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.rush_fd)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.rush_td)}</td>
-            <td class="text-right font-mono text-xs border-r-2 border-slate-300 dark:border-slate-700">${fmtInt(r.rush_40)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.rec_tgt)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.rec_rec)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.rec_yds)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.rec_fd)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.rec_td)}</td>
-            <td class="text-right font-mono text-xs border-r-2 border-slate-300 dark:border-slate-700">${fmtInt(r.rec_40)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.ret_yds)}</td>
-            <td class="text-right font-mono text-xs border-r-2 border-slate-300 dark:border-slate-700">${fmtInt(r.ret_td)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.two_pt)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.fum_lost)}</td>
-            <td class="text-right font-mono text-xs">${fmtInt(r.fum_td)}</td>
+            <td class="text-center font-mono text-xs text-slate-500 dark:text-slate-400 hist-click" ${histClickAttr('lg', r.league)}>${escapeHTML(r.league)}</td>
+            <td class="text-center font-mono hist-click ${histYrCls(r.year)}" ${histClickAttr('year', r.year)}>${r.year}</td>
+            <td class="text-center font-mono hist-click ${histWkCls(r.year, r.week)}" ${histClickAttr('week', r.week)}>${r.week}</td>
+            <td class="text-left font-bold cursor-pointer hist-click" onclick="toggleManagerFilter('${escapeHTML(r.mgr)}')" style="color:${getManagerColor(r.mgr)}">${escapeHTML(r.mgr)}</td>
+            <td class="text-center hist-click" ${histClickAttr('st', r.st)}>${stBadge}</td>
+            <td class="text-left font-semibold hist-click" ${histClickAttr('player', r.player)}>${escapeHTML(r.player)}</td>
+            <td class="text-right font-mono font-extrabold ${border}" style="background-color:${ptsBg}">${r.points.toFixed(2)}</td>
+            ${statCells}
           </tr>`;
       }).join('');
 
       return `
         <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
           <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(posLabel)} Weekly Scores — Top 40 All-Time</h3>
-            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">All-Time Single-Week Performances</span>
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(posLabel)} Weekly Scores — Top 40 ${histActiveFilterCount() ? '(Filtered)' : 'All-Time'}</h3>
+            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">Single-Week Performances</span>
           </div>
           <div class="overflow-x-auto max-h-[540px]">
             <table class="hist-table">
@@ -8245,74 +8424,123 @@
         </div>`;
     }
 
+    function histSignedCls(v) {
+      return v > 0.005 ? 'text-emerald-700 dark:text-emerald-300' : v < -0.005 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500';
+    }
+
     function renderHistoricalTab() {
       const root = document.getElementById('hist-content-root');
       if (!root) return;
       const d = computeHistoricalData();
       const sec = STATE.historical.section || 'all';
-      const chunks = [];
+      const chunks = [histBuildFilterBar()];
+      const sdevCell = (txt) => `<td class="text-right font-mono text-xs">${txt}</td>`;
+      const sdevRow = (label, cellsHtml, grandHtml) => `<tr class="hist-summary-row"><td class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">${label}</td>${cellsHtml}<td class="text-right font-mono text-xs border-l-2 border-slate-300 dark:border-slate-700">${grandHtml}</td></tr>`;
+      const pctTxt = v => (v !== null && v !== undefined) ? `${(v * 100).toFixed(1)}%` : '';
 
       if (sec === 'all' || sec === 'yearly') {
         // 1. ETEW by Year
         chunks.push(histBuildYearlyMatrixCard(
           'ETEW by Year',
           'Every Team Every Week expected win percentage across all league seasons',
-          d.seasons,
-          d.etewManagers,
+          d.seasons, d.etewManagers,
           (mgr, sKey) => {
             const v = d.etewMatrix[mgr]?.bySeason[sKey];
             if (v === null || v === undefined) return null;
-            return { val: v, text: `${(v * 100).toFixed(1)}%`, heat: 'pct' };
+            return { val: v, text: pctTxt(v), heat: 'pct' };
           },
           (mgr) => {
             const v = d.etewMatrix[mgr]?.grandPct;
             if (v === null || v === undefined) return null;
-            return { val: v, text: `${(v * 100).toFixed(1)}%`, heat: 'pct' };
+            return { val: v, text: pctTxt(v), heat: 'pct' };
           },
-          (seasons) => {
-            const cells = seasons.map(s => {
-              const sd = d.etewSDevBySeason[s.key];
-              return `<td class="text-right font-mono text-xs">${sd !== null && sd !== undefined ? `${(sd * 100).toFixed(1)}%` : ''}</td>`;
-            }).join('');
-            const gSd = d.etewGrandSDev !== null && d.etewGrandSDev !== undefined ? `${(d.etewGrandSDev * 100).toFixed(1)}%` : '';
-            return `<tr class="hist-summary-row"><td class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">SDev</td>${cells}<td class="text-right font-mono text-xs border-l-2 border-slate-300 dark:border-slate-700">${gSd}</td></tr>`;
-          }
+          (seasons) => sdevRow('SDev', seasons.map(s => sdevCell(pctTxt(d.etewSDevBySeason[s.key]))).join(''), pctTxt(d.etewGrandSDev))
         ));
 
-        // 2. WABL by Year
+        // 2. FINAL_RANK by Year
+        chunks.push(histBuildYearlyMatrixCard(
+          'FINAL_RANK by Year',
+          'Final league finish (playoff results included) for completed seasons; grand column is the average finish',
+          d.seasons, d.finalRankManagers,
+          (mgr, sKey) => {
+            const v = d.finalRankMatrix[mgr]?.bySeason[sKey];
+            if (v === null || v === undefined) return null;
+            return { val: v, text: String(v), heat: 'rank' };
+          },
+          (mgr) => {
+            const v = d.finalRankMatrix[mgr]?.avg;
+            if (v === null || v === undefined) return null;
+            return { val: v, text: v.toFixed(2), heat: 'rank' };
+          },
+          null,
+          { grandLabel: 'AVG' }
+        ));
+
+        // 3. RABL by Year
+        chunks.push(histBuildYearlyMatrixCard(
+          'RABL by Year',
+          'Rank Above Bottom Line: ETEW rank minus final rank (positive = finished higher than ETEW rank)',
+          d.seasons, d.rablManagers,
+          (mgr, sKey) => {
+            const v = d.rablRankMatrix[mgr]?.bySeason[sKey];
+            if (v === null || v === undefined) return null;
+            return { val: v, text: `${v > 0 ? '+' : ''}${v}`, heat: 'diverging', cls: histSignedCls(v) };
+          },
+          (mgr) => {
+            const v = d.rablRankMatrix[mgr]?.total;
+            if (v === null || v === undefined) return null;
+            return { val: v, text: `${v > 0 ? '+' : ''}${v}`, heat: 'diverging', cls: histSignedCls(v) };
+          },
+          null
+        ));
+
+        // 4. WABL by Year
         chunks.push(histBuildYearlyMatrixCard(
           'WABL by Year',
           'Wins Added by Luck (Actual Matchup Wins minus ETEW Expected Wins)',
-          d.seasons,
-          d.wablManagers,
+          d.seasons, d.wablManagers,
           (mgr, sKey) => {
             const v = d.wablMatrix[mgr]?.bySeason[sKey];
             if (v === null || v === undefined) return null;
-            const cls = v > 0.005 ? 'text-emerald-700 dark:text-emerald-300' : v < -0.005 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500';
-            return { val: v, text: `${v >= 0 ? '+' : ''}${v.toFixed(2)}`, heat: 'diverging', cls };
+            return { val: v, text: `${v >= 0 ? '+' : ''}${v.toFixed(2)}`, heat: 'diverging', cls: histSignedCls(v) };
           },
           (mgr) => {
             const v = d.wablMatrix[mgr]?.grandWabl;
             if (v === null || v === undefined) return null;
-            const cls = v > 0.005 ? 'text-emerald-700 dark:text-emerald-300' : v < -0.005 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500';
-            return { val: v, text: `${v >= 0 ? '+' : ''}${v.toFixed(2)}`, heat: 'diverging', cls };
+            return { val: v, text: `${v >= 0 ? '+' : ''}${v.toFixed(2)}`, heat: 'diverging', cls: histSignedCls(v) };
           },
-          (seasons) => {
-            const cells = seasons.map(s => {
-              const sd = d.wablSDevBySeason[s.key];
-              return `<td class="text-right font-mono text-xs">${sd !== null && sd !== undefined ? sd.toFixed(2) : ''}</td>`;
-            }).join('');
-            return `<tr class="hist-summary-row"><td class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">SDev</td>${cells}<td class="text-right font-mono text-xs border-l-2 border-slate-300 dark:border-slate-700"></td></tr>`;
-          }
+          (seasons) => sdevRow('SDev', seasons.map(s => {
+            const sd = d.wablSDevBySeason[s.key];
+            return sdevCell(sd !== null && sd !== undefined ? sd.toFixed(2) : '');
+          }).join(''), '')
         ));
 
-        // 3. Trades by Year
+        // 5. Efficiency by Year
+        if (d.effManagers.length > 0) {
+          chunks.push(histBuildYearlyMatrixCard(
+            'Efficiency by Year',
+            'Starter points scored as a share of the optimal lineup from the full roster (Σ actual ÷ Σ optimal)',
+            d.seasons, d.effManagers,
+            (mgr, sKey) => {
+              const v = d.effMatrix[mgr]?.bySeason[sKey];
+              if (v === null || v === undefined) return null;
+              return { val: v, text: pctTxt(v), heat: 'median' };
+            },
+            (mgr) => {
+              const v = d.effMatrix[mgr]?.grand;
+              if (v === null || v === undefined) return null;
+              return { val: v, text: pctTxt(v), heat: 'median' };
+            },
+            (seasons) => sdevRow('SDev', seasons.map(s => sdevCell(pctTxt(d.effSDevBySeason[s.key]))).join(''), pctTxt(d.effGrandSDev))
+          ));
+        }
+
+        // 6. Trades by Year
         if (d.tradeManagers.length > 0) {
           chunks.push(histBuildYearlyMatrixCard(
             'Trades by Year (In-Season)',
             'Completed in-season trade volume per manager and total league trades',
-            d.seasons,
-            d.tradeManagers,
+            d.seasons, d.tradeManagers,
             (mgr, sKey) => {
               const v = d.tradesMatrix[mgr]?.bySeason[sKey];
               if (!v) return null;
@@ -8322,34 +8550,30 @@
               const v = d.tradesMatrix[mgr]?.grandTotal || 0;
               return { val: v, text: String(v), heat: 'count' };
             },
-            (seasons) => {
-              const cells = seasons.map(s => {
-                const tot = d.tradeSeasonTotals[s.key];
-                return `<td class="text-right font-mono text-xs">${tot ? tot : ''}</td>`;
-              }).join('');
-              return `<tr class="hist-summary-row"><td class="hist-sticky-col text-left border-r-2 border-slate-300 dark:border-slate-700">Grand Total</td>${cells}<td class="text-right font-mono text-xs border-l-2 border-slate-300 dark:border-slate-700">${d.tradeGrandAll}</td></tr>`;
-            }
+            (seasons) => sdevRow('Grand Total', seasons.map(s => {
+              const tot = d.tradeSeasonTotals[s.key];
+              return sdevCell(tot ? tot : '');
+            }).join(''), d.tradeGrandAll)
           ));
         }
       }
 
-      if (sec === 'all' || sec === 'matchup_records') {
-        chunks.push(`<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          ${histBuildMatchupRecordCard('Highest PF', d.highestPf, 'top40')}
-          ${histBuildMatchupRecordCard('Lowest PF', d.lowestPf, 'lowest')}
-          ${histBuildMatchupRecordCard('Biggest Blowouts', d.biggestBlowouts, 'blowout')}
-          ${histBuildMatchupRecordCard('Closest Losses', d.closestLosses, 'closest')}
-          ${histBuildMatchupRecordCard('Highest-Scoring Losses', d.highestLosses, 'top40')}
-          ${histBuildMatchupRecordCard('Highest-Scoring Matchups', d.highestMatchups, 'ptot')}
-        </div>`);
-        chunks.push(histBuildMatchupRecordCard('Official Ties', d.ties, 'ties'));
-      }
-
-      if (sec === 'all' || sec === 'pos_records') {
-        chunks.push(histBuildPositionalRecordCard('QB', d.topPos.QB));
-        chunks.push(histBuildPositionalRecordCard('RB', d.topPos.RB));
-        chunks.push(histBuildPositionalRecordCard('WR', d.topPos.WR));
-        chunks.push(histBuildPositionalRecordCard('TE', d.topPos.TE));
+      if (sec === 'all' || sec === 'matchup_records' || sec === 'pos_records') {
+        const v = histGetViewLists(d);
+        if (sec === 'all' || sec === 'matchup_records') {
+          chunks.push(`<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            ${histBuildMatchupRecordCard('Highest PF', v.highestPf, 'top40')}
+            ${histBuildMatchupRecordCard('Lowest PF', v.lowestPf, 'lowest')}
+            ${histBuildMatchupRecordCard('Biggest Blowouts', v.biggestBlowouts, 'blowout')}
+            ${histBuildMatchupRecordCard('Closest Losses', v.closestLosses, 'closest')}
+            ${histBuildMatchupRecordCard('Highest-Scoring Losses', v.highestLosses, 'top40')}
+            ${histBuildMatchupRecordCard('Highest-Scoring Matchups', v.highestMatchups, 'ptot')}
+          </div>`);
+          chunks.push(histBuildMatchupRecordCard('Official Ties', v.ties, 'ties'));
+        }
+        if (sec === 'all' || sec === 'pos_records') {
+          ['QB', 'RB', 'WR', 'TE'].forEach(p => chunks.push(histBuildPositionalRecordCard(p, v.pos[p])));
+        }
       }
 
       root.innerHTML = chunks.join('');
@@ -8358,13 +8582,14 @@
     function downloadHistoricalCSV() {
       const d = computeHistoricalData();
       const sec = STATE.historical.section || 'all';
+      const v = histGetViewLists(d);
       let rows = [];
       let filename = 'Historical_Archive.csv';
 
       if (sec === 'pos_records') {
         filename = 'Historical_Positional_Top40.csv';
         ['QB', 'RB', 'WR', 'TE'].forEach(pos => {
-          d.topPos[pos].forEach((r, idx) => {
+          v.pos[pos].forEach((r, idx) => {
             rows.push({
               Pos: pos, Rank: idx + 1, League: r.league, Year: r.year, Week: r.week,
               Manager: r.mgr, Status: r.st, Player: r.player, Points: r.points.toFixed(2),
@@ -8382,33 +8607,29 @@
           Manager: r.mgr, Opponent: r.opp, PF: r.pf.toFixed(2), PA: r.pa.toFixed(2),
           Delta: r.delta.toFixed(2), PTOT: r.ptot.toFixed(2)
         }));
-        addCat('Highest PF', d.highestPf);
-        addCat('Lowest PF', d.lowestPf);
-        addCat('Biggest Blowouts', d.biggestBlowouts);
-        addCat('Closest Losses', d.closestLosses);
-        addCat('Highest-Scoring Losses', d.highestLosses);
-        addCat('Highest-Scoring Matchups', d.highestMatchups);
-        addCat('Ties', d.ties);
+        addCat('Highest PF', v.highestPf);
+        addCat('Lowest PF', v.lowestPf);
+        addCat('Biggest Blowouts', v.biggestBlowouts);
+        addCat('Closest Losses', v.closestLosses);
+        addCat('Highest-Scoring Losses', v.highestLosses);
+        addCat('Highest-Scoring Matchups', v.highestMatchups);
+        addCat('Ties', v.ties);
       } else {
-        filename = 'Historical_Yearly_ETEW_WABL_Trades.csv';
-        d.etewManagers.forEach(mgr => {
-          const row = { Metric: 'ETEW%', Manager: mgr };
-          d.seasons.forEach(s => {
-            const v = d.etewMatrix[mgr]?.bySeason[s.key];
-            row[s.label] = (v !== null && v !== undefined) ? `${(v * 100).toFixed(1)}%` : '';
-          });
-          row['Grand Total'] = d.etewMatrix[mgr]?.grandPct !== null ? `${(d.etewMatrix[mgr].grandPct * 100).toFixed(1)}%` : '';
+        filename = 'Historical_Yearly_Matrices.csv';
+        const addMatrix = (metric, mgrs, getCell, getGrand) => mgrs.forEach(mgr => {
+          const row = { Metric: metric, Manager: mgr };
+          d.seasons.forEach(s => { const c = getCell(mgr, s.key); row[s.label || s.key] = c === null || c === undefined ? '' : c; });
+          const g = getGrand(mgr);
+          row['Grand Total'] = g === null || g === undefined ? '' : g;
           rows.push(row);
         });
-        d.wablManagers.forEach(mgr => {
-          const row = { Metric: 'WABL', Manager: mgr };
-          d.seasons.forEach(s => {
-            const v = d.wablMatrix[mgr]?.bySeason[s.key];
-            row[s.label] = (v !== null && v !== undefined) ? v.toFixed(2) : '';
-          });
-          row['Grand Total'] = d.wablMatrix[mgr]?.grandWabl.toFixed(2);
-          rows.push(row);
-        });
+        const pct = x => (x === null || x === undefined) ? null : `${(x * 100).toFixed(1)}%`;
+        const f2 = x => (x === null || x === undefined) ? null : x.toFixed(2);
+        addMatrix('ETEW%', d.etewManagers, (m, k) => pct(d.etewMatrix[m]?.bySeason[k]), m => pct(d.etewMatrix[m]?.grandPct));
+        addMatrix('FINAL_RANK', d.finalRankManagers, (m, k) => d.finalRankMatrix[m]?.bySeason[k], m => f2(d.finalRankMatrix[m]?.avg));
+        addMatrix('RABL', d.rablManagers, (m, k) => d.rablRankMatrix[m]?.bySeason[k], m => d.rablRankMatrix[m]?.total);
+        addMatrix('WABL', d.wablManagers, (m, k) => f2(d.wablMatrix[m]?.bySeason[k]), m => f2(d.wablMatrix[m]?.grandWabl));
+        addMatrix('Efficiency', d.effManagers, (m, k) => pct(d.effMatrix[m]?.bySeason[k]), m => pct(d.effMatrix[m]?.grand));
       }
 
       const csv = Papa.unparse(rows);
