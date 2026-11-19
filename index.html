@@ -198,6 +198,17 @@
       min-width: max-content;
     }
 
+    .survivor-table .sv-mob { display: none; }
+    @media (max-width: 640px) {
+      #survivor-colgroup col:first-child { width: 74px !important; }
+      .survivor-table .sv-team { display: none; }
+      .survivor-table .sv-desk { display: none; }
+      .survivor-table .sv-mob { display: inline; }
+      .survivor-table td:first-child, .survivor-table th:first-child { padding-left: 6px !important; padding-right: 4px !important; }
+      .survivor-table .sv-mgr { border-right: 0 !important; margin-right: 0 !important; padding-right: 0 !important; }
+      #survivor-table-container { padding: 0.5rem !important; }
+    }
+
     @keyframes survivorBarReveal {
       0% {
         opacity: 0;
@@ -894,8 +905,8 @@
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="survivor-speed-slider" min="0.5" max="5" value="1" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="survivor-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
+            <input type="range" id="survivor-speed-slider" min="0.5" max="6" value="2" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="survivor-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">2x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -926,9 +937,6 @@
           <button id="btn-export-props-table-png" title="Download as PNG image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> Table PNG</button>
           <button id="btn-export-props-csv" title="Download Props Table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
             <i class="fa-solid fa-file-csv"></i> Table CSV
-          </button>
-          <button id="btn-export-div-png" title="Download Divisional Chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1">
-            <i class="fa-solid fa-file-image"></i> Chart PNG
           </button>
         </div>
       </div>
@@ -998,14 +1006,18 @@
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="div-speed-slider" min="0.5" max="5" value="1" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="div-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
+            <input type="range" id="div-speed-slider" min="0.5" max="6" value="2" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="div-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">2x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <i class="fa-solid fa-clock text-slate-400"></i>
             <input type="range" id="div-scrubber" min="0" max="100" value="100" class="w-44 md:w-64 accent-brand-500 cursor-pointer" />
           </div>
+
+          <button id="btn-export-div-png" title="Download Divisional Chart PNG" class="bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 transition flex items-center gap-1.5 font-semibold">
+            <i class="fa-solid fa-file-image"></i> Chart PNG
+          </button>
         </div>
       </div>
     </section>
@@ -1051,8 +1063,8 @@
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="wae-speed-slider" min="0.5" max="5" value="1" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="wae-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
+            <input type="range" id="wae-speed-slider" min="0.5" max="6" value="2" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="wae-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">2x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -1135,8 +1147,8 @@
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="replay-speed-slider" min="1" max="10" value="3" step="1" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="replay-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">3x</span>
+            <input type="range" id="replay-speed-slider" min="1" max="12" value="6" step="1" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="replay-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">6x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -1293,8 +1305,8 @@
         <div class="flex flex-wrap items-center gap-3 sm:gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="belt-speed-slider" min="0.5" max="5" value="1" step="0.5" class="w-16 sm:w-20 accent-brand-500 cursor-pointer" />
-            <span id="belt-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[28px]">1x</span>
+            <input type="range" id="belt-speed-slider" min="0.5" max="6" value="2" step="0.5" class="w-16 sm:w-20 accent-brand-500 cursor-pointer" />
+            <span id="belt-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[28px]">2x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -1351,17 +1363,17 @@
           </div>
           <div id="pos-legend" class="flex flex-wrap justify-center gap-2 mt-3"></div>
           <div id="pos-hint" class="text-center text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">Tap a team to see its week-by-week points by position</div>
-          <div class="flex items-center justify-end gap-2 mt-3 text-xs">
-            <button id="btn-export-pos-csv" title="Download table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-csv"></i> CSV</button>
-            <button id="btn-export-pos-png" title="Download chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-image"></i> Chart PNG</button>
-          </div>
         </div>
         <div id="pos-warnings" class="hidden mt-3 text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded px-2.5 py-1.5"></div>
       </div>
 
-      <div class="flex items-center justify-end px-1 text-xs"><button id="btn-export-pos-table-png" title="Download as PNG image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> Table PNG</button></div>
       <div id="pos-table-wrap" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="pos-table" id="pos-table"></table>
+      </div>
+      <div id="pos-export-row" class="flex items-center justify-end gap-2 px-1 text-xs">
+        <button id="btn-export-pos-csv" title="Download table CSV" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-csv"></i> CSV</button>
+        <button id="btn-export-pos-png" title="Download chart PNG" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1"><i class="fa-solid fa-file-image"></i> Chart PNG</button>
+        <button id="btn-export-pos-table-png" title="Download as PNG image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> Table PNG</button>
       </div>
     </section>
 
@@ -1496,21 +1508,21 @@
       computedStandings: [],
       liveProb: {
         chartInstance: null, fullSeries: null, animationTimer: null,
-        isPlaying: false, currentIdx: 0, speedMultiplier: 3
+        isPlaying: false, currentIdx: 0, speedMultiplier: 6
       },
       wae: {
         chartInstance: null, metric: 'wae', mode: 'matchup',
         fullSeries: null, animationTimer: null, isPlaying: false,
-        currentIdx: 0, speedMultiplier: 1.0
+        currentIdx: 0, speedMultiplier: 2.0
       },
       props: {
         chartInstance: null, fullSeries: null, computedProps: [],
-        animationTimer: null, isPlaying: false, currentIdx: 0, speedMultiplier: 1.0
+        animationTimer: null, isPlaying: false, currentIdx: 0, speedMultiplier: 2.0
       },
       survivor: {
         viewMode: 'table', // 'table' or 'chart'
         chartInstance: null, fullSeries: null, animationTimer: null,
-        isPlaying: false, currentIdx: 0, prevIdx: 0, speedMultiplier: 1.0
+        isPlaying: false, currentIdx: 0, prevIdx: 0, speedMultiplier: 2.0
       },
       positions: { sub: 'season', allYears: true, viewMode: 'real', showBench: true, hidden: new Set(), chartInstance: null, last: null, _v: -1, _cache: {}, _sfx: null },
       belt: {
@@ -1521,7 +1533,7 @@
         currentIdx: 0,
         activeCol: 'mgr',
         renderedCount: 0,
-        speedMultiplier: 1.0
+        speedMultiplier: 2.0
       },
       historical: {
         section: 'all',
@@ -3570,7 +3582,9 @@
           const targetIdx = Math.max(1, Math.round((pct / 100) * total));
           STATE.survivor.prevIdx = STATE.survivor.currentIdx;
           STATE.survivor.currentIdx = targetIdx;
+          STATE.survivor._forceScroll = true;
           renderSurvivorFrameAtIdx(targetIdx, false);
+          STATE.survivor._forceScroll = false;
         });
       }
 
@@ -3617,7 +3631,7 @@
       }
       colgroup.innerHTML = colHtml;
 
-      let headHtml = `<tr><th class="text-left font-extrabold px-3 py-2.5 text-slate-700 dark:text-slate-300 sticky left-0 z-10 bg-slate-100 dark:bg-slate-900">TEAM</th>`;
+      let headHtml = `<tr><th class="text-left font-extrabold px-3 py-2.5 text-slate-700 dark:text-slate-300 sticky left-0 z-10 bg-slate-100 dark:bg-slate-900"><span class="sv-desk">TEAM</span><span class="sv-mob">MGR</span></th>`;
       for (let w = 1; w <= s.maxWeek; w++) {
         const isCurrent = curWk !== null && w === curWk;
         const thClass = isCurrent
@@ -3821,8 +3835,32 @@
               display: false
             },
             legend: {
-              position: 'right',
-              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 12 }
+              position: 'bottom',
+              onClick: (e, item, legend) => {
+                const name = legend.chart.data.datasets[item.datasetIndex].label;
+                STATE.survivor.highlight = (STATE.survivor.highlight === name) ? null : name;
+                applySurvivorHighlight();
+              },
+              onHover: (e) => { if (e && e.native && e.native.target) e.native.target.style.cursor = 'pointer'; },
+              onLeave: (e) => { if (e && e.native && e.native.target) e.native.target.style.cursor = 'default'; },
+              labels: {
+                color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 10,
+                generateLabels: (chart) => {
+                  const hl = STATE.survivor.highlight;
+                  const base = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                  base.forEach((it) => {
+                    const ds = chart.data.datasets[it.datasetIndex];
+                    const c = ds._baseColor || ds.borderColor;
+                    it.fillStyle = c; it.strokeStyle = c; it.hidden = false;
+                    it.lineWidth = 0;
+                    const dim = hl && ds.label !== hl;
+                    it.fontColor = dim ? hexToRgba(isDark ? '#94a3b8' : '#475569', 0.4) : textColor;
+                    if (dim) { it.fillStyle = hexToRgba(c, 0.25); }
+                    it.textDecoration = '';
+                  });
+                  return base;
+                }
+              }
             },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
@@ -3860,6 +3898,44 @@
           }
         }
       });
+      if (STATE.survivor.highlight) applySurvivorHighlight();
+    }
+
+    function survivorAutoScrollToWeek(wk, smooth) {
+      if (!window.matchMedia || !window.matchMedia('(max-width: 640px)').matches) return;
+      const table = document.getElementById('survivor-table');
+      if (!table) return;
+      const scroller = table.parentElement;
+      const th = table.querySelectorAll('thead th')[wk];
+      if (!scroller || !th) return;
+      const target = Math.max(0, th.offsetLeft + th.offsetWidth - scroller.clientWidth + 6);
+      if (typeof scroller.scrollTo === 'function') {
+        scroller.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' });
+      } else {
+        scroller.scrollLeft = target;
+      }
+    }
+
+    function applySurvivorHighlight() {
+      const chart = STATE.survivor.chartInstance;
+      if (!chart) return;
+      let hl = STATE.survivor.highlight;
+      if (hl && !chart.data.datasets.some(d => d.label === hl)) { hl = STATE.survivor.highlight = null; }
+      chart.data.datasets.forEach((ds) => {
+        const base = ds._baseColor || ds.borderColor;
+        ds._baseColor = base;
+        if (!hl) {
+          ds.borderColor = base; ds.backgroundColor = base; ds.borderWidth = 2.5;
+        } else if (ds.label === hl) {
+          ds.borderColor = base; ds.backgroundColor = base; ds.borderWidth = 4.5;
+          ds.order = 0;
+        } else {
+          const dim = hexToRgba(base, 0.18);
+          ds.borderColor = dim; ds.backgroundColor = dim; ds.borderWidth = 1.5;
+          ds.order = 1;
+        }
+      });
+      chart.update('none');
     }
 
     function renderSurvivorFrameAtIdx(currentWk, isAnimatingStep = false) {
@@ -3888,8 +3964,8 @@
 
           let rowHtml = `<tr>
             <td class="text-left font-medium px-3 py-2 border-r border-slate-200 dark:border-slate-800 sticky left-0 z-10 bg-white dark:bg-slate-950 truncate">
-              <span class="text-xs font-semibold mr-1.5 inline-block border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${mgrColor}">${escapeHTML(t.manager)}</span>
-              <span class="${teamNameClass}">${escapeHTML(t.teamName)}</span>
+              <span class="sv-mgr text-xs font-semibold mr-1.5 inline-block border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${mgrColor}">${escapeHTML(t.manager)}</span>
+              <span class="sv-team ${teamNameClass}">${escapeHTML(t.teamName)}</span>
             </td>`;
 
           // Loop through ALL weeks 1..s.maxWeek so columns remain fixed in place and fill left-to-right
@@ -3983,6 +4059,11 @@
         }).join('');
       }
 
+      // Mobile: keep the newest revealed week column in view as the animation advances
+      if (isAnimatingStep || STATE.survivor.isPlaying || STATE.survivor._forceScroll) {
+        survivorAutoScrollToWeek(validWk, !!isAnimatingStep);
+      }
+
       // Render Chart View Frame
       const chart = STATE.survivor.chartInstance;
       if (chart) {
@@ -4047,8 +4128,8 @@
 
     function restartSurvivorIntervalTimer() {
       if (STATE.survivor.animationTimer) clearInterval(STATE.survivor.animationTimer);
-      const mult = STATE.survivor.speedMultiplier || 1.0;
-      const intervalMs = Math.max(120, Math.round(750 / mult));
+      const mult = STATE.survivor.speedMultiplier || 2.0;
+      const intervalMs = Math.max(90, Math.round(750 / mult));
 
       STATE.survivor.animationTimer = setInterval(() => {
         const s = STATE.survivor.fullSeries;
@@ -4404,12 +4485,25 @@
         ctx.lineTo(chartArea.right, y0);
         ctx.stroke();
 
-        ctx.font = 'bold 15px ui-sans-serif, system-ui';
-        ctx.fillStyle = isDark ? '#fb923c' : '#ea580c';
-        ctx.fillText('Division 1', chartArea.left - 75, chartArea.top + 30);
+        // Vertical (rotated) division labels in the narrow left gutter
+        ctx.font = 'bold 14px ui-sans-serif, system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const labX = 11;
 
+        ctx.save();
+        ctx.translate(labX, (chartArea.top + y0) / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = isDark ? '#fb923c' : '#ea580c';
+        ctx.fillText('Division 1', 0, 0);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(labX, (y0 + chartArea.bottom) / 2);
+        ctx.rotate(-Math.PI / 2);
         ctx.fillStyle = isDark ? '#a78bfa' : '#6d28d9';
-        ctx.fillText('Division 2', chartArea.left - 75, chartArea.bottom - 30);
+        ctx.fillText('Division 2', 0, 0);
+        ctx.restore();
 
         ctx.restore();
       }
@@ -4557,7 +4651,7 @@
           responsive: true,
           maintainAspectRatio: false,
           animation: false,
-          layout: { padding: { left: 80 } },
+          layout: { padding: { left: 24 } },
           interaction: { mode: 'index', intersect: false },
           plugins: {
             title: {
@@ -4568,8 +4662,8 @@
               padding: { bottom: 15 }
             },
             legend: {
-              position: 'right',
-              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 12 }
+              position: 'bottom',
+              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 10 }
             },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
@@ -4677,7 +4771,7 @@
     function restartDivIntervalTimer() {
       if (STATE.props.animationTimer) clearInterval(STATE.props.animationTimer);
 
-      const mult = STATE.props.speedMultiplier || 1.0;
+      const mult = STATE.props.speedMultiplier || 2.0;
       const intervalMs = Math.max(40, Math.round(350 / mult));
 
       STATE.props.animationTimer = setInterval(() => {
@@ -5189,7 +5283,7 @@
     function restartWaeIntervalTimer() {
       if (STATE.wae.animationTimer) clearInterval(STATE.wae.animationTimer);
 
-      const mult = STATE.wae.speedMultiplier || 1.0;
+      const mult = STATE.wae.speedMultiplier || 2.0;
       const intervalMs = Math.max(40, Math.round(350 / mult));
 
       STATE.wae.animationTimer = setInterval(() => {
@@ -5848,7 +5942,7 @@
 
     function restartIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
-      const mult = STATE.liveProb.speedMultiplier || 3;
+      const mult = STATE.liveProb.speedMultiplier || 6;
       const intervalMs = Math.max(10, Math.round(120 / mult));
 
       STATE.liveProb.animationTimer = setInterval(() => {
@@ -6262,7 +6356,7 @@
       const bottomY = (cellTop + targetCell.offsetHeight) - beltH - 1;
 
       if (animateGlide) {
-        const mult = STATE.belt.speedMultiplier || 1.0;
+        const mult = STATE.belt.speedMultiplier || 2.0;
         const glideMs = Math.max(150, Math.round(420 / mult));
         beltEl.style.transition = `left ${glideMs}ms cubic-bezier(0.22, 1, 0.36, 1), top ${glideMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
       } else {
@@ -6327,7 +6421,7 @@
       const row = lineage.rows[rowIdx];
       if (!row || !row.beltChanged) return;
 
-      const mult = STATE.belt.speedMultiplier || 1.0;
+      const mult = STATE.belt.speedMultiplier || 2.0;
       const transferDelay = Math.max(130, Math.round(380 / mult));
 
       STATE.belt.subTimer = setTimeout(() => {
@@ -6392,8 +6486,8 @@
 
     function restartBeltIntervalTimer() {
       if (STATE.belt.animationTimer) clearInterval(STATE.belt.animationTimer);
-      const mult = STATE.belt.speedMultiplier || 1.0;
-      const intervalMs = Math.max(240, Math.round(920 / mult));
+      const mult = STATE.belt.speedMultiplier || 2.0;
+      const intervalMs = Math.max(140, Math.round(920 / mult));
 
       STATE.belt.animationTimer = setInterval(() => {
         const lineage = STATE.belt.lineage;
@@ -7422,6 +7516,7 @@
       if (!view) {
         if (P.chartInstance) { P.chartInstance.destroy(); P.chartInstance = null; }
         if (host) host.classList.add('hidden');
+        { const er = document.getElementById('pos-export-row'); if (er) er.classList.add('hidden'); }
         document.getElementById('pos-table').innerHTML = '';
         document.getElementById('pos-legend').innerHTML = '';
         if (emptyEl) { emptyEl.textContent = emptyScopeMessage('points data'); emptyEl.classList.remove('hidden'); }
@@ -7429,6 +7524,7 @@
         return;
       }
       if (host) host.classList.remove('hidden');
+      { const er = document.getElementById('pos-export-row'); if (er) er.classList.remove('hidden'); }
       if (emptyEl) emptyEl.classList.add('hidden');
 
       if (warnEl) {
@@ -7523,8 +7619,12 @@
           animation: { duration: 250 },
           interaction: { mode: 'index', intersect: false },
           onClick: (evt, els, chart) => {
-            const pts = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, true);
-            if (pts.length) togglePositionsManager(view.teams[pts[0].index].manager);
+            const idx = posChartTeamIndexAtEvent(chart, evt);
+            if (idx !== null && view.teams[idx]) togglePositionsManager(view.teams[idx].manager);
+          },
+          onHover: (evt, els, chart) => {
+            const t = evt && evt.native && evt.native.target;
+            if (t) t.style.cursor = (posChartTeamIndexAtEvent(chart, evt) !== null) ? 'pointer' : 'default';
           },
           scales: {
             x: {
@@ -7587,6 +7687,20 @@
         },
         plugins: [benchLabelPlugin, alignPlugin]
       });
+    }
+
+    // Resolve which team column an event hits: a bar/plot hit, or a click on the x-axis (manager/team name) label strip.
+    function posChartTeamIndexAtEvent(chart, evt) {
+      if (!chart || !evt) return null;
+      const pts = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, true);
+      if (pts.length) return pts[0].index;
+      const xs = chart.scales && chart.scales.x;
+      if (xs && typeof evt.x === 'number' && typeof evt.y === 'number'
+          && evt.y >= xs.top - 2 && evt.y <= xs.bottom + 8 && evt.x >= xs.left && evt.x <= xs.right) {
+        const v = xs.getValueForPixel(evt.x);
+        if (typeof v === 'number' && v >= 0 && v < xs.ticks.length) return Math.round(v);
+      }
+      return null;
     }
 
     function renderPositionsEfficiencyChart(view) {
@@ -7670,8 +7784,12 @@
           animation: { duration: 250 },
           interaction: { mode: 'index', intersect: false },
           onClick: (evt, els, chart) => {
-            const pts = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, true);
-            if (pts.length) togglePositionsManager(view.teams[pts[0].index].manager);
+            const idx = posChartTeamIndexAtEvent(chart, evt);
+            if (idx !== null && view.teams[idx]) togglePositionsManager(view.teams[idx].manager);
+          },
+          onHover: (evt, els, chart) => {
+            const t = evt && evt.native && evt.native.target;
+            if (t) t.style.cursor = (posChartTeamIndexAtEvent(chart, evt) !== null) ? 'pointer' : 'default';
           },
           scales: {
             x: {
@@ -7768,9 +7886,9 @@
       const isDark = document.documentElement.classList.contains('dark');
       const effColor = isDark ? '#fbbf24' : '#d97706';
       const groups = [
-        { label: 'Real Lineup', color: '#0ea5e9' },
-        { label: 'Bench Gap (Optimal - Real)', color: isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(148, 163, 184, 0.55)' },
-        { label: 'Efficiency (Real / Optimal)', color: effColor }
+        { label: 'Real', color: '#0ea5e9' },
+        { label: 'Gap', color: isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(148, 163, 184, 0.55)' },
+        { label: 'Efficiency', color: effColor }
       ];
       el.innerHTML = groups.map(g =>
         `<span class="pos-legend-item"><span class="pos-chip-dot" style="background:${g.color}"></span>${g.label}</span>`
@@ -8226,27 +8344,24 @@
       const tradesMatrix = {};
       allManagersSet.forEach(m => { tradesMatrix[m] = { bySeason: {}, grandTotal: 0 }; });
 
-      // Count unique trades per manager per season. Column names in the transactions table can vary,
-      // so detection is deliberately tolerant (type column wording, id column names, per-player rows).
+      // Trades are sourced from the live.db `transactions` table: every row whose type is "trade".
+      // Each trade is counted once per participating manager per season (a trade involving two managers counts
+      // for both). Rows are de-duplicated by transaction id / timestamp so multi-player trades count once.
       const seenTradePairs = new Set();
-      const TX_TYPE_KEYS = ['type', 'transaction_type', 'action', 'transaction', 'tx_type', 'move_type', 'kind', 'event'];
-      const TX_TEAM_KEYS = ['team_id', 'trader_team_id', 'from_team_id', 'TMA', 'team_id_a', 'team1_id', 'source_team_id', 'from_team',
-        'tradee_team_id', 'to_team_id', 'TMB', 'team_id_b', 'team2_id', 'dest_team_id', 'destination_team_id', 'to_team',
-        'partner_team_id', 'other_team_id', 'trade_partner_team_id', 'opponent_team_id'];
+      const TX_TYPE_KEYS = ['type', 'transaction_type', 'tx_type', 'action', 'transaction', 'move_type', 'kind', 'event'];
       const txTypesSeen = new Set();
       const isTradeRow = tx => {
         const typed = getVal(tx, TX_TYPE_KEYS);
-        if (typed !== undefined && String(typed).trim() !== '') {
-          const t = String(typed).trim().toLowerCase();
-          if (txTypesSeen.size < 8) txTypesSeen.add(t);
-          return t.includes('trade') || t === 't' || t.startsWith('trd');
-        }
-        return Object.values(tx).some(v => typeof v === 'string' && /\btrade/i.test(v));
+        if (typed === undefined || String(typed).trim() === '') return false;
+        const t = String(typed).trim().toLowerCase();
+        if (txTypesSeen.size < 12) txTypesSeen.add(t);
+        return t === 'trade' || t === 'trades' || t.startsWith('trade') || t.endsWith('trade');
       };
+      const TX_STAMP_KEYS = ['timestamp', 'date', 'created_at', 'created', 'time', 'processed_at', 'datetime'];
       const txYear = tx => {
         const y = Number(getVal(tx, ['year', 'YR', 'season']));
         if (y) return y;
-        let raw = getVal(tx, ['timestamp', 'date', 'created_at', 'created', 'time']);
+        const raw = getVal(tx, TX_STAMP_KEYS);
         if (raw === undefined || raw === '') return 0;
         let d = null;
         if (!isNaN(Number(raw))) { const n = Number(raw); d = new Date(n < 1e12 ? n * 1000 : n); }
@@ -8254,7 +8369,12 @@
         if (!d || isNaN(d.getTime())) return 0;
         return d.getMonth() < 2 ? d.getFullYear() - 1 : d.getFullYear(); // Jan/Feb trades belong to the prior season
       };
+      // Any column that looks like it identifies a team taking part in the trade
+      const TX_TEAMCOL_RE = /(^|_)(team|tm|from|to|partner|trader|tradee|opponent|other|dest|destination|source|owner)(_|$|id|[ab12]$)|^tm[ab]$/i;
+      const TX_NOT_TEAMCOL_RE = /player|week|year|season|league|stamp|date|time|status|type|points|score|id_?number|transaction_id|tx_id|trade_id/i;
       const knownSeasons = FilterEngine.seasons();
+      const mgrByLower = {};
+      allManagersSet.forEach(m => { mgrByLower[String(m).toLowerCase()] = m; });
       let tradeRowCount = 0;
       allTx.forEach(tx => {
         if (!isTradeRow(tx)) return;
@@ -8268,29 +8388,39 @@
         const sKey = sObj ? sObj.key : makeSeasonKey(yr, lg);
         if (!seasons.some(se => se.key === sKey)) return;
 
+        const wkRaw = getVal(tx, ['week', 'WK']);
+        const wkNum = (wkRaw === undefined || wkRaw === null || wkRaw === '') ? null : Number(wkRaw);
+        if (wkNum !== null && !isNaN(wkNum) && wkNum < 1) return; // in-season trades only
+
         const txId = getVal(tx, ['transaction_id', 'tx_id', 'trade_id', 'id']);
-        const stamp = getVal(tx, ['timestamp', 'date', 'created_at', 'created', 'time']);
-        const teamIds = new Set();
-        TX_TEAM_KEYS.forEach(k => {
-          const v = getVal(tx, [k]);
+        const stamp = getVal(tx, TX_STAMP_KEYS);
+
+        const mgrs = new Set();
+        Object.keys(tx).forEach(col => {
+          if (TX_NOT_TEAMCOL_RE.test(col) && !/team_?id|^tm[ab]$/i.test(col)) return;
+          if (!TX_TEAMCOL_RE.test(col)) return;
+          const v = tx[col];
+          if (v === undefined || v === null || v === '') return;
           const n = Number(v);
-          if (v !== undefined && v !== '' && !isNaN(n) && n > 0) teamIds.add(n);
+          if (!isNaN(n) && n > 0) {
+            const mgr = getManagerName(n, yr, '', sObj ? sObj.league : lg);
+            if (mgr && !mgr.startsWith('Team ')) mgrs.add(mgr);
+          } else if (typeof v === 'string') {
+            const hit = mgrByLower[v.trim().toLowerCase()];
+            if (hit) mgrs.add(hit);
+          }
         });
 
-        const addTradeForTeam = (teamId) => {
-          const mgr = getManagerName(teamId, yr, '', sObj ? sObj.league : lg);
-          if (!mgr || mgr.startsWith('Team ')) return;
+        mgrs.forEach(mgr => {
           if (!tradesMatrix[mgr]) tradesMatrix[mgr] = { bySeason: {}, grandTotal: 0 };
-          const ref = (txId !== undefined && txId !== null && txId !== '') ? txId : ((stamp !== undefined && stamp !== '') ? `t${stamp}` : null);
-          if (ref !== null) {
-            const dedupKey = `${sKey}|${ref}|${mgr}`;
-            if (seenTradePairs.has(dedupKey)) return;
-            seenTradePairs.add(dedupKey);
-          }
+          const ref = (txId !== undefined && txId !== null && txId !== '') ? `id${txId}`
+            : ((stamp !== undefined && stamp !== null && stamp !== '') ? `t${stamp}` : `w${wkNum === null ? '' : wkNum}`);
+          const dedupKey = `${sKey}|${ref}|${mgr}`;
+          if (seenTradePairs.has(dedupKey)) return;
+          seenTradePairs.add(dedupKey);
           tradesMatrix[mgr].bySeason[sKey] = (tradesMatrix[mgr].bySeason[sKey] || 0) + 1;
           tradesMatrix[mgr].grandTotal += 1;
-        };
-        teamIds.forEach(addTradeForTeam);
+        });
       });
       const tradeDiag = { txRows: allTx.length, tradeRows: tradeRowCount, types: [...txTypesSeen], cols: allTx[0] ? Object.keys(allTx[0]) : [] };
 
@@ -8494,6 +8624,54 @@
       const off = (hdr ? hdr.getBoundingClientRect().height : 0) + 8;
       window.scrollTo({ top: next.getBoundingClientRect().top + window.scrollY - off, behavior: 'smooth' });
     }
+
+    // ---------- Mobile: snap the closest table to the top (same spot the "next table" arrow lands on) ----------
+    (function histSetupMobileSnap() {
+      let timer = null, touching = false;
+      const isMobile = () => window.innerWidth < 640;
+      function snapNow() {
+        const sec = document.getElementById('tab-historical');
+        if (!isMobile() || !sec || sec.classList.contains('hidden')) return;
+        const cards = histCards();
+        if (!cards.length) return;
+        const hdr = document.querySelector('header');
+        const off = (hdr ? hdr.getBoundingClientRect().height : 0) + 8;
+        const vh = window.innerHeight;
+
+        // first card whose top sits at/below the snap line, and the card (if any) straddling the line
+        const nextIdx = cards.findIndex(c => c.getBoundingClientRect().top >= off - 4);
+        const prev = nextIdx === -1 ? cards[cards.length - 1] : (nextIdx > 0 ? cards[nextIdx - 1] : null);
+        const next = nextIdx === -1 ? null : cards[nextIdx];
+
+        // Reading inside a tall table: leave it alone until its end comes into reach
+        if (prev) {
+          const pr = prev.getBoundingClientRect();
+          if (pr.bottom - off > vh * 0.6) return;
+        }
+        const cand = [];
+        if (prev) cand.push(prev);
+        if (next) cand.push(next);
+        if (!cand.length) return;
+        let best = cand[0], bestD = Infinity;
+        cand.forEach(c => {
+          const d = Math.abs(c.getBoundingClientRect().top - off);
+          if (d < bestD) { bestD = d; best = c; }
+        });
+        const maxScroll = Math.max(0, document.documentElement.scrollHeight - vh);
+        const target = Math.min(maxScroll, Math.max(0, best.getBoundingClientRect().top + window.scrollY - off));
+        if (Math.abs(target - window.scrollY) < 3) return;
+        window.scrollTo({ top: target, behavior: 'smooth' });
+      }
+      function schedule() {
+        if (timer) clearTimeout(timer);
+        if (touching) return;
+        timer = setTimeout(snapNow, 140);
+      }
+      window.addEventListener('scroll', schedule, { passive: true });
+      window.addEventListener('touchstart', () => { touching = true; if (timer) clearTimeout(timer); }, { passive: true });
+      window.addEventListener('touchend', () => { touching = false; schedule(); }, { passive: true });
+      window.addEventListener('touchcancel', () => { touching = false; schedule(); }, { passive: true });
+    })();
 
     // ---------- Keep the user's place on the page across re-renders ----------
     function histCardKey(c) { return String(c.dataset.title || '').split(' \u2014 ')[0]; }
