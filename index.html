@@ -665,13 +665,34 @@
     .pos-mgr-chip { font-size: 0.7rem; font-weight: 700; padding: 2px 9px; border-radius: 9999px; border: 1px solid currentColor; background: transparent; cursor: pointer; transition: opacity .15s ease; }
     .pos-mgr-chip:hover { opacity: 0.8; }
 
+
+    /* Odds tab */
+    .odds-table th, .odds-table td { white-space: nowrap; }
+    .odds-table td.odds-pct { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; }
+    .odds-table td.odds-tot, .odds-table th.odds-tot { border-left: 2px solid #cbd5e1; font-weight: 700; }
+    .dark .odds-table td.odds-tot, .dark .odds-table th.odds-tot { border-left-color: #334155; }
+    .odds-table .odds-cut { border-left: 2px dashed #94a3b8; }
+    .odds-wk-tab { padding: 8px 14px; font-size: 0.8rem; font-weight: 600; color: #0284c7; border: 1px solid transparent; border-bottom: 0; border-radius: 6px 6px 0 0; cursor: pointer; background: transparent; white-space: nowrap; }
+    .odds-wk-tab.active { color: #0f172a; background: #ffffff; border-color: #cbd5e1; }
+    .dark .odds-wk-tab.active { color: #f1f5f9; background: #0f172a; border-color: #334155; }
+    .odds-wk-badge { margin-left: 6px; font-size: 0.65rem; padding: 1px 6px; border-radius: 9999px; background: #0284c7; color: #fff; }
+    .odds-mu { display: grid; grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr); gap: 10px; align-items: stretch; }
+    .odds-btn { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; font-size: 0.82rem; text-align: center; color: #334155; background: transparent; cursor: pointer; line-height: 1.2; transition: background .12s ease, border-color .12s ease; min-height: 40px; }
+    .dark .odds-btn { border-color: #334155; color: #cbd5e1; }
+    .odds-btn:hover { background: rgba(148, 163, 184, 0.18); }
+    .odds-btn .odds-sub { display: block; font-size: 0.65rem; font-weight: 700; margin-top: 2px; }
+    .odds-btn.win { background: #17724a; border-color: #17724a; color: #fff; }
+    .odds-btn.loss { background: #a71d2d; border-color: #a71d2d; color: #fff; }
+    .odds-btn.tie-on { background: #b45309; border-color: #b45309; color: #fff; }
+    .odds-btn.draw { background: #64748b; border-color: #64748b; color: #fff; }
+    .odds-btn.win .odds-sub, .odds-btn.loss .odds-sub, .odds-btn.draw .odds-sub { color: rgba(255,255,255,0.85) !important; }
+    @media (max-width: 639px) { .odds-mu { grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr); gap: 6px; } .odds-btn { font-size: 0.72rem; padding: 6px 4px; } }
+
     /* Historical: mobile-only "next table" arrow */
-    .hist-next-btn, .hist-up-btn { display: none; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #f1f5f9; color: #475569; flex-shrink: 0; cursor: pointer; }
-    .dark .hist-next-btn, .dark .hist-up-btn { border-color: #334155; background: #0f172a; color: #94a3b8; }
-    .hist-next-btn:active, .hist-up-btn:active { background: #0284c7; color: #ffffff; }
-    .hist-card-foot { display: none; justify-content: flex-end; padding: 4px 10px 10px; }
-    @media (max-width: 639px) { .hist-next-btn, .hist-up-btn { display: inline-flex; } .hist-card-foot { display: flex; } }
-    .hist-card-foot .hist-next-btn { width: 38px; height: 38px; }
+    .hist-next-btn { display: none; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #f1f5f9; color: #475569; flex-shrink: 0; cursor: pointer; }
+    .dark .hist-next-btn { border-color: #334155; background: #0f172a; color: #94a3b8; }
+    .hist-next-btn:active { background: #0284c7; color: #ffffff; }
+    @media (max-width: 639px) { .hist-next-btn { display: inline-flex; } }
     /* Matchups: expandable matchup cards */
     .mx-wp { display: flex; height: 6px; border-radius: 9999px; overflow: hidden; background: #e2e8f0; }
     .dark .mx-wp { background: #1e293b; }
@@ -742,6 +763,7 @@
         <button data-tab="live_prob" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Live Win Prob</button>
         <button data-tab="belt" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Belt</button>
         <button data-tab="positions" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Points by Position</button>
+        <button data-tab="odds" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Odds</button>
         <button data-tab="historical" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Historical</button>
       </nav>
 
@@ -1411,6 +1433,23 @@
     </section>
 
     <!-- HISTORICAL TAB CONTENT -->
+    <!-- ODDS TAB CONTENT -->
+    <section id="tab-odds" class="tab-content space-y-4 hidden">
+      <div class="flex items-center justify-between gap-2 px-1">
+        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-dice text-brand-500"></i> Playoff &amp; Seed Odds
+        </h2>
+        <div class="flex items-center gap-2">
+          <button id="btn-export-odds-png" title="Download as PNG image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> PNG</button>
+        </div>
+      </div>
+      <div id="odds-note" class="px-1 text-[11px] text-slate-500 dark:text-slate-400"></div>
+      <div id="odds-table-wrap" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
+        <table class="standings-table odds-table" id="odds-table"></table>
+      </div>
+      <div id="odds-whatif" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden"></div>
+    </section>
+
     <section id="tab-historical" class="tab-content space-y-4 hidden">
       <div class="flex flex-wrap items-center gap-3 px-1">
         <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -1532,7 +1571,7 @@
     }
 
     const STATE = {
-      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [] },
+      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [] },
       filters: { year: 2026, league: '', seasonKey: '2026', weekMin: 1, weekMax: 8, hideCW: false, selectedManager: null, matchup: null },
       hcwUserOverride: false,
       weekUserOverride: false,
@@ -1765,6 +1804,7 @@
           if (document.querySelector('.tab-btn[data-tab="survivor"]').classList.contains('active')) renderSurvivorTab();
           if (document.querySelector('.tab-btn[data-tab="belt"]').classList.contains('active')) renderBeltTab();
           if (document.querySelector('.tab-btn[data-tab="positions"]').classList.contains('active')) renderPositionsTab();
+          if (document.querySelector('.tab-btn[data-tab="odds"]').classList.contains('active')) renderOddsTab();
           if (document.querySelector('.tab-btn[data-tab="historical"]').classList.contains('active')) renderHistoricalTab();
         });
       }
@@ -1865,6 +1905,7 @@
       live_prob:  { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       belt:       { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
       positions:  { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: true,  label: 'W' },
+      odds:       { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W', hideSeasonControls: true },
       historical: { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: false, label: 'W' }
     };
 
@@ -2671,7 +2712,7 @@
             } else if (window.initSqlJs) {
               if (!STATE.SQL) STATE.SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
               const db = new STATE.SQL.Database(new Uint8Array(buffer));
-              const tmp = { scores: [], teams: [], transactions: [], points: [], currentweek: [] };
+              const tmp = { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [] };
               Object.keys(tmp).forEach(table => {
                 try {
                   const res = db.exec(`SELECT * FROM ${table}`);
@@ -2699,14 +2740,15 @@
 
         if (!fresh && firstLoad) {
           try {
-            const [points, teams, scores, transactions, currentweek] = await Promise.all([
+            const [points, teams, scores, transactions, currentweek, schedule] = await Promise.all([
               parseCSVUrl('./points.csv').catch(() => []),
               parseCSVUrl('./teams.csv').catch(() => []),
               parseCSVUrl('./scores.csv').catch(() => []),
               parseCSVUrl('./transactions.csv').catch(() => []),
-              parseCSVUrl('./currentweek.csv').catch(() => [])
+              parseCSVUrl('./currentweek.csv').catch(() => []),
+              parseCSVUrl('./schedule.csv').catch(() => [])
             ]);
-            if (points && points.length > 0) fresh = { points, teams, scores, transactions, currentweek };
+            if (points && points.length > 0) fresh = { points, teams, scores, transactions, currentweek, schedule };
           } catch (err) {
             console.warn("CSV Fallback failed:", err);
           }
@@ -2900,6 +2942,7 @@
           case 'live_prob':  populateLiveProbMatchups(); renderLiveProbMatchup(); break;
           case 'belt':       renderBeltTab(); break;
           case 'positions':  renderPositionsTab(); break;
+          case 'odds': renderOddsTab(); break;
           case 'historical': renderHistoricalTab(); break;
         }
       } catch (err) {
@@ -4382,7 +4425,7 @@
       if (STATE.survivor.viewMode === 'chart' && STATE.survivor.chartInstance) {
         return ndlChartToPNG(STATE.survivor.chartInstance, `${activeSeasonFilePrefix()}_Survivor_Chart_${yr}.png`, { title: `Survivor Pool \u2014 ${activeSeasonDisplayName()} (Weekly PF)` });
       }
-      return ndlElementToPNG(document.getElementById('survivor-table-container'), `${activeSeasonFilePrefix()}_Survivor_Table_${yr}.png`);
+      return ndlElementToPNG(document.getElementById('survivor-table-container'), `${activeSeasonFilePrefix()}_Survivor_Table_${yr}.png`, { title: `Survivor Pool \u2014 ${activeSeasonDisplayName()} (Weekly PF)` });
     }
 
     // ==========================================
@@ -8556,24 +8599,24 @@
       allManagersSet.forEach(m => { tradesMatrix[m] = { bySeason: {}, grandTotal: 0 }; });
 
       // Trades are sourced from the live.db `transactions` table: every row whose type is "trade".
-      // Each trade is counted once per participating manager per season (a trade involving two managers counts
-      // for both). Rows are de-duplicated by transaction id / timestamp so multi-player trades count once.
-      const seenTradePairs = new Set();
+      // A trade is one EVENT (grouped by transaction id / timestamp, so a multi-row trade counts once) and is credited to
+      // every manager that took part in it. Draft-pick-only trades (rows with no player) and single-row trades count too,
+      // and there is no week cut-off: offseason / week-0 / current-week trades are all included.
       const TX_TYPE_KEYS = ['type', 'transaction_type', 'tx_type', 'action', 'transaction', 'move_type', 'kind', 'event'];
       const txTypesSeen = new Set();
       const isTradeRow = tx => {
         const typed = getVal(tx, TX_TYPE_KEYS);
-        if (typed === undefined || String(typed).trim() === '') return false;
+        if (typed === undefined || typed === null || String(typed).trim() === '') return false;
         const t = String(typed).trim().toLowerCase();
         if (txTypesSeen.size < 12) txTypesSeen.add(t);
-        return t === 'trade' || t === 'trades' || t.startsWith('trade') || t.endsWith('trade');
+        return t.indexOf('trade') !== -1;
       };
       const TX_STAMP_KEYS = ['timestamp', 'date', 'created_at', 'created', 'time', 'processed_at', 'datetime'];
       const txYear = tx => {
         const y = Number(getVal(tx, ['year', 'YR', 'season']));
         if (y) return y;
         const raw = getVal(tx, TX_STAMP_KEYS);
-        if (raw === undefined || raw === '') return 0;
+        if (raw === undefined || raw === null || raw === '') return 0;
         let d = null;
         if (!isNaN(Number(raw))) { const n = Number(raw); d = new Date(n < 1e12 ? n * 1000 : n); }
         else d = new Date(String(raw));
@@ -8581,34 +8624,31 @@
         return d.getMonth() < 2 ? d.getFullYear() - 1 : d.getFullYear(); // Jan/Feb trades belong to the prior season
       };
       // Any column that looks like it identifies a team taking part in the trade
-      const TX_TEAMCOL_RE = /(^|_)(team|tm|from|to|partner|trader|tradee|opponent|other|dest|destination|source|owner)(_|$|id|[ab12]$)|^tm[ab]$/i;
-      const TX_NOT_TEAMCOL_RE = /player|week|year|season|league|stamp|date|time|status|type|points|score|id_?number|transaction_id|tx_id|trade_id/i;
+      const TX_TEAMCOL_RE = /(^|_)(team|tm|from|to|partner|trader|tradee|opponent|other|dest|destination|source|owner|receiv\w*|send\w*|give\w*|get\w*|a|b)(_|$|id|[ab12]$)|^tm[ab]$/i;
+      const TX_NOT_TEAMCOL_RE = /player|week|year|season|league|stamp|date|time|status|type|points|score|id_?number|transaction_id|tx_id|trade_id|pick|round|note|name|desc/i;
       const knownSeasons = FilterEngine.seasons();
       const mgrByLower = {};
       allManagersSet.forEach(m => { mgrByLower[String(m).toLowerCase()] = m; });
-      let tradeRowCount = 0;
-      allTx.forEach(tx => {
+      let tradeRowCount = 0, tradeRowsUnresolved = 0;
+      const tradeEvents = new Map(); // eventKey -> { sKey, mgrs:Set }
+      allTx.forEach((tx, rowIdx) => {
         if (!isTradeRow(tx)) return;
         tradeRowCount++;
         const yr = txYear(tx);
         if (!yr) return;
         const lg = normLeague(getVal(tx, ['league']));
-        // resolveSeason() silently falls back to the newest season, so only accept years that really exist
-        if (!knownSeasons.some(se => se.year === yr)) return;
+        if (!knownSeasons.some(se => se.year === yr)) return; // resolveSeason() silently falls back to the newest season
         const sObj = FilterEngine.resolveSeason(yr, lg);
         const sKey = sObj ? sObj.key : makeSeasonKey(yr, lg);
         if (!seasons.some(se => se.key === sKey)) return;
 
         const wkRaw = getVal(tx, ['week', 'WK']);
-        const wkNum = (wkRaw === undefined || wkRaw === null || wkRaw === '') ? null : Number(wkRaw);
-        if (wkNum !== null && !isNaN(wkNum) && wkNum < 1) return; // in-season trades only
-
         const txId = getVal(tx, ['transaction_id', 'tx_id', 'trade_id', 'id']);
         const stamp = getVal(tx, TX_STAMP_KEYS);
 
         const mgrs = new Set();
         Object.keys(tx).forEach(col => {
-          if (TX_NOT_TEAMCOL_RE.test(col) && !/team_?id|^tm[ab]$/i.test(col)) return;
+          if (TX_NOT_TEAMCOL_RE.test(col) && !/team_?id|^tm[ab]$|manager|mgr/i.test(col)) return;
           if (!TX_TEAMCOL_RE.test(col)) return;
           const v = tx[col];
           if (v === undefined || v === null || v === '') return;
@@ -8621,33 +8661,34 @@
             if (hit) mgrs.add(hit);
           }
         });
+        if (mgrs.size === 0) tradeRowsUnresolved++;
 
-        mgrs.forEach(mgr => {
+        let evKey;
+        if (txId !== undefined && txId !== null && txId !== '') evKey = `${sKey}|id${txId}`;
+        else if (stamp !== undefined && stamp !== null && stamp !== '') evKey = `${sKey}|t${stamp}`;
+        else evKey = `${sKey}|w${wkRaw === undefined || wkRaw === null ? '' : wkRaw}|${[...mgrs].sort().join('+') || ('row' + rowIdx)}`;
+        let ev = tradeEvents.get(evKey);
+        if (!ev) { ev = { sKey, mgrs: new Set() }; tradeEvents.set(evKey, ev); }
+        mgrs.forEach(m => ev.mgrs.add(m));
+      });
+
+      const tradeSeasonTotals = {};
+      let tradeGrandAll = 0;
+      tradeEvents.forEach(ev => {
+        ev.mgrs.forEach(mgr => {
           if (!tradesMatrix[mgr]) tradesMatrix[mgr] = { bySeason: {}, grandTotal: 0 };
-          const ref = (txId !== undefined && txId !== null && txId !== '') ? `id${txId}`
-            : ((stamp !== undefined && stamp !== null && stamp !== '') ? `t${stamp}` : `w${wkNum === null ? '' : wkNum}`);
-          const dedupKey = `${sKey}|${ref}|${mgr}`;
-          if (seenTradePairs.has(dedupKey)) return;
-          seenTradePairs.add(dedupKey);
-          tradesMatrix[mgr].bySeason[sKey] = (tradesMatrix[mgr].bySeason[sKey] || 0) + 1;
+          tradesMatrix[mgr].bySeason[ev.sKey] = (tradesMatrix[mgr].bySeason[ev.sKey] || 0) + 1;
           tradesMatrix[mgr].grandTotal += 1;
         });
+        tradeSeasonTotals[ev.sKey] = (tradeSeasonTotals[ev.sKey] || 0) + 1;
+        tradeGrandAll += 1;
       });
-      const tradeDiag = { txRows: allTx.length, tradeRows: tradeRowCount, types: [...txTypesSeen], cols: allTx[0] ? Object.keys(allTx[0]) : [] };
+      const tradeDiag = { txRows: allTx.length, tradeRows: tradeRowCount, unresolved: tradeRowsUnresolved, events: tradeEvents.size, types: [...txTypesSeen], cols: allTx[0] ? Object.keys(allTx[0]) : [] };
+      try { console.info('[Historical] trade events per season', tradeSeasonTotals, tradeDiag); } catch (e) {}
 
       const tradeManagers = Object.keys(tradesMatrix)
         .filter(m => tradesMatrix[m].grandTotal > 0)
         .sort((a, b) => (tradesMatrix[b].grandTotal - tradesMatrix[a].grandTotal) || a.localeCompare(b));
-
-      const tradeSeasonTotals = {};
-      let tradeGrandAll = 0;
-      seasons.forEach(s => {
-        // Each trade involves 2 managers -> total trades in league = sum of manager trade counts / 2 (or exact count if stored once)
-        const sumMgr = tradeManagers.reduce((acc, m) => acc + (tradesMatrix[m].bySeason[s.key] || 0), 0);
-        const leagueTrades = Math.round(sumMgr / 2);
-        tradeSeasonTotals[s.key] = leagueTrades;
-        tradeGrandAll += leagueTrades;
-      });
 
       // --------------------------------------------------
       // 4. All-Time Matchup Records (Top 40 & Ties)
@@ -8823,52 +8864,74 @@
     }
 
     // ---------- Mobile "next table" arrow ----------
-    // Header button (top of each table's card): jumps UP to the previous table
+    // One down-arrow at the top-right of each table's card. If that table is not snapped to the top of the screen, the
+    // first tap snaps it there; once it is snapped, the tap moves on to the next table.
     function histNextBtnHTML() {
-      return `<button type="button" class="hist-up-btn" onclick="histScrollToPrev(this)" aria-label="Scroll to previous table" title="Previous table"><i class="fa-solid fa-chevron-up text-xs"></i></button>`;
+      return `<button type="button" class="hist-next-btn" onclick="histScrollToNext(this)" aria-label="Scroll down" title="Snap to this table / next table"><i class="fa-solid fa-chevron-down text-xs"></i></button>`;
     }
-    // Footer button (bottom-right of each table's card, thumb-friendly): jumps DOWN to the next table
-    function histDownBtnHTML() {
-      return `<button type="button" class="hist-next-btn" onclick="histScrollToNext(this)" aria-label="Scroll to next table" title="Next table"><i class="fa-solid fa-chevron-down text-xs"></i></button>`;
-    }
-    function histScrollToPrev(btn) {
-      const cards = histCards();
-      const i = cards.indexOf(btn.closest('.hist-card'));
-      const prev = cards[i - 1];
-      if (!prev) return;
+    function histSnapTop(card) {
       const hdr = document.querySelector('header');
       const off = (hdr ? hdr.getBoundingClientRect().height : 0) + 8;
-      window.scrollTo({ top: prev.getBoundingClientRect().top + window.scrollY - off, behavior: 'smooth' });
-    }
-    // First card: no up button. Last card: no down button. Every other card gets a bottom-right footer with the down button.
-    function histDecorateCards() {
-      const cards = histCards();
-      cards.forEach((c, i) => {
-        if (i === 0) { const u = c.querySelector('.hist-up-btn'); if (u) u.remove(); }
-        c.querySelectorAll('.hist-card-foot').forEach(n => n.remove());
-        if (i < cards.length - 1) c.insertAdjacentHTML('beforeend', `<div class="hist-card-foot">${histDownBtnHTML()}</div>`);
-      });
-    }
-    // Mobile: year matrices open scrolled to the most recent year (far right), unless the user's own position was restored
-    function histAutoScrollMatrices(anchor) {
-      if (window.innerWidth >= 640) return;
-      const saved = new Set(((anchor && anchor.scrolls) || []).map(s => s.key));
-      const run = () => histCards().filter(c => c.dataset.matrix === '1').forEach(c => {
-        if (saved.has(histCardKey(c))) return;
-        const sc = c.querySelector('.overflow-x-auto');
-        if (sc) sc.scrollLeft = sc.scrollWidth;
-      });
-      run();
-      requestAnimationFrame(run);
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      return Math.min(maxScroll, Math.max(0, card.getBoundingClientRect().top + window.scrollY - off));
     }
     function histScrollToNext(btn) {
       const cards = histCards();
       const i = cards.indexOf(btn.closest('.hist-card'));
-      const next = cards[i + 1];
+      if (i < 0) return;
+      const here = histSnapTop(cards[i]);
+      if (Math.abs(here - window.scrollY) > 4) {            // not snapped to the top yet -> snap this table
+        window.scrollTo({ top: here, behavior: 'smooth' });
+        return;
+      }
+      const next = cards[i + 1];                            // already snapped -> go to the table under it
       if (!next) return;
-      const hdr = document.querySelector('header');
-      const off = (hdr ? hdr.getBoundingClientRect().height : 0) + 8;
-      window.scrollTo({ top: next.getBoundingClientRect().top + window.scrollY - off, behavior: 'smooth' });
+      window.scrollTo({ top: histSnapTop(next), behavior: 'smooth' });
+    }
+    // Last card has nothing below it, so it gets no arrow
+    function histDecorateCards() {
+      const cards = histCards();
+      cards.forEach((c, i) => {
+        if (i === cards.length - 1) { const n = c.querySelector('.hist-next-btn'); if (n) n.remove(); }
+      });
+    }
+
+    // Matrices open scrolled to the most recent year (far right) until the user scrolls one themselves.
+    // A ResizeObserver re-applies it whenever the table gets its real width (tab was hidden, fonts, late layout).
+    const HIST_USER_SCROLLED = new Set();
+    (function histWatchUserScroll() {
+      const mark = (e) => {
+        const sc = e.target && e.target.closest && e.target.closest('.hist-card[data-matrix="1"] .overflow-x-auto');
+        if (!sc) return;
+        const card = sc.closest('.hist-card');
+        if (e.type === 'wheel' && Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
+        HIST_USER_SCROLLED.add(histCardKey(card));
+      };
+      ['pointerdown', 'touchstart', 'wheel'].forEach(t => document.addEventListener(t, mark, { passive: true, capture: true }));
+    })();
+    function histAutoScrollMatrices() {
+      const cards = histCards().filter(c => c.dataset.matrix === '1');
+      const apply = () => cards.forEach(c => {
+        if (HIST_USER_SCROLLED.has(histCardKey(c))) return;
+        const sc = c.querySelector('.overflow-x-auto');
+        if (sc && sc.scrollWidth > sc.clientWidth) sc.scrollLeft = sc.scrollWidth;
+      });
+      apply();
+      requestAnimationFrame(apply);
+      [120, 400, 1000].forEach(ms => setTimeout(apply, ms));
+      if (typeof ResizeObserver === 'function') {
+        cards.forEach(c => {
+          const sc = c.querySelector('.overflow-x-auto');
+          const tb = sc && sc.querySelector('table');
+          if (!sc || !tb) return;
+          const ro = new ResizeObserver(() => {
+            if (!document.body.contains(sc)) { ro.disconnect(); return; }
+            if (!HIST_USER_SCROLLED.has(histCardKey(c)) && sc.clientWidth > 0) sc.scrollLeft = sc.scrollWidth;
+          });
+          ro.observe(tb); ro.observe(sc);
+          setTimeout(() => ro.disconnect(), 4000);
+        });
+      }
     }
 
     // ---------- Mobile: snap the closest table to the top (same spot the "next table" arrow lands on) ----------
@@ -8954,7 +9017,7 @@
       a.scrolls.forEach(sv => {
         const c = cards.find(x => histCardKey(x) === sv.key);
         const sc = c && c.querySelector('.overflow-x-auto');
-        if (sc) { sc.scrollLeft = sv.left; sc.scrollTop = sv.top; }
+        if (sc) { if (HIST_USER_SCROLLED.has(sv.key) || !c.dataset.matrix) sc.scrollLeft = sv.left; sc.scrollTop = sv.top; }
       });
     }
 
@@ -9412,9 +9475,9 @@
         if (d.tradeManagers.length === 0) {
           const dg = d.tradeDiag || {};
           chunks.push(`
-            <div class="hist-card bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-title="Trades by Year (In-Season)">
+            <div class="hist-card bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-title="Trades by Year">
               <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
-                <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">Trades by Year (In-Season)</h3>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">Trades by Year</h3>
                 ${histNextBtnHTML()}
               </div>
               <div class="p-4 text-xs text-slate-500 dark:text-slate-400 space-y-1">
@@ -9426,7 +9489,7 @@
         }
         if (d.tradeManagers.length > 0) {
           chunks.push(histBuildYearlyMatrixCard(
-            'Trades by Year (In-Season)',
+            'Trades by Year',
             d.seasons, d.tradeManagers,
             (mgr, sKey) => {
               const v = d.tradesMatrix[mgr]?.bySeason[sKey];
@@ -9437,10 +9500,16 @@
               const v = d.tradesMatrix[mgr]?.grandTotal || 0;
               return { val: v, text: String(v), heat: 'count' };
             },
-            (seasons) => sdevRow('Grand Total', seasons.map(s => {
-              const tot = d.tradeSeasonTotals[s.key];
-              return sdevCell(tot ? tot : '');
-            }).join(''), d.tradeGrandAll)
+            (seasons) => {
+              // Grand Total row: green > clear > red across the season totals (high = green)
+              const vals = seasons.map(s => d.tradeSeasonTotals[s.key] || 0);
+              const st = histStats(vals);
+              const cells = seasons.map((s, i) => {
+                const bg = st ? HEATMAPS.greenClearRed(vals[i], st.min, st.mid, st.max) : 'transparent';
+                return `<td class="text-right font-mono text-xs"${bg !== 'transparent' ? ` style="background-color:${bg}"` : ''}>${vals[i]}</td>`;
+              }).join('');
+              return sdevRow('Grand Total', cells, d.tradeGrandAll);
+            }
           ));
         }
       }
@@ -9467,7 +9536,7 @@
       root.innerHTML = chunks.join('');
       histDecorateCards();
       histRestoreAnchor(anchor);
-      histAutoScrollMatrices(anchor);
+      histAutoScrollMatrices();
     }
 
     // ---------- Historical downloads (bottom bar): CSV / PNG, all-in-one or separate ----------
@@ -9558,7 +9627,7 @@
           clone.style.width = width + 'px';
           clone.style.maxWidth = 'none';
           clone.querySelectorAll('.overflow-x-auto, [class*="max-h-"]').forEach(n => { n.style.overflow = 'visible'; n.style.maxHeight = 'none'; });
-          clone.querySelectorAll('.hist-next-btn, .hist-up-btn, .hist-card-foot').forEach(n => { n.style.display = 'none'; });
+          clone.querySelectorAll('.hist-next-btn').forEach(n => { n.style.display = 'none'; });
           clone.querySelectorAll('*').forEach(n => { if (win.getComputedStyle(n).position === 'sticky') n.style.position = 'static'; });
           if (opts.flat) { clone.style.boxShadow = 'none'; clone.style.borderRadius = '0'; }
           ndlInlineSvgStyles(doc, clone);
@@ -9635,12 +9704,27 @@
       });
     }
 
+    // Title banner at the top of a table export (the chart exports draw their own title inside the canvas)
+    function ndlPrependTitle(clone, title) {
+      const dark = document.documentElement.classList.contains('dark');
+      const h = document.createElement('div');
+      h.textContent = title;
+      h.style.cssText = `padding:16px 18px 12px;font:800 22px/1.25 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:-0.01em;color:${dark ? '#f1f5f9' : '#0f172a'};background:${dark ? '#020617' : '#ffffff'};text-align:left;`;
+      clone.insertBefore(h, clone.firstChild);
+    }
+
     async function ndlElementToPNG(el, filename, opts = {}) {
       if (!el) return;
       if (typeof html2canvas !== 'function') { alert('PNG export library failed to load (html2canvas). Check your connection and reload.'); return; }
       const tables = [...el.querySelectorAll('table')];
       const w = opts.width || Math.max(el.scrollWidth, el.offsetWidth, ...tables.map(t => t.scrollWidth + 2), 320);
-      const canvas = await histElementToCanvas(el, { width: w, scale: opts.scale || ndlPngScale(w, el.scrollHeight), flat: true, onclone: opts.onclone });
+      const canvas = await histElementToCanvas(el, {
+        width: w, scale: opts.scale || ndlPngScale(w, el.scrollHeight + (opts.title ? 60 : 0)), flat: true,
+        onclone: (doc, clone) => {
+          if (opts.title) ndlPrependTitle(clone, opts.title);   // first, so later layout-based tweaks see the title's height
+          if (typeof opts.onclone === 'function') opts.onclone(doc, clone);
+        }
+      });
       histSaveBlob(await histCanvasToBlob(canvas), filename);
     }
 
@@ -9675,10 +9759,20 @@
         } else if (bl.display !== false) {
           P.legend = Object.assign({}, bl, { display: true, labels: Object.assign({}, bl.labels || {}, { font: { size: 14, weight: '600' }, boxWidth: 16, padding: 14 }) });
         }
+        // Chart.js clamps resize() to the canvas' parent box, so pin the parent to the export size for the render
+        const parent = chart.canvas.parentElement;
+        const pSaved = parent ? { w: parent.style.width, h: parent.style.height, mw: parent.style.maxWidth, mh: parent.style.maxHeight, minw: parent.style.minWidth, ov: parent.style.overflow, pos: parent.style.position } : null;
+        if (parent) Object.assign(parent.style, { width: cssW + 'px', height: cssH + 'px', maxWidth: 'none', maxHeight: 'none', minWidth: cssW + 'px', overflow: 'visible', position: 'relative' });
         raw.devicePixelRatio = NDL_PNG_WIDTH / cssW;
         chart.resize(cssW, cssH);
+        // If the layout still settled at another width, re-scale so the bitmap is exactly ~3000px wide
+        if (chart.width && Math.abs(chart.width - cssW) > 1) {
+          raw.devicePixelRatio = NDL_PNG_WIDTH / chart.width;
+          chart.resize(chart.width, chart.height);
+        }
         chart.update('none');
         chart.draw();
+        if (parent && pSaved) Object.assign(parent.style, { width: pSaved.w, height: pSaved.h, maxWidth: pSaved.mw, maxHeight: pSaved.mh, minWidth: pSaved.minw, overflow: pSaved.ov, position: pSaved.pos });
         const src = chart.canvas;
         out = document.createElement('canvas');
         out.width = src.width; out.height = src.height;
@@ -9754,6 +9848,7 @@
       const col = rows[lastIdx].beltChanged ? 'opp' : 'mgr';
       await ndlElementToPNG(stage, `${activeSeasonFilePrefix()}_Belt_${STATE.filters.year}.png`, {
         width: stage.offsetWidth,
+        title: `Championship Belt \u2014 ${activeSeasonDisplayName()}`,
         onclone: (doc, clone) => {
           const tb = clone.querySelector('#belt-tbody');
           if (!tb) return;
@@ -9780,9 +9875,11 @@
     function ndlSetupPngButtons() {
       const bind = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', () => ndlWithBusy(b, fn)); };
       const f = STATE.filters;
-      bind('btn-export-standings-png', () => ndlElementToPNG(document.getElementById('standings-table-wrap'), `${activeSeasonFilePrefix()}_Standings_${f.year}_Wk${f.weekMin}-${f.weekMax}.png`));
-      bind('btn-export-matchups-png', () => ndlElementToPNG(document.getElementById('matchups-table-wrap'), `${activeSeasonFilePrefix()}_Matchups_${f.year}_Week_${f.weekMax}.png`));
-      bind('btn-export-props-table-png', () => ndlElementToPNG(document.getElementById('props-table-wrap'), `${activeSeasonFilePrefix()}_Prop_Bets_${f.year}.png`));
+      const wkRange = () => f.weekMin === f.weekMax ? `Week ${f.weekMax}` : `Weeks ${f.weekMin}\u2013${f.weekMax}`;
+      bind('btn-export-standings-png', () => ndlElementToPNG(document.getElementById('standings-table-wrap'), `${activeSeasonFilePrefix()}_Standings_${f.year}_Wk${f.weekMin}-${f.weekMax}.png`, { title: `League Standings \u2014 ${activeSeasonDisplayName()} \u00B7 ${wkRange()}` }));
+      bind('btn-export-matchups-png', () => ndlElementToPNG(document.getElementById('matchups-table-wrap'), `${activeSeasonFilePrefix()}_Matchups_${f.year}_Week_${f.weekMax}.png`, { title: `Weekly Matchup Results \u2014 ${activeSeasonDisplayName()} \u00B7 Week ${f.weekMax}` }));
+      bind('btn-export-props-table-png', () => ndlElementToPNG(document.getElementById('props-table-wrap'), `${activeSeasonFilePrefix()}_Prop_Bets_${f.year}.png`, { title: `Prop Bets \u2014 ${activeSeasonDisplayName()}` }));
+      bind('btn-export-odds-png', () => ndlElementToPNG(document.getElementById('odds-table-wrap'), `${activeSeasonFilePrefix()}_Odds_${f.year}.png`, { title: oddsPngTitle() }));
       bind('btn-export-pos-table-png', () => {
         const v = STATE.positions.last;
         const name = v
@@ -9791,6 +9888,240 @@
         return ndlElementToPNG(document.getElementById('pos-table-wrap'), name);
       });
     }
+
+
+    // ==========================================
+    // ODDS TAB: Monte Carlo seed odds + what-if schedule module
+    // ==========================================
+    const ODDS_SIMS = 2000;
+    STATE.odds = { picks: {}, activeWeek: null, _key: '', _res: null };
+
+    function oddsMulberry32(a) {
+      return function () {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    function oddsNum(v) { return v === 0 ? '0' : String(Number((Math.round(v * 100) / 100).toFixed(2))); }
+
+    // The odds always describe the CURRENT season (year from the currentweek table)
+    function oddsSeason() {
+      const cw = getCurrentYearAndWeek();
+      const seasons = FilterEngine.seasons();
+      if (!seasons.length) return null;
+      const yr = cw ? cw.curYear : seasons[0].year;
+      const s0 = seasons.find(x => x.year === yr) || seasons[0];
+      return { year: s0.year, league: s0.league };
+    }
+
+    function oddsBuildModel() {
+      const S = oddsSeason();
+      if (!S) return null;
+      const cw = getCurrentYearAndWeek();
+      const psw = getPlayoffStartWeek(S.year, S.league);
+      const lastReg = Math.max(1, psw - 1);
+      const curWeek = (cw && Number(cw.curYear) === Number(S.year)) ? cw.curWeek : lastReg + 1;
+      const playedMax = Math.min(curWeek - 1, lastReg);
+
+      const st = playedMax >= 1 ? MetricsEngine.computeStandings(S.year, 1, playedMax, S.league) : [];
+      const stById = {}; st.forEach(r => { stById[r.team_id] = r; });
+
+      const ids = new Set();
+      (STATE.data.teams || []).filter(t => rowMatchesSeason(t, S.year, S.league)).forEach(t => { const id = Number(getVal(t, ['team_id'])); if (id) ids.add(id); });
+      st.forEach(r => ids.add(r.team_id));
+
+      // pooled sd as fallback for teams with <2 games
+      const allScores = [];
+      (STATE.data.points || []).forEach(r => {
+        if (!rowMatchesSeason(r, S.year, S.league)) return;
+        const w = Number(getVal(r, ['week', 'WK']));
+        if (w >= 1 && w <= playedMax) { const pts = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])); if (pts > 0) allScores.push(pts); }
+      });
+      const gMean = allScores.length ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 100;
+      const gSd = allScores.length > 1 ? Math.sqrt(allScores.reduce((a, b) => a + (b - gMean) ** 2, 0) / (allScores.length - 1)) : 25;
+
+      const teams = [...ids].sort((a, b) => a - b).map(id => {
+        const r = stById[id];
+        const mgr = getManagerName(id, S.year, r ? r.manager : '', S.league);
+        return {
+          id, mgr, name: getTeamName(id, S.year, r ? r.team_name : '', S.league),
+          W: r ? r.W : 0, L: r ? r.L : 0, T: r ? r.T : 0, PF: r ? r.PF : 0,
+          mean: r && r.AVG > 0 ? r.AVG : gMean,
+          sd: r && r.SDEV > 0 ? r.SDEV : gSd
+        };
+      });
+
+      const seen = new Set();
+      const matchups = [];
+      (STATE.data.schedule || []).forEach(r => {
+        if (!rowMatchesSeason(r, S.year, S.league)) return;
+        const w = Number(getVal(r, ['week', 'WK']));
+        const a = Number(getVal(r, ['team_a_id', 'team_a', 'tma']));
+        const b = Number(getVal(r, ['team_b_id', 'team_b', 'tmb']));
+        if (!w || !a || !b || w <= playedMax || w > lastReg) return;
+        if (!ids.has(a) || !ids.has(b)) return;
+        const key = `${w}|${Math.min(a, b)}|${Math.max(a, b)}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        matchups.push({ key, week: w, a, b });
+      });
+      matchups.sort((x, y) => x.week - y.week || x.a - y.a);
+
+      const meta = (STATE.data.teams || []).find(t => rowMatchesSeason(t, S.year, S.league)) || {};
+      const cutoff = is2021Okl(S.year, S.league) ? 4 : (Number(getVal(meta, ['num_playoff_teams'])) || 6);
+      return { S, teams, matchups, playedMax, lastReg, curWeek, cutoff, hasSchedule: (STATE.data.schedule || []).length > 0 };
+    }
+
+    // Records shown in the table include the what-if picks (a pick is a decided result)
+    function oddsRecords(model, picks) {
+      const rec = {};
+      model.teams.forEach(t => { rec[t.id] = { W: t.W, L: t.L, T: t.T }; });
+      model.matchups.forEach(m => {
+        const pk = picks[m.key]; if (!pk) return;
+        if (pk === 'a') { rec[m.a].W++; rec[m.b].L++; }
+        else if (pk === 'b') { rec[m.b].W++; rec[m.a].L++; }
+        else if (pk === 't') { rec[m.a].T++; rec[m.b].T++; }
+      });
+      return rec;
+    }
+
+    function oddsSimulate(model, picks) {
+      const n = model.teams.length;
+      const idx = {}; model.teams.forEach((t, i) => { idx[t.id] = i; });
+      const rng = oddsMulberry32(0x9E3779B1 ^ (model.S.year * 7919) ^ (n * 104729));
+      const gauss = () => { let u = 0, v = 0; while (u === 0) u = rng(); while (v === 0) v = rng(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+      const counts = model.teams.map(() => new Array(n).fill(0));
+      const W = new Float64Array(n), T = new Float64Array(n), PF = new Float64Array(n);
+      const order = new Array(n);
+      for (let sim = 0; sim < ODDS_SIMS; sim++) {
+        model.teams.forEach((t, i) => { W[i] = t.W; T[i] = t.T; PF[i] = t.PF; });
+        for (const m of model.matchups) {
+          const ia = idx[m.a], ib = idx[m.b], ta = model.teams[ia], tb = model.teams[ib];
+          const sa = Math.max(0, ta.mean + ta.sd * gauss());
+          const sb = Math.max(0, tb.mean + tb.sd * gauss());
+          PF[ia] += sa; PF[ib] += sb;
+          const pk = picks[m.key];
+          if (pk === 'a') W[ia]++;
+          else if (pk === 'b') W[ib]++;
+          else if (pk === 't') { T[ia]++; T[ib]++; }
+          else if (sa > sb) W[ia]++;
+          else if (sb > sa) W[ib]++;
+          else { T[ia]++; T[ib]++; }
+        }
+        for (let i = 0; i < n; i++) order[i] = i;
+        order.sort((x, y) => (W[y] - W[x]) || (T[y] - T[x]) || (PF[y] - PF[x]));   // same tiebreak as the Standings tab
+        for (let r = 0; r < n; r++) counts[order[r]][r]++;
+      }
+      return counts.map(row => row.map(c => (c / ODDS_SIMS) * 100));
+    }
+
+    function oddsPngTitle() {
+      const m = STATE.odds._model;
+      return m ? `Seed Odds \u2014 ${m.S.league || 'NDL'} ${m.S.year} \u00B7 ${ODDS_SIMS.toLocaleString()} simulations` : 'Seed Odds';
+    }
+
+    function renderOddsTab() {
+      const tbl = document.getElementById('odds-table');
+      const note = document.getElementById('odds-note');
+      const wi = document.getElementById('odds-whatif');
+      if (!tbl || !note || !wi) return;
+      const model = oddsBuildModel();
+      STATE.odds._model = model;
+      if (!model || !model.teams.length) {
+        tbl.innerHTML = '<tbody><tr><td class="p-8 text-center text-slate-500 dark:text-slate-400">No data yet for the current season.</td></tr></tbody>';
+        wi.innerHTML = ''; note.textContent = ''; return;
+      }
+      // drop picks that no longer correspond to a scheduled, unplayed matchup
+      const live = new Set(model.matchups.map(m => m.key));
+      Object.keys(STATE.odds.picks).forEach(k => { if (!live.has(k)) delete STATE.odds.picks[k]; });
+
+      const picks = STATE.odds.picks;
+      const cacheKey = `${STATE.dataVersion}|${JSON.stringify(picks)}`;
+      if (STATE.odds._key !== cacheKey) { STATE.odds._res = oddsSimulate(model, picks); STATE.odds._key = cacheKey; }
+      const probs = STATE.odds._res;
+      const rec = oddsRecords(model, picks);
+      const n = model.teams.length;
+      const cut = Math.min(model.cutoff, n);
+
+      const rows = model.teams.map((t, i) => {
+        const p = probs[i];
+        const total = p.slice(0, cut).reduce((a, b) => a + b, 0);
+        const exp = p.reduce((a, v, r) => a + v * (r + 1), 0) / 100;
+        return { t, p, total, exp, r: rec[t.id] };
+      }).sort((x, y) => (y.total - x.total) || (x.exp - y.exp) || (y.r.W - x.r.W) || (y.t.PF - x.t.PF));
+
+      const ord = k => k + (k % 100 >= 11 && k % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th'));
+      const head = `<thead><tr><th class="text-left">TEAM</th><th class="text-center">W-L-T</th>${
+        Array.from({ length: n }, (_, k) => `<th class="text-right${k === cut ? ' odds-cut' : ''}">${ord(k + 1)}</th>`).join('')
+      }<th class="text-right odds-tot" title="Chance of finishing in the top ${cut}">TOTAL</th></tr></thead>`;
+      const cell = (v, k) => {
+        let bg = 'transparent';
+        if (k < cut) bg = `rgba(34, 197, 94, ${(0.10 + Math.min(1, v / 100) * 0.50).toFixed(2)})`;
+        else if (v > 0) bg = `rgba(239, 68, 68, ${(Math.min(1, v / 100) * 0.35).toFixed(2)})`;
+        return `<td class="odds-pct${k === cut ? ' odds-cut' : ''}" style="background:${bg}">${oddsNum(v)}</td>`;
+      };
+      const body = rows.map(o => {
+        const color = getManagerColor(o.t.mgr);
+        const sel = STATE.filters.selectedManager && STATE.filters.selectedManager === o.t.mgr;
+        return `<tr${sel ? ' class="bg-brand-500/10"' : ''}>
+          <td class="text-left"><span class="font-semibold" style="color:${color}">${escapeHTML(o.t.mgr)}</span> <span class="text-slate-500 dark:text-slate-400">${escapeHTML(o.t.name)}</span></td>
+          <td class="text-center font-mono text-xs">${o.r.W}-${o.r.L}-${o.r.T}</td>
+          ${o.p.map((v, k) => cell(v, k)).join('')}
+          <td class="odds-pct odds-tot">${oddsNum(o.total)}</td></tr>`;
+      }).join('');
+      tbl.innerHTML = head + `<tbody>${body}</tbody>`;
+
+      const nPicks = Object.keys(picks).length;
+      note.textContent = `${ODDS_SIMS.toLocaleString()} Monte Carlo simulations \u00B7 each remaining game is drawn from both teams' ${model.S.year} average points and standard deviation \u00B7 ranks are final regular-season seeds (W, then T, then PF) \u00B7 TOTAL = chance of a top-${cut} finish`
+        + (model.playedMax >= 1 ? ` \u00B7 records through Week ${model.playedMax}` : '')
+        + (nPicks ? ` \u00B7 ${nPicks} what-if result${nPicks === 1 ? '' : 's'} applied` : '');
+
+      renderOddsWhatIf(model);
+    }
+
+    function renderOddsWhatIf(model) {
+      const wi = document.getElementById('odds-whatif');
+      if (!wi) return;
+      const head = (extra) => `<div class="flex items-center justify-between gap-2 px-3 pt-3"><h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-sliders text-brand-500"></i> What-If Scenarios</h3>${extra || ''}</div>`;
+      if (!model.matchups.length) {
+        wi.innerHTML = head() + `<div class="p-6 text-center text-xs text-slate-500 dark:text-slate-400">${model.hasSchedule ? 'No remaining regular-season matchups.' : 'No <code>schedule</code> table found in live.db yet (columns: year, week, team_a_id, team_b_id, league).'}</div>`;
+        return;
+      }
+      const weeks = [...new Set(model.matchups.map(m => m.week))];
+      if (!weeks.includes(STATE.odds.activeWeek)) STATE.odds.activeWeek = weeks[0];
+      const aw = STATE.odds.activeWeek;
+      const picks = STATE.odds.picks;
+      const nAll = Object.keys(picks).length;
+      const tabs = weeks.map(w => {
+        const c = model.matchups.filter(m => m.week === w && picks[m.key]).length;
+        return `<button type="button" class="odds-wk-tab${w === aw ? ' active' : ''}" onclick="oddsSetWeek(${w})">Week ${w}${c ? `<span class="odds-wk-badge">${c}</span>` : ''}</button>`;
+      }).join('');
+      const tm = id => model.teams.find(t => t.id === id);
+      const rows = model.matchups.filter(m => m.week === aw).map(m => {
+        const A = tm(m.a), B = tm(m.b), pk = picks[m.key];
+        const cls = (side) => pk === side ? 'win' : (pk === 'a' || pk === 'b') ? 'loss' : pk === 't' ? 'draw' : '';
+        const sub = t => `<span class="odds-sub" style="color:${getManagerColor(t.mgr)}">${escapeHTML(t.mgr)}</span>`;
+        return `<div class="odds-mu">
+          <button type="button" class="odds-btn ${cls('a')}" onclick="oddsPick('${m.key}','a')">${escapeHTML(A.name)}${sub(A)}</button>
+          <button type="button" class="odds-btn ${pk === 't' ? 'tie-on' : ''}" onclick="oddsPick('${m.key}','t')">Tie</button>
+          <button type="button" class="odds-btn ${cls('b')}" onclick="oddsPick('${m.key}','b')">${escapeHTML(B.name)}${sub(B)}</button>
+        </div>`;
+      }).join('');
+      wi.innerHTML = head(`<button type="button" onclick="oddsReset()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition text-xs ${nAll ? '' : 'opacity-50'}">Reset all</button>`)
+        + `<div class="px-3 pt-1 pb-2 text-[11px] text-slate-500 dark:text-slate-400">Pick a winner (or a tie) for any remaining game. Picks update the records and odds above; tap again to unpick.</div>`
+        + `<div class="flex overflow-x-auto border-b border-slate-200 dark:border-slate-800 px-3">${tabs}</div>`
+        + `<div class="p-3 sm:p-4 space-y-2">${rows}</div>`;
+    }
+
+    function oddsPick(key, side) {
+      const p = STATE.odds.picks;
+      if (p[key] === side) delete p[key]; else p[key] = side;
+      renderOddsTab();
+    }
+    function oddsSetWeek(w) { STATE.odds.activeWeek = w; renderOddsTab(); }
+    function oddsReset() { STATE.odds.picks = {}; renderOddsTab(); }
 
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
