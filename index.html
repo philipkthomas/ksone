@@ -666,10 +666,32 @@
     .pos-mgr-chip:hover { opacity: 0.8; }
 
     /* Historical: mobile-only "next table" arrow */
-    .hist-next-btn { display: none; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #f1f5f9; color: #475569; flex-shrink: 0; cursor: pointer; }
-    .dark .hist-next-btn { border-color: #334155; background: #0f172a; color: #94a3b8; }
-    .hist-next-btn:active { background: #0284c7; color: #ffffff; }
-    @media (max-width: 639px) { .hist-next-btn { display: inline-flex; } }
+    .hist-next-btn, .hist-up-btn { display: none; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9999px; border: 1px solid #cbd5e1; background: #f1f5f9; color: #475569; flex-shrink: 0; cursor: pointer; }
+    .dark .hist-next-btn, .dark .hist-up-btn { border-color: #334155; background: #0f172a; color: #94a3b8; }
+    .hist-next-btn:active, .hist-up-btn:active { background: #0284c7; color: #ffffff; }
+    .hist-card-foot { display: none; justify-content: flex-end; padding: 4px 10px 10px; }
+    @media (max-width: 639px) { .hist-next-btn, .hist-up-btn { display: inline-flex; } .hist-card-foot { display: flex; } }
+    .hist-card-foot .hist-next-btn { width: 38px; height: 38px; }
+    /* Matchups: expandable matchup cards */
+    .mx-wp { display: flex; height: 6px; border-radius: 9999px; overflow: hidden; background: #e2e8f0; }
+    .dark .mx-wp { background: #1e293b; }
+    .mx-wp > span { display: block; height: 100%; }
+    .mx-chev { transition: transform .2s ease; }
+    .mx-card.open .mx-chev { transform: rotate(180deg); }
+    .mx-row { display: grid; grid-template-columns: minmax(0,1fr) 42px minmax(0,1fr); align-items: center; gap: 6px; padding: 3px 10px; font-size: 11px; border-top: 1px solid rgba(148,163,184,0.18); }
+    .mx-cell { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; min-width: 0; }
+    .mx-cell.r { flex-direction: row-reverse; }
+    .mx-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: #1e293b; }
+    .dark .mx-name { color: #e2e8f0; }
+    .mx-cell.r .mx-name { text-align: right; }
+    .mx-pos { font-size: 9px; font-weight: 700; color: #94a3b8; margin-left: 3px; }
+    .mx-cell.r .mx-pos { margin-left: 0; margin-right: 3px; }
+    .mx-pts { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; color: #0f172a; flex-shrink: 0; }
+    .dark .mx-pts { color: #f1f5f9; }
+    .mx-slot { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 800; text-align: center; border-radius: 4px; padding: 1px 0; color: #0f172a; }
+    .dark .mx-slot { color: #f8fafc; }
+    .mx-sep { padding: 3px 10px; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #64748b; background: rgba(148,163,184,0.12); border-top: 1px solid rgba(148,163,184,0.18); }
+    .mx-tot { background: rgba(148,163,184,0.10); }
 
     /* Mobile: compact year/week steppers so Y + W stay on one line */
     @media (max-width: 639px) {
@@ -853,6 +875,17 @@
           <tbody id="matchups-tbody"></tbody>
         </table>
       </div>
+
+      <!-- WEEK MATCHUP CARDS -->
+      <div class="flex flex-wrap items-center justify-between gap-2 px-1 pt-2">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-people-arrows text-brand-500"></i> <span id="mx-cards-title">Week Matchups</span>
+        </h3>
+        <button id="btn-mx-expand-all" type="button" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
+          <i class="fa-solid fa-up-right-and-down-left-from-center text-xs"></i> <span id="mx-expand-all-text">Expand all</span>
+        </button>
+      </div>
+      <div id="matchups-cards" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
     </section>
 
     <!-- SURVIVOR TAB CONTENT -->
@@ -3124,11 +3157,44 @@
     function initMatchupsTab() {
       const csvBtn = document.getElementById('btn-export-matchups-csv');
       if (csvBtn) csvBtn.addEventListener('click', downloadMatchupsCSV);
+
+      const cards = document.getElementById('matchups-cards');
+      if (cards) cards.addEventListener('click', (e) => {
+        const head = e.target.closest('.mx-head');
+        if (!head) return;
+        const card = head.closest('.mx-card');
+        if (card) mxSetOpen(card, !card.classList.contains('open'));
+        mxSyncExpandAllLabel();
+      });
+      const allBtn = document.getElementById('btn-mx-expand-all');
+      if (allBtn) allBtn.addEventListener('click', () => {
+        const all = [...document.querySelectorAll('#matchups-cards .mx-card')];
+        const open = !all.every(c => c.classList.contains('open'));
+        all.forEach(c => mxSetOpen(c, open));
+        mxSyncExpandAllLabel();
+      });
+    }
+
+    function mxSetOpen(card, open) {
+      card.classList.toggle('open', open);
+      const body = card.querySelector('.mx-body');
+      const head = card.querySelector('.mx-head');
+      if (body) body.classList.toggle('hidden', !open);
+      if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (!STATE.mxOpen) STATE.mxOpen = new Set();
+      if (open) STATE.mxOpen.add(card.dataset.key); else STATE.mxOpen.delete(card.dataset.key);
+    }
+    function mxSyncExpandAllLabel() {
+      const all = [...document.querySelectorAll('#matchups-cards .mx-card')];
+      const t = document.getElementById('mx-expand-all-text');
+      if (t) t.textContent = (all.length && all.every(c => c.classList.contains('open'))) ? 'Collapse all' : 'Expand all';
     }
 
     function populateMatchupsWeeks() { }
 
     function renderMatchupsTable() {
+      const mxWrap = document.getElementById('matchups-cards');
+      if (mxWrap) mxWrap.innerHTML = '';
       const yr = STATE.filters.year;
       const lg = STATE.filters.league;
       const wk = Number(STATE.filters.weekMax);
@@ -3305,6 +3371,156 @@
             </td>
           </tr>`;
       }).join('');
+
+      try { renderMatchupCards(teamList, yr, lg, wk); } catch (e) { console.error('[Matchups] card render failed', e); }
+    }
+
+    // ---------- Week matchup cards (below the results table) ----------
+    const MX_SLOT_ORDER = ['QB1', 'RB1', 'RB2', 'WR1', 'WR2', 'TE1', 'SFX1', 'SFX2', 'FX1', 'FX2', 'FX3', 'FX4', 'FX5', 'DEF1', 'DEF2', 'K1', 'K2'];
+    function mxSlotRank(s) {
+      const i = MX_SLOT_ORDER.indexOf(s);
+      if (i >= 0) return i;
+      const b = POS_BENCH_ORDER.indexOf(s);
+      return b >= 0 ? 100 + b : 200;
+    }
+    function mxSlotIsBench(s) { return /^B/.test(s) || s === 'IR' || s === 'IR+'; }
+
+    function mxTeamPlayers(t) {
+      const out = [];
+      t.players.forEach(p => {
+        const name = getVal(p, ['player_name', 'player', 'name', 'PLAYER', 'PLAYER_NAME', 'full_name']);
+        if (!name) return;
+        let raw = getVal(p, ['player_pts', 'player_points', 'playerpts', 'pts', 'PTS', 'player_score', 'actual_pts']);
+        if (raw === undefined || raw === null) raw = (p.points !== undefined && p.points !== t.pf) ? p.points : getVal(p, ['points']);
+        const pts = Number(raw);
+        const sel = String(getVal(p, ['selected_position', 'selected_pos', 'slot', 'SLOT', 'roster_slot', 'lineup_slot', 'status']) || '').trim().toUpperCase();
+        let slot = p.normalized_position || '';
+        if (!slot) slot = NP_NOT_STARTED.has(sel) ? (sel && sel !== '' ? (sel === 'BN' || sel === 'BE' || sel === 'BENCH' ? 'BN' : sel) : 'BN') : sel;
+        const pos = String(getVal(p, ['position', 'POS', 'pos', 'POSITION']) || '').toUpperCase();
+        out.push({ slot, name: String(name), pos, pts: isNaN(pts) ? 0 : pts });
+      });
+      return out;
+    }
+
+    function renderMatchupCards(teamList, yr, lg, wk) {
+      const wrap = document.getElementById('matchups-cards');
+      if (!wrap) return;
+      const title = document.getElementById('mx-cards-title');
+      if (title) title.textContent = `${activeSeasonDisplayName(yr, lg)} Week ${wk} Matchups`;
+
+      try { getNormalizedForYear(yr); } catch (e) { console.warn('[Matchups] position normalization unavailable', e); }
+
+      const byId = {};
+      teamList.forEach(t => { byId[t.team_id] = t; });
+      const seen = new Set();
+      const pairs = [];
+      teamList.forEach(t => {
+        if (!t.oppTeamId || !byId[t.oppTeamId]) return;
+        const key = [t.team_id, t.oppTeamId].sort((x, y) => x - y).join('_');
+        if (seen.has(key)) return;
+        seen.add(key);
+        const [a, b] = key.split('_').map(Number);
+        pairs.push({ key, A: byId[a], B: byId[b] });
+      });
+      pairs.sort((x, y) => x.A.team_id - y.A.team_id);
+
+      if (!pairs.length) { wrap.innerHTML = ''; return; }
+
+      // Records & ranks entering the week
+      const before = {};
+      if (wk > 1) {
+        try { (MetricsEngine.computeStandings(yr, 1, wk - 1, lg) || []).forEach(r => { before[r.team_id] = r; }); } catch (e) { console.warn('[Matchups] standings unavailable', e); }
+      }
+      const recOf = (id) => {
+        const r = before[id];
+        if (!r) return { rec: '0-0', rank: '\u2014' };
+        return { rec: `${r.W}-${r.L}${r.T ? '-' + r.T : ''}`, rank: `#${r.actualRank}` };
+      };
+
+      const cw = getCurrentYearAndWeek();
+      const isFinal = !!cw && (Number(yr) < Number(cw.curYear) || (Number(yr) === Number(cw.curYear) && Number(wk) < Number(cw.curWeek)));
+      if (!STATE.mxOpen) STATE.mxOpen = new Set();
+
+      const fmt = (n) => (Number(n) || 0).toFixed(2);
+
+      const side = (t, align, proj) => {
+        const r = recOf(t.team_id);
+        const col = getManagerColor(t.manager);
+        const won = isFinal && t.result === 'W';
+        const lost = isFinal && t.result === 'L';
+        const ptsCls = won ? 'text-emerald-600 dark:text-emerald-400' : (lost ? 'text-slate-500 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100');
+        return `
+          <div class="min-w-0 ${align === 'r' ? 'text-right' : 'text-left'}">
+            <div class="text-xs font-extrabold truncate" style="color:${col}">${escapeHTML(t.manager)}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${escapeHTML(t.team_name)}</div>
+            <div class="text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-300">${r.rec} <span class="text-slate-400">\u00B7</span> ${r.rank}</div>
+            <div class="text-xl leading-tight font-mono font-extrabold ${ptsCls}">${fmt(t.pf)}</div>
+            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${proj > 0 ? `Proj ${fmt(proj)}` : 'Proj \u2014'}</div>
+          </div>`;
+      };
+
+      const bodyFor = (A, B) => {
+        const pa = mxTeamPlayers(A), pb = mxTeamPlayers(B);
+        const slots = [...new Set([...pa.map(p => p.slot), ...pb.map(p => p.slot)])].sort((x, y) => mxSlotRank(x) - mxSlotRank(y) || String(x).localeCompare(String(y)));
+        const find = (arr, s) => arr.filter(p => p.slot === s);
+        const starters = slots.filter(s => !mxSlotIsBench(s));
+        const bench = slots.filter(s => mxSlotIsBench(s));
+        const cell = (p, cls) => p
+          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span></span><span class="mx-pts">${fmt(p.pts)}</span></div>`
+          : '<div></div>';
+        const rows = (list) => list.map(s => {
+          const ra = find(pa, s), rb = find(pb, s);
+          const n = Math.max(ra.length, rb.length);
+          let html = '';
+          for (let i = 0; i < n; i++) {
+            const bg = posSlotColor(s);
+            html += `<div class="mx-row">${cell(ra[i], 'l')}<span class="mx-slot" style="background:${bg}33">${escapeHTML(s)}</span>${cell(rb[i], 'r')}</div>`;
+          }
+          return html;
+        }).join('');
+        const sum = (arr, bench) => arr.filter(p => mxSlotIsBench(p.slot) === bench).reduce((acc, p) => acc + p.pts, 0);
+        const colA = getManagerColor(A.manager), colB = getManagerColor(B.manager);
+        return `
+          <div class="mx-row" style="border-top:0">
+            <div class="text-[11px] font-extrabold truncate" style="color:${colA}">${escapeHTML(A.manager)}</div><span></span>
+            <div class="text-[11px] font-extrabold truncate text-right" style="color:${colB}">${escapeHTML(B.manager)}</div>
+          </div>
+          <div class="mx-sep">Starters</div>
+          ${rows(starters)}
+          <div class="mx-row mx-tot"><div class="mx-cell l"><span class="mx-name">Starters</span><span class="mx-pts">${fmt(sum(pa, false))}</span></div><span class="mx-slot">TOT</span><div class="mx-cell r"><span class="mx-name">Starters</span><span class="mx-pts">${fmt(sum(pb, false))}</span></div></div>
+          ${bench.length ? `<div class="mx-sep">Bench</div>${rows(bench)}` : ''}`;
+      };
+
+      wrap.innerHTML = pairs.map(({ key, A, B }) => {
+        const lp = buildLiveProbPoints(STATE.data.scores || [], yr, wk, A.team_id, B.team_id, lg);
+        const last = lp.length ? lp[lp.length - 1] : null;
+        const projA = last ? last.projA : 0, projB = last ? last.projB : 0;
+        const wpA = last ? Math.round(last.wpA * 10) / 10 : null;
+        const colA = getManagerColor(A.manager), colB = getManagerColor(B.manager);
+        const open = STATE.mxOpen.has(key);
+        return `
+          <div class="mx-card ${open ? 'open' : ''} bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-key="${key}">
+            <button type="button" class="mx-head w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition" aria-expanded="${open}">
+              <div class="grid items-center gap-2" style="grid-template-columns: minmax(0,1fr) auto minmax(0,1fr)">
+                ${side(A, 'l', projA)}
+                <div class="flex flex-col items-center gap-1 text-slate-400">
+                  <span class="text-[10px] font-bold uppercase tracking-wider">${isFinal ? 'Final' : 'vs'}</span>
+                  <i class="mx-chev fa-solid fa-chevron-down text-xs"></i>
+                </div>
+                ${side(B, 'r', projB)}
+              </div>
+              ${wpA !== null ? `
+              <div class="mt-2.5">
+                <div class="flex justify-between text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                  <span>${wpA.toFixed(1)}%</span><span class="uppercase tracking-wider">Win Prob</span><span>${(100 - wpA).toFixed(1)}%</span>
+                </div>
+                <div class="mx-wp mt-1"><span style="width:${wpA}%;background:${colA}"></span><span style="width:${100 - wpA}%;background:${colB}"></span></div>
+              </div>` : ''}
+            </button>
+            <div class="mx-body ${open ? '' : 'hidden'} border-t border-slate-200 dark:border-slate-800">${bodyFor(A, B)}</div>
+          </div>`;
+      }).join('');
+      mxSyncExpandAllLabel();
     }
 
     function downloadMatchupsCSV() {
@@ -3834,34 +4050,7 @@
             title: {
               display: false
             },
-            legend: {
-              position: 'bottom',
-              onClick: (e, item, legend) => {
-                const name = legend.chart.data.datasets[item.datasetIndex].label;
-                STATE.survivor.highlight = (STATE.survivor.highlight === name) ? null : name;
-                applySurvivorHighlight();
-              },
-              onHover: (e) => { if (e && e.native && e.native.target) e.native.target.style.cursor = 'pointer'; },
-              onLeave: (e) => { if (e && e.native && e.native.target) e.native.target.style.cursor = 'default'; },
-              labels: {
-                color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 10,
-                generateLabels: (chart) => {
-                  const hl = STATE.survivor.highlight;
-                  const base = Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                  base.forEach((it) => {
-                    const ds = chart.data.datasets[it.datasetIndex];
-                    const c = ds._baseColor || ds.borderColor;
-                    it.fillStyle = c; it.strokeStyle = c; it.hidden = false;
-                    it.lineWidth = 0;
-                    const dim = hl && ds.label !== hl;
-                    it.fontColor = dim ? hexToRgba(isDark ? '#94a3b8' : '#475569', 0.4) : textColor;
-                    if (dim) { it.fillStyle = hexToRgba(c, 0.25); }
-                    it.textDecoration = '';
-                  });
-                  return base;
-                }
-              }
-            },
+            legend: ndlMgrLegend(textColor, isDark, applySurvivorHighlight),
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               titleColor: isDark ? '#f8fafc' : '#0f172a',
@@ -3898,7 +4087,7 @@
           }
         }
       });
-      if (STATE.survivor.highlight) applySurvivorHighlight();
+      if (STATE.filters.selectedManager) applySurvivorHighlight();
     }
 
     function survivorAutoScrollToWeek(wk, smooth) {
@@ -3919,8 +4108,8 @@
     function applySurvivorHighlight() {
       const chart = STATE.survivor.chartInstance;
       if (!chart) return;
-      let hl = STATE.survivor.highlight;
-      if (hl && !chart.data.datasets.some(d => d.label === hl)) { hl = STATE.survivor.highlight = null; }
+      let hl = STATE.filters.selectedManager;
+      if (hl && !chart.data.datasets.some(d => d.label === hl)) hl = null;
       chart.data.datasets.forEach((ds) => {
         const base = ds._baseColor || ds.borderColor;
         ds._baseColor = base;
@@ -4191,7 +4380,7 @@
     function downloadSurvivorPNG() {
       const yr = STATE.filters.year;
       if (STATE.survivor.viewMode === 'chart' && STATE.survivor.chartInstance) {
-        return ndlChartToPNG(STATE.survivor.chartInstance, `${activeSeasonFilePrefix()}_Survivor_Chart_${yr}.png`);
+        return ndlChartToPNG(STATE.survivor.chartInstance, `${activeSeasonFilePrefix()}_Survivor_Chart_${yr}.png`, { title: `Survivor Pool \u2014 ${activeSeasonDisplayName()} (Weekly PF)` });
       }
       return ndlElementToPNG(document.getElementById('survivor-table-container'), `${activeSeasonFilePrefix()}_Survivor_Table_${yr}.png`);
     }
@@ -5156,10 +5345,7 @@
               font: { size: 16, weight: '700' },
               padding: { bottom: 16 }
             },
-            legend: {
-              position: 'right',
-              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 12 }
-            },
+            legend: ndlMgrLegend(textColor, isDark, applyWaeHighlight),
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               titleColor: isDark ? '#f8fafc' : '#0f172a',
@@ -5204,6 +5390,27 @@
           }
         }
       });
+      applyWaeHighlight();
+    }
+
+    function applyWaeHighlight() {
+      const chart = STATE.wae.chartInstance;
+      if (!chart) return;
+      let hl = STATE.filters.selectedManager;
+      if (hl && !chart.data.datasets.some(d => d.label === hl)) hl = null;
+      chart.data.datasets.forEach((ds) => {
+        const base = ds._baseColor || ds.borderColor;
+        ds._baseColor = base;
+        if (!hl) {
+          ds.borderColor = base; ds.backgroundColor = base; ds.borderWidth = 2.5; ds.pointRadius = 3.5; ds.order = 0;
+        } else if (ds.label === hl) {
+          ds.borderColor = base; ds.backgroundColor = base; ds.borderWidth = 4.5; ds.pointRadius = 5; ds.order = 0;
+        } else {
+          const dim = hexToRgba(base, 0.18);
+          ds.borderColor = dim; ds.backgroundColor = dim; ds.borderWidth = 1.5; ds.pointRadius = 2; ds.order = 1;
+        }
+      });
+      chart.update('none');
     }
 
     function renderWaeFrameAtIdx(idx) {
@@ -5995,7 +6202,9 @@
     function downloadChartPNG() {
       const chart = STATE.liveProb.chartInstance;
       if (!chart) return;
-      ndlChartToPNG(chart, `${activeSeasonFilePrefix()}_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`);
+      const ls = STATE.liveProb.fullSeries;
+      const lpTitle = `Live Win Probability${ls ? ` \u2014 ${ls.mgrA} vs ${ls.mgrB}` : ''} \u2014 ${activeSeasonDisplayName()} Week ${STATE.filters.weekMax}`;
+      ndlChartToPNG(chart, `${activeSeasonFilePrefix()}_Matchup_Chart_${STATE.filters.year}_Wk${STATE.filters.weekMax}.png`, { title: lpTitle });
     }
 
     function downloadChartCSV() {
@@ -8012,7 +8221,9 @@
       const chart = STATE.positions.chartInstance;
       const view = STATE.positions.last;
       if (!chart || !view) return;
-      ndlChartToPNG(chart, `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position${view.fileTag || ''}_${view.viewMode}_${view.yr}_w${view.wkMin}-${view.wkMax}.png`);
+      const modeLbl = view.viewMode === 'optimal' ? 'Optimal Lineup' : (view.viewMode === 'efficiency' ? 'Lineup Efficiency' : 'Real Lineup');
+      const posTitle = `Points by Position \u2014 ${activeSeasonDisplayName(view.yr, view.league)} \u00B7 ${modeLbl}${view.selMgr ? ` \u00B7 ${view.selMgr}` : ''} \u00B7 Wk ${view.wkMin}${view.wkMax !== view.wkMin ? `\u2013${view.wkMax}` : ''}`;
+      ndlChartToPNG(chart, `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position${view.fileTag || ''}_${view.viewMode}_${view.yr}_w${view.wkMin}-${view.wkMax}.png`, { title: posTitle, legendItems: ndlLegendItemsFromDom('pos-legend'), cssHeight: 900 });
     }
 
     window.assignNormalizedPositions = assignNormalizedPositions;
@@ -8612,8 +8823,43 @@
     }
 
     // ---------- Mobile "next table" arrow ----------
+    // Header button (top of each table's card): jumps UP to the previous table
     function histNextBtnHTML() {
+      return `<button type="button" class="hist-up-btn" onclick="histScrollToPrev(this)" aria-label="Scroll to previous table" title="Previous table"><i class="fa-solid fa-chevron-up text-xs"></i></button>`;
+    }
+    // Footer button (bottom-right of each table's card, thumb-friendly): jumps DOWN to the next table
+    function histDownBtnHTML() {
       return `<button type="button" class="hist-next-btn" onclick="histScrollToNext(this)" aria-label="Scroll to next table" title="Next table"><i class="fa-solid fa-chevron-down text-xs"></i></button>`;
+    }
+    function histScrollToPrev(btn) {
+      const cards = histCards();
+      const i = cards.indexOf(btn.closest('.hist-card'));
+      const prev = cards[i - 1];
+      if (!prev) return;
+      const hdr = document.querySelector('header');
+      const off = (hdr ? hdr.getBoundingClientRect().height : 0) + 8;
+      window.scrollTo({ top: prev.getBoundingClientRect().top + window.scrollY - off, behavior: 'smooth' });
+    }
+    // First card: no up button. Last card: no down button. Every other card gets a bottom-right footer with the down button.
+    function histDecorateCards() {
+      const cards = histCards();
+      cards.forEach((c, i) => {
+        if (i === 0) { const u = c.querySelector('.hist-up-btn'); if (u) u.remove(); }
+        c.querySelectorAll('.hist-card-foot').forEach(n => n.remove());
+        if (i < cards.length - 1) c.insertAdjacentHTML('beforeend', `<div class="hist-card-foot">${histDownBtnHTML()}</div>`);
+      });
+    }
+    // Mobile: year matrices open scrolled to the most recent year (far right), unless the user's own position was restored
+    function histAutoScrollMatrices(anchor) {
+      if (window.innerWidth >= 640) return;
+      const saved = new Set(((anchor && anchor.scrolls) || []).map(s => s.key));
+      const run = () => histCards().filter(c => c.dataset.matrix === '1').forEach(c => {
+        if (saved.has(histCardKey(c))) return;
+        const sc = c.querySelector('.overflow-x-auto');
+        if (sc) sc.scrollLeft = sc.scrollWidth;
+      });
+      run();
+      requestAnimationFrame(run);
     }
     function histScrollToNext(btn) {
       const cards = histCards();
@@ -8845,7 +9091,7 @@
       const footerRow = sdevRowFn ? sdevRowFn(seasons) : '';
 
       return `
-        <div class="hist-card bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-title="${escapeHTML(title)}">
+        <div class="hist-card bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-matrix="1" data-title="${escapeHTML(title)}">
           <div class="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
             <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHTML(title)}</h3>
             ${histNextBtnHTML()}
@@ -9219,9 +9465,9 @@
 
       root.style.minHeight = '';
       root.innerHTML = chunks.join('');
-      const lastCard = histCards().pop();
-      if (lastCard) { const b = lastCard.querySelector('.hist-next-btn'); if (b) b.remove(); }
+      histDecorateCards();
       histRestoreAnchor(anchor);
+      histAutoScrollMatrices(anchor);
     }
 
     // ---------- Historical downloads (bottom bar): CSV / PNG, all-in-one or separate ----------
@@ -9312,7 +9558,7 @@
           clone.style.width = width + 'px';
           clone.style.maxWidth = 'none';
           clone.querySelectorAll('.overflow-x-auto, [class*="max-h-"]').forEach(n => { n.style.overflow = 'visible'; n.style.maxHeight = 'none'; });
-          clone.querySelectorAll('.hist-next-btn').forEach(n => { n.style.display = 'none'; });
+          clone.querySelectorAll('.hist-next-btn, .hist-up-btn, .hist-card-foot').forEach(n => { n.style.display = 'none'; });
           clone.querySelectorAll('*').forEach(n => { if (win.getComputedStyle(n).position === 'sticky') n.style.position = 'static'; });
           if (opts.flat) { clone.style.boxShadow = 'none'; clone.style.borderRadius = '0'; }
           ndlInlineSvgStyles(doc, clone);
@@ -9338,13 +9584,13 @@
             const maxAll = Math.max(0, ...[...root.querySelectorAll('.hist-card table')].map(t => t.scrollWidth));
             const gridMax = Math.max(0, ...[...root.querySelectorAll('.grid .hist-card table')].map(t => t.scrollWidth));
             const width = Math.max(1400, maxAll + 2, gridMax * 2 + 18);
-            const canvas = await histElementToCanvas(root, { width, scale: 1, windowWidth: 1600 });
+            const canvas = await histElementToCanvas(root, { width, scale: ndlPngScale(width, root.scrollHeight), windowWidth: 1600 });
             histSaveBlob(await histCanvasToBlob(canvas), 'NDL_Historical_All.png');
           } else {
             for (let i = 0; i < cards.length; i++) {
               histSetStatus(`PNG ${i + 1}/${cards.length}`);
               const w = Math.max(560, ...[...cards[i].querySelectorAll('table')].map(t => t.scrollWidth + 2));
-              const canvas = await histElementToCanvas(cards[i], { width: w, scale: 2 });
+              const canvas = await histElementToCanvas(cards[i], { width: w, scale: ndlPngScale(w, cards[i].scrollHeight) });
               histSaveBlob(await histCanvasToBlob(canvas), `NDL_Historical_${String(i + 1).padStart(2, '0')}_${histSlug(cards[i].dataset.title)}.png`);
               await histWait(450);
             }
@@ -9358,6 +9604,23 @@
 
     // ---------- Shared PNG export (table / chart only, full colour, current theme background) ----------
     function ndlBg() { return document.documentElement.classList.contains('dark') ? '#020617' : '#ffffff'; }
+
+    // Every PNG download targets ~3000px wide (height is capped so very tall exports still fit browser canvas limits)
+    const NDL_PNG_WIDTH = 3000;
+    function ndlPngScale(cssW, cssH) {
+      let s = NDL_PNG_WIDTH / Math.max(1, cssW);
+      if (cssH && cssH * s > 16000) s = 16000 / cssH;
+      return Math.max(0.5, s);
+    }
+    function ndlLegendItemsFromDom(id) {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const items = [...el.querySelectorAll('.pos-legend-item')].map(n => {
+        const dot = n.querySelector('.pos-chip-dot');
+        return { text: n.textContent.trim(), color: dot ? dot.style.background : '#94a3b8' };
+      });
+      return items.length ? items : null;
+    }
 
     // html2canvas serialises inline SVGs without page CSS, so bake computed paint styles into the clone
     function ndlInlineSvgStyles(doc, clone) {
@@ -9377,20 +9640,94 @@
       if (typeof html2canvas !== 'function') { alert('PNG export library failed to load (html2canvas). Check your connection and reload.'); return; }
       const tables = [...el.querySelectorAll('table')];
       const w = opts.width || Math.max(el.scrollWidth, el.offsetWidth, ...tables.map(t => t.scrollWidth + 2), 320);
-      const canvas = await histElementToCanvas(el, { width: w, scale: opts.scale || 2, flat: true, onclone: opts.onclone });
+      const canvas = await histElementToCanvas(el, { width: w, scale: opts.scale || ndlPngScale(w, el.scrollHeight), flat: true, onclone: opts.onclone });
       histSaveBlob(await histCanvasToBlob(canvas), filename);
     }
 
-    // Chart.js canvases are transparent; paint the theme background so the PNG is readable anywhere
-    function ndlChartToPNG(chart, filename) {
+    // Re-renders the live chart at a fixed export size (3000px wide bitmap) with its title and legend forced on,
+    // paints the theme background behind it, saves it, then restores the on-screen chart exactly as it was.
+    function ndlChartToPNG(chart, filename, opts = {}) {
       if (!chart || !chart.canvas) return;
-      const src = chart.canvas;
-      const c = document.createElement('canvas');
-      c.width = src.width; c.height = src.height;
-      const g = c.getContext('2d');
-      g.fillStyle = ndlBg(); g.fillRect(0, 0, c.width, c.height);
-      g.drawImage(src, 0, 0);
-      c.toBlob(b => { if (b) histSaveBlob(b, filename); }, 'image/png');
+      const cssW = opts.cssWidth || 1500;
+      const cssH = opts.cssHeight || 820;
+      const isDark = document.documentElement.classList.contains('dark');
+      const textColor = isDark ? '#e2e8f0' : '#1e293b';
+      const raw = chart.config.options || (chart.config.options = {});
+      raw.plugins = raw.plugins || {};
+      const P = raw.plugins;
+      const saved = { title: P.title, legend: P.legend, hadDpr: Object.prototype.hasOwnProperty.call(raw, 'devicePixelRatio'), dpr: raw.devicePixelRatio };
+      let out = null;
+      try {
+        const bt = saved.title || {};
+        const titleText = opts.title || (bt.display && bt.text) || '';
+        if (titleText) {
+          P.title = Object.assign({}, bt, { display: true, text: titleText, color: bt.color || textColor, font: { size: 26, weight: '800' }, padding: { top: 6, bottom: 18 } });
+        }
+        const bl = saved.legend || {};
+        if (opts.legendItems && opts.legendItems.length) {
+          P.legend = {
+            display: true, position: 'bottom', onClick: () => {}, onHover: null, onLeave: null,
+            labels: {
+              color: textColor, font: { size: 14, weight: '600' }, boxWidth: 16, padding: 16,
+              generateLabels: () => opts.legendItems.map((it, i) => ({ text: it.text, fillStyle: it.color, strokeStyle: it.color, lineWidth: 0, hidden: false, index: i, fontColor: textColor }))
+            }
+          };
+        } else if (bl.display !== false) {
+          P.legend = Object.assign({}, bl, { display: true, labels: Object.assign({}, bl.labels || {}, { font: { size: 14, weight: '600' }, boxWidth: 16, padding: 14 }) });
+        }
+        raw.devicePixelRatio = NDL_PNG_WIDTH / cssW;
+        chart.resize(cssW, cssH);
+        chart.update('none');
+        chart.draw();
+        const src = chart.canvas;
+        out = document.createElement('canvas');
+        out.width = src.width; out.height = src.height;
+        const g = out.getContext('2d');
+        g.fillStyle = ndlBg(); g.fillRect(0, 0, out.width, out.height);
+        g.drawImage(src, 0, 0);
+      } finally {
+        if (saved.title === undefined) delete P.title; else P.title = saved.title;
+        if (saved.legend === undefined) delete P.legend; else P.legend = saved.legend;
+        if (saved.hadDpr) raw.devicePixelRatio = saved.dpr; else delete raw.devicePixelRatio;
+        chart.resize();
+        chart.update('none');
+      }
+      if (out) out.toBlob(b => { if (b) histSaveBlob(b, filename); }, 'image/png');
+    }
+
+    // Shared clickable manager legend (Survivor graph + Wins Above Even): click highlights that manager's line and is
+    // stored in the same `mgr` URL parameter as the manager filter, so it survives reloads and edited URLs.
+    function ndlMgrLegend(textColor, isDark, applyFn) {
+      return {
+        position: 'bottom',
+        onClick: (e, item, legend) => {
+          const name = legend.chart.data.datasets[item.datasetIndex].label;
+          STATE.filters.selectedManager = (STATE.filters.selectedManager === name) ? null : name;
+          applyFn();
+          updateFilterBadge();
+          updateUrlHash();
+        },
+        onHover: (e) => { if (e && e.native && e.native.target) e.native.target.style.cursor = 'pointer'; },
+        onLeave: (e) => { if (e && e.native && e.native.target) e.native.target.style.cursor = 'default'; },
+        labels: {
+          color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 10,
+          generateLabels: (chart) => {
+            let hl = STATE.filters.selectedManager;
+            if (hl && !chart.data.datasets.some(d => d.label === hl)) hl = null;
+            const base = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+            base.forEach((it) => {
+              const ds = chart.data.datasets[it.datasetIndex];
+              const c = ds._baseColor || ds.borderColor;
+              it.fillStyle = c; it.strokeStyle = c; it.hidden = false; it.lineWidth = 0;
+              const dim = hl && ds.label !== hl;
+              it.fontColor = dim ? hexToRgba(isDark ? '#94a3b8' : '#475569', 0.4) : textColor;
+              if (dim) it.fillStyle = hexToRgba(c, 0.25);
+              it.textDecoration = '';
+            });
+            return base;
+          }
+        }
+      };
     }
 
     function ndlWithBusy(btn, fn) {
@@ -9470,6 +9807,8 @@
         STATE.filters.selectedManager = null;
         renderStandingsTable();
         if (FilterEngine.activeTab() === 'positions') renderPositionsTab();
+        if (STATE.survivor && STATE.survivor.chartInstance) applySurvivorHighlight();
+        if (STATE.wae && STATE.wae.chartInstance) applyWaeHighlight();
         updateFilterBadge();
         updateUrlHash();
       });
