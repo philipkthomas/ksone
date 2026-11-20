@@ -582,9 +582,9 @@
     .hcw-track { position: relative; display: inline-block; width: 30px; height: 16px; border-radius: 9999px; background: #cbd5e1; transition: background-color .15s ease; flex-shrink: 0; }
     .dark .hcw-track { background: #334155; }
     .hcw-thumb { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 9999px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s ease; }
-    #filter-hcw:checked + .hcw-track { background: #0284c7; }
-    #filter-hcw:checked + .hcw-track .hcw-thumb { transform: translateX(14px); }
-    #filter-hcw:focus-visible + .hcw-track { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+    #filter-hcw:checked + .hcw-track, #fb-show-bench:checked + .hcw-track { background: #0284c7; }
+    #filter-hcw:checked + .hcw-track .hcw-thumb, #fb-show-bench:checked + .hcw-track .hcw-thumb { transform: translateX(14px); }
+    #filter-hcw:focus-visible + .hcw-track, #fb-show-bench:focus-visible + .hcw-track { outline: 2px solid #0ea5e9; outline-offset: 2px; }
 
     /* ---- Empty-state overlay for charts ---- */
     .chart-empty-overlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 24px; color: #64748b; font-size: 0.875rem; }
@@ -676,8 +676,8 @@
     .odds-tip::after { content: attr(data-tip); display: none; position: absolute; left: 0; top: calc(100% + 6px); z-index: 60; width: max-content; max-width: min(340px, 80vw); white-space: normal; font-size: 11px; font-weight: 500; line-height: 1.35; padding: 7px 9px; border-radius: 6px; background: #0f172a; color: #f1f5f9; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
     .odds-tip:hover::after, .odds-tip:focus::after { display: block; }
     .odds-table td.odds-pct { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; }
-    .odds-table td.odds-tot, .odds-table th.odds-tot { border-left: 2px solid #cbd5e1; font-weight: 700; }
-    .dark .odds-table td.odds-tot, .dark .odds-table th.odds-tot { border-left-color: #334155; }
+    .odds-table td.odds-tot, .odds-table th.odds-tot { border-left: 1px solid #cbd5e1; border-right: 4px solid #64748b; font-weight: 700; }
+    .dark .odds-table td.odds-tot, .dark .odds-table th.odds-tot { border-left-color: #334155; border-right-color: #94a3b8; }
     .odds-table .odds-cut { border-left: 2px dashed #94a3b8; }
     .odds-wk-tab { padding: 8px 14px; font-size: 0.8rem; font-weight: 600; color: #0284c7; border: 1px solid transparent; border-bottom: 0; border-radius: 6px 6px 0 0; cursor: pointer; background: transparent; white-space: nowrap; }
     .odds-wk-tab.active { color: #0f172a; background: #ffffff; border-color: #cbd5e1; }
@@ -707,7 +707,23 @@
     .mx-chev { transition: transform .2s ease; }
     .mx-card.open .mx-chev { transform: rotate(180deg); }
     .mx-row { display: grid; grid-template-columns: minmax(0,1fr) 42px minmax(0,1fr); align-items: center; gap: 6px; padding: 3px 10px; font-size: 11px; border-top: 1px solid rgba(148,163,184,0.18); }
-    .mx-cell { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; min-width: 0; }
+    .mx-cell { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 0; }
+    .mx-ptscol { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.12; flex-shrink: 0; }
+    .mx-cell.r .mx-ptscol { align-items: flex-start; }
+    .mx-pj { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 600; }
+    .mx-pj-n { color: #94a3b8; opacity: .85; }
+    .mx-pj-e { color: #64748b; }
+    .dark .mx-pj-e { color: #94a3b8; }
+    .mx-pj-g, .mx-live-g { color: #16a34a !important; }
+    .mx-pj-r, .mx-live-r { color: #dc2626 !important; }
+    .dark .mx-pj-g, .dark .mx-live-g { color: #4ade80 !important; }
+    .dark .mx-pj-r, .dark .mx-live-r { color: #f87171 !important; }
+    .mx-tx { display: inline-block; font-size: 8px; font-weight: 800; letter-spacing: .04em; line-height: 1; padding: 2px 4px; margin-left: 4px; border-radius: 4px; background: #facc15; color: #422006; vertical-align: 1px; }
+    .mx-tx.off { opacity: .4; }
+    .mx-cell.r .mx-tx { margin-left: 4px; margin-right: 0; }
+    .mx-wp-link { cursor: pointer; border-radius: 6px; }
+    .mx-wp-link:hover { background: rgba(148,163,184,0.16); }
+    .mx-liverow .mx-name { font-weight: 700; color: #64748b; font-size: 10px; }
     .mx-cell.r { flex-direction: row-reverse; }
     .mx-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: #1e293b; }
     .dark .mx-name { color: #e2e8f0; }
@@ -718,8 +734,8 @@
     .mx-cell.r .mx-pos { margin-left: 0; margin-right: 3px; }
     .mx-pts { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; color: #0f172a; flex-shrink: 0; }
     .dark .mx-pts { color: #f1f5f9; }
-    .mx-slot { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 800; text-align: center; border-radius: 4px; padding: 1px 0; color: #0f172a; }
-    .dark .mx-slot { color: #f8fafc; }
+    .mx-slot { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 800; text-align: center; border-radius: 4px; padding: 2px 0; color: #0f172a; }
+    .dark .mx-slot:not([style]) { color: #f8fafc; }
     .mx-sep { padding: 3px 10px; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #64748b; background: rgba(148,163,184,0.12); border-top: 1px solid rgba(148,163,184,0.18); }
     .mx-tot { background: rgba(148,163,184,0.10); }
 
@@ -819,6 +835,12 @@
             <span class="text-slate-600 dark:text-slate-400 font-medium">Hide current week</span>
           </label>
 
+          <label id="fb-bench-wrap" class="flex items-center gap-2 cursor-pointer select-none" style="display:none">
+            <input type="checkbox" id="fb-show-bench" class="sr-only" checked>
+            <span class="hcw-track"><span class="hcw-thumb"></span></span>
+            <span class="text-slate-600 dark:text-slate-400 font-medium">Show bench</span>
+          </label>
+
           <label id="hist-po-wrap" class="flex items-center gap-2 cursor-pointer select-none" style="display:none">
             <input type="checkbox" id="hist-include-playoffs" class="sr-only" checked>
             <span class="hcw-track"><span class="hcw-thumb"></span></span>
@@ -911,9 +933,6 @@
           <i class="fa-solid fa-people-arrows text-brand-500"></i> <span id="mx-cards-title">Week Matchups</span>
         </h3>
         <div class="flex items-center gap-3 text-xs">
-        <label id="mx-show-bench-wrap" class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold cursor-pointer select-none">
-          <input type="checkbox" id="mx-show-bench" class="accent-sky-500"> Show bench
-        </label>
         <button id="btn-mx-expand-all" type="button" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
           <i class="fa-solid fa-up-right-and-down-left-from-center text-xs"></i> <span id="mx-expand-all-text">Expand all</span>
         </button>
@@ -1413,11 +1432,6 @@
           </div>
           <button type="button" id="pos-back-teams" class="hidden items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"><i class="fa-solid fa-arrow-left text-[10px]"></i> All teams</button>
         </div>
-        <div class="flex flex-wrap items-center gap-3 text-xs">
-          <label id="pos-show-bench-wrap" class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold cursor-pointer select-none">
-            <input type="checkbox" id="pos-show-bench" class="accent-sky-500"> Show bench
-          </label>
-        </div>
       </div>
 
       <div id="pos-mgr-chips" class="flex-wrap items-center gap-1.5 px-1" style="display:none"></div>
@@ -1583,7 +1597,7 @@
     }
 
     const STATE = {
-      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [] },
+      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [] },
       filters: { year: 2026, league: '', seasonKey: '2026', weekMin: 1, weekMax: 8, hideCW: false, selectedManagers: [], matchup: null },
       hcwUserOverride: false,
       weekUserOverride: false,
@@ -2756,7 +2770,7 @@
             } else if (window.initSqlJs) {
               if (!STATE.SQL) STATE.SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
               const db = new STATE.SQL.Database(new Uint8Array(buffer));
-              const tmp = { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [] };
+              const tmp = { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [] };
               Object.keys(tmp).forEach(table => {
                 try {
                   const res = db.exec(`SELECT * FROM ${table}`);
@@ -2784,15 +2798,18 @@
 
         if (!fresh && firstLoad) {
           try {
-            const [points, teams, scores, transactions, currentweek, schedule] = await Promise.all([
+            const [points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi] = await Promise.all([
               parseCSVUrl('./points.csv').catch(() => []),
               parseCSVUrl('./teams.csv').catch(() => []),
               parseCSVUrl('./scores.csv').catch(() => []),
               parseCSVUrl('./transactions.csv').catch(() => []),
               parseCSVUrl('./currentweek.csv').catch(() => []),
-              parseCSVUrl('./schedule.csv').catch(() => [])
+              parseCSVUrl('./schedule.csv').catch(() => []),
+              parseCSVUrl('./projectedpoints.csv').catch(() => []),
+              parseCSVUrl('./liveprojectedpoints.csv').catch(() => []),
+              parseCSVUrl('./taxi.csv').catch(() => [])
             ]);
-            if (points && points.length > 0) fresh = { points, teams, scores, transactions, currentweek, schedule };
+            if (points && points.length > 0) fresh = { points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi };
           } catch (err) {
             console.warn("CSV Fallback failed:", err);
           }
@@ -2911,6 +2928,7 @@
       show('week-filter-group', !m.hideSeasonControls);
       show('wk-from-wrap', m.from && !m.hideSeasonControls);
       show('hcw-wrap', m.hcw);
+      show('fb-bench-wrap', tabKey === 'matchups' || (tabKey === 'positions' && (STATE.positions.viewMode || 'real') !== 'efficiency'));
       show('hist-po-wrap', tabKey === 'historical');
       show('hist-chips-wrap', tabKey === 'historical');
       const lbl = document.getElementById('wk-label');
@@ -3251,16 +3269,25 @@
 
       const cards = document.getElementById('matchups-cards');
       if (cards) cards.addEventListener('click', (e) => {
+        const wpLink = e.target.closest('.mx-wp-link');
+        if (wpLink) {
+          e.preventDefault(); e.stopPropagation();
+          STATE.filters.matchup = wpLink.getAttribute('data-mu') || null;
+          activateTab('live_prob');
+          try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {}
+          return;
+        }
         const head = e.target.closest('.mx-head');
         if (!head) return;
         const card = head.closest('.mx-card');
         if (card) mxSetOpen(card, !card.classList.contains('open'));
         mxSyncExpandAllLabel();
       });
-      const mxBench = document.getElementById('mx-show-bench');
-      if (mxBench) {
-        mxBench.checked = STATE.positions.showBench;
-        mxBench.addEventListener('change', e => setShowBench(e.target.checked));
+      const fbBench = document.getElementById('fb-show-bench');
+      if (fbBench && !fbBench._wired) {
+        fbBench._wired = true;
+        fbBench.checked = STATE.positions.showBench;
+        fbBench.addEventListener('change', e => setShowBench(e.target.checked));
       }
       const allBtn = document.getElementById('btn-mx-expand-all');
       if (allBtn) allBtn.addEventListener('click', () => {
@@ -3289,7 +3316,7 @@
     // Show Bench is one setting shared by Matchups and Points by Position (URL param `bench`, only on those two tabs)
     function setShowBench(on) {
       STATE.positions.showBench = !!on;
-      ['pos-show-bench', 'mx-show-bench'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = !!on; });
+      { const el = document.getElementById('fb-show-bench'); if (el) el.checked = !!on; }
       updateUrlHash();
       const t = FilterEngine.activeTab();
       if (t === 'positions') renderPositionsTab();
@@ -3491,8 +3518,65 @@
     }
     function mxSlotIsBench(s) { return /^B/.test(s) || s === 'IR' || s === 'IR+'; }
 
-    function mxTeamPlayers(t) {
+    // Bright, high-contrast position colours for the slot badges (bench slots use the same hue, dimmed)
+    const MX_POS_COLORS = {
+      QB: ['#5B6B84', '#FFFFFF'], SFX: ['#8A9BB5', '#FFFFFF'], RB: ['#FF8A1F', '#1A1100'], WR: ['#3B82F6', '#FFFFFF'],
+      TE: ['#FFD60A', '#1A1500'], FX: ['#22C55E', '#052E16'], DEF: ['#A855F7', '#FFFFFF'], K: ['#14B8A6', '#042F2E']
+    };
+    function mxSlotStyle(slot) {
+      const sl = String(slot || '');
+      if (sl === 'BN' || /^IR/.test(sl)) return 'background:#9CA3AF;color:#111827;opacity:.7';
+      const bench = /^B(QB|RB|WR|TE|DEF|K)/.test(sl);
+      const base = (bench ? sl.slice(1) : sl).replace(/\d+$/, '');
+      const c = MX_POS_COLORS[base];
+      if (!c) return 'background:#9CA3AF;color:#111827';
+      return `background:${c[0]};color:${c[1]}${bench ? ';opacity:.62' : ''}`;
+    }
+
+    // Projection / taxi lookups (rebuilt whenever live.db changes)
+    function mxProjIndex() {
+      if (STATE._mxIdx && STATE._mxIdx.v === STATE.dataVersion) return STATE._mxIdx;
+      const D = STATE.data;
+      const num = v => { if (v === null || v === undefined || v === '') return null; const n = Number(v); return isNaN(n) ? null : n; };
+      const proj = new Map(), live = new Map(), liveWeeks = new Set(), taxi = new Map();
+      const put = (map, r, valKey) => {
+        const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
+        const pid = String(getVal(r, ['player_id']));
+        const lg = normLeague(getVal(r, ['league']));
+        const v = num(getVal(r, [valKey]));
+        if (v === null) return null;
+        map.set(`${yr}|${lg}|${wk}|${pid}`, v);
+        map.set(`${yr}|*|${wk}|${pid}`, v);
+        return { yr, wk, lg };
+      };
+      (D.projectedpoints || []).forEach(r => put(proj, r, 'proj_points'));
+      (D.liveprojectedpoints || []).forEach(r => {
+        const k = put(live, r, 'live_proj_points');
+        if (k) { liveWeeks.add(`${k.yr}|${k.lg}|${k.wk}`); liveWeeks.add(`${k.yr}|*|${k.wk}`); }
+      });
+      (D.taxi || []).forEach(r => {
+        const type = String(getVal(r, ['type']) || 'taxi').trim().toLowerCase();
+        if (type !== 'taxi') return;
+        const yr = Number(getVal(r, ['year', 'YR'])), pid = String(getVal(r, ['player_id']));
+        if (!yr || pid === 'undefined') return;
+        const stamp = String(getVal(r, ['last_warn_time']) || '');
+        const active = String(getVal(r, ['active']) || 'Y').trim().toUpperCase() !== 'N';
+        const k = `${yr}|${pid}`, prev = taxi.get(k);
+        if (!prev || stamp >= prev.stamp) taxi.set(k, { active, stamp });
+      });
+      STATE._mxIdx = { v: STATE.dataVersion, proj, live, liveWeeks, taxi };
+      return STATE._mxIdx;
+    }
+    function mxLookup(map, yr, lg, wk, pid) {
+      let v = map.get(`${yr}|${normLeague(lg)}|${wk}|${pid}`);
+      if (v === undefined) v = map.get(`${yr}|*|${wk}|${pid}`);
+      return v;
+    }
+
+    function mxTeamPlayers(t, yr = STATE.filters.year, lg = STATE.filters.league, wk = STATE.filters.weekMax) {
       const out = [];
+      const idx = mxProjIndex();
+      const hasLiveWeek = idx.liveWeeks.has(`${yr}|${normLeague(lg)}|${wk}`) || idx.liveWeeks.has(`${yr}|*|${wk}`);
       t.players.forEach(p => {
         const name = getVal(p, ['player_name', 'player', 'name', 'PLAYER', 'PLAYER_NAME', 'full_name']);
         if (!name) return;
@@ -3503,7 +3587,23 @@
         let slot = p.normalized_position || '';
         if (!slot) slot = NP_NOT_STARTED.has(sel) ? (sel && sel !== '' ? (sel === 'BN' || sel === 'BE' || sel === 'BENCH' ? 'BN' : sel) : 'BN') : sel;
         const pos = String(getVal(p, ['position', 'POS', 'pos', 'POSITION']) || '').toUpperCase();
-        out.push({ slot, name: String(name), pos, pts: isNaN(pts) ? 0 : pts, ir: /^IR/.test(sel) });
+        const pid = String(getVal(p, ['player_id']));
+        const actual = isNaN(pts) ? 0 : pts;
+        const proj = mxLookup(idx.proj, yr, lg, wk, pid);
+        const lv = mxLookup(idx.live, yr, lg, wk, pid);
+        let pj = null, eff = null;
+        if (hasLiveWeek && lv !== undefined && lv > 0) {
+          // game in progress: live projection, green/red against the original projection
+          const base = proj === undefined ? null : proj;
+          pj = { val: lv, cls: base === null ? 'e' : (lv > base + 0.005 ? 'g' : (lv < base - 0.005 ? 'r' : 'e')) };
+          eff = lv;
+        } else {
+          // not started (or no live value): original projection, greyed. A player with points but live_proj = 0 has finished: actual counts.
+          pj = (proj === undefined || proj === null) ? null : { val: proj, cls: 'n' };
+          if (hasLiveWeek) eff = (actual !== 0) ? actual : (proj === undefined || proj === null ? 0 : proj);
+        }
+        const tx = idx.taxi.get(`${yr}|${pid}`);
+        out.push({ slot, name: String(name), pos, pts: actual, ir: /^IR/.test(sel), pj, eff, tx: !!tx, txOff: !!tx && !tx.active });
       });
       return out;
     }
@@ -3514,7 +3614,7 @@
       const title = document.getElementById('mx-cards-title');
       if (title) title.textContent = `${activeSeasonDisplayName(yr, lg)} Week ${wk} Matchups`;
 
-      { const mb = document.getElementById('mx-show-bench'); if (mb) mb.checked = STATE.positions.showBench; }
+      { const mb = document.getElementById('fb-show-bench'); if (mb) mb.checked = STATE.positions.showBench; }
       try { getNormalizedForYear(yr); } catch (e) { console.warn('[Matchups] position normalization unavailable', e); }
 
       const byId = {};
@@ -3550,7 +3650,25 @@
 
       const fmt = (n) => (Number(n) || 0).toFixed(2);
 
+      // Per-team projection numbers: original team projection, and the live total (sum of every starter's live projection,
+      // where finished players contribute their actual points and not-started players their original projection)
+      const mxCalc = (t, projScores) => {
+        if (t._mx) return t._mx;
+        const players = mxTeamPlayers(t, yr, lg, wk);
+        const starters = players.filter(p => !mxSlotIsBench(p.slot));
+        const ptsProj = Number(getVal(t.rawRow, ['team_projected_points', 'team_proj_points'])) || 0;
+        const sumProj = starters.reduce((a, p) => a + (p.pj && p.pj.cls === 'n' ? p.pj.val : 0), 0);
+        const orig = ptsProj > 0 ? ptsProj : (projScores > 0 ? projScores : sumProj);
+        const hasLive = starters.some(p => p.eff !== null);
+        const liveTot = hasLive ? starters.reduce((a, p) => a + (p.eff || 0), 0) : null;
+        const cls = liveTot === null ? '' : (liveTot > orig + 0.005 ? 'mx-live-g' : (liveTot < orig - 0.005 ? 'mx-live-r' : ''));
+        t._mx = { players, orig, liveTot, cls };
+        return t._mx;
+      };
+
       const side = (t, align, proj) => {
+        const mx = mxCalc(t, proj);
+        proj = mx.orig;
         const r = recOf(t.team_id);
         const col = getManagerColor(t.manager);
         const won = isFinal && t.result === 'W';
@@ -3563,25 +3681,25 @@
             <div class="text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-300">${r.rec} <span class="text-slate-400">\u00B7</span> ${r.rank}</div>
             <div class="text-xl leading-tight font-mono font-extrabold ${ptsCls}">${fmt(t.pf)}</div>
             <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${proj > 0 ? `Proj ${fmt(proj)}` : 'Proj \u2014'}</div>
+            ${mx.liveTot !== null ? `<div class="text-[11px] font-mono font-bold ${mx.cls || 'text-slate-600 dark:text-slate-300'}" title="Live projection: finished players' actual points + live projections for the rest">Live ${fmt(mx.liveTot)}</div>` : ''}
           </div>`;
       };
 
       const bodyFor = (A, B) => {
-        const pa = mxTeamPlayers(A), pb = mxTeamPlayers(B);
+        const pa = mxCalc(A, 0).players, pb = mxCalc(B, 0).players;
         const slots = [...new Set([...pa.map(p => p.slot), ...pb.map(p => p.slot)])].sort((x, y) => mxSlotRank(x) - mxSlotRank(y) || String(x).localeCompare(String(y)));
         const find = (arr, s) => arr.filter(p => p.slot === s);
         const starters = slots.filter(s => !mxSlotIsBench(s));
         const bench = slots.filter(s => mxSlotIsBench(s));
         const cell = (p, cls) => p
-          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}</span><span class="mx-pts">${fmt(p.pts)}</span></div>`
+          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}</span><span class="mx-ptscol"><span class="mx-pts">${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
           : '<div></div>';
         const rows = (list) => list.map(s => {
           const ra = find(pa, s), rb = find(pb, s);
           const n = Math.max(ra.length, rb.length);
           let html = '';
           for (let i = 0; i < n; i++) {
-            const bg = posSlotColor(s);
-            html += `<div class="mx-row">${cell(ra[i], 'l')}<span class="mx-slot" style="background:${bg}33">${escapeHTML(s)}</span>${cell(rb[i], 'r')}</div>`;
+            html += `<div class="mx-row">${cell(ra[i], 'l')}<span class="mx-slot" style="${mxSlotStyle(s)}">${escapeHTML(s)}</span>${cell(rb[i], 'r')}</div>`;
           }
           return html;
         }).join('');
@@ -3595,6 +3713,7 @@
           <div class="mx-sep">Starters</div>
           ${rows(starters)}
           <div class="mx-row mx-tot"><div class="mx-cell l"><span class="mx-name">Starters</span><span class="mx-pts">${fmt(sum(pa, false))}</span></div><span class="mx-slot">TOT</span><div class="mx-cell r"><span class="mx-name">Starters</span><span class="mx-pts">${fmt(sum(pb, false))}</span></div></div>
+          ${(mxCalc(A, 0).liveTot !== null || mxCalc(B, 0).liveTot !== null) ? `<div class="mx-row mx-tot mx-liverow"><div class="mx-cell l"><span class="mx-name">Live proj</span><span class="mx-pts ${mxCalc(A, 0).cls}">${mxCalc(A, 0).liveTot !== null ? fmt(mxCalc(A, 0).liveTot) : '\u2014'}</span></div><span></span><div class="mx-cell r"><span class="mx-name">Live proj</span><span class="mx-pts ${mxCalc(B, 0).cls}">${mxCalc(B, 0).liveTot !== null ? fmt(mxCalc(B, 0).liveTot) : '\u2014'}</span></div></div>` : ''}
           ${bench.length && STATE.positions.showBench ? `<div class="mx-sep">Bench</div>${rows(bench)}` : ''}`;
       };
 
@@ -3617,7 +3736,7 @@
                 ${side(B, 'r', projB)}
               </div>
               ${wpA !== null ? `
-              <div class="mt-2.5">
+              <div class="mt-2.5 mx-wp-link" data-mu="${key}" role="link" tabindex="0" title="Open the Live Win Prob chart for this matchup">
                 <div class="flex justify-between text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
                   <span>${wpA.toFixed(1)}%</span><span class="uppercase tracking-wider">Win Prob</span><span>${(100 - wpA).toFixed(1)}%</span>
                 </div>
@@ -7796,10 +7915,7 @@
         btn.classList.toggle('active', active);
         btn.setAttribute('aria-selected', active ? 'true' : 'false');
       });
-      const benchWrap = document.getElementById('pos-show-bench-wrap');
-      if (benchWrap) {
-        benchWrap.style.display = mode === 'efficiency' ? 'none' : '';
-      }
+      applyTabFilterVisibility(FilterEngine.activeTab());
     }
 
     // ------------------------------------------
@@ -7807,11 +7923,7 @@
     // ------------------------------------------
     function initPositionsTab() {
       const P = STATE.positions;
-      const cb = document.getElementById('pos-show-bench');
-      if (cb) {
-        cb.checked = P.showBench;
-        cb.addEventListener('change', e => setShowBench(e.target.checked));
-      }
+      { const cb = document.getElementById('fb-show-bench'); if (cb) cb.checked = P.showBench; }
       document.querySelectorAll('#pos-mode-slider .pos-mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const nextMode = btn.getAttribute('data-pos-mode');
@@ -7954,8 +8066,7 @@
 
     function renderPositionsTab() {
       const P = STATE.positions;
-      const cb = document.getElementById('pos-show-bench');
-      if (cb) cb.checked = P.showBench;
+      { const cb = document.getElementById('fb-show-bench'); if (cb) cb.checked = P.showBench; }
       updatePositionsModeUI();
 
       // Season sub-tab: team view, or (when a manager is picked) that manager's week-by-week view.
@@ -8466,7 +8577,7 @@
       if (!chart || !view) return;
       const modeLbl = view.viewMode === 'optimal' ? 'Optimal Lineup' : (view.viewMode === 'efficiency' ? 'Lineup Efficiency' : 'Real Lineup');
       const posTitle = `Points by Position \u2014 ${view.allYears ? 'All Seasons' : activeSeasonDisplayName(view.yr, view.league)} \u00B7 ${modeLbl}${view.selMgr ? ` \u00B7 ${view.selMgr}` : ''} \u00B7 Wk ${view.wkMin}${view.wkMax !== view.wkMin ? `\u2013${view.wkMax}` : ''}`;
-      ndlChartToPNG(chart, `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position${view.fileTag || ''}_${view.viewMode}_${view.yr}_w${view.wkMin}-${view.wkMax}.png`, { title: posTitle, legendItems: ndlLegendItemsFromDom('pos-legend'), cssHeight: 900 });
+      ndlChartToPNGOffscreen(chart, `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position${view.fileTag || ''}_${view.viewMode}_${view.yr}_w${view.wkMin}-${view.wkMax}.png`, { title: posTitle, legendItems: ndlLegendItemsFromDom('pos-legend'), cssHeight: 900 });
     }
 
     window.assignNormalizedPositions = assignNormalizedPositions;
@@ -8826,6 +8937,42 @@
       // Any column that looks like it identifies a team taking part in the trade
       const TX_TEAMCOL_RE = /(^|_)(team|tm|from|to|partner|trader|tradee|opponent|other|dest|destination|source|owner|receiv\w*|send\w*|give\w*|get\w*|a|b)(_|$|id|[ab12]$)|^tm[ab]$/i;
       const TX_NOT_TEAMCOL_RE = /player|week|year|season|league|stamp|date|time|status|type|points|score|id_?number|transaction_id|tx_id|trade_id|pick|round|note|name|desc/i;
+      // Columns that never name a team (players, dates, ids, picks...)
+      const TX_SKIP_COL_RE = /player|pid|week|^wk$|year|^yr$|season|league|stamp|date|time|status|type|points|score|pick|round|note|desc|position|^pos$|nfl|bye|^id$|transaction_id|tx_id|trade_id|^rowid$|faab|bid|waiver|count|rank/i;
+      // Numeric values are only read as team ids in columns that look like they hold a team / manager
+      const TX_NUMCOL_RE = /team|(^|_)tm|from|(^|_)to(_|$)|partner|trader|opponent|other|owner|dest|source|receiv|send|give|(^|_)get|manager|mgr|(^|_)[ab]$/i;
+      const teamNameMgr = {};
+      (STATE.data.teams || []).forEach(t => {
+        const y = Number(getVal(t, ['year', 'YR']));
+        const tn = getVal(t, ['team_name', 'name']), mg = getVal(t, ['manager', 'manager_name']);
+        if (tn && mg) teamNameMgr[`${y}|${String(tn).trim().toLowerCase()}`] = String(mg).trim();
+      });
+      const escRe = x => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Turns one transactions cell into the manager(s) it names: a team id (3 / "3"), a Yahoo team key
+      // ("470.l.219771.t.3"), a manager name, a team name, or free text containing manager names
+      const resolveTxMgrs = (v, yr, lg, col) => {
+        const out = [];
+        const byId = n => {
+          const m = getManagerName(n, yr, '', lg);
+          if (m && !/^Team \d+$/.test(m)) out.push(m);
+        };
+        if (typeof v === 'number' || (typeof v === 'string' && /^\d+$/.test(v.trim()))) {
+          const n = Number(v);
+          if (n >= 1 && n <= 40 && TX_NUMCOL_RE.test(col)) byId(n);
+          return out;
+        }
+        if (typeof v !== 'string') return out;
+        const str = v.trim(), low = str.toLowerCase();
+        if (!str || str.length > 160) return out;
+        const key = str.match(/\.t\.(\d+)/i);
+        if (key) { byId(Number(key[1])); if (out.length) return out; }
+        if (mgrByLower[low]) { out.push(mgrByLower[low]); return out; }
+        if (teamNameMgr[`${yr}|${low}`]) { out.push(teamNameMgr[`${yr}|${low}`]); return out; }
+        Object.keys(mgrByLower).forEach(lm => {
+          if (lm.length >= 3 && new RegExp(`(^|[^a-z0-9])${escRe(lm)}([^a-z0-9]|$)`, 'i').test(str)) out.push(mgrByLower[lm]);
+        });
+        return out;
+      };
       const knownSeasons = FilterEngine.seasons();
       const mgrByLower = {};
       allManagersSet.forEach(m => { mgrByLower[String(m).toLowerCase()] = m; });
@@ -8847,19 +8994,12 @@
         const stamp = getVal(tx, TX_STAMP_KEYS);
 
         const mgrs = new Set();
+        const trLg = sObj ? sObj.league : lg;
         Object.keys(tx).forEach(col => {
-          if (TX_NOT_TEAMCOL_RE.test(col) && !/team_?id|^tm[ab]$|manager|mgr/i.test(col)) return;
-          if (!TX_TEAMCOL_RE.test(col)) return;
+          if (TX_SKIP_COL_RE.test(col)) return;
           const v = tx[col];
           if (v === undefined || v === null || v === '') return;
-          const n = Number(v);
-          if (!isNaN(n) && n > 0) {
-            const mgr = getManagerName(n, yr, '', sObj ? sObj.league : lg);
-            if (mgr && !mgr.startsWith('Team ')) mgrs.add(mgr);
-          } else if (typeof v === 'string') {
-            const hit = mgrByLower[v.trim().toLowerCase()];
-            if (hit) mgrs.add(hit);
-          }
+          resolveTxMgrs(v, yr, trLg, col).forEach(m => mgrs.add(m));
         });
         if (mgrs.size === 0) tradeRowsUnresolved++;
 
@@ -8883,6 +9023,7 @@
         tradeSeasonTotals[ev.sKey] = (tradeSeasonTotals[ev.sKey] || 0) + 1;
         tradeGrandAll += 1;
       });
+      if (tradeRowsUnresolved > 0) { try { console.warn('[Historical] trade rows with no manager found - sample row:', allTx.find(isTradeRow)); } catch (e) {} }
       const tradeDiag = { txRows: allTx.length, tradeRows: tradeRowCount, unresolved: tradeRowsUnresolved, events: tradeEvents.size, types: [...txTypesSeen], cols: allTx[0] ? Object.keys(allTx[0]) : [] };
       try { console.info('[Historical] trade events per season', tradeSeasonTotals, tradeDiag); } catch (e) {}
 
@@ -9995,6 +10136,74 @@
       if (out) out.toBlob(b => { if (b) histSaveBlob(b, filename); }, 'image/png');
     }
 
+    // Deep-copies plain config objects/arrays (functions and class instances are kept by reference)
+    function ndlCloneCfg(v) {
+      if (Array.isArray(v)) return v.map(ndlCloneCfg);
+      if (v && typeof v === 'object') {
+        const proto = Object.getPrototypeOf(v);
+        if (proto !== Object.prototype && proto !== null) return v;
+        const o = {};
+        Object.keys(v).forEach(k => { o[k] = ndlCloneCfg(v[k]); });
+        return o;
+      }
+      return v;
+    }
+
+    // Renders a copy of a live chart onto a private off-screen canvas that is built at a 1500x{h} CSS size with a 2x pixel ratio,
+    // then writes a PNG that is exactly 3000px wide. The on-screen chart is never resized or touched.
+    function ndlChartToPNGOffscreen(chart, filename, opts = {}) {
+      if (!chart || typeof Chart === 'undefined') return;
+      const cssW = opts.cssWidth || 1500, cssH = opts.cssHeight || 900;
+      const isDark = document.documentElement.classList.contains('dark');
+      const textColor = isDark ? '#e2e8f0' : '#1e293b';
+      const host = document.createElement('div');
+      host.style.cssText = `position:fixed;left:-30000px;top:0;width:${cssW}px;height:${cssH}px;pointer-events:none;overflow:hidden;`;
+      const cv = document.createElement('canvas');
+      cv.width = cssW; cv.height = cssH; cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
+      host.appendChild(cv); document.body.appendChild(host);
+      let off = null, out = null;
+      try {
+        const opt = ndlCloneCfg(chart.config.options || {});
+        opt.responsive = false; opt.maintainAspectRatio = false; opt.animation = false; opt.events = [];
+        opt.devicePixelRatio = NDL_PNG_WIDTH / cssW;
+        opt.layout = Object.assign({}, opt.layout || {}, { padding: { top: 6, right: 24, bottom: 10, left: 10 } });
+        opt.plugins = opt.plugins || {};
+        if (opts.title) opt.plugins.title = { display: true, text: opts.title, color: textColor, font: { size: 26, weight: '800' }, padding: { top: 6, bottom: 18 } };
+        if (opts.legendItems && opts.legendItems.length) {
+          opt.plugins.legend = {
+            display: true, position: 'bottom', onClick: () => {}, onHover: null, onLeave: null,
+            labels: {
+              color: textColor, font: { size: 14, weight: '600' }, boxWidth: 16, padding: 16,
+              generateLabels: () => opts.legendItems.map((it, i) => ({ text: it.text, fillStyle: it.color, strokeStyle: it.color, lineWidth: 0, hidden: false, index: i, fontColor: textColor }))
+            }
+          };
+        }
+        opt.plugins.tooltip = { enabled: false };
+        // desktop-sized type for the 1500px canvas, even when exporting from a phone
+        const sc = opt.scales || {};
+        if (sc.x && sc.x.ticks) { sc.x.ticks = Object.assign({}, sc.x.ticks, { font: { size: 13, weight: '700' }, maxRotation: 0, minRotation: 0, autoSkip: false }); }
+        if (sc.y && sc.y.ticks) { sc.y.ticks = Object.assign({}, sc.y.ticks, { font: { size: 13 } }); }
+        if (sc.y && sc.y.title) { sc.y.title = Object.assign({}, sc.y.title, { display: true, font: { size: 14, weight: '600' } }); }
+        const plugins = (chart.config.plugins || []).filter(pl => !(pl && pl.id === 'posAlignTable'));
+        off = new Chart(cv.getContext('2d'), { type: chart.config.type, data: ndlCloneCfg(chart.config.data), options: opt, plugins });
+        off.update('none');
+        off.draw();
+        out = document.createElement('canvas');
+        out.width = NDL_PNG_WIDTH;
+        out.height = Math.max(1, Math.round(cv.height * (NDL_PNG_WIDTH / cv.width)));
+        const g = out.getContext('2d');
+        g.fillStyle = ndlBg(); g.fillRect(0, 0, out.width, out.height);
+        g.drawImage(cv, 0, 0, out.width, out.height);
+      } catch (e) {
+        console.error('[PNG] off-screen chart export failed', e);
+        out = null;
+      } finally {
+        try { if (off) off.destroy(); } catch (e) {}
+        host.remove();
+      }
+      if (out) out.toBlob(b => { if (b) histSaveBlob(b, filename); }, 'image/png');
+    }
+
     // Shared clickable manager legend (Survivor graph + Wins Above Even): click highlights that manager's line and is
     // stored in the same `mgr` URL parameter as the manager filter, so it survives reloads and edited URLs.
     function ndlMgrLegend(textColor, isDark, applyFn) {
@@ -10069,11 +10278,16 @@
           belt.classList.remove('hidden', 'belt-shine-active');
           belt.style.animation = 'none';
           belt.style.transition = 'none';
-          const beltH = belt.offsetHeight || 22;
+          const beltH = belt.offsetHeight || 26;
+          // Reserve a strip at the bottom of the holder's cell for the belt so it sits UNDER the manager name, never on it
+          const padBase = parseFloat(doc.defaultView.getComputedStyle(cell).paddingBottom) || 0;
+          cell.style.paddingBottom = `${padBase + beltH + 2}px`;
+          cell.style.verticalAlign = 'top';
+          void clone.offsetHeight; // force layout with the new padding before measuring
           let top = 0, left = 0;
           for (let el = cell; el && el !== clone; el = el.offsetParent) { top += el.offsetTop; left += el.offsetLeft; }
           belt.style.left = `${left + cell.offsetWidth / 2}px`;
-          belt.style.top = `${Math.max(0, top + cell.offsetHeight - beltH - 1)}px`;
+          belt.style.top = `${Math.max(0, top + cell.offsetHeight - beltH - 2)}px`;
         }
       });
     }
@@ -10259,9 +10473,9 @@
       }).sort((x, y) => (y.total - x.total) || (x.exp - y.exp) || (y.r.W - x.r.W) || (y.t.PF - x.t.PF));
 
       const ord = k => k + (k % 100 >= 11 && k % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th'));
-      const head = `<thead><tr><th class="text-left odds-sticky">MGR</th><th class="text-center">W-L-T</th>${
+      const head = `<thead><tr><th class="text-left odds-sticky">MGR</th><th class="text-center">W-L-T</th><th class="text-right odds-tot" title="Chance of finishing in the top ${cut}">TOTAL</th>${
         Array.from({ length: n }, (_, k) => `<th class="text-right${k === cut ? ' odds-cut' : ''}">${ord(k + 1)}</th>`).join('')
-      }<th class="text-right odds-tot" title="Chance of finishing in the top ${cut}">TOTAL</th></tr></thead>`;
+      }</tr></thead>`;
       const cell = (v, k) => {
         let bg = 'transparent';
         if (k < cut) bg = `rgba(34, 197, 94, ${(0.10 + Math.min(1, v / 100) * 0.50).toFixed(2)})`;
@@ -10274,15 +10488,15 @@
         return `<tr${sel ? ' class="bg-brand-500/10"' : ''}>
           <td class="text-left odds-sticky" title="${escapeHTML(o.t.name)}"><span class="font-semibold" style="color:${color}">${escapeHTML(o.t.mgr)}</span></td>
           <td class="text-center font-mono text-xs">${o.r.W}-${o.r.L}-${o.r.T}</td>
-          ${o.p.map((v, k) => cell(v, k)).join('')}
-          <td class="odds-pct odds-tot" style="background:${HEATMAPS.greenClearRed(o.total, 0, 50, 100)}">${oddsNum(o.total)}</td></tr>`;
+          <td class="odds-pct odds-tot" style="background:${HEATMAPS.greenClearRed(o.total, 0, 50, 100)}">${oddsNum(o.total)}</td>
+          ${o.p.map((v, k) => cell(v, k)).join('')}</tr>`;
       }).join('');
       tbl.innerHTML = head + `<tbody>${body}</tbody>`;
-      // Open scrolled all the way right so the TOTAL column is in view (the manager column is sticky)
+      // Open scrolled to the left so MGR, W-L-T and TOTAL (the most important columns) are in view
       const oddsWrap = document.getElementById('odds-table-wrap');
       if (oddsWrap && !STATE.odds._scrolled && oddsWrap.clientWidth > 0) {
         STATE.odds._scrolled = true;
-        requestAnimationFrame(() => { oddsWrap.scrollLeft = oddsWrap.scrollWidth; });
+        requestAnimationFrame(() => { oddsWrap.scrollLeft = 0; });
       }
 
       const nPicks = Object.keys(picks).length;
