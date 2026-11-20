@@ -720,6 +720,9 @@
     .dark .mx-pj-r, .dark .mx-live-r { color: #f87171 !important; }
     .mx-tx { display: inline-block; font-size: 8px; font-weight: 800; letter-spacing: .04em; line-height: 1; padding: 2px 4px; margin-left: 4px; border-radius: 4px; background: #facc15; color: #422006; vertical-align: 1px; }
     .mx-tx.off { opacity: .4; }
+    .mx-dm { display: inline-block; font-size: 8px; font-weight: 800; letter-spacing: .04em; line-height: 1; padding: 2px 4px; margin-left: 4px; border-radius: 4px; background: #c084fc; color: #2e1065; vertical-align: 1px; }
+    .mx-cell.r .mx-dm { margin-left: 4px; margin-right: 0; }
+    .mx-live { font-size: 11px; font-weight: 800; }
     .mx-cell.r .mx-tx { margin-left: 4px; margin-right: 0; }
     .mx-wp-link { cursor: pointer; border-radius: 6px; }
     .mx-wp-link:hover { background: rgba(148,163,184,0.16); }
@@ -3555,14 +3558,15 @@
         if (k) { liveWeeks.add(`${k.yr}|${k.lg}|${k.wk}`); liveWeeks.add(`${k.yr}|*|${k.wk}`); }
       });
       (D.taxi || []).forEach(r => {
-        const type = String(getVal(r, ['type']) || 'taxi').trim().toLowerCase();
-        if (type !== 'taxi') return;
+        const typeRaw = String(getVal(r, ['type']) || 'taxi').trim().toLowerCase();
+        const type = /dummy|^dm$/.test(typeRaw) ? 'dummy' : (typeRaw === 'taxi' ? 'taxi' : '');
+        if (!type) return;
         const yr = Number(getVal(r, ['year', 'YR'])), pid = String(getVal(r, ['player_id']));
         if (!yr || pid === 'undefined') return;
         const stamp = String(getVal(r, ['last_warn_time']) || '');
         const active = String(getVal(r, ['active']) || 'Y').trim().toUpperCase() !== 'N';
         const k = `${yr}|${pid}`, prev = taxi.get(k);
-        if (!prev || stamp >= prev.stamp) taxi.set(k, { active, stamp });
+        if (!prev || stamp >= prev.stamp) taxi.set(k, { active, stamp, type });
       });
       STATE._mxIdx = { v: STATE.dataVersion, proj, live, liveWeeks, taxi };
       return STATE._mxIdx;
@@ -3576,7 +3580,6 @@
     function mxTeamPlayers(t, yr = STATE.filters.year, lg = STATE.filters.league, wk = STATE.filters.weekMax) {
       const out = [];
       const idx = mxProjIndex();
-      const hasLiveWeek = idx.liveWeeks.has(`${yr}|${normLeague(lg)}|${wk}`) || idx.liveWeeks.has(`${yr}|*|${wk}`);
       t.players.forEach(p => {
         const name = getVal(p, ['player_name', 'player', 'name', 'PLAYER', 'PLAYER_NAME', 'full_name']);
         if (!name) return;
@@ -3592,7 +3595,7 @@
         const proj = mxLookup(idx.proj, yr, lg, wk, pid);
         const lv = mxLookup(idx.live, yr, lg, wk, pid);
         let pj = null, eff = null;
-        if (hasLiveWeek && lv !== undefined && lv > 0) {
+        if (lv !== undefined && lv > 0) {
           // game in progress: live projection, green/red against the original projection
           const base = proj === undefined ? null : proj;
           pj = { val: lv, cls: base === null ? 'e' : (lv > base + 0.005 ? 'g' : (lv < base - 0.005 ? 'r' : 'e')) };
@@ -3600,10 +3603,25 @@
         } else {
           // not started (or no live value): original projection, greyed. A player with points but live_proj = 0 has finished: actual counts.
           pj = (proj === undefined || proj === null) ? null : { val: proj, cls: 'n' };
-          if (hasLiveWeek) eff = (actual !== 0) ? actual : (proj === undefined || proj === null ? 0 : proj);
+          eff = (actual !== 0) ? actual : (proj === undefined || proj === null ? 0 : proj);
         }
         const tx = idx.taxi.get(`${yr}|${pid}`);
-        out.push({ slot, name: String(name), pos, pts: actual, ir: /^IR/.test(sel), pj, eff, tx: !!tx, txOff: !!tx && !tx.active });
+        const isDm = !!tx && tx.type === 'dummy' && tx.active;          // active dummy taxi player -> 'DM'
+        const isTx = !!tx && tx.type === 'taxi';                        // taxi player -> 'TX' (faded when active = 'N')
+        out.push({ slot, name: String(name), pos, pts: actual, ir: /^IR/.test(sel), pj, eff,
+                   projVal: (proj === undefined || proj === null) ? 0 : proj,
+                   tx: isTx, txOff: isTx && !tx.active, dm: isDm });
+      });
+      // Bench order: players holding a BQB/BRB/BWR/BTE slot keep it; the remaining 'BN' players sort
+      // plain -> TX (active N) -> TX (active Y) -> DM (active Y) -> IR (last). Ties: points, then proj_points.
+      const bnGroup = (p) => p.ir ? 4 : (p.dm ? 3 : (p.tx ? (p.txOff ? 1 : 2) : 0));
+      out.sort((a, b) => {
+        const ra = mxSlotRank(a.slot), rb = mxSlotRank(b.slot);
+        if (ra !== rb) return ra - rb;
+        if (a.slot === 'BN' && b.slot === 'BN') {
+          return (bnGroup(a) - bnGroup(b)) || (b.pts - a.pts) || (b.projVal - a.projVal) || String(a.name).localeCompare(String(b.name));
+        }
+        return 0;
       });
       return out;
     }
@@ -3659,8 +3677,9 @@
         const ptsProj = Number(getVal(t.rawRow, ['team_projected_points', 'team_proj_points'])) || 0;
         const sumProj = starters.reduce((a, p) => a + (p.pj && p.pj.cls === 'n' ? p.pj.val : 0), 0);
         const orig = ptsProj > 0 ? ptsProj : (projScores > 0 ? projScores : sumProj);
-        const hasLive = starters.some(p => p.eff !== null);
-        const liveTot = hasLive ? starters.reduce((a, p) => a + (p.eff || 0), 0) : null;
+        // Live total = sum over starters of: proj_points (to play) | live_proj_points (in play) | actual (played).
+        // Finished weeks just show the final score, so no live total is needed there.
+        const liveTot = (isFinal || !starters.length) ? null : starters.reduce((a, p) => a + (p.eff || 0), 0);
         const cls = liveTot === null ? '' : (liveTot > orig + 0.005 ? 'mx-live-g' : (liveTot < orig - 0.005 ? 'mx-live-r' : ''));
         t._mx = { players, orig, liveTot, cls };
         return t._mx;
@@ -3680,8 +3699,7 @@
             <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${escapeHTML(t.team_name)}</div>
             <div class="text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-300">${r.rec} <span class="text-slate-400">\u00B7</span> ${r.rank}</div>
             <div class="text-xl leading-tight font-mono font-extrabold ${ptsCls}">${fmt(t.pf)}</div>
-            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${proj > 0 ? `Proj ${fmt(proj)}` : 'Proj \u2014'}</div>
-            ${mx.liveTot !== null ? `<div class="text-[11px] font-mono font-bold ${mx.cls || 'text-slate-600 dark:text-slate-300'}" title="Live projection: finished players' actual points + live projections for the rest">Live ${fmt(mx.liveTot)}</div>` : ''}
+            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">${proj > 0 ? `Proj ${fmt(proj)}` : 'Proj \u2014'}${mx.liveTot !== null ? ` <span class="font-extrabold ${mx.cls || 'text-slate-600 dark:text-slate-300'}" title="Live total: actual points for finished players, live projection for players in play, original projection for players yet to play">\u2192 ${fmt(mx.liveTot)}</span>` : ''}</div>
           </div>`;
       };
 
@@ -3692,7 +3710,7 @@
         const starters = slots.filter(s => !mxSlotIsBench(s));
         const bench = slots.filter(s => mxSlotIsBench(s));
         const cell = (p, cls) => p
-          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}</span><span class="mx-ptscol"><span class="mx-pts">${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
+          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}${p.dm ? ' (Dummy taxi)' : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}${p.dm ? '<span class="mx-dm" title="Dummy taxi player">DM</span>' : ''}</span><span class="mx-ptscol"><span class="mx-pts">${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
           : '<div></div>';
         const rows = (list) => list.map(s => {
           const ra = find(pa, s), rb = find(pb, s);
@@ -3703,6 +3721,7 @@
           }
           return html;
         }).join('');
+        const liveTag = (T) => { const m = mxCalc(T, 0); return m.liveTot === null ? '' : `<span class="mx-pj mx-live ${m.cls || 'mx-pj-e'}" title="Live projection total">${fmt(m.liveTot)}</span>`; };
         const sum = (arr, bench) => arr.filter(p => mxSlotIsBench(p.slot) === bench).reduce((acc, p) => acc + p.pts, 0);
         const colA = getManagerColor(A.manager), colB = getManagerColor(B.manager);
         return `
@@ -3712,8 +3731,7 @@
           </div>
           <div class="mx-sep">Starters</div>
           ${rows(starters)}
-          <div class="mx-row mx-tot"><div class="mx-cell l"><span class="mx-name">Starters</span><span class="mx-pts">${fmt(sum(pa, false))}</span></div><span class="mx-slot">TOT</span><div class="mx-cell r"><span class="mx-name">Starters</span><span class="mx-pts">${fmt(sum(pb, false))}</span></div></div>
-          ${(mxCalc(A, 0).liveTot !== null || mxCalc(B, 0).liveTot !== null) ? `<div class="mx-row mx-tot mx-liverow"><div class="mx-cell l"><span class="mx-name">Live proj</span><span class="mx-pts ${mxCalc(A, 0).cls}">${mxCalc(A, 0).liveTot !== null ? fmt(mxCalc(A, 0).liveTot) : '\u2014'}</span></div><span></span><div class="mx-cell r"><span class="mx-name">Live proj</span><span class="mx-pts ${mxCalc(B, 0).cls}">${mxCalc(B, 0).liveTot !== null ? fmt(mxCalc(B, 0).liveTot) : '\u2014'}</span></div></div>` : ''}
+          <div class="mx-row mx-tot"><div class="mx-cell l"><span class="mx-name">Starters</span><span class="mx-ptscol"><span class="mx-pts">${fmt(sum(pa, false))}</span>${liveTag(A)}</span></div><span class="mx-slot">TOT</span><div class="mx-cell r"><span class="mx-name">Starters</span><span class="mx-ptscol"><span class="mx-pts">${fmt(sum(pb, false))}</span>${liveTag(B)}</span></div></div>
           ${bench.length && STATE.positions.showBench ? `<div class="mx-sep">Bench</div>${rows(bench)}` : ''}`;
       };
 
@@ -6083,6 +6101,7 @@
       const colorB = getManagerColor(mgrB, 1);
 
       const labels = pts.map(p => formatTimeLabel(p.time));
+      const tickLabels = liveProbTickLabels(pts.map(p => p.time), labels);
       const tmaPts = pts.map(p => p.ptsA);
       const tmbPts = pts.map(p => p.ptsB);
       const tmaProj = pts.map(p => p.projA);
@@ -6094,7 +6113,7 @@
 
       STATE.liveProb.fullSeries = {
         tma, tmb, mgrA, mgrB, colorA, colorB,
-        labels, tmaPts, tmbPts, tmaProj, tmbProj,
+        labels, tickLabels, tmaPts, tmbPts, tmaProj, tmbProj,
         tmaWpNorm, tmbWpNorm, tmaWpRaw, tmbWpRaw
       };
 
@@ -6103,6 +6122,42 @@
 
       initFixedChart(labels, nameA, nameB, colorA, colorB);
       restartReplay();
+    }
+
+    // X-axis tick labels for the Live Win Prob chart: only whole 5-minute marks (:00, :05, :10 ...), never a minute ending
+    // in 1-4 or 6-9. The first point inside each bucket carries that bucket's label; when the game window is long the step
+    // widens (10, 15, 30, 60 ... minutes) so labels never crowd. Every other point gets an empty tick label.
+    function liveProbTickLabels(times, fallbackLabels, maxLabels = 12) {
+      const dts = (times || []).map(t => {
+        if (t === undefined || t === null || t === '') return null;
+        const d = (typeof t === 'number') ? new Date(t < 1e12 ? t * 1000 : t) : new Date(String(t).replace(' ', 'T'));
+        return isNaN(d.getTime()) ? null : d;
+      });
+      if (!dts.some(Boolean)) return fallbackLabels;
+      const steps = [5, 10, 15, 30, 60, 120, 180, 360, 720, 1440];
+      let chosen = null;
+      for (const step of steps) {
+        const seenKeys = new Set(), picks = [];
+        dts.forEach((d, i) => {
+          if (!d) return;
+          const localMs = d.getTime() - d.getTimezoneOffset() * 60000;
+          const key = Math.floor(localMs / (step * 60000));
+          if (seenKeys.has(key)) return;
+          seenKeys.add(key);
+          picks.push({ i, startMs: key * step * 60000 + d.getTimezoneOffset() * 60000 });
+        });
+        chosen = picks;
+        if (picks.length <= maxLabels) break;
+      }
+      const out = new Array(dts.length).fill('');
+      chosen.forEach(c => { out[c.i] = formatTimeLabel(c.startMs); });
+      return out;
+    }
+    function liveProbXGrid(gridColor) {
+      return (c) => {
+        const ls = STATE.liveProb.fullSeries;
+        return (!ls || !ls.tickLabels || ls.tickLabels[c.index]) ? gridColor : 'transparent';
+      };
     }
 
     function initFixedChart(fullLabels, nameA, nameB, colorA, colorB) {
@@ -6233,8 +6288,14 @@
           },
           scales: {
             x: {
-              grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 14 }
+              grid: { color: liveProbXGrid(gridColor) },
+              ticks: {
+                color: textColor, font: { size: 10 }, maxRotation: 45, autoSkip: false,
+                callback: function (v, i) {
+                  const ls = STATE.liveProb.fullSeries;
+                  return (ls && ls.tickLabels) ? (ls.tickLabels[i] || '') : this.getLabelForValue(v);
+                }
+              }
             },
             y: {
               type: 'linear',
@@ -6419,7 +6480,7 @@
       const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const textColor = isDark ? '#94a3b8' : '#475569';
 
-      chart.options.scales.x.grid.color = gridColor;
+      chart.options.scales.x.grid.color = liveProbXGrid(gridColor);
       chart.options.scales.x.ticks.color = textColor;
       chart.options.scales.y.grid.color = gridColor;
       chart.options.scales.y.ticks.color = textColor;
@@ -7069,6 +7130,15 @@
 
     function npNum(v) { const n = Number(v); return isNaN(n) ? 0 : n; }
 
+    // proj_points for one player-week from the projectedpoints table (0 when there is none, e.g. historical years)
+    function npProjFor(row, year, league, week, pid) {
+      try {
+        if (pid === undefined || pid === null || pid === '') return 0;
+        const v = mxLookup(mxProjIndex().proj, year, league, week, String(pid));
+        return (v === undefined || v === null || isNaN(v)) ? 0 : Number(v);
+      } catch (e) { return 0; }
+    }
+
     function npNormToken(tok) {
       const t = String(tok || '').toUpperCase().trim();
       if (t === 'D/ST' || t === 'DST' || t === 'DEF') return 'DEF';
@@ -7096,8 +7166,9 @@
       return toks;
     }
 
+    // Ties on points (e.g. 0.00 for everyone yet to play) are broken by the player's proj_points, then volume, then name.
     function npCmp(a, b) {
-      return (b.pts - a.pts) || (b.vol - a.vol) ||
+      return (b.pts - a.pts) || ((b.proj || 0) - (a.proj || 0)) || (b.vol - a.vol) ||
         String(a.name).localeCompare(String(b.name)) ||
         String(a.id).localeCompare(String(b.id));
     }
@@ -7401,6 +7472,7 @@
         g.players.push({
           row, id: pid, name, selLabel: sel, started, ir: NP_IR.has(sel),
           pts: npNum(npF(row, 'points')),
+          proj: npProjFor(row, year, league, week, pid),
           vol: npNum(npF(row, 'rushing_att')) + npNum(npF(row, 'receiving_rec')) + npNum(npF(row, 'passing_yds')) / 10,
           elig: npEligibility(row)
         });
