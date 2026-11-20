@@ -734,13 +734,34 @@
     .mx-pos { font-size: 9px; font-weight: 700; color: #94a3b8; margin-left: 3px; }
     .mx-ir { display: inline-block; font-size: 8px; font-weight: 800; letter-spacing: .04em; line-height: 1; padding: 2px 4px; margin-left: 4px; border-radius: 4px; background: #dc2626; color: #fff; vertical-align: 1px; }
     .mx-cell.r .mx-ir { margin-left: 4px; margin-right: 0; }
-    .mx-cell.r .mx-pos { margin-left: 0; margin-right: 3px; }
+    .mx-cell.r .mx-pos { margin-left: 3px; margin-right: 0; }
     .mx-pts { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; color: #0f172a; flex-shrink: 0; }
     .dark .mx-pts { color: #f1f5f9; }
     .mx-slot { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 800; text-align: center; border-radius: 4px; padding: 2px 0; color: #0f172a; }
     .dark .mx-slot:not([style]) { color: #f8fafc; }
     .mx-sep { padding: 3px 10px; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #64748b; background: rgba(148,163,184,0.12); border-top: 1px solid rgba(148,163,184,0.18); }
     .mx-tot { background: rgba(148,163,184,0.10); }
+    .mx-tot .mx-pts { font-size: 13px; font-weight: 800; }
+    /* Manager row: name on the outside, record then rank towards the middle of the card */
+    .mx-mgr-row { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+    .mx-mgr-row.r { flex-direction: row-reverse; }
+    .mx-mgr { font-size: 12px; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mx-rec, .mx-rankv { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 600; flex-shrink: 0; white-space: nowrap; color: #475569; }
+    .dark .mx-rec, .dark .mx-rankv { color: #cbd5e1; }
+    .mx-dotsep { font-size: 11px; color: #94a3b8; flex-shrink: 0; margin: 0 -2px; }
+    /* Player actual score colouring */
+    .mx-pts.mx-pts-live { font-weight: 800; color: #2563eb; background: linear-gradient(110deg, #2563eb 0%, #2563eb 38%, #93c5fd 50%, #2563eb 62%, #2563eb 100%); background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: mxShine 2.8s linear infinite; }
+    .dark .mx-pts.mx-pts-live { color: #60a5fa; background-image: linear-gradient(110deg, #60a5fa 0%, #60a5fa 38%, #e0f2fe 50%, #60a5fa 62%, #60a5fa 100%); }
+    @keyframes mxShine { 0% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
+    @media (prefers-reduced-motion: reduce) { .mx-pts.mx-pts-live { animation: none; } }
+    .mx-pts.mx-pts-over { color: #6b9b7a; }
+    .mx-pts.mx-pts-under { color: #b58585; }
+    .dark .mx-pts.mx-pts-over { color: #6f9f7f; }
+    .dark .mx-pts.mx-pts-under { color: #b07a7a; }
+    @keyframes mxFlash { 0% { box-shadow: 0 0 0 3px rgba(14,165,233,.85); } 100% { box-shadow: 0 0 0 3px rgba(14,165,233,0); } }
+    .mx-card.mx-flash { animation: mxFlash 1.8s ease-out 1; }
+    .lp-sc-link { cursor: pointer; }
+    .lp-sc-link:hover { filter: brightness(1.06); box-shadow: 0 0 0 1px rgba(14,165,233,.55); }
 
     /* Mobile: compact year/week steppers so Y + W stay on one line */
     @media (max-width: 639px) {
@@ -753,6 +774,37 @@
       #global-filter-bar .wk-select { min-width: 26px !important; padding: 2px 2px; font-size: 11px; }
       #global-filter-bar .yr-select { min-width: 0 !important; }
     }
+
+    /* Sandbox */
+    .sb-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px; box-shadow:0 10px 25px -10px rgba(0,0,0,.25); }
+    .dark .sb-card { background:#020617; border-color:#1e293b; }
+    .sb-sec { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#64748b; margin:12px 0 5px; padding-top:8px; border-top:1px solid rgba(148,163,184,.25); }
+    .sb-sec:first-child { margin-top:0; padding-top:0; border-top:0; }
+    .sb-lbl { display:block; font-size:10px; font-weight:600; color:#64748b; margin:6px 0 2px; }
+    .sb-in { width:100%; min-width:0; background:#fff; border:1px solid #cbd5e1; color:#1e293b; border-radius:6px; padding:4px 6px; font-size:12px; outline:none; }
+    .sb-in:focus { border-color:#0ea5e9; box-shadow:0 0 0 1px #0ea5e9; }
+    .dark .sb-in { background:#0f172a; border-color:#334155; color:#e2e8f0; }
+    .sb-row { display:flex; align-items:center; gap:4px; margin-bottom:4px; }
+    .sb-calc { margin-bottom:4px; }
+    .sb-x { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; flex-shrink:0; border-radius:6px; color:#94a3b8; font-size:11px; }
+    .sb-x:hover { background:rgba(148,163,184,.2); color:#0f172a; }
+    .dark .sb-x:hover { color:#f1f5f9; }
+    .sb-add { font-size:11px; font-weight:600; color:#0284c7; padding:2px 0; }
+    .sb-add:hover { text-decoration:underline; }
+    .sb-chip { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 2px; border-radius:8px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; font-size:10px; font-weight:600; }
+    .dark .sb-chip { background:#0f172a; border-color:#334155; color:#94a3b8; }
+    .sb-chip i { font-size:14px; }
+    .sb-chip.on { background:#0284c7; border-color:#0284c7; color:#fff; }
+    .sb-btn { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:6px; border:1px solid #cbd5e1; background:#e2e8f0; color:#334155; font-size:11px; font-weight:600; }
+    .sb-btn:hover { background:#cbd5e1; }
+    .dark .sb-btn { background:#1e293b; border-color:#334155; color:#cbd5e1; }
+    .dark .sb-btn:hover { background:#334155; }
+    .sb-btn.primary { background:#0284c7; border-color:#0284c7; color:#fff; }
+    .sb-btn.primary:hover { background:#0ea5e9; }
+    .sb-pre { padding:3px 10px; border-radius:9999px; border:1px solid #cbd5e1; background:#fff; color:#334155; font-size:11px; font-weight:600; }
+    .sb-pre:hover { border-color:#0ea5e9; color:#0284c7; }
+    .dark .sb-pre { background:#0f172a; border-color:#334155; color:#cbd5e1; }
+    @media (max-width: 639px) { .sb-in { font-size:16px; } }
   </style>
 </head>
 
@@ -793,6 +845,7 @@
         <button data-tab="positions" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Points by Position</button>
         <button data-tab="odds" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Odds</button>
         <button data-tab="historical" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Historical</button>
+        <button data-tab="sandbox" class="tab-btn hover:bg-slate-300 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 px-3 py-1.5 rounded-md transition">Sandbox</button>
       </nav>
 
     </div>
@@ -843,6 +896,8 @@
             <span class="hcw-track"><span class="hcw-thumb"></span></span>
             <span class="text-slate-600 dark:text-slate-400 font-medium">Show bench</span>
           </label>
+
+          <button type="button" id="fb-view-matchup" class="items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-brand-600 hover:bg-brand-500 text-white font-semibold text-[11px] shadow transition" style="display:none" title="Open this matchup on the Matchups tab"><i class="fa-solid fa-people-arrows text-[10px]"></i> View Matchup</button>
 
           <label id="hist-po-wrap" class="flex items-center gap-2 cursor-pointer select-none" style="display:none">
             <input type="checkbox" id="hist-include-playoffs" class="sr-only" checked>
@@ -1510,6 +1565,12 @@
         </div>
       </div>
     </section>
+    <section id="tab-sandbox" class="tab-content space-y-3 hidden">
+      <div class="flex items-center justify-between gap-2 px-1">
+        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-flask text-brand-500"></i> Sandbox <span class="hidden sm:inline text-[11px] font-normal text-slate-500 dark:text-slate-400">— pick dimensions &amp; measures, add calculated fields, pin charts to your dashboard</span></h2>
+      </div>
+      <div id="sb-root" class="space-y-3"></div>
+    </section>
   </main>
 
   <div id="sparkline-tooltip" class="fixed hidden pointer-events-none z-50 bg-slate-900/95 text-white text-xs px-3 py-2 rounded-lg shadow-2xl border border-slate-700 backdrop-blur font-sans"></div>
@@ -1600,7 +1661,7 @@
     }
 
     const STATE = {
-      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [] },
+      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [], past_game_start: [] },
       filters: { year: 2026, league: '', seasonKey: '2026', weekMin: 1, weekMax: 8, hideCW: false, selectedManagers: [], matchup: null },
       hcwUserOverride: false,
       weekUserOverride: false,
@@ -1835,6 +1896,7 @@
           if (document.querySelector('.tab-btn[data-tab="positions"]').classList.contains('active')) renderPositionsTab();
           if (document.querySelector('.tab-btn[data-tab="odds"]').classList.contains('active')) renderOddsTab();
           if (document.querySelector('.tab-btn[data-tab="historical"]').classList.contains('active')) renderHistoricalTab();
+          if (document.querySelector('.tab-btn[data-tab="sandbox"]').classList.contains('active')) renderSandboxTab();
         });
       }
     }
@@ -1935,7 +1997,8 @@
       belt:       { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
       positions:  { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: true,  label: 'W' },
       odds:       { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W', hideSeasonControls: true },
-      historical: { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: false, label: 'W' }
+      historical: { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: false, label: 'W' },
+      sandbox:    { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W', hideSeasonControls: true }
     };
 
     const FilterEngine = {
@@ -2105,6 +2168,7 @@
           case 'wins_above': if (STATE.wae && STATE.wae.chartInstance) applyWaeHighlight(); break;
           case 'odds': renderOddsTab(); break;
           case 'historical': renderHistoricalTab(); break;
+          case 'sandbox': renderSandboxTab(); break;
         }
       } catch (e) { console.error('Manager filter render failed', e); }
     }
@@ -2135,6 +2199,7 @@
       p.set('hcw', f.hideCW ? 1 : 0);
       if (getSelectedManagers().length) p.set('mgr', getSelectedManagers().join(','));
       if (tab === 'live_prob' && f.matchup) p.set('mu', f.matchup);
+      if (tab === 'sandbox' && STATE.sandbox) p.set('sb', sbEnc(STATE.sandbox.cfg));
       if (tab === 'positions') {
         p.set('psub', STATE.positions.sub || 'season');
         p.set('pmode', STATE.positions.viewMode || 'real');
@@ -2210,6 +2275,7 @@
         STATE.positions.viewMode = String(p.get('pmode')).toLowerCase();
       }
       f.matchup = p.get('mu') || null;
+      if (p.has('sb')) { sbApplyUrl(p.get('sb')); if (STATE.sandbox) { STATE.sandbox.built = false; } }
     }
 
     function reconcileFiltersWithData() {
@@ -2773,7 +2839,7 @@
             } else if (window.initSqlJs) {
               if (!STATE.SQL) STATE.SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
               const db = new STATE.SQL.Database(new Uint8Array(buffer));
-              const tmp = { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [] };
+              const tmp = { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [], past_game_start: [] };
               Object.keys(tmp).forEach(table => {
                 try {
                   const res = db.exec(`SELECT * FROM ${table}`);
@@ -2801,7 +2867,7 @@
 
         if (!fresh && firstLoad) {
           try {
-            const [points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi] = await Promise.all([
+            const [points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi, past_game_start] = await Promise.all([
               parseCSVUrl('./points.csv').catch(() => []),
               parseCSVUrl('./teams.csv').catch(() => []),
               parseCSVUrl('./scores.csv').catch(() => []),
@@ -2810,9 +2876,10 @@
               parseCSVUrl('./schedule.csv').catch(() => []),
               parseCSVUrl('./projectedpoints.csv').catch(() => []),
               parseCSVUrl('./liveprojectedpoints.csv').catch(() => []),
-              parseCSVUrl('./taxi.csv').catch(() => [])
+              parseCSVUrl('./taxi.csv').catch(() => []),
+              parseCSVUrl('./past_game_start.csv').catch(() => [])
             ]);
-            if (points && points.length > 0) fresh = { points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi };
+            if (points && points.length > 0) fresh = { points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi, past_game_start };
           } catch (err) {
             console.warn("CSV Fallback failed:", err);
           }
@@ -2933,6 +3000,7 @@
       show('hcw-wrap', m.hcw);
       show('fb-bench-wrap', tabKey === 'matchups' || (tabKey === 'positions' && (STATE.positions.viewMode || 'real') !== 'efficiency'));
       show('hist-po-wrap', tabKey === 'historical');
+      { const vm = document.getElementById('fb-view-matchup'); if (vm) vm.style.display = tabKey === 'live_prob' ? 'inline-flex' : 'none'; }
       show('hist-chips-wrap', tabKey === 'historical');
       const lbl = document.getElementById('wk-label');
       if (lbl) lbl.textContent = `${m.label}:`;
@@ -3009,6 +3077,7 @@
           case 'positions':  renderPositionsTab(); break;
           case 'odds': renderOddsTab(); break;
           case 'historical': renderHistoricalTab(); break;
+          case 'sandbox': renderSandboxTab(); break;
         }
       } catch (err) {
         console.error('Render failed:', err);
@@ -3286,6 +3355,19 @@
         if (card) mxSetOpen(card, !card.classList.contains('open'));
         mxSyncExpandAllLabel();
       });
+      // Live Win Prob -> Matchups: filter-bar button + clickable manager scorecards
+      const vmBtn = document.getElementById('fb-view-matchup');
+      const lpKey = () => (document.getElementById('live-prob-matchup')?.value) || STATE.filters.matchup || '';
+      if (vmBtn && !vmBtn._wired) { vmBtn._wired = true; vmBtn.addEventListener('click', () => mxJumpToMatchup(lpKey())); }
+      ['scorecard-card-tma', 'scorecard-card-tmb'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || el._wired) return;
+        el._wired = true;
+        el.classList.add('lp-sc-link');
+        el.setAttribute('role', 'link'); el.setAttribute('tabindex', '0'); el.setAttribute('title', 'View this matchup on the Matchups tab');
+        el.addEventListener('click', () => mxJumpToMatchup(lpKey()));
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mxJumpToMatchup(lpKey()); } });
+      });
       const fbBench = document.getElementById('fb-show-bench');
       if (fbBench && !fbBench._wired) {
         fbBench._wired = true;
@@ -3541,7 +3623,7 @@
       if (STATE._mxIdx && STATE._mxIdx.v === STATE.dataVersion) return STATE._mxIdx;
       const D = STATE.data;
       const num = v => { if (v === null || v === undefined || v === '') return null; const n = Number(v); return isNaN(n) ? null : n; };
-      const proj = new Map(), live = new Map(), liveWeeks = new Set(), taxi = new Map();
+      const proj = new Map(), live = new Map(), liveWeeks = new Set(), taxi = new Map(), pgs = new Set();
       const put = (map, r, valKey) => {
         const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
         const pid = String(getVal(r, ['player_id']));
@@ -3568,7 +3650,17 @@
         const k = `${yr}|${pid}`, prev = taxi.get(k);
         if (!prev || stamp >= prev.stamp) taxi.set(k, { active, stamp, type });
       });
-      STATE._mxIdx = { v: STATE.dataVersion, proj, live, liveWeeks, taxi };
+      // past_game_start: player-weeks whose game has already started (flag 'Y'); not in the table = game not begun
+      (D.past_game_start || []).forEach(r => {
+        const flag = String(getVal(r, ['past_gm_start', 'player_gm_start']) || '').trim().toUpperCase();
+        if (flag !== 'Y') return;
+        const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
+        const pid = String(getVal(r, ['player_id']));
+        const lg = normLeague(getVal(r, ['league']));
+        pgs.add(`${yr}|${lg}|${wk}|${pid}`);
+        pgs.add(`${yr}|*|${wk}|${pid}`);
+      });
+      STATE._mxIdx = { v: STATE.dataVersion, proj, live, liveWeeks, taxi, pgs };
       return STATE._mxIdx;
     }
     function mxLookup(map, yr, lg, wk, pid) {
@@ -3594,7 +3686,13 @@
         const actual = isNaN(pts) ? 0 : pts;
         const proj = mxLookup(idx.proj, yr, lg, wk, pid);
         const lv = mxLookup(idx.live, yr, lg, wk, pid);
-        let pj = null, eff = null;
+        let pj = null, eff = null, ptsCls = '';
+        {
+          // Actual-score colouring: game live -> blue (shine); game over (started, live projection 0) -> muted red/green vs proj_points; not begun -> none
+          const started = idx.pgs.has(`${yr}|${normLeague(lg)}|${wk}|${pid}`) || idx.pgs.has(`${yr}|*|${wk}|${pid}`);
+          if (lv !== undefined && lv > 0) ptsCls = 'live';
+          else if (started && proj !== undefined && proj !== null) ptsCls = actual < proj ? 'under' : (actual > proj ? 'over' : '');
+        }
         if (lv !== undefined && lv > 0) {
           // game in progress: live projection, green/red against the original projection
           const base = proj === undefined ? null : proj;
@@ -3608,20 +3706,18 @@
         const tx = idx.taxi.get(`${yr}|${pid}`);
         const isDm = !!tx && tx.type === 'dummy' && tx.active;          // active dummy taxi player -> 'DM'
         const isTx = !!tx && tx.type === 'taxi';                        // taxi player -> 'TX' (faded when active = 'N')
-        out.push({ slot, name: String(name), pos, pts: actual, ir: /^IR/.test(sel), pj, eff,
+        out.push({ slot, name: String(name), pos, pts: actual, ptsCls, ir: /^IR/.test(sel), pj, eff,
                    projVal: (proj === undefined || proj === null) ? 0 : proj,
                    tx: isTx, txOff: isTx && !tx.active, dm: isDm });
       });
-      // Bench order: players holding a BQB/BRB/BWR/BTE slot keep it; the remaining 'BN' players sort
-      // plain -> TX (active N) -> TX (active Y) -> DM (active Y) -> IR (last). Ties: points, then proj_points.
-      const bnGroup = (p) => p.ir ? 4 : (p.dm ? 3 : (p.tx ? (p.txOff ? 1 : 2) : 0));
+      // Order within a slot: proj_points first (highest on top). Ties (e.g. several 0.00 bench players) fall back to the
+      // designation: plain -> inactive TX -> active TX -> IR -> DM, so a 0-proj DM sits at the very bottom, just below 0-proj IR.
+      // Players holding a BQB/BRB/BWR/BTE slot keep that slot (slot rank is compared first).
+      const desig = (p) => p.ir ? 3 : (p.dm ? 4 : (p.tx ? (p.txOff ? 1 : 2) : 0));
       out.sort((a, b) => {
         const ra = mxSlotRank(a.slot), rb = mxSlotRank(b.slot);
         if (ra !== rb) return ra - rb;
-        if (a.slot === 'BN' && b.slot === 'BN') {
-          return (bnGroup(a) - bnGroup(b)) || (b.pts - a.pts) || (b.projVal - a.projVal) || String(a.name).localeCompare(String(b.name));
-        }
-        return 0;
+        return (b.projVal - a.projVal) || (desig(a) - desig(b)) || (b.pts - a.pts) || String(a.name).localeCompare(String(b.name));
       });
       return out;
     }
@@ -3680,7 +3776,8 @@
         // Live total = sum over starters of: proj_points (to play) | live_proj_points (in play) | actual (played).
         // Finished weeks just show the final score, so no live total is needed there.
         const liveTot = (isFinal || !starters.length) ? null : starters.reduce((a, p) => a + (p.eff || 0), 0);
-        const cls = liveTot === null ? '' : (liveTot > orig + 0.005 ? 'mx-live-g' : (liveTot < orig - 0.005 ? 'mx-live-r' : ''));
+        // within 0.06 of the original projection is rounding noise -> no colour
+        const cls = liveTot === null ? '' : (liveTot > orig + 0.06 + 1e-9 ? 'mx-live-g' : (liveTot < orig - 0.06 - 1e-9 ? 'mx-live-r' : ''));
         t._mx = { players, orig, liveTot, cls };
         return t._mx;
       };
@@ -3695,9 +3792,8 @@
         const ptsCls = won ? 'text-emerald-600 dark:text-emerald-400' : (lost ? 'text-slate-500 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100');
         return `
           <div class="min-w-0 ${align === 'r' ? 'text-right' : 'text-left'}">
-            <div class="text-xs font-extrabold truncate" style="color:${col}">${escapeHTML(t.manager)}</div>
+            <div class="mx-mgr-row ${align === 'r' ? 'r' : ''}"><span class="mx-mgr" style="color:${col}">${escapeHTML(t.manager)}</span><span class="mx-rec" title="Record entering the week">${r.rec}</span><span class="mx-dotsep">\u00B7</span><span class="mx-rankv" title="Rank entering the week">${r.rank}</span></div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${escapeHTML(t.team_name)}</div>
-            <div class="text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-300">${r.rec} <span class="text-slate-400">\u00B7</span> ${r.rank}</div>
             <div class="text-xl leading-tight font-mono font-extrabold ${ptsCls}">${fmt(t.pf)}</div>
             <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">${proj > 0 ? `Proj ${fmt(proj)}` : 'Proj \u2014'}${mx.liveTot !== null ? ` <span class="font-extrabold ${mx.cls || 'text-slate-600 dark:text-slate-300'}" title="Live total: actual points for finished players, live projection for players in play, original projection for players yet to play">\u2192 ${fmt(mx.liveTot)}</span>` : ''}</div>
           </div>`;
@@ -3710,7 +3806,7 @@
         const starters = slots.filter(s => !mxSlotIsBench(s));
         const bench = slots.filter(s => mxSlotIsBench(s));
         const cell = (p, cls) => p
-          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}${p.dm ? ' (Dummy taxi)' : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}${p.dm ? '<span class="mx-dm" title="Dummy taxi player">DM</span>' : ''}</span><span class="mx-ptscol"><span class="mx-pts">${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
+          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}${p.dm ? ' (Dummy taxi)' : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}${p.dm ? '<span class="mx-dm" title="Dummy taxi player">DM</span>' : ''}</span><span class="mx-ptscol"><span class="mx-pts${p.ptsCls ? ' mx-pts-' + p.ptsCls : ''}">${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
           : '<div></div>';
         const rows = (list) => list.map(s => {
           const ra = find(pa, s), rb = find(pb, s);
@@ -3765,6 +3861,35 @@
           </div>`;
       }).join('');
       mxSyncExpandAllLabel();
+      mxScrollPending();
+    }
+
+    // Jump from Live Win Prob to the Matchups tab: open that matchup's card and scroll it into view
+    function mxJumpToMatchup(rawKey) {
+      const ids = String(rawKey || '').split('_').map(Number).filter(n => !isNaN(n));
+      if (ids.length !== 2) return;
+      const key = [...ids].sort((x, y) => x - y).join('_');
+      if (!STATE.mxOpen) STATE.mxOpen = new Set();
+      STATE.mxOpen.add(key);
+      STATE.mxScrollKey = key;
+      activateTab('matchups');
+      mxScrollPending();
+    }
+    function mxScrollPending() {
+      const key = STATE.mxScrollKey;
+      if (!key) return;
+      const go = () => {
+        const card = document.querySelector(`#matchups-cards .mx-card[data-key="${key}"]`);
+        if (!card) return false;
+        if (!card.classList.contains('open')) mxSetOpen(card, true);
+        mxSyncExpandAllLabel();
+        const hdr = document.querySelector('header');
+        const off = (hdr ? hdr.offsetHeight : 120) + 10;
+        window.scrollTo({ top: Math.max(0, card.getBoundingClientRect().top + window.scrollY - off), behavior: 'smooth' });
+        card.classList.remove('mx-flash'); void card.offsetWidth; card.classList.add('mx-flash');
+        return true;
+      };
+      requestAnimationFrame(() => requestAnimationFrame(() => { if (go()) STATE.mxScrollKey = null; }));
     }
 
     function downloadMatchupsCSV() {
@@ -10634,6 +10759,667 @@
       });
       renderOddsTab();
     }
+
+    // ==========================================
+    // SANDBOX: build-your-own charts (dimensions, measures, calculated fields, filters) + pinnable dashboard
+    // ==========================================
+    const SB_PALETTE = ['#2A9DF4', '#E8651A', '#1E7B47', '#7B4BFF', '#CC9400', '#F0509A', '#14A89A', '#E02D3C', '#5EB800', '#7D8590', '#0066F0', '#B04A38'];
+    const SB_TYPES = [
+      { k: 'bar', l: 'Bar', i: 'fa-chart-column' }, { k: 'hbar', l: 'H-Bar', i: 'fa-chart-bar' }, { k: 'stacked', l: 'Stacked', i: 'fa-layer-group' },
+      { k: 'line', l: 'Line', i: 'fa-chart-line' }, { k: 'area', l: 'Area', i: 'fa-chart-area' }, { k: 'combo', l: 'Combo', i: 'fa-chart-simple' },
+      { k: 'scatter', l: 'Scatter', i: 'fa-braille' }, { k: 'pie', l: 'Pie', i: 'fa-chart-pie' }, { k: 'doughnut', l: 'Donut', i: 'fa-circle-notch' },
+      { k: 'table', l: 'Table', i: 'fa-table' }, { k: 'pivot', l: 'Pivot', i: 'fa-table-cells' }, { k: 'kpi', l: 'Scorecard', i: 'fa-hashtag' }
+    ];
+    const SB_AGGS = [['sum', 'Sum'], ['avg', 'Average'], ['median', 'Median'], ['min', 'Min'], ['max', 'Max'], ['count', 'Count'], ['countd', 'Distinct count'], ['stdev', 'Std dev']];
+    const SB_DS_LABELS = { teamweeks: 'Team-Weeks (one row per team per week)', players: 'Player-Weeks (points table)', scores: 'Scores (matchups)', transactions: 'Transactions', teams: 'Teams' };
+    const SB_OPS = [['=', 'is'], ['!=', 'is not'], ['>', '>'], ['>=', '≥'], ['<', '<'], ['<=', '≤'], ['contains', 'contains'], ['in', 'is one of'], ['nin', 'is not one of']];
+    const SB_HELPERS = { abs: Math.abs, min: Math.min, max: Math.max, sqrt: Math.sqrt, pow: Math.pow, floor: Math.floor, ceil: Math.ceil,
+      round: (x, d) => { const m = Math.pow(10, d || 0); return Math.round(x * m) / m; },
+      iif: (c, a, b) => (c ? a : b), coalesce: (...a) => { const v = a.find(x => x !== null && x !== undefined && x !== ''); return v === undefined ? null : v; } };
+    const SB_LITERALS = ['true', 'false', 'null'];
+
+    function sbDefaultCfg() {
+      return { ds: 'teamweeks', type: 'bar', title: '', dim: 'manager', split: '', measures: [{ f: 'team_points', a: 'avg' }], filters: [], calcs: [], sort: 'm0', dir: 'desc', limit: 0, dec: 2, labels: false, legend: true };
+    }
+    function sbS() {
+      if (!STATE.sandbox) {
+        const sb = { cfg: sbDefaultCfg(), pinned: [], charts: {}, built: false, cache: {}, ver: -1 };
+        try {
+          const saved = JSON.parse(localStorage.getItem('ndl_sandbox_v1') || 'null');
+          if (saved && Array.isArray(saved.pinned)) sb.pinned = saved.pinned;
+          if (saved && saved.cfg && saved.cfg.ds) sb.cfg = Object.assign(sbDefaultCfg(), saved.cfg);
+        } catch (e) {}
+        STATE.sandbox = sb;
+      }
+      return STATE.sandbox;
+    }
+    function sbSave() {
+      const sb = sbS();
+      try { localStorage.setItem('ndl_sandbox_v1', JSON.stringify({ pinned: sb.pinned, cfg: sb.cfg })); } catch (e) {}
+    }
+    function sbEnc(cfg) {
+      try { return btoa(unescape(encodeURIComponent(JSON.stringify(cfg)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); } catch (e) { return ''; }
+    }
+    function sbApplyUrl(str) {
+      try {
+        let b = String(str || '').replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '=';
+        const cfg = JSON.parse(decodeURIComponent(escape(atob(b))));
+        if (cfg && cfg.ds) sbS().cfg = Object.assign(sbDefaultCfg(), cfg);
+      } catch (e) { console.warn('[Sandbox] bad sb param', e); }
+    }
+    let _sbUrlTimer = null;
+    function sbUrlSoon() { clearTimeout(_sbUrlTimer); _sbUrlTimer = setTimeout(() => { sbSave(); updateUrlHash(); }, 350); }
+
+    // ---------- datasets ----------
+    function sbDatasetRows(ds) {
+      const sb = sbS();
+      const key = `${STATE.dataVersion}|${ds}`;
+      if (sb.cache[key]) return sb.cache[key];
+      let rows = [];
+      const D = STATE.data;
+      if (ds === 'teamweeks') {
+        const map = new Map();
+        (D.points || []).forEach(r => {
+          const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK'])), tid = Number(getVal(r, ['team_id']));
+          if (!yr || !wk || isNaN(tid)) return;
+          const lg = normLeague(getVal(r, ['league']));
+          const k = `${yr}|${lg}|${wk}|${tid}`;
+          if (map.has(k)) return;
+          const pf = Number(getVal(r, ['team_points'])) || 0, pa = Number(getVal(r, ['opponent_points'])) || 0;
+          const proj = Number(getVal(r, ['team_projected_points', 'team_proj_points'])) || 0;
+          const oid = Number(getVal(r, ['opponent_team_id'])) || 0;
+          const played = oid > 0 && (pf > 0 || pa > 0);
+          map.set(k, {
+            year: yr, league: lg, week: wk, team_id: tid,
+            manager: getManagerName(tid, yr, getVal(r, ['manager_name', 'manager']), lg),
+            team_name: getTeamName(tid, yr, getVal(r, ['team_name', 'name']), lg),
+            team_points: pf, opponent_team_id: oid, opponent_points: pa, margin: played ? pf - pa : null,
+            result: played ? (pf > pa ? 'W' : (pf < pa ? 'L' : 'T')) : '', win: played ? (pf > pa ? 1 : (pf === pa ? 0.5 : 0)) : null,
+            projected_points: proj || null, proj_diff: proj ? pf - proj : null
+          });
+        });
+        rows = [...map.values()];
+        const mg = new Map(); rows.forEach(r => mg.set(`${r.year}|${r.league}|${r.week}|${r.team_id}`, r.manager));
+        rows.forEach(r => { r.opponent = mg.get(`${r.year}|${r.league}|${r.week}|${r.opponent_team_id}`) || ''; });
+      } else if (ds === 'players') {
+        const idx = mxProjIndex();
+        rows = (D.points || []).map(r => {
+          const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK'])), lg = normLeague(getVal(r, ['league']));
+          const o = Object.assign({}, r);
+          o.manager = getManagerName(Number(getVal(r, ['team_id'])), yr, getVal(r, ['manager_name', 'manager']), lg);
+          const pj = mxLookup(idx.proj, yr, lg, wk, String(getVal(r, ['player_id'])));
+          o.proj_points = pj === undefined ? null : pj;
+          return o;
+        });
+      } else if (D[ds]) rows = D[ds];
+      sb.cache[key] = rows;
+      return rows;
+    }
+    function sbDetectCols(rows) {
+      const seen = new Map(); const n = rows.length; const step = Math.max(1, Math.floor(n / 500));
+      for (let i = 0; i < n; i += step) {
+        const r = rows[i];
+        for (const k in r) {
+          if (k.charAt(0) === '_') continue;
+          let c = seen.get(k); if (!c) { c = { name: k, num: 0, tot: 0 }; seen.set(k, c); }
+          const v = r[k]; if (v === null || v === undefined || v === '') continue;
+          c.tot++; if (typeof v === 'number' || (typeof v === 'string' && v.trim() !== '' && isFinite(Number(v)))) c.num++;
+        }
+      }
+      return [...seen.values()].map(c => ({ name: c.name, numeric: c.tot > 0 && c.num === c.tot }));
+    }
+    function sbCompile(expr, names) {
+      let e = String(expr || '').trim();
+      if (!e) throw new Error('Enter a formula');
+      const strs = [];
+      e = e.replace(/'([^'\\]*)'|"([^"\\]*)"/g, (m, a, b) => { strs.push(a !== undefined ? a : b); return `__S${strs.length - 1}__`; });
+      e = e.replace(/\[([^\]]+)\]/g, (m, n) => n.trim().replace(/\s+/g, '_'));
+      if (/[^0-9A-Za-z_\s.+\-*/%()<>=!&|?:,]/.test(e)) throw new Error('Unsupported character in formula');
+      e = e.replace(/[<>!=]=?/g, m => (m === '=' ? '==' : m)).replace(/\bif\s*\(/g, 'iif(');
+      const used = new Set();
+      (e.match(/\b[A-Za-z_]\w*/g) || []).forEach(id => {
+        if (/^__S\d+__$/.test(id) || SB_LITERALS.includes(id) || Object.prototype.hasOwnProperty.call(SB_HELPERS, id)) return;
+        if (!names.has(id)) throw new Error(`Unknown field "${id}"`);
+        used.add(id);
+      });
+      const params = [...used];
+      const helperNames = Object.keys(SB_HELPERS);
+      e = e.replace(/__S(\d+)__/g, (m, i) => JSON.stringify(strs[Number(i)]));
+      const fn = new Function(...params, ...helperNames, `return (${e});`);
+      const hv = helperNames.map(h => SB_HELPERS[h]);
+      return r => {
+        try { const v = fn(...params.map(p => r[p]), ...hv); return (typeof v === 'number' && !isFinite(v)) ? null : v; } catch (err) { return null; }
+      };
+    }
+    function sbContext(cfg) {
+      const sb = sbS();
+      const key = `${STATE.dataVersion}|${cfg.ds}|${JSON.stringify(cfg.calcs || [])}`;
+      if (sb._ctx && sb._ctx.key === key) return sb._ctx;
+      const base = sbDatasetRows(cfg.ds);
+      const bk = `${STATE.dataVersion}|${cfg.ds}|cols`;
+      if (!sb.cache[bk]) sb.cache[bk] = sbDetectCols(base);
+      const cols = sb.cache[bk].slice();
+      const errors = [], fns = [];
+      const names = new Set(cols.map(c => c.name));
+      (cfg.calcs || []).forEach((c, i) => {
+        const nm = String(c.name || '').trim();
+        try {
+          if (!/^[A-Za-z_]\w*$/.test(nm)) throw new Error('Name: letters, digits, underscore only');
+          if (names.has(nm)) throw new Error('Name already in use');
+          fns.push({ name: nm, fn: sbCompile(c.expr, names) }); names.add(nm); errors[i] = '';
+        } catch (e) { errors[i] = e.message; }
+      });
+      let rows = base;
+      if (fns.length) {
+        rows = base.map(r => { const o = Object.assign({}, r); fns.forEach(f => { o[f.name] = f.fn(o); }); return o; });
+        const cc = sbDetectCols(rows.slice(0, 4000));
+        fns.forEach(f => { const hit = cc.find(x => x.name === f.name); cols.push({ name: f.name, numeric: !!(hit && hit.numeric), calc: true }); });
+      }
+      sb._ctx = { key, rows, cols, errors };
+      return sb._ctx;
+    }
+
+    // ---------- compute ----------
+    function sbSame(v, raw) { if (String(v) === raw) return true; const n = Number(raw); return raw !== '' && isFinite(n) && v !== null && v !== '' && Number(v) === n; }
+    function sbPass(r, f) {
+      const raw = String(f.v === undefined || f.v === null ? '' : f.v).trim();
+      if (!f.f || raw === '') return true;
+      const v = r[f.f], n = Number(raw);
+      switch (f.op) {
+        case '=': return sbSame(v, raw);
+        case '!=': return !sbSame(v, raw);
+        case '>': return Number(v) > n; case '>=': return Number(v) >= n;
+        case '<': return Number(v) < n; case '<=': return Number(v) <= n;
+        case 'contains': return String(v).toLowerCase().includes(raw.toLowerCase());
+        case 'in': return raw.split(',').map(x => x.trim()).some(x => sbSame(v, x));
+        case 'nin': return !raw.split(',').map(x => x.trim()).some(x => sbSame(v, x));
+      }
+      return true;
+    }
+    function sbAgg(vals, agg) {
+      if (agg === 'count') return vals.length;
+      if (agg === 'countd') return new Set(vals.map(String)).size;
+      const n = vals.filter(v => v !== null && v !== undefined && v !== '').map(Number).filter(isFinite);
+      if (!n.length) return null;
+      switch (agg) {
+        case 'sum': return n.reduce((a, b) => a + b, 0);
+        case 'avg': return n.reduce((a, b) => a + b, 0) / n.length;
+        case 'min': return Math.min(...n); case 'max': return Math.max(...n);
+        case 'median': { const s = n.slice().sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+        case 'stdev': { if (n.length < 2) return 0; const mu = n.reduce((a, b) => a + b, 0) / n.length; return Math.sqrt(n.reduce((a, b) => a + (b - mu) * (b - mu), 0) / (n.length - 1)); }
+      }
+      return null;
+    }
+    function sbMLabel(m) {
+      if (m.f === '*') return 'Record count';
+      const a = (SB_AGGS.find(x => x[0] === m.a) || [m.a, m.a])[1];
+      return `${a} of ${m.f}`;
+    }
+    function sbTitle(cfg) {
+      if (cfg.title) return cfg.title;
+      const ms = (cfg.measures || []).map(sbMLabel).join(', ') || 'Chart';
+      return cfg.dim ? `${ms} by ${cfg.dim}${cfg.split ? ' · ' + cfg.split : ''}` : ms;
+    }
+    function sbNatSort(a, b) {
+      const na = Number(a), nb = Number(b);
+      if (isFinite(na) && isFinite(nb) && a !== '' && b !== '') return na - nb;
+      return String(a).localeCompare(String(b));
+    }
+    function sbFmt(v, dec) {
+      if (v === null || v === undefined || (typeof v === 'number' && !isFinite(v))) return '—';
+      if (typeof v !== 'number') return String(v);
+      return v.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    }
+    function sbDecFor(cfg, m) { return (m && (m.a === 'count' || m.a === 'countd' || m.f === '*')) ? 0 : cfg.dec; }
+
+    function sbCompute(cfg) {
+      const ctx = sbContext(cfg);
+      const ms = (cfg.measures || []).filter(m => m && (m.f === '*' || ctx.cols.some(c => c.name === m.f))).map(m => (m.f === '*' ? { f: '*', a: 'count' } : m));
+      if (!ms.length) return { error: 'Add at least one measure.' };
+      const dimOk = cfg.dim && ctx.cols.some(c => c.name === cfg.dim) ? cfg.dim : '';
+      const splitOk = cfg.split && ctx.cols.some(c => c.name === cfg.split) ? cfg.split : '';
+      const fl = (cfg.filters || []);
+      const rows = fl.length ? ctx.rows.filter(r => fl.every(f => sbPass(r, f))) : ctx.rows;
+      const type = cfg.type;
+      const lab = v => (v === null || v === undefined || v === '') ? '(blank)' : String(v);
+      const mval = (m, rs) => (m.f === '*' ? rs.length : sbAgg(rs.map(r => r[m.f]), m.a));
+
+      if (type === 'kpi') return { kind: 'kpi', ms, tiles: ms.map(m => ({ label: sbMLabel(m), value: mval(m, rows), m })), n: rows.length };
+
+      if (type === 'scatter') {
+        if (ms.length < 2) return { error: 'Scatter needs two measures: the first is X, the second is Y.' };
+        const groups = new Map();
+        const pushPt = (sname, pt) => { if (!groups.has(sname)) groups.set(sname, []); groups.get(sname).push(pt); };
+        if (!dimOk) {
+          rows.slice(0, 3000).forEach(r => { const x = Number(r[ms[0].f]), y = Number(r[ms[1].f]); if (isFinite(x) && isFinite(y)) pushPt(splitOk ? lab(r[splitOk]) : 'Rows', { x, y, label: '' }); });
+        } else {
+          const g = new Map();
+          rows.forEach(r => { const k = lab(r[dimOk]) + '\u0001' + (splitOk ? lab(r[splitOk]) : ''); if (!g.has(k)) g.set(k, []); g.get(k).push(r); });
+          g.forEach((rs, k) => { const [d, s] = k.split('\u0001'); const x = mval(ms[0], rs), y = mval(ms[1], rs); if (x !== null && y !== null) pushPt(splitOk ? s : 'Points', { x, y, label: d }); });
+        }
+        return { kind: 'scatter', ms, dim: dimOk, series: [...groups.entries()].map(([name, pts]) => ({ name, pts })), n: rows.length };
+      }
+
+      // grouped
+      const gmap = new Map(); const splitVals = new Set();
+      rows.forEach(r => {
+        const d = dimOk ? lab(r[dimOk]) : 'All';
+        const s = splitOk ? lab(r[splitOk]) : '';
+        if (splitOk) splitVals.add(s);
+        if (!gmap.has(d)) gmap.set(d, new Map());
+        const sm = gmap.get(d); if (!sm.has(s)) sm.set(s, []); sm.get(s).push(r);
+      });
+      let cats = [...gmap.keys()];
+      let splits = splitOk ? [...splitVals] : [''];
+      const useSplit = splitOk && type !== 'pie' && type !== 'doughnut';
+      if (!useSplit) splits = [''];
+      const cellRows = (d, s) => { const sm = gmap.get(d); if (!sm) return []; if (!useSplit) return [].concat(...sm.values()); return sm.get(s) || []; };
+
+      if (type === 'table') {
+        const out = [];
+        cats.forEach(d => splits.forEach(s => { const rs = cellRows(d, s); if (rs.length) out.push({ d, s, vals: ms.map(m => mval(m, rs)) }); }));
+        const key = cfg.sort === 'dim' ? null : 0;
+        out.sort((a, b) => key === null ? (sbNatSort(a.d, b.d) || sbNatSort(a.s, b.s)) * (cfg.dir === 'asc' ? 1 : -1) : ((a.vals[0] === null) - (b.vals[0] === null)) || ((a.vals[0] - b.vals[0]) * (cfg.dir === 'asc' ? 1 : -1)));
+        return { kind: 'table', ms, dim: dimOk, split: useSplit ? splitOk : '', rows: cfg.limit > 0 ? out.slice(0, cfg.limit) : out, n: rows.length };
+      }
+
+      // series data
+      let series = [];
+      splits.forEach(s => ms.forEach((m, mi) => {
+        series.push({ name: (useSplit ? (ms.length > 1 ? `${s} · ${sbMLabel(m)}` : s) : sbMLabel(m)), mi, m, split: s, data: cats.map(d => { const rs = cellRows(d, s); return rs.length ? mval(m, rs) : null; }) });
+      }));
+      // order categories
+      const score = i => series.filter(x => x.mi === 0).reduce((a, x) => a + (x.data[i] || 0), 0);
+      let order = cats.map((c, i) => i);
+      if (cfg.sort === 'dim') order.sort((a, b) => sbNatSort(cats[a], cats[b]) * (cfg.dir === 'desc' ? -1 : 1));
+      else order.sort((a, b) => (score(a) - score(b)) * (cfg.dir === 'asc' ? 1 : -1));
+      if (cfg.limit > 0) order = order.slice(0, cfg.limit);
+      cats = order.map(i => cats[i]);
+      series.forEach(x => { x.data = order.map(i => x.data[i]); });
+      if (useSplit && series.length > 15) {
+        const tot = x => x.data.reduce((a, b) => a + (b || 0), 0);
+        series = series.sort((a, b) => tot(b) - tot(a)).slice(0, 15);
+      }
+      if (type === 'pivot') {
+        if (!useSplit) return { error: 'Pivot needs a "Split by" field for the columns.' };
+        return { kind: 'pivot', m: ms[0], dim: dimOk, split: splitOk, cats, cols: series.filter(x => x.mi === 0), n: rows.length };
+      }
+      return { kind: 'chart', ms, dim: dimOk, split: useSplit ? splitOk : '', cats, series, n: rows.length };
+    }
+
+    // ---------- rendering ----------
+    function sbDark() { return document.documentElement.classList.contains('dark'); }
+    function sbHex(c, a) { const h = c.replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(x => x + x).join('') : h, 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+    function sbColors(res, cfg) {
+      const mgrField = f => f && /manager|^opponent$/i.test(f);
+      const byName = !res.split && mgrField(res.dim) && res.series && res.series.length === 1;
+      return {
+        cat: i => byName ? getManagerColor(res.cats[i]) : null,
+        ser: (s, i) => (res.split && mgrField(res.split)) ? getManagerColor(s.split) : SB_PALETTE[i % SB_PALETTE.length]
+      };
+    }
+    const sbLabelPlugin = {
+      id: 'sbLabels',
+      afterDatasetsDraw(chart, args, opt) {
+        if (!opt || !opt.on) return;
+        const ctx = chart.ctx; ctx.save();
+        ctx.font = '600 10px ui-monospace, Menlo, monospace'; ctx.fillStyle = opt.color; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        chart.data.datasets.forEach((ds, di) => {
+          const meta = chart.getDatasetMeta(di); if (meta.hidden || ds.data.length > 40) return;
+          meta.data.forEach((el, i) => {
+            const v = ds.data[i]; if (v === null || v === undefined || typeof v === 'object') return;
+            const p = el.tooltipPosition ? el.tooltipPosition() : { x: el.x, y: el.y };
+            const horiz = chart.options.indexAxis === 'y';
+            if (horiz) { ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(sbFmt(v, opt.dec), p.x + 4, p.y); }
+            else { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(sbFmt(v, opt.dec), p.x, p.y - 3); }
+          });
+        });
+        ctx.restore();
+      }
+    };
+
+    function sbRender(host, cfg, key, opts = {}) {
+      const sb = sbS();
+      if (sb.charts[key]) { try { sb.charts[key].destroy(); } catch (e) {} delete sb.charts[key]; }
+      const res = sbCompute(cfg);
+      host._res = res;
+      const dark = sbDark();
+      const txt = dark ? '#94a3b8' : '#475569', grid = dark ? 'rgba(148,163,184,.14)' : 'rgba(100,116,139,.18)';
+      const h = opts.h || 380;
+      if (res.error) { host.innerHTML = `<div class="p-8 text-center text-xs text-slate-500 dark:text-slate-400"><i class="fa-solid fa-circle-info mr-1 text-brand-500"></i>${escapeHTML(res.error)}</div>`; return; }
+      const dec = cfg.dec;
+      if (res.kind === 'kpi') {
+        host.innerHTML = `<div class="grid gap-2 p-3" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${res.tiles.map(t => `
+          <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-3 text-center">
+            <div class="text-2xl sm:text-3xl font-mono font-extrabold text-slate-900 dark:text-slate-100">${sbFmt(t.value, sbDecFor(cfg, t.m))}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">${escapeHTML(t.label)}</div></div>`).join('')}</div>
+          <div class="px-3 pb-2 text-[10px] text-slate-400">${res.n.toLocaleString()} rows</div>`;
+        return;
+      }
+      if (res.kind === 'table') {
+        const head = [res.dim, res.split].filter(Boolean).map(x => `<th class="text-left">${escapeHTML(x)}</th>`).join('') + res.ms.map(m => `<th class="text-right">${escapeHTML(sbMLabel(m))}</th>`).join('');
+        const body = res.rows.map(r => `<tr>${res.dim ? `<td class="text-left font-sans">${escapeHTML(r.d)}</td>` : ''}${res.split ? `<td class="text-left font-sans">${escapeHTML(r.s)}</td>` : ''}${r.vals.map((v, i) => `<td class="text-right font-mono">${sbFmt(v, sbDecFor(cfg, res.ms[i]))}</td>`).join('')}</tr>`).join('');
+        host.innerHTML = `<div class="overflow-auto" style="max-height:${opts.compact ? 300 : 560}px"><table class="standings-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+        return;
+      }
+      if (res.kind === 'pivot') {
+        let mn = Infinity, mx = -Infinity;
+        res.cols.forEach(c => c.data.forEach(v => { if (v !== null) { mn = Math.min(mn, v); mx = Math.max(mx, v); } }));
+        const head = `<th class="text-left">${escapeHTML(res.dim || '')}</th>` + res.cols.map(c => `<th class="text-right">${escapeHTML(c.split)}</th>`).join('');
+        const body = res.cats.map((d, i) => `<tr><td class="text-left font-sans">${escapeHTML(d)}</td>${res.cols.map(c => { const v = c.data[i]; return `<td class="text-right font-mono" style="background-color:${v === null ? 'transparent' : HEATMAPS.greenToClear(v, mn, mx)}">${sbFmt(v, sbDecFor(cfg, res.m))}</td>`; }).join('')}</tr>`).join('');
+        host.innerHTML = `<div class="px-3 pt-2 text-[10px] text-slate-400">${escapeHTML(sbMLabel(res.m))}</div><div class="overflow-auto" style="max-height:${opts.compact ? 300 : 560}px"><table class="standings-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+        return;
+      }
+      // Chart.js
+      host.innerHTML = `<div style="position:relative;height:${h}px;width:100%" class="p-2"><canvas></canvas></div>`;
+      const canvas = host.querySelector('canvas');
+      const type = cfg.type;
+      const col = sbColors(res, cfg);
+      let config;
+      const baseOpt = { responsive: true, maintainAspectRatio: false, animation: { duration: 350 }, interaction: { mode: 'nearest', intersect: false },
+        plugins: { legend: { display: false, position: 'bottom', labels: { color: txt, boxWidth: 12, font: { size: 11 } } }, tooltip: {}, sbLabels: { on: !!cfg.labels, dec, color: txt } } };
+      if (res.kind === 'scatter') {
+        const datasets = res.series.map((s, i) => ({ label: s.name, data: s.pts, backgroundColor: sbHex((res.series.length > 1 && /manager/i.test(cfg.split)) ? getManagerColor(s.name) : SB_PALETTE[i % SB_PALETTE.length], .8), borderColor: (res.series.length > 1 && /manager/i.test(cfg.split)) ? getManagerColor(s.name) : SB_PALETTE[i % SB_PALETTE.length], pointRadius: 5, pointHoverRadius: 7 }));
+        const single = !res.dim ? false : true;
+        config = { type: 'scatter', data: { datasets }, options: Object.assign({}, baseOpt, {
+          plugins: Object.assign({}, baseOpt.plugins, { legend: { display: res.series.length > 1 && cfg.legend !== false, position: 'bottom', labels: { color: txt, boxWidth: 12 } },
+            tooltip: { callbacks: { label: c => `${c.raw.label ? c.raw.label + ': ' : ''}${sbFmt(c.raw.x, dec)}, ${sbFmt(c.raw.y, dec)}` } } }),
+          scales: { x: { title: { display: true, text: sbMLabel(res.ms[0]), color: txt }, ticks: { color: txt }, grid: { color: grid } }, y: { title: { display: true, text: sbMLabel(res.ms[1]), color: txt }, ticks: { color: txt }, grid: { color: grid } } } }),
+          plugins: [{ id: 'sbPtLabels', afterDatasetsDraw(chart) { if (!single || !cfg.labels) return; const c = chart.ctx; c.save(); c.font = '600 10px sans-serif'; c.fillStyle = txt; c.textAlign = 'left'; c.textBaseline = 'middle'; chart.data.datasets.forEach((d, di) => { chart.getDatasetMeta(di).data.forEach((el, i) => { if (d.data[i].label) c.fillText(d.data[i].label, el.x + 8, el.y); }); }); c.restore(); } }] };
+      } else if (type === 'pie' || type === 'doughnut') {
+        const s0 = res.series[0];
+        const colors = res.cats.map((c, i) => col.cat(i) || SB_PALETTE[i % SB_PALETTE.length]);
+        config = { type: type === 'pie' ? 'pie' : 'doughnut', data: { labels: res.cats, datasets: [{ data: s0.data, backgroundColor: colors, borderColor: dark ? '#020617' : '#ffffff', borderWidth: 2 }] },
+          options: Object.assign({}, baseOpt, { plugins: { legend: { display: cfg.legend !== false, position: 'bottom', labels: { color: txt, boxWidth: 12, font: { size: 11 } } },
+            tooltip: { callbacks: { label: c => { const tot = s0.data.reduce((a, b) => a + (b || 0), 0); return `${c.label}: ${sbFmt(c.raw, sbDecFor(cfg, s0.m))}${tot ? ` (${(100 * c.raw / tot).toFixed(1)}%)` : ''}`; } } }, sbLabels: { on: false } } }) };
+      } else {
+        const horiz = type === 'hbar';
+        const stacked = type === 'stacked' || (type === 'area' && res.series.length > 1);
+        const datasets = res.series.map((s, i) => {
+          const c = col.ser(s, i);
+          const isLine = type === 'line' || type === 'area' || (type === 'combo' && s.mi > 0);
+          const d = { label: s.name, data: s.data, order: isLine ? 0 : 1 };
+          if (isLine) Object.assign(d, { type: 'line', borderColor: c, backgroundColor: sbHex(c, type === 'area' ? .28 : 1), borderWidth: 2, tension: 0, pointRadius: res.cats.length > 40 ? 0 : 3, pointHoverRadius: 5, fill: type === 'area', spanGaps: true, yAxisID: type === 'combo' ? 'y1' : 'y' });
+          else {
+            const cat = col.cat(0) !== null && res.series.length === 1;
+            Object.assign(d, { backgroundColor: cat ? res.cats.map((x, j) => sbHex(col.cat(j), .9)) : sbHex(c, .9), borderColor: cat ? res.cats.map((x, j) => col.cat(j)) : c, borderWidth: 1, borderRadius: 3, maxBarThickness: 56, yAxisID: 'y' });
+          }
+          return d;
+        });
+        const catAxis = { ticks: { color: txt, maxRotation: horiz ? 0 : 60, autoSkip: res.cats.length > 24 }, grid: { display: false }, stacked, title: { display: !!res.dim, text: res.dim, color: txt } };
+        const valAxis = { ticks: { color: txt, callback: v => sbFmt(Number(v), 0 === dec ? 0 : (Math.abs(v) < 10 && v % 1 ? Math.min(dec, 2) : 0)) }, grid: { color: grid }, stacked, beginAtZero: type !== 'line', title: { display: res.ms.length === 1, text: res.ms.length === 1 ? sbMLabel(res.ms[0]) : '', color: txt } };
+        const scales = horiz ? { y: Object.assign({}, catAxis, { title: catAxis.title }), x: valAxis } : { x: catAxis, y: valAxis };
+        if (type === 'combo' && res.ms.length > 1) scales.y1 = { position: 'right', ticks: { color: txt }, grid: { drawOnChartArea: false }, title: { display: true, text: res.ms.slice(1).map(sbMLabel).join(' / '), color: txt } };
+        config = { type: (type === 'line' || type === 'area') ? 'line' : 'bar', data: { labels: res.cats, datasets },
+          options: Object.assign({}, baseOpt, { indexAxis: horiz ? 'y' : 'x', scales,
+            plugins: Object.assign({}, baseOpt.plugins, { legend: { display: datasets.length > 1 && cfg.legend !== false, position: 'bottom', labels: { color: txt, boxWidth: 12, font: { size: 11 } } },
+              tooltip: { callbacks: { label: c => `${c.dataset.label}: ${sbFmt(c.raw, sbDecFor(cfg, res.series[c.datasetIndex] && res.series[c.datasetIndex].m))}` } } }) }) };
+      }
+      config.plugins = (config.plugins || []).concat([sbLabelPlugin]);
+      sb.charts[key] = new Chart(canvas, config);
+    }
+
+    // ---------- builder panel ----------
+    function sbOpts(list, sel, blank) {
+      return (blank !== undefined ? `<option value="">${escapeHTML(blank)}</option>` : '') + list.map(o => {
+        const v = Array.isArray(o) ? o[0] : o, l = Array.isArray(o) ? o[1] : o;
+        return `<option value="${escapeHTML(v)}"${String(v) === String(sel) ? ' selected' : ''}>${escapeHTML(l)}</option>`;
+      }).join('');
+    }
+    function sbPresets() {
+      const cw = getCurrentYearAndWeek(); const yr = cw ? cw.curYear : STATE.filters.year;
+      const base = { filters: [], calcs: [], sort: 'm0', dir: 'desc', limit: 0, dec: 2, labels: false, legend: true, title: '' };
+      return [
+        { n: 'Avg points by manager', c: { ds: 'teamweeks', type: 'bar', dim: 'manager', split: '', measures: [{ f: 'team_points', a: 'avg' }] } },
+        { n: 'Weekly scoring trend', c: { ds: 'teamweeks', type: 'line', dim: 'week', split: 'manager', measures: [{ f: 'team_points', a: 'sum' }], sort: 'dim', dir: 'asc', filters: [{ f: 'year', op: '=', v: String(yr) }] } },
+        { n: 'Win % by manager', c: { ds: 'teamweeks', type: 'hbar', dim: 'manager', split: '', measures: [{ f: 'win', a: 'avg' }], dec: 3 } },
+        { n: 'PF vs PA', c: { ds: 'teamweeks', type: 'scatter', dim: 'manager', split: '', measures: [{ f: 'team_points', a: 'avg' }, { f: 'opponent_points', a: 'avg' }], labels: true } },
+        { n: 'Share of points', c: { ds: 'teamweeks', type: 'doughnut', dim: 'manager', split: '', measures: [{ f: 'team_points', a: 'sum' }], filters: [{ f: 'year', op: '=', v: String(yr) }] } },
+        { n: 'Points by position', c: { ds: 'players', type: 'hbar', dim: 'position', split: '', measures: [{ f: 'player_pts', a: 'sum' }], filters: [{ f: 'year', op: '=', v: String(yr) }] } },
+        { n: 'Manager × week heatmap', c: { ds: 'teamweeks', type: 'pivot', dim: 'manager', split: 'week', measures: [{ f: 'team_points', a: 'sum' }], filters: [{ f: 'year', op: '=', v: String(yr) }] } }
+      ].map(p => ({ n: p.n, c: Object.assign({}, base, p.c) }));
+    }
+    function sbPresetOk(p) {
+      const ctx = sbContext(Object.assign({}, p.c, { calcs: [] }));
+      if (!ctx.rows.length) return false;
+      const names = new Set(ctx.cols.map(c => c.name));
+      const need = [p.c.dim, p.c.split, ...p.c.measures.map(m => m.f), ...p.c.filters.map(f => f.f)].filter(x => x && x !== '*');
+      return need.every(n => names.has(n));
+    }
+
+    function sbPanelHTML() {
+      const sb = sbS(), cfg = sb.cfg, ctx = sbContext(cfg);
+      const dsList = Object.keys(SB_DS_LABELS).filter(k => sbDatasetRows(k).length).map(k => [k, SB_DS_LABELS[k]]);
+      const allCols = ctx.cols.map(c => [c.name, c.name + (c.calc ? ' ƒ' : '')]);
+      const meaCols = [['*', 'Record count'], ...ctx.cols.map(c => [c.name, c.name + (c.numeric ? '' : ' (text)') + (c.calc ? ' ƒ' : '')])];
+      const secT = t => `<div class="sb-sec">${t}</div>`;
+      const filtRows = (cfg.filters || []).map((f, i) => {
+        const col = ctx.cols.find(c => c.name === f.f);
+        let dl = '';
+        if (col && !col.numeric) { const vals = [...new Set(ctx.rows.slice(0, 6000).map(r => r[f.f]))].filter(v => v !== null && v !== '').slice(0, 150); dl = `<datalist id="sb-dl-${i}">${vals.map(v => `<option value="${escapeHTML(v)}">`).join('')}</datalist>`; }
+        return `<div class="sb-row"><select class="sb-in" data-sb="ff" data-i="${i}">${sbOpts(allCols, f.f, 'field…')}</select>
+          <select class="sb-in" style="max-width:96px" data-sb="fo" data-i="${i}">${sbOpts(SB_OPS, f.op)}</select>
+          <input class="sb-in" data-sb="fv" data-i="${i}" list="sb-dl-${i}" value="${escapeHTML(f.v || '')}" placeholder="value">${dl}
+          <button class="sb-x" data-sb="fdel" data-i="${i}" title="Remove filter"><i class="fa-solid fa-xmark"></i></button></div>`;
+      }).join('');
+      const meaRows = (cfg.measures || []).map((m, i) => `<div class="sb-row"><select class="sb-in" data-sb="mf" data-i="${i}">${sbOpts(meaCols, m.f)}</select>
+          <select class="sb-in" style="max-width:112px" data-sb="ma" data-i="${i}">${sbOpts(SB_AGGS, m.f === '*' ? 'count' : m.a)}</select>
+          <button class="sb-x" data-sb="mdel" data-i="${i}" title="Remove measure"><i class="fa-solid fa-xmark"></i></button></div>`).join('');
+      const calcRows = (cfg.calcs || []).map((c, i) => `<div class="sb-calc"><div class="sb-row"><input class="sb-in" style="max-width:120px" data-sb="cn" data-i="${i}" value="${escapeHTML(c.name || '')}" placeholder="name">
+          <input class="sb-in" data-sb="ce" data-i="${i}" value="${escapeHTML(c.expr || '')}" placeholder="e.g. team_points - opponent_points">
+          <button class="sb-x" data-sb="cdel" data-i="${i}" title="Remove calculated field"><i class="fa-solid fa-xmark"></i></button></div>
+          ${ctx.errors[i] ? `<div class="text-[10px] text-rose-500 mt-0.5">${escapeHTML(ctx.errors[i])}</div>` : ''}</div>`).join('');
+      return `
+        <div class="sb-card">
+          ${secT('Data source')}
+          <select class="sb-in" data-sb="ds">${sbOpts(dsList, cfg.ds)}</select>
+          <div class="text-[10px] text-slate-400 mt-1">${ctx.rows.length.toLocaleString()} rows · ${ctx.cols.length} fields</div>
+          ${secT('Chart type')}
+          <div class="grid grid-cols-4 gap-1.5">${SB_TYPES.map(t => `<button type="button" class="sb-chip${cfg.type === t.k ? ' on' : ''}" data-sb="type" data-k="${t.k}" title="${t.l}"><i class="fa-solid ${t.i}"></i><span>${t.l}</span></button>`).join('')}</div>
+          ${secT('Dimensions')}
+          <label class="sb-lbl">${cfg.type === 'scatter' ? 'Point label (group by)' : 'Dimension (X / group by)'}</label>
+          <select class="sb-in" data-sb="dim">${sbOpts(allCols, cfg.dim, '(none)')}</select>
+          <label class="sb-lbl">Split by (series / columns)</label>
+          <select class="sb-in" data-sb="split">${sbOpts(allCols, cfg.split, '(none)')}</select>
+          ${secT('Measures')}
+          ${meaRows}
+          <button type="button" class="sb-add" data-sb="madd"><i class="fa-solid fa-plus"></i> Add measure</button>
+          ${cfg.type === 'scatter' ? '<div class="text-[10px] text-slate-400 mt-1">Scatter: 1st measure = X, 2nd = Y. Combo: 1st = bars, others = lines on the right axis.</div>' : (cfg.type === 'combo' ? '<div class="text-[10px] text-slate-400 mt-1">Combo: 1st measure = bars, others = lines on the right axis.</div>' : '')}
+          ${secT('Calculated fields')}
+          ${calcRows}
+          <button type="button" class="sb-add" data-sb="cadd"><i class="fa-solid fa-plus"></i> Add calculated field</button>
+          <div class="text-[10px] text-slate-400 mt-1 leading-snug">Row-level formulas using field names: <code>team_points - opponent_points</code>, <code>if(result == 'W', 1, 0)</code>, <code>round(margin / 2, 1)</code>. Functions: abs, min, max, round, sqrt, pow, floor, ceil, if. Calculated fields (ƒ) then appear in every dropdown.</div>
+          ${secT('Filters')}
+          ${filtRows}
+          <button type="button" class="sb-add" data-sb="fadd"><i class="fa-solid fa-plus"></i> Add filter</button>
+          ${secT('Sort & options')}
+          <div class="sb-row"><select class="sb-in" data-sb="sort">${sbOpts([['m0', 'Sort by first measure'], ['dim', 'Sort by dimension']], cfg.sort)}</select>
+            <select class="sb-in" style="max-width:88px" data-sb="dir">${sbOpts([['desc', 'Desc'], ['asc', 'Asc']], cfg.dir)}</select></div>
+          <div class="sb-row mt-1"><label class="sb-lbl" style="margin:0;white-space:nowrap">Top N</label><input class="sb-in" type="number" min="0" data-sb="limit" value="${cfg.limit || 0}" style="max-width:70px">
+            <label class="sb-lbl" style="margin:0;white-space:nowrap">Decimals</label><input class="sb-in" type="number" min="0" max="4" data-sb="dec" value="${cfg.dec}" style="max-width:60px"></div>
+          <div class="flex items-center gap-4 mt-2 text-xs text-slate-600 dark:text-slate-300">
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" data-sb="labels" ${cfg.labels ? 'checked' : ''}> Data labels</label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" data-sb="legend" ${cfg.legend !== false ? 'checked' : ''}> Legend</label></div>
+          <label class="sb-lbl">Title (optional)</label>
+          <input class="sb-in" data-sb="title" value="${escapeHTML(cfg.title || '')}" placeholder="${escapeHTML(sbTitle(Object.assign({}, cfg, { title: '' })))}">
+        </div>`;
+    }
+
+    function sbDashHTML() {
+      const sb = sbS();
+      if (!sb.pinned.length) return `<div class="bg-white dark:bg-slate-950 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center text-xs text-slate-500 dark:text-slate-400"><i class="fa-solid fa-thumbtack text-brand-500 mr-1"></i> Build a chart above and press <b>Pin to dashboard</b> to keep it here. Pinned charts live-update with the data and are saved in this browser.</div>`;
+      return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">${sb.pinned.map((p, i) => `
+        <div class="sb-tile bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden ${p.span === 2 ? 'lg:col-span-2' : ''}">
+          <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${escapeHTML(sbTitle(p.cfg))}</div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button class="sb-x" data-sb="tleft" data-i="${i}" title="Move earlier"><i class="fa-solid fa-arrow-up"></i></button>
+              <button class="sb-x" data-sb="tright" data-i="${i}" title="Move later"><i class="fa-solid fa-arrow-down"></i></button>
+              <button class="sb-x hidden lg:inline-flex" data-sb="tspan" data-i="${i}" title="Toggle width"><i class="fa-solid fa-left-right"></i></button>
+              <button class="sb-x" data-sb="tedit" data-i="${i}" title="Edit in builder"><i class="fa-solid fa-pen"></i></button>
+              <button class="sb-x" data-sb="tdel" data-i="${i}" title="Remove"><i class="fa-solid fa-trash"></i></button>
+            </div></div>
+          <div class="sb-tile-body" data-i="${i}"></div></div>`).join('')}</div>`;
+    }
+
+    function sbRefreshPreview() {
+      const sb = sbS();
+      const host = document.getElementById('sb-preview-body'); if (!host) return;
+      const t = document.getElementById('sb-preview-title'); if (t) t.textContent = sbTitle(sb.cfg);
+      const h = window.innerWidth < 640 ? 300 : 400;
+      sbRender(host, sb.cfg, 'preview', { h });
+      const meta = document.getElementById('sb-preview-meta');
+      if (meta) meta.textContent = host._res && host._res.n !== undefined ? `${host._res.n.toLocaleString()} rows after filters` : '';
+    }
+    function sbRefreshTiles() {
+      const sb = sbS();
+      Object.keys(sb.charts).filter(k => k !== 'preview').forEach(k => { try { sb.charts[k].destroy(); } catch (e) {} delete sb.charts[k]; });
+      document.querySelectorAll('#sb-dash .sb-tile-body').forEach(el => {
+        const i = Number(el.getAttribute('data-i')); const p = sb.pinned[i]; if (!p) return;
+        sbRender(el, p.cfg, 'tile' + i, { h: 260, compact: true });
+      });
+    }
+    function sbRebuildPanel() {
+      const el = document.getElementById('sb-panel'); if (!el) return;
+      const st = el.scrollTop; el.innerHTML = sbPanelHTML(); el.scrollTop = st;
+    }
+    function sbRebuildDash() { const el = document.getElementById('sb-dash'); if (el) { el.innerHTML = sbDashHTML(); sbRefreshTiles(); } }
+    function sbRebuildPresets() {
+      const el = document.getElementById('sb-presets'); if (!el) return;
+      const ps = sbPresets().filter(sbPresetOk);
+      el.innerHTML = ps.length ? `<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">Quick start</span>` + ps.map((p, i) => `<button type="button" class="sb-pre" data-sb="preset" data-i="${i}">${escapeHTML(p.n)}</button>`).join('') : '';
+      el._ps = ps;
+    }
+
+    function renderSandboxTab() {
+      const root = document.getElementById('sb-root'); if (!root) return;
+      const sb = sbS();
+      if (!sb.built) {
+        root.innerHTML = `
+          <div id="sb-presets" class="flex flex-wrap items-center gap-1.5 px-1"></div>
+          <div class="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-3 items-start">
+            <aside id="sb-panel" class="order-2 lg:order-1 lg:sticky lg:top-[150px] lg:max-h-[calc(100vh-170px)] lg:overflow-y-auto"></aside>
+            <div class="order-1 lg:order-2 space-y-3 min-w-0">
+              <div id="sb-preview" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+                <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+                  <div class="min-w-0"><div id="sb-preview-title" class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate"></div><div id="sb-preview-meta" class="text-[10px] text-slate-400"></div></div>
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <button class="sb-btn primary" data-sb="pin"><i class="fa-solid fa-thumbtack"></i> Pin</button>
+                    <button class="sb-btn" data-sb="png" title="Download as PNG"><i class="fa-solid fa-file-image"></i> PNG</button>
+                    <button class="sb-btn" data-sb="csv" title="Download the aggregated data"><i class="fa-solid fa-file-csv"></i> CSV</button>
+                    <button class="sb-btn" data-sb="link" title="Copy a link to this chart"><i class="fa-solid fa-link"></i></button>
+                    <button class="sb-btn" data-sb="reset" title="Reset builder"><i class="fa-solid fa-rotate-left"></i></button>
+                  </div>
+                </div>
+                <div id="sb-preview-body"></div>
+              </div>
+              <div class="flex items-center justify-between px-1"><h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-table-columns text-brand-500"></i> Dashboard</h3>
+                <button class="sb-btn" data-sb="clearall" title="Remove every pinned chart"><i class="fa-solid fa-trash"></i> Clear</button></div>
+              <div id="sb-dash"></div>
+            </div>
+          </div>`;
+        if (!root._wired) { root._wired = true; root.addEventListener('change', sbOnChange); root.addEventListener('click', sbOnClick); }
+        sb.built = true; sb.ver = STATE.dataVersion;
+        sbRebuildPresets(); sbRebuildPanel(); sbRefreshPreview(); sbRebuildDash();
+        return;
+      }
+      // later renders (data poll, theme change, tab switch): keep the panel untouched while the user is typing in it
+      const panel = document.getElementById('sb-panel');
+      const typing = panel && panel.contains(document.activeElement);
+      if (sb.ver !== STATE.dataVersion) { sb.ver = STATE.dataVersion; sbRebuildPresets(); if (!typing) sbRebuildPanel(); }
+      sbRefreshPreview(); sbRefreshTiles();
+    }
+
+    function sbOnChange(e) {
+      const el = e.target.closest('[data-sb]'); if (!el) return;
+      const sb = sbS(), cfg = sb.cfg, a = el.getAttribute('data-sb'), i = Number(el.getAttribute('data-i'));
+      const v = el.type === 'checkbox' ? el.checked : el.value;
+      const ctx = sbContext(cfg);
+      let structural = false;
+      switch (a) {
+        case 'ds': {
+          const fresh = sbDefaultCfg(); const cols = sbDetectCols(sbDatasetRows(v));
+          cfg.ds = v; cfg.calcs = []; cfg.filters = [];
+          const dim = cols.find(c => !c.numeric && !/id$/i.test(c.name)) || cols[0];
+          const mea = cols.find(c => c.numeric && !/(^|_)(id|year|week)$/i.test(c.name)) || cols.find(c => c.numeric);
+          cfg.dim = (v === 'teamweeks') ? 'manager' : (dim ? dim.name : ''); cfg.split = '';
+          cfg.measures = v === 'teamweeks' ? fresh.measures : [mea ? { f: mea.name, a: 'sum' } : { f: '*', a: 'count' }];
+          structural = true; break;
+        }
+        case 'dim': cfg.dim = v; break;
+        case 'split': cfg.split = v; break;
+        case 'mf': { const m = cfg.measures[i]; m.f = v; const c = ctx.cols.find(x => x.name === v); if (v === '*') m.a = 'count'; else if (c && !c.numeric && !['count', 'countd'].includes(m.a)) m.a = 'countd'; structural = true; break; }
+        case 'ma': cfg.measures[i].a = v; break;
+        case 'cn': cfg.calcs[i].name = v.trim(); structural = true; break;
+        case 'ce': cfg.calcs[i].expr = v; structural = true; break;
+        case 'ff': cfg.filters[i].f = v; cfg.filters[i].v = ''; structural = true; break;
+        case 'fo': cfg.filters[i].op = v; break;
+        case 'fv': cfg.filters[i].v = v; break;
+        case 'sort': cfg.sort = v; break;
+        case 'dir': cfg.dir = v; break;
+        case 'limit': cfg.limit = Math.max(0, parseInt(v, 10) || 0); break;
+        case 'dec': cfg.dec = Math.min(4, Math.max(0, parseInt(v, 10) || 0)); break;
+        case 'labels': cfg.labels = !!v; break;
+        case 'legend': cfg.legend = !!v; break;
+        case 'title': cfg.title = v; break;
+        default: return;
+      }
+      if (structural) sbRebuildPanel();
+      sbRefreshPreview(); sbUrlSoon();
+    }
+    function sbOnClick(e) {
+      const el = e.target.closest('[data-sb]'); if (!el || el.tagName === 'SELECT' || el.tagName === 'INPUT') return;
+      const sb = sbS(), cfg = sb.cfg, a = el.getAttribute('data-sb'), i = Number(el.getAttribute('data-i'));
+      const panelRefresh = () => { sbRebuildPanel(); sbRefreshPreview(); sbUrlSoon(); };
+      switch (a) {
+        case 'type': cfg.type = el.getAttribute('data-k'); if (cfg.type === 'line' || cfg.type === 'area') { cfg.sort = 'dim'; cfg.dir = 'asc'; } panelRefresh(); break;
+        case 'madd': { const c = sbContext(cfg).cols.find(x => x.numeric && !cfg.measures.some(m => m.f === x.name)); cfg.measures.push(c ? { f: c.name, a: 'avg' } : { f: '*', a: 'count' }); panelRefresh(); break; }
+        case 'mdel': cfg.measures.splice(i, 1); panelRefresh(); break;
+        case 'cadd': cfg.calcs.push({ name: `calc_${cfg.calcs.length + 1}`, expr: '' }); sbRebuildPanel(); break;
+        case 'cdel': cfg.calcs.splice(i, 1); panelRefresh(); break;
+        case 'fadd': cfg.filters.push({ f: '', op: '=', v: '' }); sbRebuildPanel(); break;
+        case 'fdel': cfg.filters.splice(i, 1); panelRefresh(); break;
+        case 'preset': { const ps = document.getElementById('sb-presets')._ps || []; if (ps[i]) { sb.cfg = Object.assign(sbDefaultCfg(), JSON.parse(JSON.stringify(ps[i].c))); panelRefresh(); } break; }
+        case 'reset': sb.cfg = sbDefaultCfg(); panelRefresh(); break;
+        case 'pin': {
+          sb.pinned.push({ cfg: JSON.parse(JSON.stringify(cfg)), span: 1 }); sbSave(); sbRebuildDash();
+          const d = document.getElementById('sb-dash'); if (d && d.scrollIntoView) { /* stay on builder; flash the new tile */ const last = d.querySelector('.sb-tile:last-child'); if (last) { last.classList.add('mx-flash'); } }
+          break;
+        }
+        case 'clearall': if (sb.pinned.length && confirm('Remove every pinned chart from the dashboard?')) { sb.pinned = []; sbSave(); sbRebuildDash(); } break;
+        case 'tdel': sb.pinned.splice(i, 1); sbSave(); sbRebuildDash(); break;
+        case 'tleft': if (i > 0) { const t = sb.pinned[i]; sb.pinned[i] = sb.pinned[i - 1]; sb.pinned[i - 1] = t; sbSave(); sbRebuildDash(); } break;
+        case 'tright': if (i < sb.pinned.length - 1) { const t = sb.pinned[i]; sb.pinned[i] = sb.pinned[i + 1]; sb.pinned[i + 1] = t; sbSave(); sbRebuildDash(); } break;
+        case 'tspan': sb.pinned[i].span = sb.pinned[i].span === 2 ? 1 : 2; sbSave(); sbRebuildDash(); break;
+        case 'tedit': sb.cfg = Object.assign(sbDefaultCfg(), JSON.parse(JSON.stringify(sb.pinned[i].cfg))); panelRefresh(); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {} break;
+        case 'png': {
+          const name = (sbTitle(cfg).replace(/[^A-Za-z0-9]+/g, '_').slice(0, 60) || 'Sandbox') + '.png';
+          ndlElementToPNG(document.getElementById('sb-preview-body'), name, { title: sbTitle(cfg) }); break;
+        }
+        case 'csv': sbDownloadCSV(); break;
+        case 'link': {
+          sbSave(); updateUrlHash();
+          const url = window.location.href;
+          const done = () => { el.innerHTML = '<i class="fa-solid fa-check"></i>'; setTimeout(() => { el.innerHTML = '<i class="fa-solid fa-link"></i>'; }, 1400); };
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => prompt('Copy this link:', url)); else prompt('Copy this link:', url);
+          break;
+        }
+      }
+    }
+    function sbDownloadCSV() {
+      const host = document.getElementById('sb-preview-body'); const res = host && host._res; if (!res || res.error) return;
+      const q = v => { const s = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+      let lines = [];
+      if (res.kind === 'kpi') { lines.push('measure,value'); res.tiles.forEach(t => lines.push([q(t.label), q(t.value)].join(','))); }
+      else if (res.kind === 'table') { lines.push([res.dim, res.split, ...res.ms.map(sbMLabel)].filter((x, i) => x || i > 1).map(q).join(',')); res.rows.forEach(r => lines.push([...(res.dim ? [r.d] : []), ...(res.split ? [r.s] : []), ...r.vals].map(q).join(','))); }
+      else if (res.kind === 'pivot') { lines.push([res.dim, ...res.cols.map(c => c.split)].map(q).join(',')); res.cats.forEach((d, i) => lines.push([d, ...res.cols.map(c => c.data[i])].map(q).join(','))); }
+      else if (res.kind === 'scatter') { lines.push(['series', 'label', 'x', 'y'].join(',')); res.series.forEach(s => s.pts.forEach(p => lines.push([s.name, p.label, p.x, p.y].map(q).join(',')))); }
+      else { lines.push([res.dim || 'category', ...res.series.map(s => s.name)].map(q).join(',')); res.cats.forEach((d, i) => lines.push([d, ...res.series.map(s => s.data[i])].map(q).join(','))); }
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Sandbox_${(sbTitle(sbS().cfg).replace(/[^A-Za-z0-9]+/g, '_').slice(0, 50)) || 'data'}.csv`;
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    }
+
 
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
