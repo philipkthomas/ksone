@@ -668,6 +668,13 @@
 
     /* Odds tab */
     .odds-table th, .odds-table td { white-space: nowrap; }
+    .odds-table .odds-sticky { position: sticky; left: 0; z-index: 2; background: #ffffff; border-right: 2px solid #cbd5e1; }
+    .odds-table th.odds-sticky { z-index: 3; background: #f1f5f9; }
+    .dark .odds-table .odds-sticky { background: #020617; border-right-color: #334155; }
+    .dark .odds-table th.odds-sticky { background: #0f172a; }
+    .odds-tip { position: relative; cursor: help; outline: none; }
+    .odds-tip::after { content: attr(data-tip); display: none; position: absolute; left: 0; top: calc(100% + 6px); z-index: 60; width: max-content; max-width: min(340px, 80vw); white-space: normal; font-size: 11px; font-weight: 500; line-height: 1.35; padding: 7px 9px; border-radius: 6px; background: #0f172a; color: #f1f5f9; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+    .odds-tip:hover::after, .odds-tip:focus::after { display: block; }
     .odds-table td.odds-pct { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; }
     .odds-table td.odds-tot, .odds-table th.odds-tot { border-left: 2px solid #cbd5e1; font-weight: 700; }
     .dark .odds-table td.odds-tot, .dark .odds-table th.odds-tot { border-left-color: #334155; }
@@ -706,6 +713,8 @@
     .dark .mx-name { color: #e2e8f0; }
     .mx-cell.r .mx-name { text-align: right; }
     .mx-pos { font-size: 9px; font-weight: 700; color: #94a3b8; margin-left: 3px; }
+    .mx-ir { display: inline-block; font-size: 8px; font-weight: 800; letter-spacing: .04em; line-height: 1; padding: 2px 4px; margin-left: 4px; border-radius: 4px; background: #dc2626; color: #fff; vertical-align: 1px; }
+    .mx-cell.r .mx-ir { margin-left: 4px; margin-right: 0; }
     .mx-cell.r .mx-pos { margin-left: 0; margin-right: 3px; }
     .mx-pts { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; color: #0f172a; flex-shrink: 0; }
     .dark .mx-pts { color: #f1f5f9; }
@@ -817,8 +826,6 @@
           </label>
 
           <div id="manager-filter-badge" class="hidden items-center gap-2 bg-brand-100 dark:bg-brand-900/60 border border-brand-300 dark:border-brand-500/40 text-brand-800 dark:text-brand-200 px-2.5 py-0.5 rounded-full">
-            <span>Manager: <strong id="selected-manager-name">--</strong></span>
-            <button id="clear-manager-filter" class="hover:text-slate-900 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
           <div id="hist-chips-wrap" class="flex flex-wrap items-center gap-2" style="display:none">
@@ -903,9 +910,14 @@
         <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
           <i class="fa-solid fa-people-arrows text-brand-500"></i> <span id="mx-cards-title">Week Matchups</span>
         </h3>
+        <div class="flex items-center gap-3 text-xs">
+        <label id="mx-show-bench-wrap" class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold cursor-pointer select-none">
+          <input type="checkbox" id="mx-show-bench" class="accent-sky-500"> Show bench
+        </label>
         <button id="btn-mx-expand-all" type="button" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs">
           <i class="fa-solid fa-up-right-and-down-left-from-center text-xs"></i> <span id="mx-expand-all-text">Expand all</span>
         </button>
+        </div>
       </div>
       <div id="matchups-cards" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
     </section>
@@ -1436,14 +1448,14 @@
     <!-- ODDS TAB CONTENT -->
     <section id="tab-odds" class="tab-content space-y-4 hidden">
       <div class="flex items-center justify-between gap-2 px-1">
-        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+        <h2 id="odds-title" class="odds-tip text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2" tabindex="0" data-tip="">
           <i class="fa-solid fa-dice text-brand-500"></i> Playoff &amp; Seed Odds
         </h2>
         <div class="flex items-center gap-2">
           <button id="btn-export-odds-png" title="Download as PNG image" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> PNG</button>
         </div>
       </div>
-      <div id="odds-note" class="px-1 text-[11px] text-slate-500 dark:text-slate-400"></div>
+      <div id="odds-note" class="hidden"></div>
       <div id="odds-table-wrap" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto shadow-xl">
         <table class="standings-table odds-table" id="odds-table"></table>
       </div>
@@ -1572,7 +1584,7 @@
 
     const STATE = {
       data: { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [] },
-      filters: { year: 2026, league: '', seasonKey: '2026', weekMin: 1, weekMax: 8, hideCW: false, selectedManager: null, matchup: null },
+      filters: { year: 2026, league: '', seasonKey: '2026', weekMin: 1, weekMax: 8, hideCW: false, selectedManagers: [], matchup: null },
       hcwUserOverride: false,
       weekUserOverride: false,
       loaded: false, loading: false, dataVersion: 0, dbSig: null, SQL: null, _selfHash: null,
@@ -1596,7 +1608,7 @@
         chartInstance: null, fullSeries: null, animationTimer: null,
         isPlaying: false, currentIdx: 0, prevIdx: 0, speedMultiplier: 2.0
       },
-      positions: { sub: 'season', allYears: true, viewMode: 'real', showBench: true, hidden: new Set(), chartInstance: null, last: null, _v: -1, _cache: {}, _sfx: null },
+      positions: { sub: 'season', allBySub: { season: false, historical: true }, viewMode: 'real', showBench: true, hidden: new Set(), chartInstance: null, last: null, _v: -1, _cache: {}, _sfx: null },
       belt: {
         lineage: null,
         animationTimer: null,
@@ -2041,17 +2053,43 @@
     // The year dropdown offers an "All" option on the Historical tab and on Points by Position > Historical
     function yearAllCapable() {
       const t = FilterEngine.activeTab();
-      return t === 'historical' || (t === 'positions' && STATE.positions.sub === 'historical');
+      return t === 'historical' || t === 'positions';
     }
     function yearAllOn() {
       const t = FilterEngine.activeTab();
       if (t === 'historical') return STATE.historical.allYears !== false;
-      if (t === 'positions' && STATE.positions.sub === 'historical') return STATE.positions.allYears !== false;
+      if (t === 'positions') return !!STATE.positions.allBySub[STATE.positions.sub === 'historical' ? 'historical' : 'season'];
       return false;
     }
     function setYearAll(on) {
-      if (FilterEngine.activeTab() === 'positions') STATE.positions.allYears = !!on;
+      if (FilterEngine.activeTab() === 'positions') STATE.positions.allBySub[STATE.positions.sub === 'historical' ? 'historical' : 'season'] = !!on;
       else STATE.historical.allYears = !!on;
+    }
+
+    // ---- Manager filter (multi-select, shared by every tab and the `mgr` URL param, comma separated) ----
+    function getSelectedManagers() { return STATE.filters.selectedManagers || []; }
+    function isMgrSelected(m) { return getSelectedManagers().includes(m); }
+    function setSelectedManagers(list) {
+      STATE.filters.selectedManagers = [...new Set((list || []).map(x => String(x).trim()).filter(Boolean))];
+    }
+    function toggleSelectedManager(m) {
+      const cur = getSelectedManagers();
+      setSelectedManagers(cur.includes(m) ? cur.filter(x => x !== m) : [...cur, m]);
+    }
+    // Re-render whatever the manager filter touches on the active tab, then sync badge + URL
+    function afterManagerFilterChanged() {
+      updateFilterBadge();
+      updateUrlHash();
+      try {
+        switch (FilterEngine.activeTab()) {
+          case 'standings': renderStandingsTable(); break;
+          case 'positions': renderPositionsTab(); break;
+          case 'survivor': if (STATE.survivor && STATE.survivor.chartInstance) applySurvivorHighlight(); break;
+          case 'wins_above': if (STATE.wae && STATE.wae.chartInstance) applyWaeHighlight(); break;
+          case 'odds': renderOddsTab(); break;
+          case 'historical': renderHistoricalTab(); break;
+        }
+      } catch (e) { console.error('Manager filter render failed', e); }
     }
 
     function readUrlParams() {
@@ -2078,14 +2116,15 @@
       p.set('wmin', f.weekMin);
       p.set('wmax', f.weekMax);
       p.set('hcw', f.hideCW ? 1 : 0);
-      if (f.selectedManager && tab !== 'historical') p.set('mgr', f.selectedManager);
+      if (getSelectedManagers().length) p.set('mgr', getSelectedManagers().join(','));
       if (tab === 'live_prob' && f.matchup) p.set('mu', f.matchup);
       if (tab === 'positions') {
         p.set('psub', STATE.positions.sub || 'season');
-        p.set('bench', STATE.positions.showBench ? 1 : 0);
         p.set('pmode', STATE.positions.viewMode || 'real');
       }
-      const next = '#' + p.toString();
+      // Show Bench is shared by Points by Position and Matchups only; every other tab leaves it out of the URL
+      if (tab === 'positions' || tab === 'matchups') p.set('bench', STATE.positions.showBench ? 1 : 0);
+      const next = '#' + p.toString().replace(/%2C/gi, ',');
       if (window.location.hash === next) return;
       try {
         history.replaceState(null, '', next);
@@ -2113,8 +2152,13 @@
 
       if (p.has('psub')) STATE.positions.sub = String(p.get('psub')).toLowerCase() === 'historical' ? 'historical' : 'season';
       const rawYearParam = p.get('year') || '';
-      if (rawYearParam.toLowerCase() === 'all') { STATE.historical.allYears = true; STATE.positions.allYears = true; }
-      else if (rawYearParam) { STATE.historical.allYears = false; STATE.positions.allYears = false; }
+      {
+        const isAll = rawYearParam.toLowerCase() === 'all';
+        if (rawYearParam) {
+          STATE.historical.allYears = isAll;
+          if (activeTab === 'positions') STATE.positions.allBySub[STATE.positions.sub === 'historical' ? 'historical' : 'season'] = isAll;
+        }
+      }
       const parsedParam = rawYearParam.includes('|') ? parseSeasonKey(rawYearParam) : { year: toInt(rawYearParam, 1990, 2100), league: normLeague(p.get('league')) };
       const targetYear = parsedParam.year !== null ? parsedParam.year : (cw ? cw.curYear : f.year);
       const season = FilterEngine.resolveSeason(targetYear, parsedParam.league);
@@ -2143,8 +2187,8 @@
         STATE.hcwUserOverride = false;
       }
 
-      f.selectedManager = p.get('mgr') || null;
-      if (p.has('bench')) STATE.positions.showBench = !['0', 'false', 'off'].includes(String(p.get('bench')).toLowerCase());
+      setSelectedManagers(String(p.get('mgr') || '').split(','));
+      if (p.has('bench') && (activeTab === 'positions' || activeTab === 'matchups')) STATE.positions.showBench = !['0', 'false', 'off'].includes(String(p.get('bench')).toLowerCase());
       if (p.has('pmode') && ['real', 'optimal', 'efficiency'].includes(String(p.get('pmode')).toLowerCase())) {
         STATE.positions.viewMode = String(p.get('pmode')).toLowerCase();
       }
@@ -3072,8 +3116,8 @@
         return;
       }
 
-      if (STATE.filters.selectedManager) {
-        data = data.filter(r => r.manager === STATE.filters.selectedManager);
+      if (getSelectedManagers().length) {
+        data = data.filter(r => isMgrSelected(r.manager));
       }
 
       const field = STATE.sort.field;
@@ -3178,19 +3222,23 @@
     }
 
     function toggleManagerFilter(mgr) {
-      STATE.filters.selectedManager = STATE.filters.selectedManager === mgr ? null : mgr;
-      renderStandingsTable();
-      updateFilterBadge();
-      updateUrlHash();
+      toggleSelectedManager(mgr);
+      afterManagerFilterChanged();
     }
 
+    // Manager chips in the global filter bar (the Historical tab shows them in its own chip strip instead)
     function updateFilterBadge() {
       const badge = document.getElementById('manager-filter-badge');
-      if (STATE.filters.selectedManager && FilterEngine.activeTab() !== 'historical') {
-        document.getElementById('selected-manager-name').innerText = STATE.filters.selectedManager;
-        badge.classList.remove('hidden'); badge.classList.add('flex');
+      if (!badge) return;
+      const sel = getSelectedManagers();
+      if (sel.length && FilterEngine.activeTab() !== 'historical') {
+        badge.innerHTML = `<span>Manager${sel.length > 1 ? 's' : ''}:</span>`
+          + sel.map(m => `<span class="inline-flex items-center gap-1"><strong>${escapeHTML(m)}</strong><button type="button" data-rm-mgr="${escapeHTML(m)}" class="opacity-60 hover:opacity-100" title="Remove ${escapeHTML(m)}"><i class="fa-solid fa-xmark text-[10px]"></i></button></span>`).join('')
+          + (sel.length > 1 ? `<button type="button" id="clear-manager-filter" class="hover:text-slate-900 dark:hover:text-white text-[11px] font-semibold underline" title="Clear all managers">Clear</button>` : '');
+        badge.classList.remove('hidden'); badge.classList.add('flex', 'flex-wrap');
       } else {
-        badge.classList.add('hidden'); badge.classList.remove('flex');
+        badge.innerHTML = '';
+        badge.classList.add('hidden'); badge.classList.remove('flex', 'flex-wrap');
       }
     }
 
@@ -3209,6 +3257,11 @@
         if (card) mxSetOpen(card, !card.classList.contains('open'));
         mxSyncExpandAllLabel();
       });
+      const mxBench = document.getElementById('mx-show-bench');
+      if (mxBench) {
+        mxBench.checked = STATE.positions.showBench;
+        mxBench.addEventListener('change', e => setShowBench(e.target.checked));
+      }
       const allBtn = document.getElementById('btn-mx-expand-all');
       if (allBtn) allBtn.addEventListener('click', () => {
         const all = [...document.querySelectorAll('#matchups-cards .mx-card')];
@@ -3231,6 +3284,16 @@
       const all = [...document.querySelectorAll('#matchups-cards .mx-card')];
       const t = document.getElementById('mx-expand-all-text');
       if (t) t.textContent = (all.length && all.every(c => c.classList.contains('open'))) ? 'Collapse all' : 'Expand all';
+    }
+
+    // Show Bench is one setting shared by Matchups and Points by Position (URL param `bench`, only on those two tabs)
+    function setShowBench(on) {
+      STATE.positions.showBench = !!on;
+      ['pos-show-bench', 'mx-show-bench'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = !!on; });
+      updateUrlHash();
+      const t = FilterEngine.activeTab();
+      if (t === 'positions') renderPositionsTab();
+      else if (t === 'matchups') renderMatchupsTable();
     }
 
     function populateMatchupsWeeks() { }
@@ -3419,7 +3482,7 @@
     }
 
     // ---------- Week matchup cards (below the results table) ----------
-    const MX_SLOT_ORDER = ['QB1', 'RB1', 'RB2', 'WR1', 'WR2', 'TE1', 'SFX1', 'SFX2', 'FX1', 'FX2', 'FX3', 'FX4', 'FX5', 'DEF1', 'DEF2', 'K1', 'K2'];
+    const MX_SLOT_ORDER = ['QB1', 'RB1', 'RB2', 'WR1', 'WR2', 'TE1', 'FX1', 'FX2', 'FX3', 'FX4', 'FX5', 'SFX1', 'SFX2', 'DEF1', 'DEF2', 'K1', 'K2'];
     function mxSlotRank(s) {
       const i = MX_SLOT_ORDER.indexOf(s);
       if (i >= 0) return i;
@@ -3440,7 +3503,7 @@
         let slot = p.normalized_position || '';
         if (!slot) slot = NP_NOT_STARTED.has(sel) ? (sel && sel !== '' ? (sel === 'BN' || sel === 'BE' || sel === 'BENCH' ? 'BN' : sel) : 'BN') : sel;
         const pos = String(getVal(p, ['position', 'POS', 'pos', 'POSITION']) || '').toUpperCase();
-        out.push({ slot, name: String(name), pos, pts: isNaN(pts) ? 0 : pts });
+        out.push({ slot, name: String(name), pos, pts: isNaN(pts) ? 0 : pts, ir: /^IR/.test(sel) });
       });
       return out;
     }
@@ -3451,6 +3514,7 @@
       const title = document.getElementById('mx-cards-title');
       if (title) title.textContent = `${activeSeasonDisplayName(yr, lg)} Week ${wk} Matchups`;
 
+      { const mb = document.getElementById('mx-show-bench'); if (mb) mb.checked = STATE.positions.showBench; }
       try { getNormalizedForYear(yr); } catch (e) { console.warn('[Matchups] position normalization unavailable', e); }
 
       const byId = {};
@@ -3509,7 +3573,7 @@
         const starters = slots.filter(s => !mxSlotIsBench(s));
         const bench = slots.filter(s => mxSlotIsBench(s));
         const cell = (p, cls) => p
-          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span></span><span class="mx-pts">${fmt(p.pts)}</span></div>`
+          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}</span><span class="mx-pts">${fmt(p.pts)}</span></div>`
           : '<div></div>';
         const rows = (list) => list.map(s => {
           const ra = find(pa, s), rb = find(pb, s);
@@ -3531,7 +3595,7 @@
           <div class="mx-sep">Starters</div>
           ${rows(starters)}
           <div class="mx-row mx-tot"><div class="mx-cell l"><span class="mx-name">Starters</span><span class="mx-pts">${fmt(sum(pa, false))}</span></div><span class="mx-slot">TOT</span><div class="mx-cell r"><span class="mx-name">Starters</span><span class="mx-pts">${fmt(sum(pb, false))}</span></div></div>
-          ${bench.length ? `<div class="mx-sep">Bench</div>${rows(bench)}` : ''}`;
+          ${bench.length && STATE.positions.showBench ? `<div class="mx-sep">Bench</div>${rows(bench)}` : ''}`;
       };
 
       wrap.innerHTML = pairs.map(({ key, A, B }) => {
@@ -3967,9 +4031,11 @@
       const minScoresPerWeek = {};
       // Lowest PF each week across EVERY team, including ones already eliminated (drives the red text)
       const minAllScoresPerWeek = {};
+      // Highest PF each week across EVERY team, eliminated ones included (drives the bar widths)
+      const maxAllScoresPerWeek = {};
       for (let w = 1; w <= maxWeek; w++) {
         const vals = teamIds.map(tId => teamScores[tId]?.[w]).filter(v => v !== undefined && v !== null);
-        if (vals.length) minAllScoresPerWeek[w] = Math.min(...vals);
+        if (vals.length) { minAllScoresPerWeek[w] = Math.min(...vals); maxAllScoresPerWeek[w] = Math.max(...vals); }
       }
 
       teamIds.forEach(tId => eliminatedWeek[tId] = null);
@@ -4037,6 +4103,7 @@
         maxScoresPerWeek,
         minScoresPerWeek,
         minAllScoresPerWeek,
+        maxAllScoresPerWeek,
         fireWeek,
         fireTeamIds
       };
@@ -4130,7 +4197,7 @@
           }
         }
       });
-      if (STATE.filters.selectedManager) applySurvivorHighlight();
+      if (getSelectedManagers().length) applySurvivorHighlight();
     }
 
     function survivorAutoScrollToWeek(wk, smooth) {
@@ -4151,14 +4218,14 @@
     function applySurvivorHighlight() {
       const chart = STATE.survivor.chartInstance;
       if (!chart) return;
-      let hl = STATE.filters.selectedManager;
-      if (hl && !chart.data.datasets.some(d => d.label === hl)) hl = null;
+      let hl = getSelectedManagers().filter(m => chart.data.datasets.some(d => d.label === m));
+      if (!hl.length) hl = null;
       chart.data.datasets.forEach((ds) => {
         const base = ds._baseColor || ds.borderColor;
         ds._baseColor = base;
         if (!hl) {
           ds.borderColor = base; ds.backgroundColor = base; ds.borderWidth = 2.5;
-        } else if (ds.label === hl) {
+        } else if (hl.includes(ds.label)) {
           ds.borderColor = base; ds.backgroundColor = base; ds.borderWidth = 4.5;
           ds.order = 0;
         } else {
@@ -4272,7 +4339,9 @@
               textColorClass = 'text-emerald-600 dark:text-emerald-400 font-black';
             }
 
-            const maxScoreInWeek = maxWkScore > 0 ? maxWkScore : 230;
+            // Width = this score relative to the best score of ALL managers that week (alive or eliminated)
+            const maxAllWk = s.maxAllScoresPerWeek ? s.maxAllScoresPerWeek[w] : undefined;
+            const maxScoreInWeek = maxAllWk > 0 ? maxAllWk : (maxWkScore > 0 ? maxWkScore : 230);
             const widthPct = Math.max(46, Math.min(100, Math.round((score / maxScoreInWeek) * 100)));
             const inlineStyle = (isFrozenCell || isFireCell)
               ? `width: ${widthPct}%;`
@@ -5439,14 +5508,14 @@
     function applyWaeHighlight() {
       const chart = STATE.wae.chartInstance;
       if (!chart) return;
-      let hl = STATE.filters.selectedManager;
-      if (hl && !chart.data.datasets.some(d => d.label === hl)) hl = null;
+      let hl = getSelectedManagers().filter(m => chart.data.datasets.some(d => d.label === m));
+      if (!hl.length) hl = null;
       chart.data.datasets.forEach((ds) => {
         const base = ds._baseColor || ds.borderColor;
         ds._baseColor = base;
         if (!hl) {
           ds.borderColor = base; ds.backgroundColor = base; ds.borderWidth = 2.5; ds.pointRadius = 3.5; ds.order = 0;
-        } else if (ds.label === hl) {
+        } else if (hl.includes(ds.label)) {
           ds.borderColor = base; ds.backgroundColor = base; ds.borderWidth = 4.5; ds.pointRadius = 5; ds.order = 0;
         } else {
           const dim = hexToRgba(base, 0.18);
@@ -6890,8 +6959,12 @@
     }
 
     function npEligibility(row) {
-      const raw = String(npF(row, 'position', ['eligible_positions', 'eligible_position']) || '').toUpperCase();
+      let raw = String(npF(row, 'position', ['eligible_positions', 'eligible_position']) || '').toUpperCase();
       let toks = raw.split(/[,\/\s]+/).map(npNormToken).filter(Boolean);
+      if (toks.length === 0) {
+        raw = ['display_position', 'primary_position', 'pos', 'POS', 'player_position'].map(k => String(npF(row, k) || '')).join(',').toUpperCase();
+        toks = raw.split(/[,\/\s]+/).map(npNormToken).filter(Boolean);
+      }
       if (toks.length === 0) {
         const sel = npNormToken(npF(row, 'selected_position'));
         if (sel) toks = [sel];
@@ -7006,7 +7079,7 @@
     // Optimal lineup solver for a single team-week across all eligible rostered players (starters + bench, excluding IR).
     // Maximizes total starter score under the league-year's lineup slot caps (QB1, RB1..2, WR1..2, TE1, FX1..fxCap, SFX1..sfxCap, DEF1..defCap, K1..kCap).
     function npSolveOptimalLineup(allPlayers, caps) {
-      const eligible = allPlayers.filter(p => !p.ir && p.elig.length > 0);
+      const eligible = allPlayers.filter(p => p.elig.length > 0 && (!p.ir || p.pts > 0));
       const multi = eligible.filter(p => p.elig.length > 1).sort(npCmp);
       let best = null;
 
@@ -7098,8 +7171,8 @@
 
       const starterSlots = best ? best.slots : {};
       const usedSet = best ? best.used : new Set();
-      const benchPool = eligible.filter(p => !usedSet.has(p));
-      const irPool = allPlayers.filter(p => p.ir && p.elig.length > 0);
+      const benchPool = allPlayers.filter(p => p.elig.length > 0 && !usedSet.has(p) && !(p.ir && p.pts <= 0));
+      const irPool = allPlayers.filter(p => p.ir && p.pts <= 0 && p.elig.length > 0);
       const benchRes = benchPool.length ? npAssignBench(benchPool) : { slots: {}, overflow: [] };
 
       return {
@@ -7179,6 +7252,7 @@
       const warnings = [];
       const groupsMap = new Map();
       const seen = new Set();
+      const dupRows = [], firstByKey = new Map();
 
       (rows || []).forEach(row => {
         row.normalized_position = null;
@@ -7191,8 +7265,9 @@
         const name = String(npF(row, 'name', ['player_name']) || '');
         const pid = npF(row, 'player_id');
         const dupKey = `${league}|${year}|${week}|${tid}|${(pid !== undefined && pid !== null && pid !== '') ? pid : name}`;
-        if (seen.has(dupKey)) return; // exact duplicate export rows are counted once
+        if (seen.has(dupKey)) { dupRows.push({ row, key: dupKey }); return; } // exact duplicate export rows are counted once
         seen.add(dupKey);
+        firstByKey.set(dupKey, row);
 
         const gKey = `${league}|${year}|${week}|${tid}`;
         let g = groupsMap.get(gKey);
@@ -7256,8 +7331,8 @@
             gw.push(`${p.name} (started) could not be placed in a lineup slot`);
           });
         }
-        const B = g.players.filter(p => !p.started && !p.ir && p.elig.length);
-        const bnExtras = g.players.filter(p => !p.started && p.ir && p.elig.length);
+        const B = g.players.filter(p => !p.started && p.elig.length);   // IR / taxi players are ordinary bench players here
+        const bnExtras = [];
         if (B.length) {
           const res = npAssignBench(B);
           Object.entries(res.slots).forEach(([slot, p]) => placeReal(p, slot));
@@ -7294,6 +7369,11 @@
           optSlots: optSlotsOut, optNames: optNamesOut,
           warnings: gw
         });
+      });
+
+      dupRows.forEach(d => {
+        const first = firstByKey.get(d.key);
+        if (first) { d.row.normalized_position = first.normalized_position; d.row.optimal_position = first.optimal_position; }
       });
 
       return { rows, summary, warnings };
@@ -7441,15 +7521,99 @@
       };
     }
 
-    // Column header: a team on the team view; a week / season label on the weekly and by-year views
-    function posTeamHeadHTML(t, view, selMgr) {
+    // Column header: a manager on the all-years view, a team on the team view; a week / season label on the weekly and by-year views
+    function posDim(view, t) {
+      const sel = getSelectedManagers();
+      return !view.periodKind && sel.length > 0 && !sel.includes(t.manager);
+    }
+    function posTeamHeadHTML(t, view, idx) {
+      if (view.periodKind === 'yearly') {
+        return `<th class="pos-team-th" data-idx="${idx}" style="border-top:3px solid ${t.color}" title="Click to view ${escapeHTML(String(t.team_name))} by team"><div class="pos-team-mgr" style="color:${t.color};font-size:0.72rem">${escapeHTML(t.team_name)}</div></th>`;
+      }
       if (view.periodKind) {
         return `<th class="pos-team-th" style="border-top:3px solid ${t.color};cursor:default"><div class="pos-team-mgr" style="color:${t.color};font-size:0.72rem">${escapeHTML(t.team_name)}</div></th>`;
       }
-      const dim = selMgr && t.manager !== selMgr;
-      return `<th class="pos-team-th${dim ? ' pos-dim' : ''}" data-mgr="${escapeHTML(t.manager)}" style="border-top:3px solid ${t.color}" title="${escapeHTML(t.manager)} - click for week-by-week">
+      const dim = posDim(view, t);
+      if (view.allMgr) {
+        return `<th class="pos-team-th${dim ? ' pos-dim' : ''}" data-idx="${idx}" data-mgr="${escapeHTML(t.manager)}" style="border-top:3px solid ${t.color}" title="${escapeHTML(t.manager)} - click for points by position by year">
+          <div class="pos-team-mgr" style="color:${t.color}">${escapeHTML(t.manager)}</div></th>`;
+      }
+      return `<th class="pos-team-th${dim ? ' pos-dim' : ''}" data-idx="${idx}" data-mgr="${escapeHTML(t.manager)}" style="border-top:3px solid ${t.color}" title="${escapeHTML(t.manager)} - click for week-by-week">
           <div class="pos-team-name">${escapeHTML(t.team_name)}</div>
           <div class="pos-team-mgr" style="color:${t.color}">${escapeHTML(t.manager)}</div></th>`;
+    }
+
+    // Season view with the year filter on "All": one column per manager, averaged over every season in the week range
+    function computePositionsAllView() {
+      const f = STATE.filters, P = STATE.positions;
+      const viewMode = P.viewMode || 'real';
+      const isOptimal = viewMode === 'optimal';
+      const cw = getCurrentYearAndWeek();
+      const wMin = Number(f.weekMin) || 1, wMax = Number(f.weekMax) || 99;
+      const teams = {};
+      const benchSeen = new Set();
+      histGetSeasonsChronological().forEach(se => {
+        const lg = normLeague(se.league);
+        const res = getNormalizedForYear(se.year);
+        (res.summary || []).forEach(e => {
+          if (lg && normLeague(e.league) !== lg) return;
+          if (e.week < wMin || e.week > wMax) return;
+          if (f.hideCW && cw && Number(se.year) === Number(cw.curYear) && e.week >= Number(cw.curWeek)) return;
+          const mgr = getManagerName(e.team_id, se.year, e.manager, lg);
+          if (!mgr) return;
+          const t = teams[mgr] || (teams[mgr] = { team_id: mgr, manager: mgr, team_name: mgr, n: 0, sums: {}, filled: {}, names: {}, realSums: {}, optSums: {} });
+          t.n++;
+          Object.keys(e.slots || {}).forEach(sl => { if (!posIsBench(sl)) t.realSums[sl] = (t.realSums[sl] || 0) + e.slots[sl]; });
+          Object.keys(e.optSlots || {}).forEach(sl => { if (!posIsBench(sl)) t.optSums[sl] = (t.optSums[sl] || 0) + e.optSlots[sl]; });
+          const aSlots = isOptimal ? (e.optSlots || {}) : (e.slots || {});
+          Object.keys(aSlots).forEach(sl => {
+            t.sums[sl] = (t.sums[sl] || 0) + aSlots[sl];
+            t.filled[sl] = (t.filled[sl] || 0) + 1;
+            if (posIsBench(sl)) benchSeen.add(sl);
+          });
+        });
+      });
+      const arr = Object.values(teams);
+      if (!arr.length) return null;
+
+      const fxP = new Set(), sfxP = new Set(), defP = new Set(), kP = new Set();
+      arr.forEach(t => {
+        [...Object.keys(t.sums), ...Object.keys(t.realSums), ...Object.keys(t.optSums)].forEach(slot => {
+          if (/^FX\d+$/.test(slot)) fxP.add(Number(slot.slice(2)));
+          if (/^SFX\d+$/.test(slot)) sfxP.add(Number(slot.slice(3)));
+          if (/^DEF\d+$/.test(slot)) defP.add(Number(slot.slice(3)));
+          if (/^K\d+$/.test(slot)) kP.add(Number(slot.slice(1)));
+        });
+      });
+      const sortNum = set => [...set].sort((a, b) => a - b);
+      const startSlots = [...NP_CORE_SLOTS,
+        ...sortNum(fxP).map(i => `FX${i}`), ...sortNum(sfxP).map(i => `SFX${i}`),
+        ...sortNum(defP).map(i => `DEF${i}`), ...sortNum(kP).map(i => `K${i}`)];
+      const benchSlots = POS_BENCH_ORDER.filter(sl => benchSeen.has(sl));
+
+      const list = arr.map(t => {
+        const avg = {};
+        [...startSlots, ...benchSlots].forEach(sl => { avg[sl] = (t.sums[sl] || 0) / t.n; });
+        const total = startSlots.reduce((a, sl) => a + avg[sl], 0);
+        const bnTotal = benchSlots.reduce((a, sl) => a + avg[sl], 0);
+        const realTotal = startSlots.reduce((a, sl) => a + ((t.realSums[sl] || 0) / t.n), 0);
+        const optimalTotal = startSlots.reduce((a, sl) => a + ((t.optSums[sl] || 0) / t.n), 0);
+        return Object.assign(t, {
+          avg, total, bnTotal, realTotal, optimalTotal,
+          efficiency: optimalTotal > 0 ? realTotal / optimalTotal : 0,
+          benchLeftPts: Math.max(0, optimalTotal - realTotal),
+          color: getManagerColor(t.manager)
+        });
+      });
+      if (viewMode === 'efficiency') list.sort((a, b) => (b.efficiency - a.efficiency) || (b.realTotal - a.realTotal) || a.manager.localeCompare(b.manager));
+      else list.sort((a, b) => (b.total - a.total) || a.manager.localeCompare(b.manager));
+
+      return {
+        yr: Number(f.year), league: normLeague(f.league), wkMin: wMin, wkMax: Math.min(wMax, 99), singleWeek: false, viewMode,
+        teams: list, startSlots, benchSlots, warnCount: 0,
+        hasDef: defP.size > 0, hasK: kP.size > 0,
+        allMgr: true, allYears: true, fileTag: '_all_seasons'
+      };
     }
 
     // Weekly (one manager, one bar per week) and by-year (league average or one manager, one bar per season) views.
@@ -7460,9 +7624,9 @@
       const viewMode = P.viewMode || 'real';
       const isOptimal = viewMode === 'optimal';
       const cw = getCurrentYearAndWeek();
-      const allMode = kind === 'yearly' && yearAllOn();
+      const allMode = yearAllOn();
       const seasons = allMode ? histGetSeasonsChronological() : [FilterEngine.resolveSeason(f.year, f.league)];
-      let selMgr = f.selectedManager || null;
+      let selMgrs = getSelectedManagers().slice();
 
       const all = [];
       seasons.forEach(se => {
@@ -7485,11 +7649,12 @@
       if (!all.length) return null;
 
       const mgrList = [...new Set(all.map(x => x.mgr))].filter(Boolean).sort((a, b) => a.localeCompare(b));
-      let mine = selMgr ? all.filter(x => x.mgr === selMgr) : all;
+      let mine = selMgrs.length ? all.filter(x => selMgrs.includes(x.mgr)) : all;
       if (!mine.length) {
-        if (kind === 'weekly') return null;   // manager not in this season: fall back to the team view
-        selMgr = null; mine = all;
+        if (kind === 'weekly') return null;   // manager not in this range: fall back to the team view
+        selMgrs = []; mine = all;
       }
+      selMgrs = selMgrs.filter(m => mine.some(x => x.mgr === m));
 
       const groups = new Map();
       mine.forEach(x => {
@@ -7536,7 +7701,8 @@
       const benchSlots = POS_BENCH_ORDER.filter(sl => benchSeen.has(sl));
 
       const isDark = document.documentElement.classList.contains('dark');
-      const color = selMgr ? getManagerColor(selMgr) : (isDark ? '#cbd5e1' : '#475569');
+      const color = selMgrs.length === 1 ? getManagerColor(selMgrs[0]) : (isDark ? '#cbd5e1' : '#475569');
+      const selLabel = selMgrs.join(' + ');
       const list = periods.map((pd, i) => {
         const avg = {};
         [...startSlots, ...benchSlots].forEach(sl => { avg[sl] = (pd.sums[sl] || 0) / pd.n; });
@@ -7549,19 +7715,20 @@
           efficiency: optimalTotal > 0 ? realTotal / optimalTotal : 0,
           benchLeftPts: Math.max(0, optimalTotal - realTotal),
           sums: pd.sums, filled: pd.filled, names: pd.names, realSums: pd.realSums, optSums: pd.optSums,
-          team_name: pd.g.label, manager: selMgr || 'League avg', color
+          team_name: pd.g.label, manager: selLabel || 'League avg', color,
+          seasonKey: kind === 'yearly' ? pd.g.key : null
         };
       });
 
       const weekKeys = kind === 'weekly' ? ordered.map(g => g.key) : [];
-      const slug = String(selMgr || 'league').replace(/[^A-Za-z0-9]+/g, '_');
+      const slug = String(selLabel || 'league').replace(/[^A-Za-z0-9]+/g, '_');
       return {
         yr: Number(f.year), league: normLeague(f.league),
         wkMin: weekKeys.length ? Math.min(...weekKeys) : Number(f.weekMin), wkMax: weekKeys.length ? Math.max(...weekKeys) : Number(f.weekMax),
         singleWeek: kind === 'weekly', viewMode,
         teams: list, startSlots, benchSlots, warnCount: 0,
         hasDef: defP.size > 0, hasK: kP.size > 0,
-        periodKind: kind, selMgr, mgrList,
+        periodKind: kind, selMgr: selLabel || null, selMgrs, mgrList, allYears: allMode,
         fileTag: kind === 'weekly' ? `_weekly_${slug}` : `_by_year_${slug}`
       };
     }
@@ -7643,11 +7810,7 @@
       const cb = document.getElementById('pos-show-bench');
       if (cb) {
         cb.checked = P.showBench;
-        cb.addEventListener('change', e => {
-          P.showBench = !!e.target.checked;
-          updateUrlHash();
-          renderPositionsTab();
-        });
+        cb.addEventListener('change', e => setShowBench(e.target.checked));
       }
       document.querySelectorAll('#pos-mode-slider .pos-mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -7692,20 +7855,56 @@
       });
     }
 
-    // Clicking a team/manager on the team view switches to that manager's week-by-week view.
-    // Weekly / by-year columns are not teams, so clicks on them do nothing.
+    // Column / axis-label clicks (chart bars, axis labels and table headers all land here):
+    //   Season, one year  -> toggles that manager in the (multi-select) manager filter -> week-by-week view
+    //   Season, year ALL  -> that manager only, in the Historical (by-year) view
+    //   Historical        -> year filter set to that season, back to the Season view (manager filter kept)
+    function posColumnClick(idx) {
+      const view = STATE.positions.last;
+      if (!view || !view.teams[idx]) return;
+      const t = view.teams[idx];
+      if (view.periodKind === 'yearly') { posPickYear(t.seasonKey); return; }
+      if (view.periodKind) return;                       // weekly columns are weeks, not teams
+      if (view.allMgr) { posDrillToHistorical(t.manager); return; }
+      togglePositionsManager(t.manager);
+    }
+
     function togglePositionsManager(mgr) {
-      const last = STATE.positions.last;
-      if (last && last.periodKind) return;
       if (!mgr) return;
-      setPositionsManager(STATE.filters.selectedManager === mgr ? null : mgr);
+      toggleSelectedManager(mgr);
+      afterManagerFilterChanged();
     }
 
     function setPositionsManager(mgr) {
-      STATE.filters.selectedManager = mgr || null;
+      setSelectedManagers(mgr ? [mgr] : []);
+      afterManagerFilterChanged();
+    }
+
+    function posDrillToHistorical(mgr) {
+      const P = STATE.positions;
+      setSelectedManagers([mgr]);
+      P.sub = 'historical';
+      P.allBySub.historical = true;
+      syncFilterUI();
       updateFilterBadge();
       updateUrlHash();
       renderPositionsTab();
+    }
+
+    function posPickYear(seasonKey) {
+      if (!seasonKey) return;
+      const P = STATE.positions, f = STATE.filters;
+      const { year: yr, league: lg } = parseSeasonKey(seasonKey);
+      const season = FilterEngine.resolveSeason(yr, lg);
+      P.sub = 'season';
+      P.allBySub.season = false;
+      f.year = season.year; f.league = season.league; f.seasonKey = season.key;
+      STATE.weekUserOverride = false;
+      const weeks = FilterEngine.weeksForSeason(f.year, f.league);
+      f.weekMin = weeks[0];
+      f.weekMax = FilterEngine.defaultWeekMax(f.year, 'positions', f.league);
+      f.matchup = null;
+      onFiltersChanged();
     }
 
     function updatePositionsSubUI(view) {
@@ -7722,29 +7921,34 @@
       const back = document.getElementById('pos-back-teams');
       if (back) { back.classList.toggle('hidden', !weekly); back.classList.toggle('inline-flex', weekly); }
       const hint = document.getElementById('pos-hint');
-      if (hint) hint.style.display = (view && !view.periodKind) ? '' : 'none';
+      if (hint) {
+        hint.style.display = (view && view.periodKind !== 'weekly') ? '' : 'none';
+        hint.textContent = !view ? '' : view.periodKind === 'yearly' ? 'Tap a year to see that season\u2019s points by position'
+          : view.allMgr ? 'Tap a manager to see their points by position by year'
+          : 'Tap a team to see its week-by-week points by position (tap more teams to combine them)';
+      }
       renderPositionsMgrChips(view);
     }
 
-    // Manager picker for Points by Position > Historical (league average when none is picked)
+    // Manager picker (multi-select) for the weekly and by-year views; league average when none is picked
     function renderPositionsMgrChips(view) {
       const host = document.getElementById('pos-mgr-chips');
       if (!host) return;
-      const show = STATE.positions.sub === 'historical' && view && view.mgrList && view.mgrList.length;
+      const show = view && view.periodKind && view.mgrList && view.mgrList.length;
       host.style.display = show ? 'flex' : 'none';
       if (!show) { host.innerHTML = ''; return; }
-      const sel = STATE.filters.selectedManager || null;
-      const allOn = !sel || !view.mgrList.includes(sel);
-      const chips = [`<button type="button" class="pos-mgr-chip text-slate-600 dark:text-slate-300" data-mgr="" style="${allOn ? 'background:#475569;color:#fff;border-color:#475569' : ''}">All teams (avg)</button>`];
+      const sel = getSelectedManagers().filter(m => view.mgrList.includes(m));
+      const chips = [`<button type="button" class="pos-mgr-chip text-slate-600 dark:text-slate-300" data-mgr="" style="${!sel.length ? 'background:#475569;color:#fff;border-color:#475569' : ''}">All teams (avg)</button>`];
       view.mgrList.forEach(m => {
         const c = getManagerColor(m);
-        const on = sel === m;
+        const on = sel.includes(m);
         chips.push(`<button type="button" class="pos-mgr-chip" data-mgr="${escapeHTML(m)}" style="color:${c};${on ? `background:${c};color:${getContrastTextColor(c)};border-color:${c}` : ''}">${escapeHTML(m)}</button>`);
       });
       host.innerHTML = chips.join('');
       host.querySelectorAll('.pos-mgr-chip').forEach(b => b.addEventListener('click', () => {
         const m = b.getAttribute('data-mgr') || null;
-        setPositionsManager(m && m === STATE.filters.selectedManager ? null : m);
+        if (!m) setSelectedManagers([]); else toggleSelectedManager(m);
+        afterManagerFilterChanged();
       }));
     }
 
@@ -7756,9 +7960,9 @@
 
       // Season sub-tab: team view, or (when a manager is picked) that manager's week-by-week view.
       // Historical sub-tab: by-year view (league average, or the picked manager).
-      const kind = P.sub === 'historical' ? 'yearly' : (STATE.filters.selectedManager ? 'weekly' : null);
+      const kind = P.sub === 'historical' ? 'yearly' : (getSelectedManagers().length ? 'weekly' : null);
       let view = kind ? computePositionsPeriodView(kind) : null;
-      if (!view && kind !== 'yearly') view = computePositionsView();
+      if (!view && kind !== 'yearly') view = yearAllOn() ? computePositionsAllView() : computePositionsView();
       P.last = view;
       updatePositionsSubUI(view);
       const host = document.getElementById('pos-chart-host');
@@ -7810,8 +8014,7 @@
       const gridFaint = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const gridStrong = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(15,23,42,0.65)';
       const surface = isDark ? '#0f172a' : '#ffffff';
-      const selMgr = STATE.filters.selectedManager;
-      const dimmed = view.teams.map(t => !!selMgr && t.manager !== selMgr);
+      const dimmed = view.teams.map(t => posDim(view, t));
       const showBench = P.showBench && view.benchSlots.length > 0;
       const modeLabel = view.viewMode === 'optimal' ? 'Optimal Starters' : 'Starters';
 
@@ -7872,11 +8075,11 @@
           interaction: { mode: 'index', intersect: false },
           onClick: (evt, els, chart) => {
             const idx = posChartTeamIndexAtEvent(chart, evt);
-            if (idx !== null && view.teams[idx]) togglePositionsManager(view.teams[idx].manager);
+            if (idx !== null) posColumnClick(idx);
           },
           onHover: (evt, els, chart) => {
             const t = evt && evt.native && evt.native.target;
-            if (t) t.style.cursor = (posChartTeamIndexAtEvent(chart, evt) !== null) ? 'pointer' : 'default';
+            if (t) t.style.cursor = (posChartTeamIndexAtEvent(chart, evt) !== null && view.periodKind !== 'weekly') ? 'pointer' : 'default';
           },
           scales: {
             x: {
@@ -7966,8 +8169,7 @@
       const textColor = isDark ? '#94a3b8' : '#475569';
       const gridFaint = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
       const surface = isDark ? '#0f172a' : '#ffffff';
-      const selMgr = STATE.filters.selectedManager;
-      const dimmed = view.teams.map(t => !!selMgr && t.manager !== selMgr);
+      const dimmed = view.teams.map(t => posDim(view, t));
 
       const xLabels = (isMobile && !view.periodKind)
         ? view.teams.map(t => t.manager)
@@ -8037,11 +8239,11 @@
           interaction: { mode: 'index', intersect: false },
           onClick: (evt, els, chart) => {
             const idx = posChartTeamIndexAtEvent(chart, evt);
-            if (idx !== null && view.teams[idx]) togglePositionsManager(view.teams[idx].manager);
+            if (idx !== null) posColumnClick(idx);
           },
           onHover: (evt, els, chart) => {
             const t = evt && evt.native && evt.native.target;
-            if (t) t.style.cursor = (posChartTeamIndexAtEvent(chart, evt) !== null) ? 'pointer' : 'default';
+            if (t) t.style.cursor = (posChartTeamIndexAtEvent(chart, evt) !== null && view.periodKind !== 'weekly') ? 'pointer' : 'default';
           },
           scales: {
             x: {
@@ -8151,20 +8353,19 @@
       const P = STATE.positions;
       const tbl = document.getElementById('pos-table');
       if (!tbl) return;
-      const selMgr = STATE.filters.selectedManager;
       const showBench = P.showBench && view.benchSlots.length > 0;
       const teams = view.teams;
 
       const labelW = window.innerWidth < 640 ? 52 : 68;
       const colgroup = `<colgroup><col style="width:${labelW}px">${teams.map(() => '<col>').join('')}</colgroup>`;
 
-      const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t) => posTeamHeadHTML(t, view, selMgr)).join('')}</tr></thead>`;
+      const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t, i) => posTeamHeadHTML(t, view, i)).join('')}</tr></thead>`;
 
       const shadedRow = (label, color, valuesFn, filledFn, opts = {}) => {
         const vals = teams.map(valuesFn);
         const st = getColStats(teams.map((t) => (!filledFn || filledFn(t)) ? vals[i_idx(teams, t)] : null), v => v);
         const tdc = teams.map((t, i) => {
-          const dim = selMgr && t.manager !== selMgr;
+          const dim = posDim(view, t);
           const filled = filledFn ? filledFn(t) : true;
           const bg = filled ? HEATMAPS.greenClearRed(vals[i], st.min, st.mid, st.max) : 'transparent';
           return `<td class="pos-val${dim ? ' pos-dim' : ''}${opts.total ? ' pos-total' : ''}" style="background:${bg}">${filled ? posFmt(vals[i]) : '-'}</td>`;
@@ -8186,25 +8387,24 @@
         rows.push(shadedRow('BNTOTAL', null, t => t.bnTotal, null, { total: true }));
       }
       tbl.innerHTML = colgroup + head + `<tbody>${rows.join('')}</tbody>`;
-      tbl.querySelectorAll('.pos-team-th').forEach(th => th.addEventListener('click', () => togglePositionsManager(th.getAttribute('data-mgr'))));
+      tbl.querySelectorAll('.pos-team-th[data-idx]').forEach(th => th.addEventListener('click', () => posColumnClick(Number(th.getAttribute('data-idx')))));
     }
 
     function renderPositionsEfficiencyTable(view) {
       const tbl = document.getElementById('pos-table');
       if (!tbl) return;
-      const selMgr = STATE.filters.selectedManager;
       const teams = view.teams;
 
       const labelW = window.innerWidth < 640 ? 52 : 68;
       const colgroup = `<colgroup><col style="width:${labelW}px">${teams.map(() => '<col>').join('')}</colgroup>`;
 
-      const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t) => posTeamHeadHTML(t, view, selMgr)).join('')}</tr></thead>`;
+      const head = `<thead><tr><th class="pos-label-col"></th>${teams.map((t, i) => posTeamHeadHTML(t, view, i)).join('')}</tr></thead>`;
 
       const metricRow = (label, valuesFn, fmtFn, opts = {}) => {
         const vals = teams.map(valuesFn);
         const st = getColStats(vals, v => v);
         const tdc = teams.map((t, i) => {
-          const dim = selMgr && t.manager !== selMgr;
+          const dim = posDim(view, t);
           const bg = opts.reverseHeat
             ? HEATMAPS.redClearGreen(vals[i], st.min, st.mid, st.max)
             : HEATMAPS.greenClearRed(vals[i], st.min, st.mid, st.max);
@@ -8221,7 +8421,7 @@
       ];
 
       tbl.innerHTML = colgroup + head + `<tbody>${rows.join('')}</tbody>`;
-      tbl.querySelectorAll('.pos-team-th').forEach(th => th.addEventListener('click', () => togglePositionsManager(th.getAttribute('data-mgr'))));
+      tbl.querySelectorAll('.pos-team-th[data-idx]').forEach(th => th.addEventListener('click', () => posColumnClick(Number(th.getAttribute('data-idx')))));
     }
 
     function i_idx(arr, item) { return arr.indexOf(item); }
@@ -8265,7 +8465,7 @@
       const view = STATE.positions.last;
       if (!chart || !view) return;
       const modeLbl = view.viewMode === 'optimal' ? 'Optimal Lineup' : (view.viewMode === 'efficiency' ? 'Lineup Efficiency' : 'Real Lineup');
-      const posTitle = `Points by Position \u2014 ${activeSeasonDisplayName(view.yr, view.league)} \u00B7 ${modeLbl}${view.selMgr ? ` \u00B7 ${view.selMgr}` : ''} \u00B7 Wk ${view.wkMin}${view.wkMax !== view.wkMin ? `\u2013${view.wkMax}` : ''}`;
+      const posTitle = `Points by Position \u2014 ${view.allYears ? 'All Seasons' : activeSeasonDisplayName(view.yr, view.league)} \u00B7 ${modeLbl}${view.selMgr ? ` \u00B7 ${view.selMgr}` : ''} \u00B7 Wk ${view.wkMin}${view.wkMax !== view.wkMin ? `\u2013${view.wkMax}` : ''}`;
       ndlChartToPNG(chart, `${activeSeasonFilePrefix(view.yr, view.league).toLowerCase()}_points_by_position${view.fileTag || ''}_${view.viewMode}_${view.yr}_w${view.wkMin}-${view.wkMax}.png`, { title: posTitle, legendItems: ndlLegendItemsFromDom('pos-legend'), cssHeight: 900 });
     }
 
@@ -8817,11 +9017,12 @@
     // ---------- Historical: clickable column filters & current year/week highlights ----------
     function histFilters() {
       const H = STATE.historical;
-      if (!H.filters) H.filters = { mgr: null, lg: null, opp: null, st: null, player: null };
+      if (!H.filters) H.filters = { lg: null, opp: null, st: null, player: null };   // managers live in the global multi-select
       return H.filters;
     }
 
     function histToggleFilter(key, raw) {
+      if (key === 'mgr') { toggleSelectedManager(String(raw)); updateUrlHash(); renderHistoricalTab(); return; }
       const f = histFilters();
       const val = String(raw);
       f[key] = (f[key] === val) ? null : val;
@@ -8831,6 +9032,8 @@
     function histClearFilters() {
       const f = histFilters();
       Object.keys(f).forEach(k => { f[k] = null; });
+      setSelectedManagers([]);
+      updateUrlHash();
       renderHistoricalTab();
     }
 
@@ -9045,7 +9248,10 @@
       if (!host) return;
       const f = histFilters();
       const chips = [];
-      [['mgr', 'MGR'], ['lg', 'LG'], ['opp', 'OPP'], ['st', 'ST'], ['player', 'PLAYER']].forEach(([k, label]) => {
+      getSelectedManagers().forEach(m => {
+        chips.push(`<button type="button" class="hist-chip" data-val="${escapeHTML(m)}" onclick="histToggleFilter('mgr', this.dataset.val)">MGR: <b>${escapeHTML(m)}</b> <i class="fa-solid fa-xmark text-[10px]"></i></button>`);
+      });
+      [['lg', 'LG'], ['opp', 'OPP'], ['st', 'ST'], ['player', 'PLAYER']].forEach(([k, label]) => {
         if (f[k] !== null && f[k] !== undefined) {
           chips.push(`<button type="button" class="hist-chip" data-val="${escapeHTML(String(f[k]))}" onclick="histToggleFilter('${k}', this.dataset.val)">${label}: <b>${escapeHTML(String(f[k]))}</b> <i class="fa-solid fa-xmark text-[10px]"></i></button>`);
         }
@@ -9057,9 +9263,9 @@
     // Applies the active filters BEFORE ranking/slicing, so every table is a true Top 40 within the filter
     function histGetViewLists(d) {
       const f = histFilters();
-      const sm = f.mgr;
+      const sm = getSelectedManagers();
       const pass = (r, game) => {
-        if (sm && !(game ? (r.mgr === sm || r.opp === sm) : r.mgr === sm)) return false;
+        if (sm.length && !(game ? (sm.includes(r.mgr) || sm.includes(r.opp)) : sm.includes(r.mgr))) return false;
         if (f.lg && r.league !== f.lg) return false;
         if (f.opp && r.opp !== undefined && !(game ? (r.opp === f.opp || r.mgr === f.opp) : r.opp === f.opp)) return false;
         if (f.st && r.st !== undefined && r.st !== f.st) return false;
@@ -9114,8 +9320,8 @@
 
     function histBuildYearlyMatrixCard(title, allSeasons, managers, getCellFn, getGrandFn, sdevRowFn, opts = {}) {
       const f = histFilters();
-      const selMgr = f.mgr;
-      const filteredMgrs = selMgr ? managers.filter(m => m === selMgr) : managers;
+      const selMgrs = getSelectedManagers();
+      const filteredMgrs = selMgrs.length ? managers.filter(m => selMgrs.includes(m)) : managers;
       const seasons = allSeasons.filter(s => (!f.lg || (s.league || 'OKL') === f.lg) && !(opts.excludeSeason && opts.excludeSeason(s)));
       const grandLabel = opts.grandLabel || 'GRAND TOTAL';
 
@@ -9245,7 +9451,7 @@
 
     function histActiveFilterCount() {
       const f = histFilters();
-      return Object.values(f).filter(v => v !== null && v !== undefined).length;
+      return Object.values(f).filter(v => v !== null && v !== undefined).length + getSelectedManagers().length;
     }
 
     // ---------- Positional tables ----------
@@ -9796,7 +10002,7 @@
         position: 'bottom',
         onClick: (e, item, legend) => {
           const name = legend.chart.data.datasets[item.datasetIndex].label;
-          STATE.filters.selectedManager = (STATE.filters.selectedManager === name) ? null : name;
+          toggleSelectedManager(name);
           applyFn();
           updateFilterBadge();
           updateUrlHash();
@@ -9806,14 +10012,14 @@
         labels: {
           color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14, padding: 10,
           generateLabels: (chart) => {
-            let hl = STATE.filters.selectedManager;
-            if (hl && !chart.data.datasets.some(d => d.label === hl)) hl = null;
+            let hl = getSelectedManagers().filter(m => chart.data.datasets.some(d => d.label === m));
+            if (!hl.length) hl = null;
             const base = Chart.defaults.plugins.legend.labels.generateLabels(chart);
             base.forEach((it) => {
               const ds = chart.data.datasets[it.datasetIndex];
               const c = ds._baseColor || ds.borderColor;
               it.fillStyle = c; it.strokeStyle = c; it.hidden = false; it.lineWidth = 0;
-              const dim = hl && ds.label !== hl;
+              const dim = hl && !hl.includes(ds.label);
               it.fontColor = dim ? hexToRgba(isDark ? '#94a3b8' : '#475569', 0.4) : textColor;
               if (dim) it.fillStyle = hexToRgba(c, 0.25);
               it.textDecoration = '';
@@ -10031,7 +10237,7 @@
       STATE.odds._model = model;
       if (!model || !model.teams.length) {
         tbl.innerHTML = '<tbody><tr><td class="p-8 text-center text-slate-500 dark:text-slate-400">No data yet for the current season.</td></tr></tbody>';
-        wi.innerHTML = ''; note.textContent = ''; return;
+        wi.innerHTML = ''; return;
       }
       // drop picks that no longer correspond to a scheduled, unplayed matchup
       const live = new Set(model.matchups.map(m => m.key));
@@ -10053,7 +10259,7 @@
       }).sort((x, y) => (y.total - x.total) || (x.exp - y.exp) || (y.r.W - x.r.W) || (y.t.PF - x.t.PF));
 
       const ord = k => k + (k % 100 >= 11 && k % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[k % 10] || 'th'));
-      const head = `<thead><tr><th class="text-left">TEAM</th><th class="text-center">W-L-T</th>${
+      const head = `<thead><tr><th class="text-left odds-sticky">MGR</th><th class="text-center">W-L-T</th>${
         Array.from({ length: n }, (_, k) => `<th class="text-right${k === cut ? ' odds-cut' : ''}">${ord(k + 1)}</th>`).join('')
       }<th class="text-right odds-tot" title="Chance of finishing in the top ${cut}">TOTAL</th></tr></thead>`;
       const cell = (v, k) => {
@@ -10064,19 +10270,26 @@
       };
       const body = rows.map(o => {
         const color = getManagerColor(o.t.mgr);
-        const sel = STATE.filters.selectedManager && STATE.filters.selectedManager === o.t.mgr;
+        const sel = isMgrSelected(o.t.mgr);
         return `<tr${sel ? ' class="bg-brand-500/10"' : ''}>
-          <td class="text-left"><span class="font-semibold" style="color:${color}">${escapeHTML(o.t.mgr)}</span> <span class="text-slate-500 dark:text-slate-400">${escapeHTML(o.t.name)}</span></td>
+          <td class="text-left odds-sticky" title="${escapeHTML(o.t.name)}"><span class="font-semibold" style="color:${color}">${escapeHTML(o.t.mgr)}</span></td>
           <td class="text-center font-mono text-xs">${o.r.W}-${o.r.L}-${o.r.T}</td>
           ${o.p.map((v, k) => cell(v, k)).join('')}
-          <td class="odds-pct odds-tot">${oddsNum(o.total)}</td></tr>`;
+          <td class="odds-pct odds-tot" style="background:${HEATMAPS.greenClearRed(o.total, 0, 50, 100)}">${oddsNum(o.total)}</td></tr>`;
       }).join('');
       tbl.innerHTML = head + `<tbody>${body}</tbody>`;
+      // Open scrolled all the way right so the TOTAL column is in view (the manager column is sticky)
+      const oddsWrap = document.getElementById('odds-table-wrap');
+      if (oddsWrap && !STATE.odds._scrolled && oddsWrap.clientWidth > 0) {
+        STATE.odds._scrolled = true;
+        requestAnimationFrame(() => { oddsWrap.scrollLeft = oddsWrap.scrollWidth; });
+      }
 
       const nPicks = Object.keys(picks).length;
-      note.textContent = `${ODDS_SIMS.toLocaleString()} Monte Carlo simulations \u00B7 each remaining game is drawn from both teams' ${model.S.year} average points and standard deviation \u00B7 ranks are final regular-season seeds (W, then T, then PF) \u00B7 TOTAL = chance of a top-${cut} finish`
+      const tipText = `${ODDS_SIMS.toLocaleString()} Monte Carlo simulations \u00B7 each remaining game is drawn from both teams' ${model.S.year} average points and standard deviation \u00B7 ranks are final regular-season seeds (W, then T, then PF) \u00B7 TOTAL = chance of a top-${cut} finish`
         + (model.playedMax >= 1 ? ` \u00B7 records through Week ${model.playedMax}` : '')
         + (nPicks ? ` \u00B7 ${nPicks} what-if result${nPicks === 1 ? '' : 's'} applied` : '');
+      const ttl = document.getElementById('odds-title'); if (ttl) ttl.setAttribute('data-tip', tipText);
 
       renderOddsWhatIf(model);
     }
@@ -10084,7 +10297,7 @@
     function renderOddsWhatIf(model) {
       const wi = document.getElementById('odds-whatif');
       if (!wi) return;
-      const head = (extra) => `<div class="flex items-center justify-between gap-2 px-3 pt-3"><h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-sliders text-brand-500"></i> What-If Scenarios</h3>${extra || ''}</div>`;
+      const head = (extra) => `<div class="flex items-center justify-between gap-2 px-3 pt-3"><h3 class="odds-tip text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2" tabindex="0" data-tip="Pick a winner (or a tie) for any remaining game. Picks update the records and odds above; tap again to unpick."><i class="fa-solid fa-sliders text-brand-500"></i> What-If Scenarios</h3>${extra || ''}</div>`;
       if (!model.matchups.length) {
         wi.innerHTML = head() + `<div class="p-6 text-center text-xs text-slate-500 dark:text-slate-400">${model.hasSchedule ? 'No remaining regular-season matchups.' : 'No <code>schedule</code> table found in live.db yet (columns: year, week, team_a_id, team_b_id, league).'}</div>`;
         return;
@@ -10109,8 +10322,8 @@
           <button type="button" class="odds-btn ${cls('b')}" onclick="oddsPick('${m.key}','b')">${escapeHTML(B.name)}${sub(B)}</button>
         </div>`;
       }).join('');
-      wi.innerHTML = head(`<button type="button" onclick="oddsReset()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition text-xs ${nAll ? '' : 'opacity-50'}">Reset all</button>`)
-        + `<div class="px-3 pt-1 pb-2 text-[11px] text-slate-500 dark:text-slate-400">Pick a winner (or a tie) for any remaining game. Picks update the records and odds above; tap again to unpick.</div>`
+      wi.innerHTML = head(`<div class="flex items-center gap-2"><button type="button" onclick="oddsPickFavs()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition text-xs">Pick All Favs</button><button type="button" onclick="oddsReset()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition text-xs ${nAll ? '' : 'opacity-50'}">Reset all</button></div>`)
+        + `<div class="pb-2"></div>`
         + `<div class="flex overflow-x-auto border-b border-slate-200 dark:border-slate-800 px-3">${tabs}</div>`
         + `<div class="p-3 sm:p-4 space-y-2">${rows}</div>`;
     }
@@ -10122,6 +10335,19 @@
     }
     function oddsSetWeek(w) { STATE.odds.activeWeek = w; renderOddsTab(); }
     function oddsReset() { STATE.odds.picks = {}; renderOddsTab(); }
+    // Favorite = the team with the higher PF so far (ties fall back to scoring average)
+    function oddsPickFavs() {
+      const model = STATE.odds._model;
+      if (!model) return;
+      const tm = id => model.teams.find(t => t.id === id);
+      model.matchups.forEach(m => {
+        const A = tm(m.a), B = tm(m.b);
+        if (!A || !B) return;
+        const d = (A.PF - B.PF) || (A.mean - B.mean);
+        STATE.odds.picks[m.key] = d >= 0 ? 'a' : 'b';
+      });
+      renderOddsTab();
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
@@ -10133,15 +10359,11 @@
       setupSparklineTooltips();
       ndlSetupPngButtons();
 
-      const clearMgrBtn = document.getElementById('clear-manager-filter');
-      if (clearMgrBtn) clearMgrBtn.addEventListener('click', () => {
-        STATE.filters.selectedManager = null;
-        renderStandingsTable();
-        if (FilterEngine.activeTab() === 'positions') renderPositionsTab();
-        if (STATE.survivor && STATE.survivor.chartInstance) applySurvivorHighlight();
-        if (STATE.wae && STATE.wae.chartInstance) applyWaeHighlight();
-        updateFilterBadge();
-        updateUrlHash();
+      const mgrBadge = document.getElementById('manager-filter-badge');
+      if (mgrBadge) mgrBadge.addEventListener('click', (e) => {
+        const rm = e.target.closest('[data-rm-mgr]');
+        if (rm) { toggleSelectedManager(rm.getAttribute('data-rm-mgr')); afterManagerFilterChanged(); return; }
+        if (e.target.closest('#clear-manager-filter')) { setSelectedManagers([]); afterManagerFilterChanged(); }
       });
 
       const exportCsvBtn = document.getElementById('btn-export-standings-csv');
