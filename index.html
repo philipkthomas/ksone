@@ -723,6 +723,20 @@
     .mx-dm { display: inline-block; font-size: 8px; font-weight: 800; letter-spacing: .04em; line-height: 1; padding: 2px 4px; margin-left: 4px; border-radius: 4px; background: #c084fc; color: #2e1065; vertical-align: 1px; }
     .mx-cell.r .mx-dm { margin-left: 4px; margin-right: 0; }
     .mx-live { font-size: 11px; font-weight: 800; }
+    .mx-tot .mx-pts.ndl-heat { color: var(--hl); }
+    .dark .mx-tot .mx-pts.ndl-heat { color: var(--hd); }
+    .mx-cl { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; margin-top: 6px; }
+    .mx-ch { display: flex; align-items: center; gap: 4px; white-space: nowrap; min-width: 0; }
+    .mx-ch.l { justify-content: flex-end; }
+    .mx-ch.r { justify-content: flex-start; }
+    .mx-big { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; line-height: 1.1; font-weight: 800; color: #0f172a; }
+    .dark .mx-big { color: #f1f5f9; }
+    .mx-o { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; font-weight: 600; color: #94a3b8; }
+    .mx-lv { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; font-weight: 800; }
+    .mx-live-e { color: #64748b; }
+    .dark .mx-live-e { color: #94a3b8; }
+    .mx-mid { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; text-align: center; }
+    @media (max-width: 420px) { .mx-big { font-size: 15.5px; } .mx-o { font-size: 9.5px; } .mx-lv { font-size: 10.5px; } .mx-ch { gap: 3px; } .mx-cl { gap: 4px; } .ndl-arw { width: 12px; } }
     .mx-cell.r .mx-tx { margin-left: 4px; margin-right: 0; }
     .mx-wp-link { cursor: pointer; border-radius: 6px; }
     .mx-wp-link:hover { background: rgba(148,163,184,0.16); }
@@ -797,6 +811,8 @@
     .dark .sb-chip { background:#0f172a; border-color:#334155; color:#94a3b8; }
     .sb-chip i { font-size:14px; }
     .sb-chip.on { background:#0284c7; border-color:#0284c7; color:#fff; }
+    .sb-applybar { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:8px; margin:-4px -4px 6px; padding:6px 4px; background:#fff; border-bottom:1px solid #e2e8f0; }
+    .dark .sb-applybar { background:#020617; border-bottom-color:#1e293b; }
     .sb-btn { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:6px; border:1px solid #cbd5e1; background:#e2e8f0; color:#334155; font-size:11px; font-weight:600; }
     .sb-btn:hover { background:#cbd5e1; }
     .dark .sb-btn { background:#1e293b; border-color:#334155; color:#cbd5e1; }
@@ -885,7 +901,25 @@
     .sch-g.sch-fut .sch-body { opacity: .62; }
     .sch-lead { display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .sch-wk2 { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 800; color: #64748b; line-height: 1; }
-    .sch-body { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; min-width: 0; }
+    .sch-body { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: "l c r"; align-items: center; gap: 8px; min-width: 0; }
+    .sch-body > .sch-side.l { grid-area: l; }
+    .sch-body > .sch-side.r { grid-area: r; }
+    .sch-body > .sch-cl { grid-area: c; }
+    @media (max-width: 639px) { .sch-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "l r" "c c"; row-gap: 2px; } }
+    .sch-cl { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; justify-self: center; }
+    .sch-ch { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .sch-ch.l { justify-content: flex-end; }
+    .sch-ch.r { justify-content: flex-start; }
+    .sch-pj { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; font-weight: 600; color: #94a3b8; }
+    .sch-lp { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 800; }
+    .sch-lp-e { color: #64748b; }
+    .dark .sch-lp-e { color: #94a3b8; }
+    .ndl-heat { color: var(--hl, #64748b); }
+    .dark .ndl-heat { color: var(--hd, #94a3b8); }
+    .ndl-arw-w { display: inline-flex; align-items: center; flex-shrink: 0; line-height: 0; }
+    .ndl-arw { width: 15px; height: 10px; display: block; }
+    .ndl-arw.l { transform: scaleX(-1); }
+    @media (min-width: 640px) { .sch-main { max-width: 600px; } }
     .sch-side { min-width: 0; }
     .sch-side.r { text-align: right; }
     .sch-id { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
@@ -895,7 +929,8 @@
     .sch-rc { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
     .sch-rk2 { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; font-weight: 600; flex-shrink: 0; color: #64748b; }
     .dark .sch-rk2 { color: #94a3b8; }
-    .sch-pt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 17px; line-height: 1.15; font-weight: 800; }
+    .sch-pt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 17px; line-height: 1.15; font-weight: 800; color: #0f172a; }
+    .dark .sch-pt { color: #f8fafc; }
     .sch-mid { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; }
     /* conditional formatting lives on the text (solid colours, theme aware) */
     .sch-heat { color: var(--hl); }
@@ -3526,6 +3561,63 @@
     function stRec(s) { return `${s.W}-${s.L}${s.T > 0 ? '-' + s.T : ''}`; }
     function stById(id) { return document.getElementById(id); }
 
+    // Solid text colour on a green > clear > red scale (t in [-1, 1]); light + dark values so it needs no background.
+    // Used as inline CSS variables: pair with the .ndl-heat class (color: var(--hl) / dark: var(--hd)).
+    function ndlHeat(t) {
+      if (t === null || t === undefined || isNaN(t)) return '';
+      t = Math.max(-1, Math.min(1, t));
+      const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
+      const rgb = a => `rgb(${a.join(',')})`;
+      const baseL = [51, 65, 85], baseD = [226, 232, 240];
+      const gL = [21, 128, 61], gD = [74, 222, 128], rL = [185, 28, 28], rD = [248, 113, 113];
+      const k = Math.abs(t);
+      return `--hl:${rgb(mix(baseL, t >= 0 ? gL : rL, k))};--hd:${rgb(mix(baseD, t >= 0 ? gD : rD, k))};`;
+    }
+    // Arrow that points from a team's original projection toward its actual points (dir 'r' = points right, 'l' = points left).
+    // Coloured green > clear > red by how far the actual points landed from the projection (+20 / even / -20).
+    function ndlArrow(dir, pts, proj, tip, cls) {
+      const heat = (!cls && proj > 0) ? ndlHeat((pts - proj) / 20) : '';
+      const t = tip || (proj > 0 ? `Proj ${proj.toFixed(2)} \u00B7 ${pts - proj >= 0 ? '+' : ''}${(pts - proj).toFixed(2)}` : '');
+      return `<span class="ndl-arw-w ${cls || 'ndl-heat'}" style="${heat}" title="${t}"><svg class="ndl-arw ${dir}" viewBox="0 0 16 10" aria-hidden="true"><path d="M0.8 5H13.2M9.2 1.3L13.4 5L9.2 8.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+    }
+    // Live team total for one team/week (same rule as the Matchups cards): proj_points for players still to play,
+    // live_proj_points for players in play, actual points for players who are done.
+    function stLiveTotal(yr, lg, wk, teamId) {
+      const C = stCache();
+      const key = `lt|${yr}|${normLeague(lg)}|${wk}|${teamId}`;
+      if (key in C) return C[key];
+      let out = null;
+      try {
+        try { getNormalizedForYear(yr); } catch (e) {}
+        const rows = (STATE.data.points || []).filter(r => rowMatchesSeason(r, yr, lg) && Number(getVal(r, ['week', 'WK'])) === Number(wk) && Number(getVal(r, ['team_id', 'TMA', 'team'])) === Number(teamId));
+        if (rows.length) {
+          const t = { team_id: teamId, pf: Number(getVal(rows[0], ['team_points', 'points', 'TMAPTS'])) || 0, players: rows };
+          const st = mxTeamPlayers(t, yr, lg, wk).filter(p => !mxSlotIsBench(p.slot));
+          if (st.length) out = st.reduce((a, p) => a + (p.eff || 0), 0);
+        }
+      } catch (e) { console.warn('[Schedule] live total unavailable', e); }
+      return (C[key] = out);
+    }
+    // class for a live total vs the original projection (within 0.06 = rounding noise -> no colour)
+    function ndlLiveCls(live, orig) {
+      if (live === null || live === undefined) return '';
+      return live > orig + 0.06 + 1e-9 ? 'mx-live-g' : (live < orig - 0.06 - 1e-9 ? 'mx-live-r' : '');
+    }
+    // Top-ranked manager of the active season (regular-season rank), used to pre-fill the Schedule filter
+    function stTopManager() {
+      const f = STATE.filters, yr = f.year, lg = f.league;
+      const teams = stSeasonTeams(yr, lg);
+      if (!teams.length) return null;
+      const psw = getPlayoffStartWeek(yr, lg);
+      const cw = getCurrentYearAndWeek();
+      let baseW = Math.max(0, psw - 1);
+      if (cw && Number(yr) === Number(cw.curYear)) baseW = Math.min(baseW, Math.max(0, Number(cw.curWeek) - 1));
+      const stand = stStandingsAt(yr, lg, baseW);
+      teams.forEach(t => { const x = stand.get(t.id); t.rank = x ? x.regularRank : 99; });
+      teams.sort((a, b) => a.rank - b.rank || a.manager.localeCompare(b.manager));
+      return teams[0].manager;
+    }
+
     // ---- subtab switching ----
     function stSyncSubUI() {
       const sub = STATE.st.sub;
@@ -3542,6 +3634,10 @@
     function setStandingsSub(sub) {
       if (!ST_SUBS.includes(sub)) return;
       STATE.st.sub = sub;
+      if (sub === 'schedule' && !getSelectedManagers().length) {
+        const top = stTopManager();
+        if (top) { setSelectedManagers([top]); try { updateFilterBadge(); } catch (e) {} }
+      }
       stSyncSubUI();
       updateUrlHash();
       renderStandingsSection();
@@ -3660,11 +3756,8 @@
         if (a === teamId) opp = b; else if (b === teamId) opp = a; else return;
         rows.set(w, { week: w, opp, status: status(w), pf: null, pa: null, proj: 0 });
       });
-      // Respect the filter: weeks From..To and "Hide current week". When the To week is the current week or later,
-      // the rest of the scheduled season (future matchups) is included.
-      const upper = (isCur && Number(f.weekMax) >= curWk) ? Infinity : Number(f.weekMax);
+      // The Schedule always shows every week of the year: the week range and "Hide curr. wk" filters are ignored here.
       return [...rows.values()]
-        .filter(r => r.week >= Number(f.weekMin) && r.week <= upper && FilterEngine.gate(yr, r.week))
         .sort((x, y) => x.week - y.week)
         .map(r => ({ ...r, oppProj: (idx.get(`${r.week}_${r.opp}`) || {}).proj || 0 }));
     }
@@ -3679,8 +3772,9 @@
       const teams = stSeasonTeams(yr, lg);
       if (!teams.length) { selEl.innerHTML = ''; mainEl.innerHTML = ''; wrap.classList.remove('compact'); return; }
       const psw = getPlayoffStartWeek(yr, lg);
-      const effMax = FilterEngine.effectiveMax(yr, lg);
-      const baseW = Math.max(0, Math.min(effMax, psw - 1));
+      const cwx = getCurrentYearAndWeek();
+      let baseW = Math.max(0, psw - 1);
+      if (cwx && Number(yr) === Number(cwx.curYear)) baseW = Math.min(baseW, Math.max(0, Number(cwx.curWeek) - 1));
       const stand = stStandingsAt(yr, lg, baseW);
       teams.forEach(t => { const s = stand.get(t.id); t.rank = s ? s.regularRank : 99; t.rec = s ? stRec(s) : '0-0'; });
       teams.sort((a, b) => a.rank - b.rank || a.manager.localeCompare(b.manager));
@@ -3742,17 +3836,7 @@
       const oppName = id => getManagerName(id, yr, '', lg);
       const fmt = n => (Number(n) || 0).toFixed(2);
 
-      // Solid text colour on a green > clear > red scale (t in [-1, 1]); light + dark values so it needs no background
-      const heatTxt = (t) => {
-        if (t === null || t === undefined || isNaN(t)) return '';
-        t = Math.max(-1, Math.min(1, t));
-        const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
-        const rgb = a => `rgb(${a.join(',')})`;
-        const baseL = [51, 65, 85], baseD = [226, 232, 240];
-        const gL = [21, 128, 61], gD = [74, 222, 128], rL = [185, 28, 28], rD = [248, 113, 113];
-        const k = Math.abs(t);
-        return `--hl:${rgb(mix(baseL, t >= 0 ? gL : rL, k))};--hd:${rgb(mix(baseD, t >= 0 ? gD : rD, k))};`;
-      };
+      const heatTxt = ndlHeat;
 
       let html = '', sawPO = false;
       rows.forEach(r => {
@@ -3766,8 +3850,6 @@
           const o = resolveMatchupOutcome(yr, lg, r.week, me.id, r.opp, r.pf, r.pa);
           res = o.result; resCls = o.result.toLowerCase(); resTip = o.result === 'W' ? 'Win' : o.result === 'L' ? 'Loss' : 'Tie';
         }
-        const ptsHeat = (pts, proj) => (r.status === 'final' && show && proj > 0) ? heatTxt((pts - proj) / 20) : '';
-        const tip = (pts, proj) => proj > 0 && show ? `Proj ${fmt(proj)} \u00B7 ${pts - proj >= 0 ? '+' : ''}${fmt(pts - proj)}` : '';
         const recHeat = x => x.pct === null ? '' : heatTxt((x.pct - 0.5) / 0.5);
         const clickable = r.status !== 'future' && show;
         const attrs = clickable ? ` data-open="${yr}|${escapeHTML(lg)}|${r.week}|${me.id}|${r.opp}" title="Open this matchup"` : '';
@@ -3785,19 +3867,33 @@
           } catch (e) { console.warn('[Schedule] live win prob unavailable', e); }
         }
 
-        const side = (nm, c, x, pts, proj, align, me2) => `
-          <div class="sch-side ${align}${me2 ? ' sch-me2' : ''}">
+        const idBlock = (nm, c, x, align) => `
+          <div class="sch-side ${align}">
             <div class="sch-id"><span class="sch-nm" style="color:${c}">${escapeHTML(nm)}</span><span class="sch-rc sch-heat" style="${recHeat(x)}" title="Record after this week">${x.rec}</span><span class="sch-rk2" title="${x.isPO ? 'Seed' : 'Rank after this week'}">${x.rk}</span></div>
-            <div class="sch-pt sch-heat" style="${ptsHeat(pts, proj) || '--hl:#0f172a;--hd:#f8fafc;'}" title="${tip(pts, proj)}">${show ? fmt(pts) : '\u2014'}</div>
           </div>`;
+
+        // centre cluster: [projection -> points] vs [points <- projection]; live week: [live projection  points] vs [points  live projection]
+        const ptsHTML = (v) => `<span class="sch-pt">${show ? fmt(v) : '\u2014'}</span>`;
+        const half = (pts, proj, id, align) => {
+          if (r.status === 'live') {
+            const lt = stLiveTotal(yr, lg, r.week, id);
+            const lpHTML = lt === null ? '' : `<span class="sch-lp ${ndlLiveCls(lt, proj) || 'sch-lp-e'}" title="Live projected total (original ${fmt(proj)})">${fmt(lt)}</span>`;
+            return align === 'l' ? `<div class="sch-ch l">${lpHTML}${ptsHTML(pts)}</div>` : `<div class="sch-ch r">${ptsHTML(pts)}${lpHTML}</div>`;
+          }
+          if (r.status === 'final' && show && proj > 0) {
+            const pj = `<span class="sch-pj" title="Original team projection">${fmt(proj)}</span>`;
+            return align === 'l' ? `<div class="sch-ch l">${pj}${ndlArrow('r', pts, proj)}${ptsHTML(pts)}</div>` : `<div class="sch-ch r">${ptsHTML(pts)}${ndlArrow('l', pts, proj)}${pj}</div>`;
+          }
+          return `<div class="sch-ch ${align}">${ptsHTML(pts)}</div>`;
+        };
 
         html += `
           <div class="sch-g${clickable ? ' sch-click' : ''}${r.status === 'future' ? ' sch-fut' : ''}"${attrs}>
             <div class="sch-lead"><span class="sch-wk2">${r.week}</span><span class="sch-chip ${resCls}" title="${resTip}">${res}</span></div>
             <div class="sch-body">
-              ${side(selMgr, col, a, r.pf, r.proj, 'l', true)}
-              <span class="sch-mid">vs</span>
-              ${side(om, oc, b, r.pa, r.oppProj, 'r', false)}
+              ${idBlock(selMgr, col, a, 'l')}
+              <div class="sch-cl">${half(r.pf, r.proj, me.id, 'l')}<span class="sch-mid">vs</span>${half(r.pa, r.oppProj, r.opp, 'r')}</div>
+              ${idBlock(om, oc, b, 'r')}
             </div>
             ${wpLine}
           </div>`;
@@ -3806,7 +3902,7 @@
         <div class="sch-card" id="sch-table-wrap">
           <div class="sch-list">${html}</div>
         </div>
-        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 px-1">Rank &amp; record are as of the end of that week and shaded by win % (text colour). Scores are coloured against each team\u2019s projection (green +20 \u2192 red \u221220). Tap a game to open it in Matchups.</div>`;
+        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 px-1">Rank &amp; record are as of the end of that week and shaded by win % (text colour). The arrow runs from each team\u2019s original projection to its actual points and is coloured green +20 \u2192 red \u221220. The live week shows the live projected total instead. Tap a game to open it in Matchups.</div>`;
     }
 
     // ==========================================
@@ -4610,6 +4706,7 @@
 
       const cw = getCurrentYearAndWeek();
       const isFinal = !!cw && (Number(yr) < Number(cw.curYear) || (Number(yr) === Number(cw.curYear) && Number(wk) < Number(cw.curWeek)));
+      const isLive = !!cw && !isFinal && Number(yr) === Number(cw.curYear) && Number(wk) === Number(cw.curWeek);
       if (!STATE.mxOpen) STATE.mxOpen = new Set();
 
       const fmt = (n) => (Number(n) || 0).toFixed(2);
@@ -4632,21 +4729,39 @@
         return t._mx;
       };
 
-      const side = (t, align, proj) => {
-        const mx = mxCalc(t, proj);
-        proj = mx.orig;
+      // Identity block (name, record, rank, team name). A win gets the same W badge used on the Schedule (no L badge).
+      const side = (t, align) => {
         const r = recOf(t.team_id);
         const col = getManagerColor(t.manager);
         const won = isFinal && t.result === 'W';
-        const lost = isFinal && t.result === 'L';
-        const ptsCls = won ? 'text-emerald-600 dark:text-emerald-400' : (lost ? 'text-slate-500 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100');
+        const badge = won ? '<span class="sch-chip w" title="Win">W</span>' : '';
         return `
           <div class="min-w-0 ${align === 'r' ? 'text-right' : 'text-left'}">
-            <div class="mx-mgr-row ${align === 'r' ? 'r' : ''}"><span class="mx-mgr" style="color:${col}">${escapeHTML(t.manager)}</span><span class="mx-rec" title="Record entering the week">${r.rec}</span><span class="mx-dotsep">\u00B7</span><span class="mx-rankv" title="Rank entering the week">${r.rank}</span></div>
+            <div class="mx-mgr-row ${align === 'r' ? 'r' : ''}">${badge}<span class="mx-mgr" style="color:${col}">${escapeHTML(t.manager)}</span><span class="mx-rec" title="Record entering the week">${r.rec}</span><span class="mx-dotsep">\u00B7</span><span class="mx-rankv" title="Rank entering the week">${r.rank}</span></div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${escapeHTML(t.team_name)}</div>
-            <div class="text-xl leading-tight font-mono font-extrabold ${ptsCls}">${fmt(t.pf)}</div>
-            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">${proj > 0 ? `Proj ${fmt(proj)}` : 'Proj \u2014'}${mx.liveTot !== null ? ` <span class="font-extrabold ${mx.cls || 'text-slate-600 dark:text-slate-300'}" title="Live total: actual points for finished players, live projection for players in play, original projection for players yet to play">\u2192 ${fmt(mx.liveTot)}</span>` : ''}</div>
           </div>`;
+      };
+
+      // Score cluster, centred on the middle label.
+      //  final : [proj -> points] FINAL [points <- proj]       (arrow coloured green > clear > red at +20 / even / -20 vs proj)
+      //  live  : [proj -> live total  points] VS [points  live total <- proj]   (live total coloured vs proj; arrow follows it)
+      const half = (t, mx, align) => {
+        const big = `<span class="mx-big">${fmt(t.pf)}</span>`;
+        const orig = mx.orig;
+        const o = (orig > 0) ? `<span class="mx-o" title="Original team projection">${fmt(orig)}</span>` : '<span class="mx-o">\u2014</span>';
+        const L = align === 'l';
+        if (isFinal) {
+          if (!(orig > 0)) return `<div class="mx-ch ${align}">${big}</div>`;
+          const ar = ndlArrow(L ? 'r' : 'l', Number(t.pf) || 0, orig);
+          return L ? `<div class="mx-ch l">${o}${ar}${big}</div>` : `<div class="mx-ch r">${big}${ar}${o}</div>`;
+        }
+        if (isLive && mx.liveTot !== null) {
+          const cls = mx.cls || 'mx-live-e';
+          const lv = `<span class="mx-lv ${cls}" title="Live total: actual points for finished players, live projection for players in play, original projection for players yet to play">${fmt(mx.liveTot)}</span>`;
+          const ar = orig > 0 ? ndlArrow(L ? 'r' : 'l', mx.liveTot, orig, `Original projection ${fmt(orig)} \u2192 live total ${fmt(mx.liveTot)}`, cls) : '';
+          return L ? `<div class="mx-ch l">${o}${ar}${lv}${big}</div>` : `<div class="mx-ch r">${big}${lv}${ar}${o}</div>`;
+        }
+        return `<div class="mx-ch ${align}">${o}</div>`;   // not started: just the original projection
       };
 
       const bodyFor = (A, B) => {
@@ -4667,7 +4782,17 @@
           }
           return html;
         }).join('');
-        const liveTag = (T) => { const m = mxCalc(T, 0); return m.liveTot === null ? '' : `<span class="mx-pj mx-live ${m.cls || 'mx-pj-e'}" title="Live projection total">${fmt(m.liveTot)}</span>`; };
+        const liveTag = (T) => {
+          const m = mxCalc(T, 0);
+          if (isFinal) return m.orig > 0 ? `<span class="mx-pj mx-pj-e" title="Original team projection">${fmt(m.orig)}</span>` : '';
+          return m.liveTot === null ? '' : `<span class="mx-pj mx-live ${m.cls || 'mx-pj-e'}" title="Live projection total">${fmt(m.liveTot)}</span>`;
+        };
+        // finished weeks: actual starter total coloured green > clear > red against the original team projection (+20 / even / -20)
+        const totPts = (T, arr) => {
+          const v = sum(arr, false), o = mxCalc(T, 0).orig;
+          const heat = (isFinal && o > 0) ? ndlHeat((v - o) / 20) : '';
+          return `<span class="mx-pts${heat ? ' ndl-heat' : ''}"${heat ? ` style="${heat}" title="Proj ${fmt(o)} \u00B7 ${v - o >= 0 ? '+' : ''}${fmt(v - o)}"` : ''}>${fmt(v)}</span>`;
+        };
         const sum = (arr, bench) => arr.filter(p => mxSlotIsBench(p.slot) === bench).reduce((acc, p) => acc + p.pts, 0);
         const colA = getManagerColor(A.manager), colB = getManagerColor(B.manager);
         return `
@@ -4677,7 +4802,7 @@
           </div>
           <div class="mx-sep">Starters</div>
           ${rows(starters)}
-          <div class="mx-row mx-tot"><div class="mx-cell l"><span class="mx-name">Starters</span><span class="mx-ptscol"><span class="mx-pts">${fmt(sum(pa, false))}</span>${liveTag(A)}</span></div><span class="mx-slot">TOT</span><div class="mx-cell r"><span class="mx-name">Starters</span><span class="mx-ptscol"><span class="mx-pts">${fmt(sum(pb, false))}</span>${liveTag(B)}</span></div></div>
+          <div class="mx-row mx-tot"><div class="mx-cell l"><span class="mx-name">Starters</span><span class="mx-ptscol">${totPts(A, pa)}${liveTag(A)}</span></div><span class="mx-slot">TOT</span><div class="mx-cell r"><span class="mx-name">Starters</span><span class="mx-ptscol">${totPts(B, pb)}${liveTag(B)}</span></div></div>
           ${bench.length && STATE.positions.showBench ? `<div class="mx-sep">Bench</div>${rows(bench)}` : ''}`;
       };
 
@@ -4688,17 +4813,21 @@
         const wpA = last ? Math.round(last.wpA * 10) / 10 : null;
         const colA = getManagerColor(A.manager), colB = getManagerColor(B.manager);
         const open = STATE.mxOpen.has(key);
+        const mA = mxCalc(A, projA), mB = mxCalc(B, projB);
         return `
           <div class="mx-card ${open ? 'open' : ''} bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-key="${key}">
             <button type="button" class="mx-head w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition" aria-expanded="${open}">
-              <div class="grid items-center gap-2" style="grid-template-columns: minmax(0,1fr) auto minmax(0,1fr)">
-                ${side(A, 'l', projA)}
-                <div class="flex flex-col items-center gap-1 text-slate-400">
-                  <span class="text-[10px] font-bold uppercase tracking-wider">${isFinal ? 'Final' : 'vs'}</span>
-                  <i class="mx-chev fa-solid fa-chevron-down text-xs"></i>
-                </div>
-                ${side(B, 'r', projB)}
+              <div class="grid items-start gap-2" style="grid-template-columns: minmax(0,1fr) auto minmax(0,1fr)">
+                ${side(A, 'l')}
+                <div class="flex justify-center">${isLive ? '<span class="sch-chip live shine" title="In progress">LIVE</span>' : ''}</div>
+                ${side(B, 'r')}
               </div>
+              <div class="mx-cl">
+                ${half(A, mA, 'l')}
+                <span class="mx-mid">${isFinal ? 'Final' : 'vs'}</span>
+                ${half(B, mB, 'r')}
+              </div>
+              <div class="flex justify-center text-slate-400 mt-0.5"><i class="mx-chev fa-solid fa-chevron-down text-xs"></i></div>
               ${wpA !== null ? `
               <div class="mt-2.5 mx-wp-link" data-mu="${key}" role="link" tabindex="0" title="Open the Live Win Prob chart for this matchup">
                 <div class="flex justify-between text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
@@ -11016,7 +11145,73 @@
     }
     function histCards() { return [...document.querySelectorAll('#hist-content-root .hist-card')]; }
     function histSlug(t) { return String(t || 'table').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+    // ---- iPhone/iPad: a normal <a download> sends images to the Files app. Photos needs the system share sheet
+    // ("Save Image"), which is only allowed from a fresh tap. So: try the share sheet straight away; if Safari refuses
+    // (the export took too long), show an in-page sheet with the finished image(s) and a one-tap "Save to Photos"
+    // button (a fresh tap), plus "open in new tab" and press-and-hold fallbacks. Several images in a row collect in one sheet.
+    function ndlIsIOS() {
+      const ua = navigator.userAgent || '';
+      return /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+    const NDL_IMG = { items: [], el: null };
+    async function ndlSaveImage(blob, name) {
+      let file = null;
+      try { file = new File([blob], name, { type: 'image/png' }); } catch (e) {}
+      if (file && !NDL_IMG.el && navigator.canShare && navigator.share) {
+        try {
+          if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; }
+        } catch (e) { if (e && e.name === 'AbortError') return; /* otherwise fall through to the sheet */ }
+      }
+      NDL_IMG.items.push({ blob, name, file, url: URL.createObjectURL(blob) });
+      ndlImageSheet();
+    }
+    function ndlImageSheet() {
+      const dark = document.documentElement.classList.contains('dark');
+      const fg = dark ? '#f1f5f9' : '#0f172a', bg = dark ? '#0b1220' : '#ffffff', mut = dark ? '#94a3b8' : '#64748b', bd = dark ? '#334155' : '#cbd5e1';
+      let el = NDL_IMG.el;
+      if (!el) {
+        el = document.createElement('div');
+        el.setAttribute('data-html2canvas-ignore', 'true');
+        el.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(2,6,23,.78);display:flex;align-items:flex-end;justify-content:center;padding:env(safe-area-inset-top) 0 0;-webkit-overflow-scrolling:touch;';
+        el.addEventListener('click', ev => { if (ev.target === el) ndlImageSheetClose(); });
+        document.body.appendChild(el); NDL_IMG.el = el;
+      }
+      const n = NDL_IMG.items.length;
+      const canShareAll = !!(navigator.canShare && navigator.share && NDL_IMG.items.every(i => i.file) && navigator.canShare({ files: NDL_IMG.items.map(i => i.file) }));
+      const btn = `display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;font-weight:700;font-size:14px;border:1px solid ${bd};color:${fg};background:transparent;`;
+      el.innerHTML = `
+        <div style="width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;background:${bg};color:${fg};border-radius:16px 16px 0 0;border:1px solid ${bd};padding:14px 14px calc(14px + env(safe-area-inset-bottom));font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+            <div style="font-weight:800;font-size:15px;">${n > 1 ? n + ' images ready' : 'Image ready'}</div>
+            <button type="button" data-ndl-img="close" aria-label="Close" style="${btn}padding:6px 12px;">Close</button>
+          </div>
+          <div style="overflow:auto;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:12px;">
+            ${NDL_IMG.items.map(it => `
+              <div>
+                <img src="${it.url}" alt="${escapeHTML(it.name)}" style="width:100%;height:auto;border-radius:8px;border:1px solid ${bd};display:block;-webkit-touch-callout:default;">
+                <div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:${mut};margin-top:4px;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(it.name)}</span><a href="${it.url}" target="_blank" rel="noopener" style="color:#0ea5e9;font-weight:700;white-space:nowrap;">Open in new tab</a></div>
+              </div>`).join('')}
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;">
+            ${canShareAll ? `<button type="button" data-ndl-img="share" style="${btn}background:#0284c7;border-color:#0284c7;color:#fff;">Save to Photos</button>` : ''}
+            <span style="font-size:11px;color:${mut};flex:1 1 140px;">${canShareAll ? 'Choose \u201CSave Image\u201D in the share sheet.' : 'Press and hold an image, then tap \u201CAdd to Photos\u201D.'}</span>
+          </div>
+        </div>`;
+      el.onclick = async ev => {
+        const b = ev.target.closest && ev.target.closest('[data-ndl-img]');
+        if (ev.target === el) return ndlImageSheetClose();
+        if (!b) return;
+        if (b.getAttribute('data-ndl-img') === 'close') return ndlImageSheetClose();
+        try { await navigator.share({ files: NDL_IMG.items.map(i => i.file) }); } catch (e) { /* cancelled */ }
+      };
+    }
+    function ndlImageSheetClose() {
+      if (NDL_IMG.el) { NDL_IMG.el.remove(); NDL_IMG.el = null; }
+      NDL_IMG.items.forEach(i => { try { URL.revokeObjectURL(i.url); } catch (e) {} });
+      NDL_IMG.items = [];
+    }
     function histSaveBlob(blob, name) {
+      if (/\.png$/i.test(String(name)) && ndlIsIOS()) { ndlSaveImage(blob, name); return; }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = name;
@@ -11701,7 +11896,7 @@
     const SB_LITERALS = ['true', 'false', 'null'];
 
     function sbDefaultCfg() {
-      return { ds: 'teamweeks', type: 'bar', title: '', dim: 'manager', xdims: [], split: '', measures: [{ f: 'team_points', a: 'avg' }], filters: [], having: [], cf: [], calcs: [], sort: 'm0', dir: 'desc', limit: 0, dec: 2, labels: false, legend: true, totals: false, tsort: null };
+      return { ds: 'teamweeks', type: 'bar', title: '', dim: 'manager', xdims: [], split: '', measures: [{ f: 'team_points', a: 'avg' }], filters: [], having: [], cf: [], calcs: [], pcalcs: [], sort: 'm0', dir: 'desc', limit: 0, dec: 2, labels: false, legend: true, totals: false, tsort: null };
     }
     function sbS() {
       if (!STATE.sandbox) {
@@ -11885,6 +12080,7 @@
       return null;
     }
     function sbMLabel(m) {
+      if (m && m.calc) return m.name;
       const sfx = { pct: ' (% of total)', run: ' (running)', rank: ' (rank)', diff: ' (Δ prev)' }[m.show] || '';
       if (m.f === '*') return 'Record count' + sfx;
       const a = (SB_AGGS.find(x => x[0] === m.a) || [m.a, m.a])[1];
@@ -11906,6 +12102,37 @@
       return v.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
     }
     function sbDecFor(cfg, m) { return (m && (m.a === 'count' || m.a === 'countd' || m.f === '*' || m.show === 'rank')) ? 0 : cfg.dec; }
+    // Calculated columns that combine already-aggregated columns (tables and pivots).
+    //   keys: one entry per base column = array of names that may be used to reference it, e.g. ['m1', 'Average of points'] or ['ST'].
+    //   rows: per output row, the aggregated values of those base columns.
+    // A formula refers to columns as [name]; earlier calculated columns can be used by later ones. A row whose referenced
+    // values are missing (blank) gets a blank result instead of treating blanks as 0.
+    function sbPostCalc(calcs, keys, rows) {
+      const out = { cols: [], vals: rows.map(() => []), errs: [] };
+      const all = keys.map(k => k.map(x => String(x)));
+      const cur = rows.map(r => r.slice());
+      (calcs || []).forEach((c, ci) => {
+        const nm = String((c && c.name) || '').trim();
+        try {
+          if (!nm) throw new Error('Name this column');
+          if (all.some(a => a.some(x => x.toLowerCase() === nm.toLowerCase()))) throw new Error('Name already in use');
+          const src = String((c && c.expr) || '').trim();
+          if (!src) throw new Error('Enter a formula, e.g. [ST] - [BN]');
+          const look = t => { const tt = t.trim().toLowerCase(); return all.findIndex(a => a.some(x => x.toLowerCase() === tt)); };
+          const used = [];
+          let e = src.replace(/\[([^\]]+)\]/g, (m, t) => { const i = look(t); if (i < 0) throw new Error(`Unknown column "${t.trim()}"`); if (!used.includes(i)) used.push(i); return ` __c${i} `; });
+          e = e.replace(/\b([A-Za-z_]\w*)\b/g, (m, id) => { if (/^__c\d+$/.test(id) || Object.prototype.hasOwnProperty.call(SB_HELPERS, id) || SB_LITERALS.includes(id) || id === 'if') return m; const i = look(id); if (i < 0) return m; if (!used.includes(i)) used.push(i); return ` __c${i} `; });
+          const fn = sbCompile(e, new Set(all.map((_, i) => '__c' + i)));
+          const vals = cur.map(r => {
+            if (used.some(i => r[i] === null || r[i] === undefined || (typeof r[i] === 'number' && !isFinite(r[i])))) return null;
+            const o = {}; used.forEach(i => { o['__c' + i] = r[i]; });
+            const v = fn(o); return (typeof v === 'number' && isFinite(v)) ? v : (typeof v === 'string' ? v : null);
+          });
+          all.push([nm]); cur.forEach((r, i) => r.push(vals[i])); out.cols.push(nm); vals.forEach((v, i) => out.vals[i].push(v)); out.errs[ci] = '';
+        } catch (err) { out.errs[ci] = err.message; }
+      });
+      return out;
+    }
     function sbCompute(cfg, extraF) {
       const ctx = sbContext(cfg);
       const has = n => !!n && ctx.cols.some(c => c.name === n);
@@ -11961,6 +12188,19 @@
       if (type === 'table') {
         const out = [];
         cats.forEach(d => splits.forEach(s => { const rs = cellRows(d, s); if (!rs.length) return; const vals = ms.map(m => mval(m, rs)); if (passH(vals)) out.push({ d, dp: dparts.get(d), s, vals }); }));
+        // calculated columns over the aggregated measures (so they are sortable like any other column)
+        const pcs = cfg.pcalcs || [];
+        const tkeys = ms.map((m, i) => [`m${i + 1}`, sbMLabel(m)]);
+        let msx = ms, pcErr = [];
+        const refInfo = ms.map((m, i) => ({ k: `m${i + 1}`, l: sbMLabel(m) }));
+        let calcTot = null;
+        if (pcs.length) {
+          const pr = sbPostCalc(pcs, tkeys, out.map(o => o.vals));
+          out.forEach((o, i) => { o.vals = o.vals.concat(pr.vals[i]); });
+          msx = ms.concat(pr.cols.map(n => ({ f: '#calc', a: 'calc', calc: true, name: n })));
+          pcErr = pr.errs; pr.cols.forEach(n => refInfo.push({ k: n, l: 'calculated' }));
+          if (cfg.totals) calcTot = sbPostCalc(pcs, tkeys, [ms.map(m => (m.show ? null : mval(m, rows)))]).vals[0];
+        }
         const nd = dimsAll.length, off = nd + (useSplit ? 1 : 0);
         const colVal = (r, c) => c < nd ? r.dp[c] : ((useSplit && c === nd) ? r.s : r.vals[c - off]);
         const isN = v => v === null || v === undefined;
@@ -11969,8 +12209,8 @@
         else if (cfg.sort === 'dim') out.sort((a, b) => (sbNatSort(a.d, b.d) || sbNatSort(a.s, b.s)) * (cfg.dir === 'asc' ? 1 : -1));
         else out.sort((a, b) => ((a.vals[0] === null) - (b.vals[0] === null)) || ((a.vals[0] - b.vals[0]) * (cfg.dir === 'asc' ? 1 : -1)));
         ms.forEach((m, mi) => { if (m.show) { const col = sbShowAs(out.map(r => r.vals[mi]), m.show); out.forEach((r, i) => { r.vals[mi] = col[i]; }); } });
-        const totals = cfg.totals ? ms.map(m => m.show ? null : mval(m, rows)) : null;
-        return Object.assign({ kind: 'table', ms, split: useSplit ? splitOk : '', rows: cfg.limit > 0 ? out.slice(0, cfg.limit) : out, totals, n: rows.length }, base);
+        const totals = cfg.totals ? ms.map(m => m.show ? null : mval(m, rows)).concat(calcTot || []) : null;
+        return Object.assign({ kind: 'table', ms: msx, refInfo, pcErr, split: useSplit ? splitOk : '', rows: cfg.limit > 0 ? out.slice(0, cfg.limit) : out, totals, n: rows.length }, base);
       }
 
       if (hv.length) cats = cats.filter(d => { const rs = [].concat(...gmap.get(d).values()); return passH(ms.map(m => mval(m, rs))); });
@@ -11986,18 +12226,33 @@
       cats = order.map(i => cats[i]);
       series.forEach(x => { x.data = order.map(i => x.data[i]); });
       const cap = type === 'pivot' ? 80 : 15;
-      if (useSplit && series.length > cap) { const tot = x => x.data.reduce((a, b) => a + (b || 0), 0); series = series.sort((a, b) => tot(b) - tot(a)).slice(0, cap); }
+      if (useSplit && series.length > cap) {
+        if (type === 'pivot' && ms.length > 1) series = series.slice(0, Math.max(1, Math.floor(cap / ms.length)) * ms.length);
+        else { const tot = x => x.data.reduce((a, b) => a + (b || 0), 0); series = series.sort((a, b) => tot(b) - tot(a)).slice(0, cap); }
+      }
       series.forEach(x => { if (x.m.show) x.data = sbShowAs(x.data, x.m.show); });
       if (type === 'pivot') {
-        if (!useSplit) return { error: 'Pivot needs a "Split by" field for the columns.' };
-        const pc = series.filter(x => x.mi === 0), ts = cfg.tsort;
+        if (!useSplit && ms.length < 2) return { error: 'Pivot needs a "Split by" field for the columns (or two or more measures to lay out as columns).' };
+        const pc = series.slice(), multi = ms.length > 1, ts = cfg.tsort;
+        // calculated columns (e.g. [ST] - [BN]) over the aggregated pivot columns
+        const pcs = cfg.pcalcs || [];
+        const keyOf = c => useSplit
+          ? (multi ? [`${c.split}|${c.mi + 1}`, `${c.split}|${sbMLabel(c.m)}`].concat(c.mi === 0 ? [c.split] : []) : [c.split])
+          : [`m${c.mi + 1}`, sbMLabel(c.m)];
+        const refInfo = pc.map(c => ({ k: keyOf(c)[0], l: useSplit ? (multi ? `${c.split} · ${sbMLabel(c.m)}` : c.split) : sbMLabel(c.m) }));
+        let pcErr = [];
+        if (pcs.length) {
+          const pr = sbPostCalc(pcs, pc.map(keyOf), cats.map((_, i) => pc.map(c => c.data[i])));
+          pcErr = pr.errs;
+          pr.cols.forEach((n, j) => { pc.push({ name: n, split: n, calc: true, mi: -1, m: null, data: cats.map((_, i) => pr.vals[i][j]) }); refInfo.push({ k: n, l: 'calculated' }); });
+        }
         if (ts && ts.c >= 0) {
           const ix = cats.map((_, i) => i), dir = ts.dir === 'asc' ? 1 : -1;
           const val = i => ts.c === 0 ? cats[i] : (pc[ts.c - 1] ? pc[ts.c - 1].data[i] : null);
           ix.sort((a, b) => { const x = val(a), y = val(b), nx = x === null || x === undefined, ny = y === null || y === undefined; if (nx !== ny) return nx ? 1 : -1; return (typeof x === 'number' && typeof y === 'number' ? x - y : sbNatSort(x, y)) * dir; });
           cats = ix.map(i => cats[i]); pc.forEach(c => { c.data = ix.map(i => c.data[i]); });
         }
-        return Object.assign({ kind: 'pivot', m: ms[0], split: splitOk, cats, cols: pc, n: rows.length }, base);
+        return Object.assign({ kind: 'pivot', m: ms[0], ms, hasSplit: useSplit, split: splitOk, cats, cols: pc, refInfo, pcErr, n: rows.length }, base);
       }
       return Object.assign({ kind: 'chart', ms, split: useSplit ? splitOk : '', cats, series, n: rows.length }, base);
     }
@@ -12068,12 +12323,34 @@
         bindSort(); return;
       }
       if (res.kind === 'pivot') {
-        let mn = Infinity, mx = -Infinity;
-        res.cols.forEach(c => c.data.forEach(v => { if (v !== null) { mn = Math.min(mn, v); mx = Math.max(mx, v); } }));
-        const lbl = sbMLabel(res.m), st = sbColStats([].concat(...res.cols.map(c => c.data))), hasCf = (cfg.cf || []).some(r => r.c === lbl);
-        const head = sortTh(res.dim || '', 0, false, true) + res.cols.map((c, i) => sortTh(c.split, i + 1, true, false)).join('');
-        const body = res.cats.map((d, i) => `<tr><td class="text-left font-sans" style="${sbCfStyle(cfg, res.dims[0], d, null)}">${escapeHTML(d)}</td>${res.cols.map(c => { const v = c.data[i]; const style = hasCf ? sbCfStyle(cfg, lbl, v, st) : `background-color:${v === null ? 'transparent' : HEATMAPS.greenToClear(v, mn, mx)}`; return `<td class="text-right font-mono" style="${style}">${sbFmt(v, sbDecFor(cfg, res.m))}</td>`; }).join('')}</tr>`).join('');
-        host.innerHTML = `<div class="px-3 pt-2 text-[10px] text-slate-400">${escapeHTML(lbl)}</div><div class="overflow-auto" style="max-height:${opts.compact ? 300 : 560}px"><table class="standings-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+        const multi = res.ms.length > 1, grouped = res.hasSplit && multi;
+        const baseCols = res.cols.filter(c => !c.calc);
+        // per-measure ranges for the default heat shading + stats for conditional-format rules
+        const rng = res.ms.map((m, mi) => { let mn = Infinity, mx = -Infinity; const all = []; baseCols.filter(c => c.mi === mi).forEach(c => c.data.forEach(v => { if (v !== null) { mn = Math.min(mn, v); mx = Math.max(mx, v); } all.push(v); })); return { mn, mx, st: sbColStats(all) }; });
+        const calcSt = new Map(); res.cols.filter(c => c.calc).forEach(c => calcSt.set(c, sbColStats(c.data)));
+        const subTitle = (!multi && res.hasSplit) ? `<div class="px-3 pt-2 text-[10px] text-slate-400">${escapeHTML(sbMLabel(res.m))}</div>` : '';
+        let head;
+        if (grouped) {
+          const top = []; let i = 0;
+          while (i < res.cols.length) {
+            const c = res.cols[i];
+            if (c.calc) { top.push(sortTh(c.name, i + 1, true, false).replace('<th ', '<th rowspan="2" ')); i++; continue; }
+            let j = i; while (j < res.cols.length && !res.cols[j].calc && res.cols[j].split === c.split) j++;
+            top.push(`<th class="text-center" colspan="${j - i}" style="white-space:nowrap">${escapeHTML(c.split)}</th>`); i = j;
+          }
+          const sub = res.cols.map((c, k) => c.calc ? '' : sortTh(sbMLabel(c.m), k + 1, true, false)).join('');
+          head = `<tr>${sortTh(res.dim || '', 0, false, true).replace('<th ', '<th rowspan="2" ')}${top.join('')}</tr><tr>${sub}</tr>`;
+        } else {
+          head = `<tr>${sortTh(res.dim || '', 0, false, true)}${res.cols.map((c, k) => sortTh(c.calc ? c.name : (res.hasSplit ? c.split : sbMLabel(c.m)), k + 1, true, false)).join('')}</tr>`;
+        }
+        const body = res.cats.map((d, i) => `<tr><td class="text-left font-sans" style="${sbCfStyle(cfg, res.dims[0], d, null)}">${escapeHTML(d)}</td>${res.cols.map(c => {
+          const v = c.data[i];
+          if (c.calc) return `<td class="text-right font-mono" style="${sbCfStyle(cfg, c.name, v, calcSt.get(c))}">${sbFmt(v, cfg.dec)}</td>`;
+          const lbl = sbMLabel(c.m), R = rng[c.mi], hasCf = (cfg.cf || []).some(r => r.c === lbl);
+          const style = hasCf ? sbCfStyle(cfg, lbl, v, R.st) : `background-color:${v === null ? 'transparent' : HEATMAPS.greenToClear(v, R.mn, R.mx)}`;
+          return `<td class="text-right font-mono" style="${style}">${sbFmt(v, sbDecFor(cfg, c.m))}</td>`;
+        }).join('')}</tr>`).join('');
+        host.innerHTML = `${subTitle}<div class="overflow-auto" style="max-height:${opts.compact ? 300 : 560}px"><table class="standings-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
         bindSort(); return;
       }
       host.innerHTML = `<div style="position:relative;height:${h}px;width:100%" class="p-2"><canvas></canvas></div>${res.bubble ? `<div class="px-3 pb-2 text-[10px] text-slate-400">Bubble size = ${escapeHTML(sbMLabel(res.ms[2]))}</div>` : ''}`;
@@ -12197,13 +12474,20 @@
           <input class="sb-in" data-sb="ce" data-i="${i}" value="${escapeHTML(c.expr || '')}" placeholder="e.g. CASE WHEN margin > 20 THEN 'Blowout' ELSE 'Close' END">
           <button class="sb-x" data-sb="cdel" data-i="${i}" title="Remove calculated field"><i class="fa-solid fa-xmark"></i></button></div>
           ${ctx.errors[i] ? `<div class="text-[10px] text-rose-500 mt-0.5">${escapeHTML(ctx.errors[i])}</div>` : (sbIsSql(c.expr) ? '<div class="text-[10px] text-sky-600 mt-0.5">SQL expression</div>' : '')}</div>`).join('');
-      const cfCols = [...[cfg.dim].concat(cfg.xdims || []).filter(Boolean), ...(cfg.split ? [cfg.split] : []), ...(cfg.measures || []).map(sbMLabel)];
+      const cfCols = [...[cfg.dim].concat(cfg.xdims || []).filter(Boolean), ...(cfg.split ? [cfg.split] : []), ...(cfg.measures || []).map(sbMLabel), ...(cfg.pcalcs || []).map(c => String(c.name || '').trim()).filter(Boolean)];
+      const pcRows = (cfg.pcalcs || []).map((c, i) => `<div class="sb-calc"><div class="sb-row"><input class="sb-in" style="max-width:96px" data-sb="pn" data-i="${i}" value="${escapeHTML(c.name || '')}" placeholder="name">
+          <input class="sb-in" data-sb="pe" data-i="${i}" value="${escapeHTML(c.expr || '')}" placeholder="e.g. [ST] - [BN]">
+          <button class="sb-x" data-sb="pcdel" data-i="${i}" title="Remove calculated column"><i class="fa-solid fa-xmark"></i></button></div>
+          <div class="sb-row"><select class="sb-in" data-sb="pcins" data-i="${i}" title="Insert a column into the formula"><option value="">+ insert column…</option></select></div>
+          <div class="text-[10px] text-rose-500 mt-0.5" data-pcerr="${i}"></div></div>`).join('');
       const cfRows = (cfg.cf || []).map((r, i) => `<div class="sb-calc"><div class="sb-row"><select class="sb-in" data-sb="cfc" data-i="${i}">${sbOpts(cfCols, r.c, 'column…')}</select><button class="sb-x" data-sb="cfdel" data-i="${i}"><i class="fa-solid fa-xmark"></i></button></div>
           <div class="sb-row"><select class="sb-in" data-sb="cfo" data-i="${i}">${sbOpts(SB_CF_OPS, r.op)}</select><input class="sb-in" style="max-width:64px" data-sb="cfv" data-i="${i}" value="${escapeHTML(r.v === undefined ? '' : r.v)}" placeholder="value"><input class="sb-in" style="max-width:56px" data-sb="cfv2" data-i="${i}" value="${escapeHTML(r.v2 === undefined ? '' : r.v2)}" placeholder="and">
           <select class="sb-in" style="max-width:74px" data-sb="cfk" data-i="${i}">${sbOpts(Object.keys(SB_CF_COLORS).map(k => [k, k]), r.k)}</select></div></div>`).join('');
       const isTbl = cfg.type === 'table' || cfg.type === 'pivot';
+      const applyBar = `<div class="sb-applybar"><button type="button" class="sb-btn primary" data-sb="apply" title="Apply every change in the builder (Enter in a field does the same)"><i class="fa-solid fa-check"></i> Apply</button><span class="text-[10px] text-slate-400">Updates the chart with all changes below</span></div>`;
       return `
         <div class="sb-card">
+          ${applyBar}
           ${secT('Data source')}
           <select class="sb-in" data-sb="ds">${sbOpts(dsList, cfg.ds)}</select>
           <div class="flex items-center justify-between mt-1"><div class="text-[10px] text-slate-400">${ctx.rows.length.toLocaleString()} rows · ${ctx.cols.length} fields${isCustom && sb.customDs[cfg.ds].err ? ' · <span class="text-rose-500">' + escapeHTML(sb.customDs[cfg.ds].err) + '</span>' : ''}</div>
@@ -12230,6 +12514,7 @@
           ${calcRows}
           <button type="button" class="sb-add" data-sb="cadd"><i class="fa-solid fa-plus"></i> Add calculated field</button>
           <div class="text-[10px] text-slate-400 mt-1 leading-snug">Row-level. SQL works: <code>CASE WHEN margin &gt; 20 THEN 'Blowout' ELSE 'Close' END</code>, <code>ROUND(team_points / projected_points, 3)</code>, <code>manager || ' W' || week</code> (prefix <code>sql:</code> to force). Plain formulas also work: <code>team_points - opponent_points</code>, <code>if(result == 'W', 1, 0)</code>. Calculated fields (ƒ) appear in every dropdown.</div>
+          ${(cfg.type === 'table' || cfg.type === 'pivot') ? secT('Calculated columns (after aggregation)') + pcRows + '<button type="button" class="sb-add" data-sb="pcadd"><i class="fa-solid fa-plus"></i> Add calculated column</button><div class="text-[10px] text-slate-400 mt-1 leading-snug">Combine columns that are already aggregated. Refer to a column as <code>[name]</code>: in a pivot, a Split-by value such as <code>[ST] - [BN]</code> (with several measures use <code>[ST|2]</code> for the 2nd measure); in a table, <code>[m1]</code>, <code>[m2]</code>… Helpers: <code>if([BN] &gt; 0, [ST] / [BN] - 1, null)</code>, <code>round()</code>, <code>abs()</code>. Rows with a blank input stay blank. The new column is click-sortable.</div>' : ''}
           ${secT('Filters')}
           ${filtRows}
           <button type="button" class="sb-add" data-sb="fadd"><i class="fa-solid fa-plus"></i> Add filter</button>
@@ -12245,6 +12530,7 @@
             ${cfg.type === 'table' ? `<label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" data-sb="totals" ${cfg.totals ? 'checked' : ''}> Totals row</label>` : ''}</div>
           <label class="sb-lbl">Title (optional)</label>
           <input class="sb-in" data-sb="title" value="${escapeHTML(cfg.title || '')}" placeholder="${escapeHTML(sbTitle(Object.assign({}, cfg, { title: '' })))}">
+          <div class="mt-3">${applyBar}</div>
         </div>`;
     }
     function sbDashHTML() {
@@ -12278,6 +12564,7 @@
       const meta = document.getElementById('sb-preview-meta');
       if (meta) {
         const r = host._res, up = sb.updated ? ` · updated ${sb.updated.toLocaleTimeString()}` : '';
+        sbSyncPc();
         meta.textContent = r && r.n !== undefined ? `${r.n.toLocaleString()} rows after filters${r.kind === 'chart' && r.ndim === 1 ? ' · click a bar to filter' : ''}${up}` : '';
       }
       sbSyncUndo();
@@ -12293,6 +12580,16 @@
     function sbRebuildPanel() {
       const el = document.getElementById('sb-panel'); if (!el) return;
       const st = el.scrollTop; el.innerHTML = sbPanelHTML(); el.scrollTop = st;
+      sbSyncPc();
+    }
+    // fills the "insert column" dropdowns and error lines of the calculated-columns section from the latest result
+    function sbSyncPc() {
+      const host = document.getElementById('sb-preview-body'), res = host && host._res;
+      const info = (res && res.refInfo) || [];
+      document.querySelectorAll('#sb-panel select[data-sb="pcins"]').forEach(sel => {
+        sel.innerHTML = '<option value="">+ insert column…</option>' + info.map(r => `<option value="${escapeHTML(r.k)}">[${escapeHTML(r.k)}]${r.l && r.l !== r.k ? ' \u00B7 ' + escapeHTML(r.l) : ''}</option>`).join('');
+      });
+      document.querySelectorAll('#sb-panel [data-pcerr]').forEach(d => { const i = Number(d.getAttribute('data-pcerr')); d.textContent = (res && res.pcErr && res.pcErr[i]) || ''; });
     }
     function sbRebuildDash() { const el = document.getElementById('sb-dash'); if (el) { el.innerHTML = sbDashHTML(); sbRefreshTiles(); } }
     function sbRebuildPresets() {
@@ -12320,6 +12617,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800">
                   <div class="min-w-0"><div id="sb-preview-title" class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate"></div><div id="sb-preview-meta" class="text-[10px] text-slate-400"></div></div>
                   <div class="flex flex-wrap items-center gap-1.5">
+                    <button class="sb-btn primary" data-sb="apply" title="Apply every change in the builder"><i class="fa-solid fa-check"></i> Apply</button>
                     <button class="sb-btn" data-sb="undo" title="Undo last change (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i> Undo</button>
                     <button class="sb-btn" data-sb="refresh" title="Reload data and redraw"><i class="fa-solid fa-arrows-rotate"></i></button>
                     <button class="sb-btn primary" data-sb="pin"><i class="fa-solid fa-thumbtack"></i> Pin</button>
@@ -12341,7 +12639,8 @@
           <div id="sb-sqlview" class="hidden"></div>`;
         if (!root._wired) {
           root._wired = true; root.addEventListener('change', sbOnChange); root.addEventListener('click', sbOnClick);
-          root.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.target.id === 'sb-sqltext') { e.preventDefault(); sbRunSqlUI(); } });
+          root.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.target.id === 'sb-sqltext') { e.preventDefault(); sbRunSqlUI(); }
+            else if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.closest('#sb-panel') && e.target.type !== 'checkbox') { e.preventDefault(); sbApply(); } });
           document.addEventListener('keydown', e => {
             if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== 'z') return;
             const t = e.target; if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
@@ -12367,7 +12666,7 @@
       if (sql) sbRebuildSql(); else { sbRefreshPreview(); sbRefreshTiles(); }
       sbSyncUndo();
     }
-    function sbOnChange(e) {
+    function sbOnChange(e, quiet) {
       const el = e.target.closest('[data-sb]'); if (!el) return;
       const sb = sbS(), cfg = sb.cfg, a = el.getAttribute('data-sb'), i = Number(el.getAttribute('data-i'));
       const v = el.type === 'checkbox' ? el.checked : el.value;
@@ -12387,9 +12686,12 @@
         if (a === 'dff') f.f = v; else if (a === 'dfo') f.op = v; else f.v = v;
         sbSave(); sbRefreshTiles(); return;
       }
-      sbSnap(a);
+      if (!quiet) sbSnap(a);
       switch (a) {
         case 'ds': sbSetDs(v); structural = true; break;
+        case 'pn': (cfg.pcalcs[i] || {}).name = v.trim(); structural = true; break;
+        case 'pe': (cfg.pcalcs[i] || {}).expr = v; structural = true; break;
+        case 'pcins': { if (v === '') return; const c = cfg.pcalcs[i]; if (!c) return; c.expr = ((c.expr || '').trim() + ' [' + v + ']').trim(); structural = true; break; }
         case 'dim': cfg.dim = v; break;
         case 'xd': cfg.xdims[i] = v; break;
         case 'split': cfg.split = v; break;
@@ -12419,17 +12721,32 @@
         case 'title': cfg.title = v; break;
         default: return;
       }
+      if (quiet) return;
       if (structural) sbRebuildPanel();
       sbRefreshPreview(); sbUrlSoon();
+    }
+    // Apply: commit every pending text edit in the builder (typed values only reach the chart when a field loses focus, and
+    // some mobile browsers never blur on a button tap), then rebuild the panel and redraw the chart and the dashboard.
+    function sbApply(btn) {
+      const sb = sbS();
+      try { const ae = document.activeElement; if (ae && ae.closest && ae.closest('#sb-panel') && ae.blur) ae.blur(); } catch (e) {}
+      sbSnap('apply');
+      document.querySelectorAll('#sb-panel input[data-sb]:not([type="checkbox"]):not([type="radio"])').forEach(inp => { try { sbOnChange({ target: inp }, true); } catch (err) {} });
+      sbSave();
+      sbRebuildPanel(); sbRefreshPreview(); sbRefreshTiles(); sbUrlSoon();
+      if (btn) { const old = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-check"></i> Applied'; setTimeout(() => { btn.innerHTML = old; }, 1000); }
     }
     function sbOnClick(e) {
       const el = e.target.closest('[data-sb]'); if (!el || el.tagName === 'SELECT' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
       const sb = sbS(), cfg = sb.cfg, a = el.getAttribute('data-sb'), i = Number(el.getAttribute('data-i'));
       const panelRefresh = () => { sbRebuildPanel(); sbRefreshPreview(); sbUrlSoon(); };
-      const MUT = ['type', 'madd', 'mdel', 'cadd', 'cdel', 'fadd', 'fdel', 'preset', 'reset', 'pin', 'clearall', 'tdel', 'tleft', 'tright', 'tspan', 'tedit', 'tdup', 'tren', 'xdadd', 'xddel', 'hadd', 'hdel', 'cfadd', 'cfdel', 'dfadd', 'dfdel', 'jcreate', 'dsdel', 'sqluse'];
+      const MUT = ['type', 'madd', 'mdel', 'cadd', 'cdel', 'fadd', 'fdel', 'preset', 'reset', 'pin', 'clearall', 'tdel', 'tleft', 'tright', 'tspan', 'tedit', 'tdup', 'tren', 'xdadd', 'xddel', 'hadd', 'hdel', 'cfadd', 'cfdel', 'dfadd', 'dfdel', 'jcreate', 'dsdel', 'sqluse', 'pcadd', 'pcdel'];
       if (MUT.includes(a)) sbSnap();
       switch (a) {
         case 'undo': sbUndo(); break;
+        case 'apply': sbApply(el); break;
+        case 'pcadd': { const n = (cfg.pcalcs = cfg.pcalcs || []).length; cfg.pcalcs.push({ name: n ? `calc_${n + 1}` : 'diff', expr: '' }); sbRebuildPanel(); break; }
+        case 'pcdel': cfg.pcalcs.splice(i, 1); panelRefresh(); break;
         case 'refresh': sbRefresh(el); break;
         case 'mode': sb.mode = el.getAttribute('data-k'); sbApplyMode(); break;
         case 'type': {
@@ -12520,7 +12837,7 @@
       let lines = [];
       if (res.kind === 'kpi') { lines.push('measure,value'); res.tiles.forEach(t => lines.push([q(t.label), q(t.value)].join(','))); }
       else if (res.kind === 'table') { lines.push([...res.dims, ...(res.split ? [res.split] : []), ...res.ms.map(sbMLabel)].map(q).join(',')); res.rows.forEach(r => lines.push([...r.dp, ...(res.split ? [r.s] : []), ...r.vals].map(q).join(','))); }
-      else if (res.kind === 'pivot') { lines.push([res.dim, ...res.cols.map(c => c.split)].map(q).join(',')); res.cats.forEach((d, i) => lines.push([d, ...res.cols.map(c => c.data[i])].map(q).join(','))); }
+      else if (res.kind === 'pivot') { const hn = c => c.calc ? c.name : (res.hasSplit ? (res.ms.length > 1 ? `${c.split} \u00b7 ${sbMLabel(c.m)}` : c.split) : sbMLabel(c.m)); lines.push([res.dim, ...res.cols.map(hn)].map(q).join(',')); res.cats.forEach((d, i) => lines.push([d, ...res.cols.map(c => c.data[i])].map(q).join(','))); }
       else if (res.kind === 'scatter') { lines.push(['series', 'label', 'x', 'y', ...(res.bubble ? ['size'] : [])].join(',')); res.series.forEach(s => s.pts.forEach(p => lines.push([s.name, p.label, p.x, p.y, ...(res.bubble ? [p.s] : [])].map(q).join(',')))); }
       else { lines.push([res.dim || 'category', ...res.series.map(s => s.name)].map(q).join(',')); res.cats.forEach((d, i) => lines.push([d, ...res.series.map(s => s.data[i])].map(q).join(','))); }
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -12816,6 +13133,12 @@
     .ndl-fit-btn:hover { opacity: 1; background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
     .ndl-fit { position: fixed !important; inset: 0 !important; z-index: 2000 !important; margin: 0 !important; border-radius: 0 !important; overflow: auto !important; max-width: none !important; width: auto !important; height: auto !important; display: flex !important; flex-direction: column; background: #ffffff; padding-top: max(8px, env(safe-area-inset-top)) !important; padding-bottom: max(8px, env(safe-area-inset-bottom)) !important; }
     .dark .ndl-fit { background: #020617; }
+    .ndl-fit { background-color: #ffffff !important; backdrop-filter: none !important; opacity: 1 !important; }
+    .dark .ndl-fit { background-color: #020617 !important; }
+    /* solid layer behind an expanded card so nothing from the page (header, filter bar, scorecards) shows through */
+    .ndl-fit-backdrop { position: fixed; inset: 0; z-index: 1999; background: #ffffff; }
+    .dark .ndl-fit-backdrop { background: #020617; }
+    html.ndl-fit-open body > header, html.ndl-fit-open #sparkline-tooltip { visibility: hidden !important; }
     .ndl-fit-chain { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; max-height: none !important; display: flex !important; flex-direction: column; }
     .ndl-fit-size { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; max-height: none !important; overflow: hidden; }
     .ndl-fit-x { position: fixed; top: max(8px, env(safe-area-inset-top)); right: 10px; z-index: 2001; }
@@ -12967,7 +13290,7 @@
     }, true);
 
     /* ================= EXPAND TO FIT SCREEN ================= */
-    let active = null, closeBtn = null, lockPrev = '';
+    let active = null, closeBtn = null, lockPrev = '', backdrop = null;
     function chartsIn(el) {
       const out = [];
       el.querySelectorAll('canvas').forEach(c => { try { const ch = window.Chart && Chart.getChart(c); if (ch) out.push(ch); } catch (e) {} });
@@ -12983,6 +13306,12 @@
       if (active) exit();
       active = { card, size, chain: [] };
       card.classList.add('ndl-fit');
+      try {
+        backdrop = document.createElement('div');
+        backdrop.className = 'ndl-fit-backdrop'; backdrop.setAttribute('data-html2canvas-ignore', 'true');
+        if (card.parentNode) card.parentNode.insertBefore(backdrop, card); else document.body.appendChild(backdrop);
+      } catch (e) {}
+      document.documentElement.classList.add('ndl-fit-open');
       if (size) {
         for (let el = size.parentElement; el && el !== card; el = el.parentElement) { el.classList.add('ndl-fit-chain'); active.chain.push(el); }
         size.classList.add('ndl-fit-size');
@@ -13000,6 +13329,8 @@
       if (!active) return;
       const { card, size, chain } = active;
       card.classList.remove('ndl-fit');
+      if (backdrop) { backdrop.remove(); backdrop = null; }
+      document.documentElement.classList.remove('ndl-fit-open');
       chain.forEach(el => el.classList.remove('ndl-fit-chain'));
       if (size) size.classList.remove('ndl-fit-size');
       document.querySelectorAll('.ndl-fit-btn[data-fit-for]').forEach(b => icon(b, false));
