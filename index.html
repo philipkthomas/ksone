@@ -874,6 +874,40 @@
     .sch-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; border: 1px solid #cbd5e1; color: #475569; background: transparent; }
     .dark .sch-pill { border-color: #334155; color: #cbd5e1; }
 
+
+    /* Schedule: horizontal mini-matchup rows */
+    .sch-list { display: flex; flex-direction: column; }
+    .sch-sep2 { padding: 3px 10px; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #64748b; background: rgba(148,163,184,.14); }
+    .sch-g { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; gap: 6px; padding: 6px 8px 7px 6px; border-bottom: 1px solid #e2e8f0; }
+    .dark .sch-g { border-bottom-color: #1e293b; }
+    .sch-g.sch-click { cursor: pointer; }
+    .sch-g.sch-click:hover { background: rgba(148,163,184,.12); }
+    .sch-g.sch-fut .sch-body { opacity: .62; }
+    .sch-lead { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .sch-wk2 { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 800; color: #64748b; line-height: 1; }
+    .sch-body { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; min-width: 0; }
+    .sch-side { min-width: 0; }
+    .sch-side.r { text-align: right; }
+    .sch-id { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
+    .sch-side.r .sch-id { flex-direction: row-reverse; }
+    .sch-nm { font-size: 12px; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sch-me2 .sch-nm { font-weight: 900; }
+    .sch-rc { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
+    .sch-rk2 { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; font-weight: 600; flex-shrink: 0; color: #64748b; }
+    .dark .sch-rk2 { color: #94a3b8; }
+    .sch-pt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 17px; line-height: 1.15; font-weight: 800; }
+    .sch-mid { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; }
+    /* conditional formatting lives on the text (solid colours, theme aware) */
+    .sch-heat { color: var(--hl); }
+    .dark .sch-heat { color: var(--hd); }
+    /* live: subtle shine on the LIVE label + win-prob underline */
+    .sch-chip.live.shine { background: linear-gradient(110deg, #0369a1 0%, #0369a1 38%, #bae6fd 50%, #0369a1 62%, #0369a1 100%); background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: mxShine 2.8s linear infinite; border-color: rgba(14, 165, 233, .5); }
+    .dark .sch-chip.live.shine { background-image: linear-gradient(110deg, #38bdf8 0%, #38bdf8 38%, #f0f9ff 50%, #38bdf8 62%, #38bdf8 100%); }
+    @media (prefers-reduced-motion: reduce) { .sch-chip.live.shine { animation: none; } }
+    .sch-wpline { position: absolute; left: 6px; right: 8px; bottom: 1px; height: 3px; display: flex; border-radius: 9999px; overflow: hidden; background: #e2e8f0; }
+    .dark .sch-wpline { background: #1e293b; }
+    .sch-wpline > span { display: block; height: 100%; }
+
     /* Playoff brackets */
     .po-season { background: #ffffff; border: 1px solid #e2e8f0; border-radius: .75rem; padding: 10px 12px 12px; box-shadow: 0 10px 25px -10px rgba(15, 23, 42, .25); }
     .dark .po-season { background: #020617; border-color: #1e293b; }
@@ -892,6 +926,7 @@
     .bk-cap { position: absolute; z-index: 1; font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; white-space: nowrap; pointer-events: none; }
     .bk-colh { position: absolute; top: 0; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: #64748b; white-space: nowrap; }
     .bk-row { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 6px; font-size: 11px; }
+    @media (max-width: 639px) { .bk-row { gap: 3px; padding: 0 4px; font-size: 10px; } .bk-seed { width: 11px; } .bk-pts { font-size: 9.5px; } .bk-cap, .bk-colh { font-size: 8.5px; letter-spacing: .03em; } }
     .bk-row + .bk-row { border-top: 1px solid #e2e8f0; }
     .dark .bk-row + .bk-row { border-top-color: #1e293b; }
     .bk-row.win { background: rgba(34, 197, 94, .11); }
@@ -991,7 +1026,7 @@
           <label id="hcw-wrap" class="flex items-center gap-2 cursor-pointer select-none">
             <input type="checkbox" id="filter-hcw" class="sr-only">
             <span class="hcw-track"><span class="hcw-thumb"></span></span>
-            <span class="text-slate-600 dark:text-slate-400 font-medium">Hide current week</span>
+            <span class="text-slate-600 dark:text-slate-400 font-medium">Hide curr. wk</span>
           </label>
 
           <label id="fb-bench-wrap" class="flex items-center gap-2 cursor-pointer select-none" style="display:none">
@@ -3707,49 +3742,71 @@
       const oppName = id => getManagerName(id, yr, '', lg);
       const fmt = n => (Number(n) || 0).toFixed(2);
 
+      // Solid text colour on a green > clear > red scale (t in [-1, 1]); light + dark values so it needs no background
+      const heatTxt = (t) => {
+        if (t === null || t === undefined || isNaN(t)) return '';
+        t = Math.max(-1, Math.min(1, t));
+        const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
+        const rgb = a => `rgb(${a.join(',')})`;
+        const baseL = [51, 65, 85], baseD = [226, 232, 240];
+        const gL = [21, 128, 61], gD = [74, 222, 128], rL = [185, 28, 28], rD = [248, 113, 113];
+        const k = Math.abs(t);
+        return `--hl:${rgb(mix(baseL, t >= 0 ? gL : rL, k))};--hd:${rgb(mix(baseD, t >= 0 ? gD : rD, k))};`;
+      };
+
       let html = '', sawPO = false;
       rows.forEach(r => {
-        if (r.week >= psw && !sawPO) { sawPO = true; html += `<tbody><tr class="sch-sep"><td colspan="6">Playoffs \u00B7 rank column shows seed</td></tr></tbody>`; }
+        if (r.week >= psw && !sawPO) { sawPO = true; html += `<div class="sch-sep2">Playoffs \u00B7 rank shows seed</div>`; }
         const om = oppName(r.opp), oc = getManagerColor(om);
         const a = stFor(me.id, r), b = stFor(r.opp, r);
         const show = r.status !== 'future' && r.pf !== null;
         let res = '\u2014', resCls = 'fut', resTip = 'Scheduled';
-        if (r.status === 'live') { res = 'LIVE'; resCls = 'live'; resTip = 'In progress'; }
+        if (r.status === 'live') { res = 'LIVE'; resCls = 'live shine'; resTip = 'In progress'; }
         else if (show && (r.pf > 0 || r.pa > 0)) {
           const o = resolveMatchupOutcome(yr, lg, r.week, me.id, r.opp, r.pf, r.pa);
           res = o.result; resCls = o.result.toLowerCase(); resTip = o.result === 'W' ? 'Win' : o.result === 'L' ? 'Loss' : 'Tie';
         }
-        const ptsBg = (pts, proj) => (r.status === 'final' && show && proj > 0) ? HEATMAPS.greenClearRed(pts - proj, -20, 0, 20) : 'transparent';
+        const ptsHeat = (pts, proj) => (r.status === 'final' && show && proj > 0) ? heatTxt((pts - proj) / 20) : '';
         const tip = (pts, proj) => proj > 0 && show ? `Proj ${fmt(proj)} \u00B7 ${pts - proj >= 0 ? '+' : ''}${fmt(pts - proj)}` : '';
-        const recBg = x => x.pct === null ? 'transparent' : HEATMAPS.greenClearRed(x.pct, 0, 0.5, 1);
+        const recHeat = x => x.pct === null ? '' : heatTxt((x.pct - 0.5) / 0.5);
         const clickable = r.status !== 'future' && show;
         const attrs = clickable ? ` data-open="${yr}|${escapeHTML(lg)}|${r.week}|${me.id}|${r.opp}" title="Open this matchup"` : '';
+
+        // live win-prob line under the in-progress matchup
+        let wpLine = '';
+        if (r.status === 'live') {
+          try {
+            const lp = buildLiveProbPoints(STATE.data.scores || [], yr, r.week, me.id, r.opp, lg);
+            const last = lp.length ? lp[lp.length - 1] : null;
+            if (last && isFinite(last.wpA)) {
+              const w = Math.max(0, Math.min(100, Math.round(last.wpA * 10) / 10));
+              wpLine = `<div class="sch-wpline" title="Live win probability \u00B7 ${escapeHTML(selMgr)} ${w.toFixed(1)}% / ${escapeHTML(om)} ${(100 - w).toFixed(1)}%"><span style="width:${w}%;background:${col}"></span><span style="width:${100 - w}%;background:${oc}"></span></div>`;
+            }
+          } catch (e) { console.warn('[Schedule] live win prob unavailable', e); }
+        }
+
+        const side = (nm, c, x, pts, proj, align, me2) => `
+          <div class="sch-side ${align}${me2 ? ' sch-me2' : ''}">
+            <div class="sch-id"><span class="sch-nm" style="color:${c}">${escapeHTML(nm)}</span><span class="sch-rc sch-heat" style="${recHeat(x)}" title="Record after this week">${x.rec}</span><span class="sch-rk2" title="${x.isPO ? 'Seed' : 'Rank after this week'}">${x.rk}</span></div>
+            <div class="sch-pt sch-heat" style="${ptsHeat(pts, proj) || '--hl:#0f172a;--hd:#f8fafc;'}" title="${tip(pts, proj)}">${show ? fmt(pts) : '\u2014'}</div>
+          </div>`;
+
         html += `
-          <tbody class="sch-game${clickable ? ' sch-click' : ''}${r.status === 'future' ? ' sch-fut' : ''}"${attrs}>
-            <tr class="sch-me">
-              <td class="sch-wk" rowspan="2">${r.week}</td>
-              <td class="sch-res" rowspan="2"><span class="sch-chip ${resCls}" title="${resTip}">${res}</span></td>
-              <td class="sch-name" style="color:${col};border-left:3px solid ${col}">${escapeHTML(selMgr)}</td>
-              <td class="sch-rk" title="${a.isPO ? 'Seed' : 'Rank after this week'}">${a.rk}</td>
-              <td class="sch-rec" style="background-color:${recBg(a)}">${a.rec}</td>
-              <td class="sch-pts" style="background-color:${ptsBg(r.pf, r.proj)}" title="${tip(r.pf, r.proj)}">${show ? fmt(r.pf) : '\u2014'}</td>
-            </tr>
-            <tr class="sch-opp">
-              <td class="sch-name" style="color:${oc};border-left:3px solid ${oc}">${escapeHTML(om)}</td>
-              <td class="sch-rk" title="${b.isPO ? 'Seed' : 'Rank after this week'}">${b.rk}</td>
-              <td class="sch-rec" style="background-color:${recBg(b)}">${b.rec}</td>
-              <td class="sch-pts" style="background-color:${ptsBg(r.pa, r.oppProj)}" title="${tip(r.pa, r.oppProj)}">${show ? fmt(r.pa) : '\u2014'}</td>
-            </tr>
-          </tbody>`;
+          <div class="sch-g${clickable ? ' sch-click' : ''}${r.status === 'future' ? ' sch-fut' : ''}"${attrs}>
+            <div class="sch-lead"><span class="sch-wk2">${r.week}</span><span class="sch-chip ${resCls}" title="${resTip}">${res}</span></div>
+            <div class="sch-body">
+              ${side(selMgr, col, a, r.pf, r.proj, 'l', true)}
+              <span class="sch-mid">vs</span>
+              ${side(om, oc, b, r.pa, r.oppProj, 'r', false)}
+            </div>
+            ${wpLine}
+          </div>`;
       });
       mainEl.innerHTML = head + `
         <div class="sch-card" id="sch-table-wrap">
-          <table class="sch-table">
-            <thead><tr><th>WK</th><th>RES</th><th style="text-align:left">MGR</th><th>RK</th><th>W-L-T</th><th style="text-align:right">PTS</th></tr></thead>
-            ${html}
-          </table>
+          <div class="sch-list">${html}</div>
         </div>
-        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 px-1">Rank &amp; record are as of the end of that week. Scores are shaded against each team\u2019s projection (green +20 \u2192 red \u221220). Tap a game to open it in Matchups.</div>`;
+        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 px-1">Rank &amp; record are as of the end of that week and shaded by win % (text colour). Scores are coloured against each team\u2019s projection (green +20 \u2192 red \u221220). Tap a game to open it in Matchups.</div>`;
     }
 
     // ==========================================
@@ -3833,7 +3890,7 @@
       const Ln = (m, text) => ({ src: m, as: 'L', text });
       const mk = o => {
         const m = Object.assign({ id: `m${++n}`, weeks: [o.week], kind: 'game' }, o);
-        m.first = m.weeks[0] === w1;
+        m.first = o.first !== undefined ? !!o.first : m.weeks[0] === w1;
         const rs = s => {
           if (!s) return { id: null, tbd: '' };
           if (s.id != null) {
@@ -3919,8 +3976,8 @@
           mk({ br: 'champ', col: 2, order: 1, week: w3, name: '3rd Place', short: '3rd', places: [3, 4], a: Ln(sf1), b: Ln(sf2) });
           base.cols.champ = [{ col: 0, title: `${wkLbl([w1])} \u00B7 Quarterfinals` }, { col: 1, title: `${wkLbl([w2])} \u00B7 Semifinals` }, { col: 2, title: `${wkLbl([w3])} \u00B7 Finals` }];
           if (total === 10) {
-            const c1 = mk({ br: 'cons', col: 0, order: 0, week: w2, name: 'Consolation Semi', short: 'CS1', a: T(S(7)), b: T(S(10)) });
-            const c2 = mk({ br: 'cons', col: 0, order: 1, week: w2, name: 'Consolation Semi', short: 'CS2', a: T(S(8)), b: T(S(9)) });
+            const c1 = mk({ br: 'cons', col: 0, order: 0, week: w2, first: true, name: 'Consolation Semi', short: 'CS1', a: T(S(7)), b: T(S(10)) });
+            const c2 = mk({ br: 'cons', col: 0, order: 1, week: w2, first: true, name: 'Consolation Semi', short: 'CS2', a: T(S(8)), b: T(S(9)) });
             mk({ br: 'cons', col: 1, order: 0, week: w3, name: '7th Place', short: '7th', places: [7, 8], a: Wn(c1), b: Wn(c2), layoutSrc: [c1, c2] });
             mk({ br: 'cons', col: 1, order: 1, week: w3, name: '9th Place', short: '9th', places: [9, 10], a: Ln(c1), b: Ln(c2) });
             base.cols.cons = [{ col: 0, title: `${wkLbl([w2])} \u00B7 Consolation Semis` }, { col: 1, title: `${wkLbl([w3])} \u00B7 Placement` }];
@@ -3955,7 +4012,8 @@
       const noteHTML = notes.length ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1"><span class="font-bold uppercase tracking-wider text-[10px]">${notes.every(x => x.why === 'Exempt') ? 'Exempt from bracket' : 'No game'}</span>${notes.map(x => `<span><span class="font-mono text-slate-400">S${x.seed}</span> <strong style="color:${getManagerColor(bk.tmap[x.id].manager)}">${escapeHTML(bk.tmap[x.id].manager)}</strong> <span class="text-slate-400">(${stOrd(x.rank)})</span></span>`).join('')}</div>` : '';
       if (!ms.length) return `<div class="text-xs text-slate-500 dark:text-slate-400 py-3">${brKey === 'cons' ? 'No consolation games this season.' : 'No bracket games found.'}</div>${noteHTML}`;
 
-      const CW = 188, CH = 50, BH = 26, GX = 32, GY = 16, TOP = 36;
+      const mob = window.matchMedia && window.matchMedia('(max-width: 639px)').matches;
+      const CW = mob ? 112 : 188, CH = 50, BH = 26, GX = mob ? 12 : 32, GY = 16, TOP = 36;
       const pos = {};
       const cols = [...new Set(ms.map(m => m.col))].sort((a, b) => a - b);
       cols.forEach(c => {
@@ -4071,6 +4129,7 @@
     }
 
     function stInit() {
+      try { const mq = window.matchMedia('(max-width: 639px)'); const h = () => { if (STATE.st && STATE.st.sub === 'playoffs') renderPlayoffsSub(); }; if (mq.addEventListener) mq.addEventListener('change', h); else if (mq.addListener) mq.addListener(h); } catch (e) {}
       document.querySelectorAll('#st-sub-slider .pos-mode-btn').forEach(btn => {
         btn.addEventListener('click', () => setStandingsSub(btn.getAttribute('data-st-sub')));
       });
@@ -9172,13 +9231,10 @@
           maintainAspectRatio: false,
           animation: { duration: 250 },
           interaction: { mode: 'index', intersect: false },
-          onClick: (evt, els, chart) => {
-            const idx = posChartTeamIndexAtEvent(chart, evt);
-            if (idx !== null) posColumnClick(idx);
-          },
+          // bars are not clickable: only the x-axis labels (posBindAxisClicks) and the table column titles change the view
           onHover: (evt, els, chart) => {
             const t = evt && evt.native && evt.native.target;
-            if (t) t.style.cursor = (posChartTeamIndexAtEvent(chart, evt) !== null && view.periodKind !== 'weekly') ? 'pointer' : 'default';
+            if (t && !(chart && chart._overAxis)) t.style.cursor = 'default';
           },
           scales: {
             x: {
@@ -9264,7 +9320,9 @@
       canvas.addEventListener('click', e => { const i = locate(e); if (i !== null) posColumnClick(i); });
       canvas.addEventListener('mousemove', e => {
         const view = STATE.positions.last, i = locate(e);
-        if (i !== null) canvas.style.cursor = (view && view.periodKind !== 'weekly') ? 'pointer' : 'default';
+        const ch = STATE.positions.chartInstance;
+        if (ch) ch._overAxis = i !== null;
+        canvas.style.cursor = (i !== null && view && view.periodKind !== 'weekly') ? 'pointer' : 'default';
       });
     }
 
@@ -9397,13 +9455,10 @@
           maintainAspectRatio: false,
           animation: { duration: 250 },
           interaction: { mode: 'index', intersect: false },
-          onClick: (evt, els, chart) => {
-            const idx = posChartTeamIndexAtEvent(chart, evt);
-            if (idx !== null) posColumnClick(idx);
-          },
+          // bars are not clickable: only the x-axis labels (posBindAxisClicks) and the table column titles change the view
           onHover: (evt, els, chart) => {
             const t = evt && evt.native && evt.native.target;
-            if (t) t.style.cursor = (posChartTeamIndexAtEvent(chart, evt) !== null && view.periodKind !== 'weekly') ? 'pointer' : 'default';
+            if (t && !(chart && chart._overAxis)) t.style.cursor = 'default';
           },
           scales: {
             x: {
@@ -12276,10 +12331,11 @@
                 </div>
                 <div id="sb-preview-body"></div>
               </div>
-              <div class="flex items-center justify-between px-1"><h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-table-columns text-brand-500"></i> Dashboard</h3>
+              <div id="sb-dash-wrap" class="space-y-3"><div class="flex items-center justify-between px-1"><h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-table-columns text-brand-500"></i> Dashboard</h3>
                 <div class="flex gap-1.5"><button class="sb-btn" data-sb="undo" title="Undo"><i class="fa-solid fa-rotate-left"></i> Undo</button><button class="sb-btn" data-sb="refresh" title="Reload data and redraw"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+                <button class="sb-btn" data-fit="dash" title="Expand the dashboard to fit the screen"><i class="fa-solid fa-expand"></i> Fit</button>
                 <button class="sb-btn" data-sb="clearall" title="Remove every pinned chart"><i class="fa-solid fa-trash"></i> Clear</button></div></div>
-              <div id="sb-dash"></div>
+              <div id="sb-dash"></div></div>
             </div>
           </div></div>
           <div id="sb-sqlview" class="hidden"></div>`;
@@ -12748,5 +12804,258 @@
       startLivePolling();
     });
   </script>
+  <style>
+    /* ===== Click-to-sort headers ===== */
+    th.ndl-sortable { cursor: pointer; user-select: none; }
+    th.ndl-sortable:hover { filter: brightness(1.12); }
+    th.ndl-sortable[data-sorted="asc"]::after { content: " \25B2"; font-size: .7em; opacity: .8; }
+    th.ndl-sortable[data-sorted="desc"]::after { content: " \25BC"; font-size: .7em; opacity: .8; }
+    /* ===== Expand to fit screen ===== */
+    .ndl-fit-btn { position: absolute; top: 4px; right: 4px; z-index: 6; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; border: 1px solid #cbd5e1; background: rgba(255,255,255,.88); color: #475569; font-size: 11px; cursor: pointer; opacity: .75; transition: opacity .15s ease, background-color .15s ease; }
+    .dark .ndl-fit-btn { border-color: #334155; background: rgba(15,23,42,.88); color: #94a3b8; }
+    .ndl-fit-btn:hover { opacity: 1; background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
+    .ndl-fit { position: fixed !important; inset: 0 !important; z-index: 2000 !important; margin: 0 !important; border-radius: 0 !important; overflow: auto !important; max-width: none !important; width: auto !important; height: auto !important; display: flex !important; flex-direction: column; background: #ffffff; padding-top: max(8px, env(safe-area-inset-top)) !important; padding-bottom: max(8px, env(safe-area-inset-bottom)) !important; }
+    .dark .ndl-fit { background: #020617; }
+    .ndl-fit-chain { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; max-height: none !important; display: flex !important; flex-direction: column; }
+    .ndl-fit-size { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; max-height: none !important; overflow: hidden; }
+    .ndl-fit-x { position: fixed; top: max(8px, env(safe-area-inset-top)); right: 10px; z-index: 2001; }
+    .ndl-fit-x.ndl-fit-btn { opacity: 1; width: 32px; height: 32px; }
+    /* Sandbox dashboard: tiles stretch to fill the screen (scroll if there are many) */
+    #sb-dash-wrap.ndl-fit { gap: 8px; padding-left: 12px; padding-right: 12px; }
+    #sb-dash-wrap.ndl-fit #sb-dash { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+    #sb-dash-wrap.ndl-fit #sb-dash > .grid { flex: 1 1 auto; min-height: calc(100dvh - 110px); grid-auto-rows: minmax(220px, 1fr); }
+    #sb-dash-wrap.ndl-fit .sb-tile { display: flex; flex-direction: column; min-height: 0; }
+    #sb-dash-wrap.ndl-fit .sb-tile-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
+    #sb-dash-wrap.ndl-fit .sb-tile-body > div[style*="position:relative"] { flex: 1 1 auto; height: auto !important; min-height: 0; }
+    #sb-dash-wrap.ndl-fit .sb-tile-body .overflow-auto { max-height: none !important; }
+  </style>
+  <script>
+  (function () {
+    'use strict';
+
+    /* ================= CLICK-TO-SORT (all tables with their own sort left alone) ================= */
+    const SORT_SKIP = '#standings-table, #pos-table, #belt-table, #survivor-table';   // own sorting / playback / clickable-column semantics
+    const sortState = new Map();     // table key -> { col, dir }
+    const PIN_RE = /^(total|grand total|avg|average|mean|median|sdev|std|stdev|league|bntotal|tot)\b/i;
+
+    function tableKey(t) {
+      if (t.id) return 'id:' + t.id;
+      const card = t.closest('[data-title]');
+      if (card) return 't:' + card.getAttribute('data-title');
+      const sec = t.closest('section');
+      const all = sec ? [...sec.querySelectorAll('table')] : [];
+      return 's:' + (sec ? sec.id : '') + ':' + all.indexOf(t);
+    }
+    function eligible(t) {
+      if (!t || t.matches(SORT_SKIP)) return false;
+      if (t.closest('#sb-sqlres, #sb-dash, #sb-preview')) return false;           // Sandbox tables have their own sorting
+      if (t.querySelector('th[data-sort], th[data-sc], th[data-sb]')) return false;
+      return !!t.tBodies.length;
+    }
+    // column index of every header cell (rowspan/colspan aware)
+    function headerMap(t) {
+      const map = new Map(), rows = t.tHead ? [...t.tHead.rows] : [];
+      const grid = [];
+      rows.forEach((tr, r) => {
+        let c = 0;
+        [...tr.cells].forEach(th => {
+          while (grid[r] && grid[r][c]) c++;
+          for (let rr = r; rr < r + (th.rowSpan || 1); rr++) for (let cc = c; cc < c + (th.colSpan || 1); cc++) { (grid[rr] = grid[rr] || [])[cc] = true; }
+          map.set(th, c);
+          c += th.colSpan || 1;
+        });
+      });
+      return map;
+    }
+    function cellAt(tr, col) {
+      // map a logical column to the actual cell (colspan aware)
+      let c = 0;
+      for (const td of tr.cells) { const span = td.colSpan || 1; if (col >= c && col < c + span) return td; c += span; }
+      return null;
+    }
+    function parseVal(td) {
+      if (!td) return { n: null, s: '' };
+      const raw = td.getAttribute('data-sort-val');
+      let txt = (raw !== null ? raw : td.textContent || '').replace(/\u00a0/g, ' ').trim();
+      if (!txt || /^[\u2014\u2013\-–—]+$/.test(txt) || /^(n\/a|na|null)$/i.test(txt)) return { n: null, s: '' };
+      let m = txt.match(/^(\d+)-(\d+)(?:-(\d+))?$/);                        // W-L-T record -> win %
+      if (m) { const w = +m[1], l = +m[2], tt = +(m[3] || 0), g = w + l + tt; return { n: g ? (w + tt / 2) / g : 0, s: txt, n2: w }; }
+      m = txt.replace(/,/g, '').match(/^[#S$+\u2212]?\s*(-?\d+(?:\.\d+)?)\s*(?:%|st|nd|rd|th)?\b/i);
+      if (m && /^[#S$+\u2212\-\d.]/i.test(txt.replace(/,/g, ''))) {
+        let v = parseFloat(m[1]); if (/^\u2212/.test(txt)) v = -Math.abs(v);
+        return { n: v, s: txt };
+      }
+      return { n: null, s: txt.toLowerCase() };
+    }
+    function bodyRows(t) { const out = []; [...t.tBodies].forEach(b => out.push(...b.rows)); return out; }
+    function isPinned(tr, ncols) {
+      if (tr.closest('tfoot') || tr.hasAttribute('data-nosort')) return true;
+      if (tr.cells.length === 1 && (tr.cells[0].colSpan || 1) > 1) return true;          // separators
+      const first = (tr.cells[0] && tr.cells[0].textContent || '').trim();
+      return PIN_RE.test(first);
+    }
+    function applySort(t, st) {
+      const rows = bodyRows(t);
+      if (!rows.length) return;
+      rows.forEach((tr, i) => { if (tr._ndlIdx === undefined) tr._ndlIdx = i; });
+      const slots = rows.map((tr, i) => ({ tr, i, pin: isPinned(tr) }));
+      const free = slots.filter(x => !x.pin).map(x => x.tr);
+      let ordered;
+      if (!st) ordered = free.slice().sort((a, b) => a._ndlIdx - b._ndlIdx);
+      else {
+        const vals = new Map(free.map(tr => [tr, parseVal(cellAt(tr, st.col))]));
+        const numeric = free.some(tr => vals.get(tr).n !== null);
+        const sign = st.dir === 'asc' ? 1 : -1;
+        ordered = free.slice().sort((a, b) => {
+          const x = vals.get(a), y = vals.get(b);
+          const xe = numeric ? x.n === null : !x.s, ye = numeric ? y.n === null : !y.s;
+          if (xe !== ye) return xe ? 1 : -1;                                         // blanks always last
+          let d = 0;
+          if (numeric) { d = x.n - y.n; if (!d && x.n2 !== undefined) d = (x.n2 || 0) - (y.n2 || 0); }
+          else d = x.s.localeCompare(y.s, undefined, { numeric: true });
+          return d ? d * sign : a._ndlIdx - b._ndlIdx;
+        });
+      }
+      // pinned rows keep their slot; everything else is refilled in sorted order
+      const fixed = new Map(slots.filter(x => x.pin).map(x => [x.i, x.tr]));
+      const parents = rows.map(tr => tr.parentNode);
+      let k = 0;
+      const next = rows.map((_, i) => fixed.has(i) ? fixed.get(i) : ordered[k++]);
+      const frag = new Map();
+      next.forEach((tr, i) => { const p = parents[i]; if (!frag.has(p)) frag.set(p, []); frag.get(p).push(tr); });
+      // rows may belong to several tbody sections: keep each slot's original parent
+      next.forEach((tr, i) => { const p = parents[i]; p.appendChild(tr); });
+      t._ndlApplied = true;
+    }
+    function paint(t, st) {
+      const map = headerMap(t);
+      map.forEach((c, th) => {
+        if (th.classList.contains('hist-stat-group-th') || th.hasAttribute('data-csv-skip')) return;
+        th.classList.add('ndl-sortable');
+        if (st && st.col === c && !(th.rowSpan === 1 && map.size && [...map.keys()].some(o => o !== th && map.get(o) === c && o.parentNode.rowIndex > th.parentNode.rowIndex))) th.setAttribute('data-sorted', st.dir);
+        else th.removeAttribute('data-sorted');
+      });
+    }
+    function enhance(t) {
+      if (!eligible(t)) return;
+      const key = tableKey(t), st = sortState.get(key) || null;
+      if (!t._ndlPainted || (st && !t._ndlApplied)) {
+        paint(t, st);
+        if (st && !t._ndlApplied) applySort(t, st);
+        t._ndlPainted = true;
+      }
+    }
+    document.addEventListener('click', e => {
+      const th = e.target.closest && e.target.closest('th');
+      if (!th || e.target.closest('button, a, input, select, label')) return;
+      const t = th.closest('table');
+      if (!t || !eligible(t) || !th.classList.contains('ndl-sortable')) return;
+      const map = headerMap(t), col = map.get(th);
+      if (col === undefined) return;
+      const key = tableKey(t), cur = sortState.get(key);
+      // first look at the column to choose the natural first direction (numbers high->low, text A->Z)
+      const sample = bodyRows(t).find(tr => !isPinned(tr) && parseVal(cellAt(tr, col)).s !== '' || (parseVal(cellAt(tr, col)).n !== null));
+      const numeric = bodyRows(t).some(tr => !isPinned(tr) && parseVal(cellAt(tr, col)).n !== null);
+      const first = numeric ? 'desc' : 'asc', second = numeric ? 'asc' : 'desc';
+      let st;
+      if (!cur || cur.col !== col) st = { col, dir: first };
+      else if (cur.dir === first) st = { col, dir: second };
+      else st = null;                                                                    // third click restores the original order
+      if (st) sortState.set(key, st); else sortState.delete(key);
+      applySort(t, st); paint(t, st);
+      e.stopPropagation();
+    }, true);
+
+    /* ================= EXPAND TO FIT SCREEN ================= */
+    let active = null, closeBtn = null, lockPrev = '';
+    function chartsIn(el) {
+      const out = [];
+      el.querySelectorAll('canvas').forEach(c => { try { const ch = window.Chart && Chart.getChart(c); if (ch) out.push(ch); } catch (e) {} });
+      return out;
+    }
+    function resizeCharts(el) {
+      const go = () => chartsIn(el).forEach(ch => { try { ch.resize(); } catch (e) {} });
+      requestAnimationFrame(() => { go(); requestAnimationFrame(go); });
+      setTimeout(go, 220);
+    }
+    function icon(b, on) { b.innerHTML = '<i class="fa-solid ' + (on ? 'fa-compress' : 'fa-expand') + '"></i>'; b.title = on ? 'Exit full screen (Esc)' : 'Expand to fit screen'; b.setAttribute('aria-label', b.title); }
+    function enter(card, size) {
+      if (active) exit();
+      active = { card, size, chain: [] };
+      card.classList.add('ndl-fit');
+      if (size) {
+        for (let el = size.parentElement; el && el !== card; el = el.parentElement) { el.classList.add('ndl-fit-chain'); active.chain.push(el); }
+        size.classList.add('ndl-fit-size');
+      }
+      lockPrev = document.documentElement.style.overflow;
+      document.documentElement.style.overflow = 'hidden';
+      closeBtn = document.createElement('button');
+      closeBtn.type = 'button'; closeBtn.className = 'ndl-fit-btn ndl-fit-x'; closeBtn.setAttribute('data-html2canvas-ignore', 'true');
+      icon(closeBtn, true); closeBtn.addEventListener('click', exit);
+      document.body.appendChild(closeBtn);
+      document.querySelectorAll('.ndl-fit-btn[data-fit-for]').forEach(b => { if (b.closest('.ndl-fit') === card) icon(b, true); });
+      resizeCharts(card);
+    }
+    function exit() {
+      if (!active) return;
+      const { card, size, chain } = active;
+      card.classList.remove('ndl-fit');
+      chain.forEach(el => el.classList.remove('ndl-fit-chain'));
+      if (size) size.classList.remove('ndl-fit-size');
+      document.querySelectorAll('.ndl-fit-btn[data-fit-for]').forEach(b => icon(b, false));
+      if (closeBtn) { closeBtn.remove(); closeBtn = null; }
+      document.documentElement.style.overflow = lockPrev;
+      active = null;
+      resizeCharts(card);
+      try { window.dispatchEvent(new Event('ndl-fit-exit')); } catch (e) {}
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && active) exit(); });
+
+    function cardOf(canvas) {
+      return canvas.closest('#sb-preview, .sb-tile, [id$="-chart-container"]') || canvas.closest('.rounded-xl') || canvas.parentElement;
+    }
+    function addChartButtons() {
+      document.querySelectorAll('canvas').forEach(c => {
+        if (c.closest('[data-html2canvas-ignore]')) return;
+        const size = c.parentElement;
+        if (!size || size.querySelector(':scope > .ndl-fit-btn')) return;
+        // only live Chart.js charts (skip off-screen export canvases)
+        let isChart = false; try { isChart = !!(window.Chart && Chart.getChart(c)); } catch (e) {}
+        if (!isChart) return;
+        const card = cardOf(c);
+        if (getComputedStyle(size).position === 'static') size.style.position = 'relative';
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'ndl-fit-btn'; b.setAttribute('data-fit-for', 'chart'); b.setAttribute('data-html2canvas-ignore', 'true');
+        icon(b, !!(active && active.card === card));
+        b.addEventListener('click', ev => { ev.stopPropagation(); (active && active.card === card) ? exit() : enter(card, size); });
+        size.appendChild(b);
+        // a re-rendered chart inside a card that is already expanded keeps the expanded layout
+        if (active && active.card === card) { for (let el = size.parentElement; el && el !== card; el = el.parentElement) { el.classList.add('ndl-fit-chain'); active.chain.push(el); } size.classList.add('ndl-fit-size'); active.size = size; }
+      });
+    }
+    // Sandbox dashboard button (markup lives in the Sandbox template)
+    document.addEventListener('click', e => {
+      const b = e.target.closest && e.target.closest('[data-fit="dash"]');
+      if (!b) return;
+      const wrap = document.getElementById('sb-dash-wrap');
+      if (!wrap) return;
+      if (active && active.card === wrap) { exit(); b.innerHTML = '<i class="fa-solid fa-expand"></i> Fit'; }
+      else { enter(wrap, null); b.innerHTML = '<i class="fa-solid fa-compress"></i> Exit'; }
+    });
+    window.addEventListener('ndl-fit-exit', () => { const b = document.querySelector('[data-fit="dash"]'); if (b) b.innerHTML = '<i class="fa-solid fa-expand"></i> Fit'; });
+
+    /* ================= keep both features alive across re-renders ================= */
+    let timer = null;
+    function sweep() {
+      timer = null;
+      document.querySelectorAll('table').forEach(enhance);
+      addChartButtons();
+    }
+    const mo = new MutationObserver(() => { if (!timer) timer = setTimeout(sweep, 120); });
+    function start() { mo.observe(document.body, { childList: true, subtree: true }); sweep(); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+  })();
+  </script>
+
 </body>
 </html>
