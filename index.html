@@ -807,6 +807,107 @@
     .sb-pre:hover { border-color:#0ea5e9; color:#0284c7; }
     .dark .sb-pre { background:#0f172a; border-color:#334155; color:#cbd5e1; }
     @media (max-width: 639px) { .sb-in { font-size:16px; } }
+
+    /* ===== Standings subtabs: Schedule + Playoffs ===== */
+    .sch-wrap { display: flex; gap: 8px; align-items: flex-start; }
+    .sch-sel { flex: 0 0 100%; min-width: 0; transition: flex-basis .32s cubic-bezier(.22, 1, .36, 1); }
+    .sch-wrap.compact .sch-sel { flex-basis: 62px; position: sticky; top: calc(var(--hdr-h, 118px) + 8px); }
+    @media (min-width: 640px) { .sch-wrap.compact .sch-sel { flex-basis: 136px; } }
+    .sch-sel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #64748b; padding: 2px 2px 8px; }
+    .sch-wrap.compact .sch-sel-title { display: none; }
+    .sch-sel-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    .sch-wrap.compact .sch-sel-list { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .sch-mbtn { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; padding: 10px 12px 10px 16px; border-radius: .6rem; border: 1px solid #cbd5e1; background: #ffffff; cursor: pointer; overflow: hidden; min-width: 0; transition: border-color .15s ease, background-color .15s ease, padding .3s ease; }
+    .dark .sch-mbtn { border-color: #1e293b; background: #020617; }
+    .sch-mbtn:hover { border-color: #0ea5e9; }
+    .sch-mbtn-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+    .sch-mbtn-name { font-size: 14px; font-weight: 800; line-height: 1.15; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sch-mbtn-team { font-size: 11px; color: #64748b; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dark .sch-mbtn-team { color: #94a3b8; }
+    .sch-mbtn-meta { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 600; color: #475569; }
+    .dark .sch-mbtn-meta { color: #cbd5e1; }
+    .sch-wrap.compact .sch-mbtn { padding: 5px 3px 5px 9px; border-radius: .45rem; }
+    .sch-wrap.compact .sch-mbtn-name { font-size: 10.5px; text-overflow: clip; }
+    .sch-wrap.compact .sch-mbtn-team { display: none; }
+    .sch-wrap.compact .sch-mbtn-meta { font-size: 9px; }
+    .sch-wrap.compact .sch-mbtn-bar { width: 3px; }
+    .sch-mbtn.on { box-shadow: inset 0 0 0 1px currentColor; }
+    .sch-main { flex: 1 1 0; min-width: 0; display: none; }
+    .sch-wrap.compact .sch-main { display: block; animation: schIn .3s ease both; }
+    @keyframes schIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .sch-wrap.compact .sch-main { animation: none; } .sch-sel { transition: none; } }
+    .sch-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: .75rem; overflow-x: auto; box-shadow: 0 10px 25px -10px rgba(15, 23, 42, .25); }
+    .dark .sch-card { background: #020617; border-color: #1e293b; }
+    .sch-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .sch-table th { background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 6px 6px; border-bottom: 2px solid #cbd5e1; white-space: nowrap; text-align: center; }
+    .dark .sch-table th { background: #0f172a; color: #94a3b8; border-bottom-color: #334155; }
+    .sch-table td { padding: 4px 6px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; color: #0f172a; }
+    .dark .sch-table td { border-bottom-color: #1e293b; color: #f8fafc; }
+    .sch-game.sch-click { cursor: pointer; }
+    .sch-game.sch-click:hover td { filter: brightness(.95); }
+    .dark .sch-game.sch-click:hover td { filter: brightness(1.12); }
+    .sch-game.sch-fut td { opacity: .62; }
+    .sch-game tr.sch-opp td { border-bottom: 2px solid #cbd5e1; }
+    .dark .sch-game tr.sch-opp td { border-bottom-color: #334155; }
+    .sch-me td { font-weight: 800; }
+    .sch-name { text-align: left; font-weight: 800; max-width: 88px; overflow: hidden; text-overflow: ellipsis; }
+    .sch-wk { text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 800; color: #64748b; border-right: 1px solid #e2e8f0; }
+    .dark .sch-wk { border-right-color: #1e293b; }
+    .sch-rk { text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; color: #475569; }
+    .dark .sch-rk { color: #cbd5e1; }
+    .sch-rec { text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
+    .sch-pts { text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
+    .sch-res { text-align: center; border-right: 1px solid #e2e8f0; }
+    .dark .sch-res { border-right-color: #1e293b; }
+    .sch-chip { display: inline-block; min-width: 24px; text-align: center; padding: 2px 6px; border-radius: 6px; font-weight: 800; font-size: 11px; border: 1px solid transparent; line-height: 1.2; }
+    .sch-chip.w { background: rgba(34, 197, 94, .22); color: #15803d; border-color: rgba(34, 197, 94, .55); }
+    .dark .sch-chip.w { color: #4ade80; }
+    .sch-chip.t { background: rgba(250, 204, 21, .30); color: #a16207; border-color: rgba(234, 179, 8, .65); }
+    .dark .sch-chip.t { color: #facc15; }
+    .sch-chip.l { background: rgba(239, 68, 68, .20); color: #b91c1c; border-color: rgba(239, 68, 68, .55); }
+    .dark .sch-chip.l { color: #f87171; }
+    .sch-chip.live { background: rgba(14, 165, 233, .15); color: #0369a1; border-color: rgba(14, 165, 233, .5); font-size: 9px; }
+    .dark .sch-chip.live { color: #38bdf8; }
+    .sch-chip.fut { background: transparent; color: #94a3b8; border-color: #cbd5e1; }
+    .dark .sch-chip.fut { border-color: #334155; }
+    .sch-sep td { background: rgba(148, 163, 184, .14); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #64748b; padding: 3px 8px; text-align: left; }
+    .sch-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; border: 1px solid #cbd5e1; color: #475569; background: transparent; }
+    .dark .sch-pill { border-color: #334155; color: #cbd5e1; }
+
+    /* Playoff brackets */
+    .po-season { background: #ffffff; border: 1px solid #e2e8f0; border-radius: .75rem; padding: 10px 12px 12px; box-shadow: 0 10px 25px -10px rgba(15, 23, 42, .25); }
+    .dark .po-season { background: #020617; border-color: #1e293b; }
+    .po-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+    .po-canvas { position: relative; }
+    .bk-svg { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+    .bk-line { fill: none; stroke: #94a3b8; stroke-width: 1; }
+    .dark .bk-line { stroke: #475569; }
+    .bk-line.dashed { stroke-dasharray: 3 3; }
+    .bk-line.adv { stroke: #0ea5e9; stroke-width: 1.4; }
+    .bk-card { position: absolute; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; z-index: 1; overflow: hidden; }
+    .dark .bk-card { border-color: #334155; background: #020617; }
+    .bk-card.bk-click { cursor: pointer; }
+    .bk-card.bk-click:hover { border-color: #0ea5e9; box-shadow: 0 0 0 1px #0ea5e9; }
+    .bk-card.bye { background: transparent; border-style: dashed; }
+    .bk-cap { position: absolute; z-index: 1; font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; white-space: nowrap; pointer-events: none; }
+    .bk-colh { position: absolute; top: 0; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: #64748b; white-space: nowrap; }
+    .bk-row { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 6px; font-size: 11px; }
+    .bk-row + .bk-row { border-top: 1px solid #e2e8f0; }
+    .dark .bk-row + .bk-row { border-top-color: #1e293b; }
+    .bk-row.win { background: rgba(34, 197, 94, .11); }
+    .bk-row.lose .bk-name, .bk-row.lose .bk-pts { opacity: .5; }
+    .bk-seed { width: 14px; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; font-weight: 700; color: #94a3b8; flex-shrink: 0; }
+    .bk-name { flex: 1 1 0; min-width: 0; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bk-row.tbd .bk-name { font-weight: 500; font-style: italic; color: #94a3b8; }
+    .bk-pts { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; font-size: 11px; flex-shrink: 0; min-width: 36px; text-align: right; color: #0f172a; }
+    .dark .bk-pts { color: #f1f5f9; }
+    .bk-place { font-size: 9px; font-weight: 800; color: #64748b; flex-shrink: 0; }
+    .bk-bye { margin-left: auto; font-size: 9px; font-weight: 800; letter-spacing: .08em; color: #94a3b8; }
+    .po-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+    .po-chip { flex-shrink: 0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 9999px; border: 1px solid #cbd5e1; color: #475569; background: transparent; cursor: pointer; }
+    .dark .po-chip { border-color: #334155; color: #94a3b8; }
+    .po-chip:hover { border-color: #0ea5e9; color: #0284c7; }
+    .po-chip.on { background: #0284c7; border-color: #0284c7; color: #ffffff; }
   </style>
 </head>
 
@@ -925,6 +1026,15 @@
     <!-- STANDINGS TAB CONTENT -->
     <section id="tab-standings" class="tab-content space-y-3">
       <div class="flex items-center justify-between gap-2 px-1">
+        <div class="pos-mode-slider" id="st-sub-slider" style="--n:3" role="tablist" aria-label="Standings views">
+          <div class="pos-mode-thumb" id="st-sub-thumb"></div>
+          <button type="button" class="pos-mode-btn active" data-st-sub="standings" role="tab" aria-selected="true">Standings</button>
+          <button type="button" class="pos-mode-btn" data-st-sub="schedule" role="tab" aria-selected="false">Schedule</button>
+          <button type="button" class="pos-mode-btn" data-st-sub="playoffs" role="tab" aria-selected="false">Playoffs</button>
+        </div>
+      </div>
+      <div id="st-pane-standings" class="space-y-3">
+      <div class="flex items-center justify-between gap-2 px-1">
         <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
           <i class="fa-solid fa-list-ol text-brand-500"></i> League Standings
         </h2>
@@ -956,6 +1066,26 @@
           </thead>
           <tbody id="standings-tbody"></tbody>
         </table>
+      </div>
+      </div>
+
+      <div id="st-pane-schedule" class="hidden">
+        <div id="sch-wrap" class="sch-wrap">
+          <div id="sch-sel" class="sch-sel"></div>
+          <div id="sch-main" class="sch-main"></div>
+        </div>
+      </div>
+
+      <div id="st-pane-playoffs" class="hidden space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div class="pos-mode-slider" id="po-br-slider" style="--n:2" role="tablist" aria-label="Bracket">
+            <div class="pos-mode-thumb" id="po-br-thumb"></div>
+            <button type="button" class="pos-mode-btn active" data-po-br="champ" role="tab" aria-selected="true">Championship</button>
+            <button type="button" class="pos-mode-btn" data-po-br="cons" role="tab" aria-selected="false">Consolation</button>
+          </div>
+        </div>
+        <div id="po-year-chips" class="po-chips px-1"></div>
+        <div id="po-seasons" class="space-y-4"></div>
       </div>
     </section>
 
@@ -2164,7 +2294,7 @@
       updateUrlHash();
       try {
         switch (FilterEngine.activeTab()) {
-          case 'standings': renderStandingsTable(); break;
+          case 'standings': renderStandingsSection(); break;
           case 'positions': renderPositionsTab(); break;
           case 'survivor': if (STATE.survivor && STATE.survivor.chartInstance) applySurvivorHighlight(); break;
           case 'wins_above': if (STATE.wae && STATE.wae.chartInstance) applyWaeHighlight(); break;
@@ -2200,6 +2330,7 @@
       p.set('wmax', f.weekMax);
       p.set('hcw', f.hideCW ? 1 : 0);
       if (getSelectedManagers().length) p.set('mgr', getSelectedManagers().join(','));
+      if (tab === 'standings') { p.set('ssub', STATE.st.sub); if (STATE.st.sub === 'playoffs') p.set('pbr', STATE.st.poBr); }
       if (tab === 'live_prob' && f.matchup) p.set('mu', f.matchup);
       if (tab === 'sandbox' && STATE.sandbox) p.set('sb', sbEnc(STATE.sandbox.cfg));
       if (tab === 'positions') {
@@ -2234,6 +2365,8 @@
       }
       const activeTab = FilterEngine.activeTab();
 
+      STATE.st.sub = ST_SUBS.includes(p.get('ssub')) ? p.get('ssub') : 'standings';
+      STATE.st.poBr = p.get('pbr') === 'cons' ? 'cons' : 'champ';
       if (p.has('psub')) STATE.positions.sub = String(p.get('psub')).toLowerCase() === 'historical' ? 'historical' : 'season';
       const rawYearParam = p.get('year') || '';
       {
@@ -3069,7 +3202,7 @@
       if (!STATE.loaded) return;
       try {
         switch (FilterEngine.activeTab()) {
-          case 'standings':  renderStandingsTable(); break;
+          case 'standings':  renderStandingsSection(); break;
           case 'matchups':   renderMatchupsTable(); break;
           case 'survivor':   renderSurvivorTab(); break;
           case 'props':      renderPropsTab(); break;
@@ -3262,7 +3395,7 @@
         return `
           <tr class="${rowClass}">
             <td class="text-center ${rankClass}">${rankStr}</td>
-            <td class="text-left cursor-pointer" onclick="toggleManagerFilter('${r.manager}')">
+            <td class="text-left cursor-pointer" onclick="stPickManager('${r.manager}')">
               <span class="text-xs font-semibold mr-1.5 border-r border-slate-300 dark:border-slate-700 pr-1.5" style="color: ${getManagerColor(r.manager)}">${r.manager}</span>
               <span class="${teamClass}">${r.team_name}</span>${trophyHTML}
             </td>
@@ -3332,6 +3465,654 @@
         badge.innerHTML = '';
         badge.classList.add('hidden'); badge.classList.remove('flex', 'flex-wrap');
       }
+    }
+
+    // ==========================================
+    // STANDINGS SUBTABS: Standings | Schedule | Playoffs
+    // ==========================================
+    STATE.st = { sub: 'standings', poBr: 'champ', _cache: { v: -1, m: {} }, _lastPoKey: null, _poFirst: true };
+    const ST_SUBS = ['standings', 'schedule', 'playoffs'];
+
+    function stCache() {
+      if (STATE.st._cache.v !== STATE.dataVersion) STATE.st._cache = { v: STATE.dataVersion, m: {} };
+      return STATE.st._cache.m;
+    }
+    function stOrd(n) {
+      const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+    function stRgba(hex, a) {
+      const h = String(hex || '#888888').replace('#', '');
+      const f = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const n = parseInt(f, 16);
+      if (isNaN(n)) return `rgba(136,136,136,${a})`;
+      return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+    }
+    function stRec(s) { return `${s.W}-${s.L}${s.T > 0 ? '-' + s.T : ''}`; }
+    function stById(id) { return document.getElementById(id); }
+
+    // ---- subtab switching ----
+    function stSyncSubUI() {
+      const sub = STATE.st.sub;
+      const idx = Math.max(0, ST_SUBS.indexOf(sub));
+      const thumb = stById('st-sub-thumb');
+      if (thumb) thumb.style.transform = `translateX(${idx * 100}%)`;
+      document.querySelectorAll('#st-sub-slider .pos-mode-btn').forEach(btn => {
+        const on = btn.getAttribute('data-st-sub') === sub;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      ST_SUBS.forEach(s => { const p = stById('st-pane-' + s); if (p) p.classList.toggle('hidden', s !== sub); });
+    }
+    function setStandingsSub(sub) {
+      if (!ST_SUBS.includes(sub)) return;
+      STATE.st.sub = sub;
+      stSyncSubUI();
+      updateUrlHash();
+      renderStandingsSection();
+    }
+    function renderStandingsSection() {
+      if (!STATE.loaded) return;
+      stSyncSubUI();
+      const sub = STATE.st.sub;
+      if (sub === 'schedule') renderScheduleSub();
+      else if (sub === 'playoffs') renderPlayoffsSub();
+      else renderStandingsTable();
+    }
+
+    // Clicking a manager in the Standings table filters to that manager and opens their Schedule
+    function stPickManager(mgr) {
+      setSelectedManagers([mgr]);
+      STATE.st.sub = 'schedule';
+      updateFilterBadge();
+      stSyncSubUI();
+      updateUrlHash();
+      renderStandingsSection();
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
+    }
+
+    // Jump to the Matchups tab, scrolled to and expanded on one matchup (any year / week)
+    function stOpenMatchup(year, league, week, a, b) {
+      const f = STATE.filters;
+      const season = FilterEngine.resolveSeason(Number(year), league);
+      f.year = season.year; f.league = season.league; f.seasonKey = season.key;
+      f.weekMax = Number(week);
+      if (f.weekMin > f.weekMax) f.weekMin = f.weekMax;
+      STATE.weekUserOverride = true;
+      f.matchup = null;
+      mxJumpToMatchup(`${a}_${b}`);
+      try { window.scrollTo({ top: 0 }); } catch (e) {}
+    }
+
+    // ---- shared season data (cached per data refresh) ----
+    function stSeasonTeams(yr, lg) {
+      const seen = new Map();
+      (STATE.data.teams || []).forEach(t => {
+        if (!rowMatchesSeason(t, yr, lg)) return;
+        const id = Number(getVal(t, ['team_id']));
+        if (isNaN(id) || seen.has(id)) return;
+        seen.set(id, {
+          id,
+          manager: getManagerName(id, yr, getVal(t, ['manager', 'manager_name']), lg),
+          team_name: getTeamName(id, yr, getVal(t, ['team_name', 'name']), lg)
+        });
+      });
+      return [...seen.values()];
+    }
+
+    // one entry per (week, team): score, opponent, opponent score, team projection
+    function stWeekIndex(yr, lg) {
+      const C = stCache();
+      const key = `wi|${yr}|${normLeague(lg)}`;
+      if (C[key]) return C[key];
+      const map = new Map();
+      (STATE.data.points || []).forEach(r => {
+        if (!rowMatchesSeason(r, yr, lg)) return;
+        const w = Number(getVal(r, ['week', 'WK']));
+        const tid = Number(getVal(r, ['team_id', 'TMA', 'team']));
+        if (!w || isNaN(tid)) return;
+        const k = `${w}_${tid}`;
+        if (map.has(k)) return;
+        map.set(k, {
+          week: w, id: tid,
+          pf: Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0,
+          pa: Number(getVal(r, ['opponent_points', 'TMBPTS'])) || 0,
+          opp: Number(getVal(r, ['opponent_team_id', 'TMB'])) || 0,
+          proj: Number(getVal(r, ['team_projected_points', 'team_proj_points'])) || 0,
+          raw: r
+        });
+      });
+      return (C[key] = map);
+    }
+
+    // standings after week w (cumulative from week 1)
+    function stStandingsAt(yr, lg, w) {
+      const C = stCache();
+      const key = `sa|${yr}|${normLeague(lg)}|${w}`;
+      if (C[key]) return C[key];
+      let list = [];
+      if (w >= 1) { try { list = MetricsEngine.computeStandings(yr, 1, w, lg) || []; } catch (e) { console.warn('[Schedule] standings failed', e); } }
+      return (C[key] = new Map(list.map(r => [r.team_id, r])));
+    }
+
+    // ==========================================
+    // SCHEDULE SUBTAB
+    // ==========================================
+    function stBuildSchedule(teamId, yr, lg) {
+      const f = STATE.filters;
+      const cw = getCurrentYearAndWeek();
+      const curYr = cw ? Number(cw.curYear) : null, curWk = cw ? Number(cw.curWeek) : null;
+      const isCur = curYr !== null && Number(yr) === curYr;
+      const status = w => {
+        if (curYr === null || Number(yr) < curYr) return 'final';
+        if (Number(yr) > curYr) return 'future';
+        return w < curWk ? 'final' : (w === curWk ? 'live' : 'future');
+      };
+      const idx = stWeekIndex(yr, lg);
+      const rows = new Map();
+      idx.forEach(v => {
+        if (v.id !== teamId || v.opp <= 0) return;
+        const st = status(v.week);
+        rows.set(v.week, { week: v.week, opp: v.opp, status: st, pf: st === 'future' ? null : v.pf, pa: st === 'future' ? null : v.pa, proj: v.proj });
+      });
+      (STATE.data.schedule || []).forEach(r => {
+        if (!rowMatchesSeason(r, yr, lg)) return;
+        const w = Number(getVal(r, ['week', 'WK']));
+        const a = Number(getVal(r, ['team_a_id', 'team_a', 'tma']));
+        const b = Number(getVal(r, ['team_b_id', 'team_b', 'tmb']));
+        if (!w || !a || !b || rows.has(w)) return;
+        let opp = 0;
+        if (a === teamId) opp = b; else if (b === teamId) opp = a; else return;
+        rows.set(w, { week: w, opp, status: status(w), pf: null, pa: null, proj: 0 });
+      });
+      // Respect the filter: weeks From..To and "Hide current week". When the To week is the current week or later,
+      // the rest of the scheduled season (future matchups) is included.
+      const upper = (isCur && Number(f.weekMax) >= curWk) ? Infinity : Number(f.weekMax);
+      return [...rows.values()]
+        .filter(r => r.week >= Number(f.weekMin) && r.week <= upper && FilterEngine.gate(yr, r.week))
+        .sort((x, y) => x.week - y.week)
+        .map(r => ({ ...r, oppProj: (idx.get(`${r.week}_${r.opp}`) || {}).proj || 0 }));
+    }
+
+    function renderScheduleSub() {
+      const f = STATE.filters, yr = f.year, lg = f.league;
+      const wrap = stById('sch-wrap'), selEl = stById('sch-sel'), mainEl = stById('sch-main');
+      if (!wrap || !selEl || !mainEl) return;
+      const hdr = document.querySelector('header');
+      if (hdr) document.documentElement.style.setProperty('--hdr-h', hdr.offsetHeight + 'px');
+
+      const teams = stSeasonTeams(yr, lg);
+      if (!teams.length) { selEl.innerHTML = ''; mainEl.innerHTML = ''; wrap.classList.remove('compact'); return; }
+      const psw = getPlayoffStartWeek(yr, lg);
+      const effMax = FilterEngine.effectiveMax(yr, lg);
+      const baseW = Math.max(0, Math.min(effMax, psw - 1));
+      const stand = stStandingsAt(yr, lg, baseW);
+      teams.forEach(t => { const s = stand.get(t.id); t.rank = s ? s.regularRank : 99; t.rec = s ? stRec(s) : '0-0'; });
+      teams.sort((a, b) => a.rank - b.rank || a.manager.localeCompare(b.manager));
+
+      const chosen = getSelectedManagers();
+      const selMgr = chosen.find(m => teams.some(t => t.manager === m)) || null;
+      const missing = (!selMgr && chosen.length) ? chosen[0] : null;
+      const label = activeSeasonDisplayName(yr, lg);
+
+      selEl.innerHTML = `
+        <div class="sch-sel-title">Select a manager${missing ? ` <span class="normal-case tracking-normal font-semibold text-amber-600 dark:text-amber-400">\u00B7 ${escapeHTML(missing)} is not in ${escapeHTML(label)}</span>` : ''}</div>
+        <div class="sch-sel-list">${teams.map(t => {
+          const c = getManagerColor(t.manager);
+          const on = t.manager === selMgr;
+          return `<button type="button" class="sch-mbtn${on ? ' on' : ''}" data-st-mgr="${escapeHTML(t.manager)}" style="${on ? `background:${stRgba(c, 0.12)};color:${c};` : ''}" title="${on ? 'Selected \u2014 tap to clear' : 'View ' + escapeHTML(t.manager) + ' schedule'}" aria-pressed="${on}">
+            <span class="sch-mbtn-bar" style="background:${c}"></span>
+            <span class="sch-mbtn-name" style="color:${c}">${escapeHTML(t.manager)}</span>
+            <span class="sch-mbtn-team">${escapeHTML(t.team_name)}</span>
+            <span class="sch-mbtn-meta">${t.rank < 99 ? '#' + t.rank + ' \u00B7 ' : ''}${t.rec}</span>
+          </button>`;
+        }).join('')}</div>`;
+      wrap.classList.toggle('compact', !!selMgr);
+      if (!selMgr) { mainEl.innerHTML = ''; return; }
+
+      const me = teams.find(t => t.manager === selMgr);
+      const col = getManagerColor(selMgr);
+      const cw = getCurrentYearAndWeek();
+      const curYr = cw ? Number(cw.curYear) : null, curWk = cw ? Number(cw.curWeek) : null;
+      const isCur = curYr !== null && Number(yr) === curYr;
+      const rows = stBuildSchedule(me.id, yr, lg);
+      const meNow = stand.get(me.id);
+      let frChip = '';
+      if (curYr !== null && Number(yr) < curYr) {
+        let fr = null; try { fr = (computeFinalRanks(yr, lg) || {})[me.id]; } catch (e) {}
+        if (fr) frChip = `<span class="sch-pill" title="Final rank">Final #${fr}${getTrophyBadgeHTML(fr)}</span>`;
+      }
+      const head = `
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 px-0.5">
+          <span class="inline-block w-1 h-5 rounded" style="background:${col}"></span>
+          <span class="text-base font-extrabold leading-none" style="color:${col}">${escapeHTML(selMgr)}</span>
+          <span class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[40vw]">${escapeHTML(me.team_name)}</span>
+          <span class="sch-pill">${escapeHTML(label)}</span>
+          <span class="sch-pill font-mono">${meNow ? stRec(meNow) + ' \u00B7 #' + meNow.regularRank : '0-0'}</span>${frChip}
+          <button type="button" id="btn-export-sched-png" title="Download as PNG image" class="ml-auto bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> PNG</button>
+        </div>`;
+
+      if (!rows.length) {
+        mainEl.innerHTML = head + `<div class="sch-card p-6 text-center text-sm text-slate-500 dark:text-slate-400">No matchups for ${escapeHTML(selMgr)} in ${escapeHTML(label)} within the selected weeks. Widen the week filter or pick another year.</div>`;
+        return;
+      }
+
+      const stFor = (id, r) => {
+        const isPO = r.week >= psw;
+        const w = r.status === 'future' ? Math.min(psw - 1, isCur ? curWk - 1 : psw - 1) : Math.min(r.week, psw - 1);
+        const s = w >= 1 ? stStandingsAt(yr, lg, w).get(id) : null;
+        if (!s) return { rk: '\u2014', rec: '0-0', pct: null, isPO };
+        return { rk: (isPO ? 'S' : '#') + s.regularRank, rec: stRec(s), pct: s.winPct, isPO };
+      };
+      const oppName = id => getManagerName(id, yr, '', lg);
+      const fmt = n => (Number(n) || 0).toFixed(2);
+
+      let html = '', sawPO = false;
+      rows.forEach(r => {
+        if (r.week >= psw && !sawPO) { sawPO = true; html += `<tbody><tr class="sch-sep"><td colspan="6">Playoffs \u00B7 rank column shows seed</td></tr></tbody>`; }
+        const om = oppName(r.opp), oc = getManagerColor(om);
+        const a = stFor(me.id, r), b = stFor(r.opp, r);
+        const show = r.status !== 'future' && r.pf !== null;
+        let res = '\u2014', resCls = 'fut', resTip = 'Scheduled';
+        if (r.status === 'live') { res = 'LIVE'; resCls = 'live'; resTip = 'In progress'; }
+        else if (show && (r.pf > 0 || r.pa > 0)) {
+          const o = resolveMatchupOutcome(yr, lg, r.week, me.id, r.opp, r.pf, r.pa);
+          res = o.result; resCls = o.result.toLowerCase(); resTip = o.result === 'W' ? 'Win' : o.result === 'L' ? 'Loss' : 'Tie';
+        }
+        const ptsBg = (pts, proj) => (r.status === 'final' && show && proj > 0) ? HEATMAPS.greenClearRed(pts - proj, -20, 0, 20) : 'transparent';
+        const tip = (pts, proj) => proj > 0 && show ? `Proj ${fmt(proj)} \u00B7 ${pts - proj >= 0 ? '+' : ''}${fmt(pts - proj)}` : '';
+        const recBg = x => x.pct === null ? 'transparent' : HEATMAPS.greenClearRed(x.pct, 0, 0.5, 1);
+        const clickable = r.status !== 'future' && show;
+        const attrs = clickable ? ` data-open="${yr}|${escapeHTML(lg)}|${r.week}|${me.id}|${r.opp}" title="Open this matchup"` : '';
+        html += `
+          <tbody class="sch-game${clickable ? ' sch-click' : ''}${r.status === 'future' ? ' sch-fut' : ''}"${attrs}>
+            <tr class="sch-me">
+              <td class="sch-wk" rowspan="2">${r.week}</td>
+              <td class="sch-res" rowspan="2"><span class="sch-chip ${resCls}" title="${resTip}">${res}</span></td>
+              <td class="sch-name" style="color:${col};border-left:3px solid ${col}">${escapeHTML(selMgr)}</td>
+              <td class="sch-rk" title="${a.isPO ? 'Seed' : 'Rank after this week'}">${a.rk}</td>
+              <td class="sch-rec" style="background-color:${recBg(a)}">${a.rec}</td>
+              <td class="sch-pts" style="background-color:${ptsBg(r.pf, r.proj)}" title="${tip(r.pf, r.proj)}">${show ? fmt(r.pf) : '\u2014'}</td>
+            </tr>
+            <tr class="sch-opp">
+              <td class="sch-name" style="color:${oc};border-left:3px solid ${oc}">${escapeHTML(om)}</td>
+              <td class="sch-rk" title="${b.isPO ? 'Seed' : 'Rank after this week'}">${b.rk}</td>
+              <td class="sch-rec" style="background-color:${recBg(b)}">${b.rec}</td>
+              <td class="sch-pts" style="background-color:${ptsBg(r.pa, r.oppProj)}" title="${tip(r.pa, r.oppProj)}">${show ? fmt(r.pa) : '\u2014'}</td>
+            </tr>
+          </tbody>`;
+      });
+      mainEl.innerHTML = head + `
+        <div class="sch-card" id="sch-table-wrap">
+          <table class="sch-table">
+            <thead><tr><th>WK</th><th>RES</th><th style="text-align:left">MGR</th><th>RK</th><th>W-L-T</th><th style="text-align:right">PTS</th></tr></thead>
+            ${html}
+          </table>
+        </div>
+        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 px-1">Rank &amp; record are as of the end of that week. Scores are shaded against each team\u2019s projection (green +20 \u2192 red \u221220). Tap a game to open it in Matchups.</div>`;
+    }
+
+    // ==========================================
+    // PLAYOFF BRACKET ENGINE (mirrors computeFinalRanks, but exposes every playoff game)
+    // ==========================================
+    function stGetBracket(year, league) {
+      const C = stCache();
+      const key = `bk|${year}|${normLeague(league)}`;
+      if (C[key] !== undefined) return C[key];
+      let bk = null;
+      try { bk = computeBracket(year, league); } catch (e) { console.error('[Playoffs] bracket failed', year, league, e); }
+      return (C[key] = bk);
+    }
+
+    function computeBracket(year, league) {
+      const yr = Number(year), lg = normLeague(league);
+      const cw = getCurrentYearAndWeek();
+      const curYear = cw ? Number(cw.curYear) : null, curWeek = cw ? Number(cw.curWeek) : null;
+
+      const tmap = {};
+      (STATE.data.teams || []).forEach(row => {
+        if (!rowMatchesSeason(row, yr, lg)) return;
+        const tid = Number(getVal(row, ['team_id']));
+        if (isNaN(tid) || tmap[tid]) return;
+        const rowLg = normLeague(getVal(row, ['league'])) || lg;
+        tmap[tid] = {
+          id: tid,
+          manager: getManagerName(tid, yr, getVal(row, ['manager', 'manager_name']), rowLg),
+          team_name: getTeamName(tid, yr, getVal(row, ['team_name', 'name']), rowLg),
+          playoff_start_week: Number(getVal(row, ['playoff_start_week'])) || 15,
+          num_playoff_teams: Number(getVal(row, ['num_playoff_teams'])) || 6
+        };
+      });
+      const ids = Object.keys(tmap).map(Number);
+      if (!ids.length) return null;
+      const sample = tmap[ids[0]];
+      const special21 = is2021Okl(yr, lg);
+      const w1 = special21 ? 15 : sample.playoff_start_week;
+      const numPO = special21 ? 4 : sample.num_playoff_teams;
+      const total = ids.length;
+      const base = { year: yr, league: lg, tmap, total, numPO, playoffStart: w1, matches: [], cols: { champ: [], cons: [] }, notes: { champ: [], cons: [] } };
+      if (numPO !== 4 && numPO !== 6) return Object.assign(base, { unsupported: true });
+
+      const idx = stWeekIndex(yr, lg);
+      const dataWeeks = new Set();
+      idx.forEach(v => { if (v.pf > 0) dataWeeks.add(v.week); });
+      const pts = (w, t) => (idx.get(`${w}_${t}`) || {}).pf || 0;
+
+      // seeds: regular season only (weeks before playoff_start_week), wins -> ties -> PF (same as final_rank_engine)
+      const stats = {};
+      ids.forEach(t => { stats[t] = { wins: 0, ties: 0, pf: 0 }; });
+      let asOfWeek = 0;
+      idx.forEach(v => {
+        if (v.week >= w1 || !stats[v.id]) return;
+        stats[v.id].pf += v.pf;
+        if (v.pf > 0 && v.week > asOfWeek) asOfWeek = v.week;
+        if (v.opp !== 0) {
+          const o = resolveMatchupOutcome(yr, lg, v.week, v.id, v.opp, v.pf, v.pa, v.raw);
+          stats[v.id].wins += o.win; stats[v.id].ties += o.tie;
+        }
+      });
+      const seeded = [...ids].sort((a, b) => (stats[b].wins - stats[a].wins) || (stats[b].ties - stats[a].ties) || (stats[b].pf - stats[a].pf));
+      const seedToId = {}, idToSeed = {};
+      seeded.forEach((t, i) => { seedToId[i + 1] = t; idToSeed[t] = i + 1; });
+      const S = n => seedToId[n];
+
+      const inPlayoffs = curYear === null || yr < curYear || (yr === curYear && curWeek >= w1);
+      const projected = !inPlayoffs;
+      const weekStatus = w => {
+        if (!dataWeeks.has(w)) return 'future';
+        if (curYear === null || yr < curYear) return 'final';
+        if (yr > curYear) return 'future';
+        return w < curWeek ? 'final' : (w === curWeek ? 'live' : 'final');
+      };
+      Object.assign(base, { projected, asOfWeek, seedToId, idToSeed, seeded });
+
+      const matches = base.matches;
+      let n = 0;
+      const T = id => ({ id });
+      const Wn = (m, text) => ({ src: m, as: 'W', text });
+      const Ln = (m, text) => ({ src: m, as: 'L', text });
+      const mk = o => {
+        const m = Object.assign({ id: `m${++n}`, weeks: [o.week], kind: 'game' }, o);
+        m.first = m.weeks[0] === w1;
+        const rs = s => {
+          if (!s) return { id: null, tbd: '' };
+          if (s.id != null) {
+            if (projected && !m.first && m.kind !== 'bye') return { id: null, tbd: `Seed ${idToSeed[s.id]}`, seedHint: idToSeed[s.id], src: s.src, as: s.as || 'W' };
+            return { id: s.id, seed: idToSeed[s.id], src: s.src, as: s.as || 'W' };
+          }
+          if (s.src) {
+            const sm = s.src;
+            if (sm.winner != null) { const id = s.as === 'W' ? sm.winner : sm.loser; return { id, seed: idToSeed[id], src: sm, as: s.as }; }
+            return { id: null, tbd: s.text || `${s.as === 'W' ? 'Winner' : 'Loser'} ${sm.short}`, src: sm, as: s.as };
+          }
+          return { id: null, tbd: s.text || 'TBD' };
+        };
+        m.A = rs(o.a); m.B = rs(o.b);
+        let st = 'final';
+        for (const w of m.weeks) { const s = weekStatus(w); if (s === 'future') { st = 'future'; break; } if (s === 'live') st = 'live'; }
+        if (m.kind === 'bye') st = 'bye';
+        m.status = st;
+        m.ptsA = m.A.id != null ? m.weeks.reduce((a, w) => a + pts(w, m.A.id), 0) : null;
+        m.ptsB = m.B.id != null ? m.weeks.reduce((a, w) => a + pts(w, m.B.id), 0) : null;
+        m.winner = null; m.loser = null;
+        if (st === 'final' && m.A.id != null && m.B.id != null) {
+          let aWins;
+          if (m.ptsA > m.ptsB) aWins = true; else if (m.ptsB > m.ptsA) aWins = false; else aWins = idToSeed[m.A.id] < idToSeed[m.B.id];
+          m.winner = aWins ? m.A.id : m.B.id; m.loser = aWins ? m.B.id : m.A.id;
+        }
+        matches.push(m);
+        return m;
+      };
+      const wkLbl = ws => ws.length > 1 ? `Wk ${ws[0]}\u2013${ws[ws.length - 1]}` : `Wk ${ws[0]}`;
+      const noGame = (br, seedN, rank, why) => { if (S(seedN) != null) base.notes[br].push({ id: S(seedN), seed: seedN, rank, why }); };
+
+      if (special21) {
+        // 2021 OKL: wk15 semis (seeds 5 & 6 exempt), wk16+17 combined totals for the finals
+        const sf1 = mk({ br: 'champ', col: 0, order: 0, week: 15, name: 'Semifinal', short: 'SF1', a: T(S(1)), b: T(S(4)) });
+        const sf2 = mk({ br: 'champ', col: 0, order: 1, week: 15, name: 'Semifinal', short: 'SF2', a: T(S(2)), b: T(S(3)) });
+        mk({ br: 'champ', col: 1, order: 0, weeks: [16, 17], week: 17, name: 'Championship', short: 'Final', places: [1, 2], a: Wn(sf1), b: Wn(sf2), layoutSrc: [sf1, sf2] });
+        mk({ br: 'champ', col: 1, order: 1, weeks: [16, 17], week: 17, name: '3rd Place', short: '3rd', places: [3, 4], a: Ln(sf1), b: Ln(sf2) });
+        noGame('champ', 5, 5, 'Exempt'); noGame('champ', 6, 6, 'Exempt');
+        base.cols.champ = [{ col: 0, title: `${wkLbl([15])} \u00B7 Semifinals` }, { col: 1, title: `${wkLbl([16, 17])} \u00B7 Finals (2-wk total)` }];
+        const c1 = mk({ br: 'cons', col: 0, order: 0, week: 15, name: 'Toilet Bowl Semi', short: 'TB1', a: T(S(7)), b: T(S(10)) });
+        const c2 = mk({ br: 'cons', col: 0, order: 1, week: 15, name: 'Toilet Bowl Semi', short: 'TB2', a: T(S(8)), b: T(S(9)) });
+        mk({ br: 'cons', col: 1, order: 0, weeks: [16, 17], week: 17, name: '7th Place', short: '7th', places: [7, 8], a: Wn(c1), b: Wn(c2), layoutSrc: [c1, c2] });
+        mk({ br: 'cons', col: 1, order: 1, weeks: [16, 17], week: 17, name: '9th Place', short: '9th', places: [9, 10], a: Ln(c1), b: Ln(c2) });
+        base.cols.cons = [{ col: 0, title: `${wkLbl([15])} \u00B7 Toilet Bowl Semis` }, { col: 1, title: `${wkLbl([16, 17])} \u00B7 Placement (2-wk total)` }];
+      } else {
+        const w2 = w1 + 1, w3 = w1 + 2;
+        if (numPO === 4) {
+          const sf1 = mk({ br: 'champ', col: 0, order: 0, week: w1, name: 'Semifinal', short: 'SF1', a: T(S(1)), b: T(S(4)) });
+          const sf2 = mk({ br: 'champ', col: 0, order: 1, week: w1, name: 'Semifinal', short: 'SF2', a: T(S(2)), b: T(S(3)) });
+          mk({ br: 'champ', col: 1, order: 0, week: w2, name: 'Championship', short: 'Final', places: [1, 2], a: Wn(sf1), b: Wn(sf2), layoutSrc: [sf1, sf2] });
+          mk({ br: 'champ', col: 1, order: 1, week: w2, name: '3rd Place', short: '3rd', places: [3, 4], a: Ln(sf1), b: Ln(sf2) });
+          base.cols.champ = [{ col: 0, title: `${wkLbl([w1])} \u00B7 Semifinals` }, { col: 1, title: `${wkLbl([w2])} \u00B7 Finals` }];
+          if (total === 8 || total === 10) {
+            if (total === 10) { noGame('cons', 9, 9, 'No game'); noGame('cons', 10, 10, 'No game'); }
+            const c1 = mk({ br: 'cons', col: 0, order: 0, week: w1, name: 'Consolation Semi', short: 'CS1', a: T(S(5)), b: T(S(8)) });
+            const c2 = mk({ br: 'cons', col: 0, order: 1, week: w1, name: 'Consolation Semi', short: 'CS2', a: T(S(6)), b: T(S(7)) });
+            mk({ br: 'cons', col: 1, order: 0, week: w2, name: '5th Place', short: '5th', places: [5, 6], a: Wn(c1), b: Wn(c2), layoutSrc: [c1, c2] });
+            mk({ br: 'cons', col: 1, order: 1, week: w2, name: '7th Place', short: '7th', places: [7, 8], a: Ln(c1), b: Ln(c2) });
+            base.cols.cons = [{ col: 0, title: `${wkLbl([w1])} \u00B7 Consolation Semis` }, { col: 1, title: `${wkLbl([w2])} \u00B7 Placement` }];
+          } else {
+            for (let s = numPO + 1; s <= total; s++) noGame('cons', s, s, 'No game');
+          }
+        } else {
+          // 6 playoff teams: seeds 1 & 2 get a bye in week 1; semifinals re-seed
+          const b1 = mk({ br: 'champ', kind: 'bye', col: 0, order: 0, week: w1, short: 'Bye', a: T(S(1)), b: null });
+          const qf1 = mk({ br: 'champ', col: 0, order: 1, week: w1, name: 'Quarterfinal', short: 'QF1', a: T(S(4)), b: T(S(5)) });
+          const qf2 = mk({ br: 'champ', col: 0, order: 2, week: w1, name: 'Quarterfinal', short: 'QF2', a: T(S(3)), b: T(S(6)) });
+          const b2 = mk({ br: 'champ', kind: 'bye', col: 0, order: 3, week: w1, short: 'Bye', a: T(S(2)), b: null });
+          let sf1Opp = null, sf2Opp = null;
+          if (qf1.winner != null && qf2.winner != null) {
+            const qfW = [qf1.winner, qf2.winner].sort((x, y) => idToSeed[x] - idToSeed[y]);
+            const m1 = idx.get(`${w2}_${S(1)}`);
+            const o1 = m1 ? m1.opp : 0;
+            if (qfW.includes(o1)) { sf1Opp = o1; sf2Opp = (o1 === qfW[1]) ? qfW[0] : qfW[1]; }
+            else { sf1Opp = qfW[1]; sf2Opp = qfW[0]; }
+          }
+          const srcOf = id => id === qf1.winner ? qf1 : (id === qf2.winner ? qf2 : null);
+          const sf1 = mk({ br: 'champ', col: 1, order: 0, week: w2, name: 'Semifinal', short: 'SF1', a: { id: S(1), src: b1, as: 'W' }, b: sf1Opp != null ? { id: sf1Opp, src: srcOf(sf1Opp), as: 'W' } : { tbd: 'Lowest seed left' }, layoutSrc: [b1, qf1] });
+          const sf2 = mk({ br: 'champ', col: 1, order: 1, week: w2, name: 'Semifinal', short: 'SF2', a: { id: S(2), src: b2, as: 'W' }, b: sf2Opp != null ? { id: sf2Opp, src: srcOf(sf2Opp), as: 'W' } : { tbd: 'Highest seed left' }, layoutSrc: [qf2, b2] });
+          mk({ br: 'champ', col: 1, order: 2, week: w2, name: '5th Place', short: '5th', places: [5, 6], a: Ln(qf1), b: Ln(qf2) });
+          mk({ br: 'champ', col: 2, order: 0, week: w3, name: 'Championship', short: 'Final', places: [1, 2], a: Wn(sf1), b: Wn(sf2), layoutSrc: [sf1, sf2] });
+          mk({ br: 'champ', col: 2, order: 1, week: w3, name: '3rd Place', short: '3rd', places: [3, 4], a: Ln(sf1), b: Ln(sf2) });
+          base.cols.champ = [{ col: 0, title: `${wkLbl([w1])} \u00B7 Quarterfinals` }, { col: 1, title: `${wkLbl([w2])} \u00B7 Semifinals` }, { col: 2, title: `${wkLbl([w3])} \u00B7 Finals` }];
+          if (total === 10) {
+            const c1 = mk({ br: 'cons', col: 0, order: 0, week: w2, name: 'Consolation Semi', short: 'CS1', a: T(S(7)), b: T(S(10)) });
+            const c2 = mk({ br: 'cons', col: 0, order: 1, week: w2, name: 'Consolation Semi', short: 'CS2', a: T(S(8)), b: T(S(9)) });
+            mk({ br: 'cons', col: 1, order: 0, week: w3, name: '7th Place', short: '7th', places: [7, 8], a: Wn(c1), b: Wn(c2), layoutSrc: [c1, c2] });
+            mk({ br: 'cons', col: 1, order: 1, week: w3, name: '9th Place', short: '9th', places: [9, 10], a: Ln(c1), b: Ln(c2) });
+            base.cols.cons = [{ col: 0, title: `${wkLbl([w2])} \u00B7 Consolation Semis` }, { col: 1, title: `${wkLbl([w3])} \u00B7 Placement` }];
+          } else {
+            for (let s = numPO + 1; s <= total; s++) noGame('cons', s, s, 'No game');
+          }
+        }
+      }
+
+      // Champion + sanity check against final_rank_engine
+      const fin = matches.find(m => m.places && m.places[0] === 1);
+      base.champion = fin && fin.winner != null ? fin.winner : null;
+      base.runnerUp = fin && fin.loser != null ? fin.loser : null;
+      if (!projected && matches.every(m => m.status === 'final' || m.status === 'bye')) {
+        try {
+          const eng = computeFinalRanks(yr, lg);
+          if (eng) {
+            const mine = {};
+            matches.forEach(m => { if (m.places && m.winner != null) { mine[m.winner] = m.places[0]; mine[m.loser] = m.places[1]; } });
+            ['champ', 'cons'].forEach(b => base.notes[b].forEach(x => { mine[x.id] = x.rank; }));
+            const bad = Object.keys(eng).filter(t => mine[t] !== eng[t]);
+            if (bad.length) console.warn(`[Playoffs] bracket vs final_rank_engine mismatch for ${yr} ${lg}`, { engine: eng, bracket: mine });
+          }
+        } catch (e) { /* sanity check only */ }
+      }
+      return base;
+    }
+
+    function stBracketHTML(bk, brKey) {
+      const ms = bk.matches.filter(m => m.br === brKey);
+      const notes = bk.notes[brKey] || [];
+      const noteHTML = notes.length ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1"><span class="font-bold uppercase tracking-wider text-[10px]">${notes.every(x => x.why === 'Exempt') ? 'Exempt from bracket' : 'No game'}</span>${notes.map(x => `<span><span class="font-mono text-slate-400">S${x.seed}</span> <strong style="color:${getManagerColor(bk.tmap[x.id].manager)}">${escapeHTML(bk.tmap[x.id].manager)}</strong> <span class="text-slate-400">(${stOrd(x.rank)})</span></span>`).join('')}</div>` : '';
+      if (!ms.length) return `<div class="text-xs text-slate-500 dark:text-slate-400 py-3">${brKey === 'cons' ? 'No consolation games this season.' : 'No bracket games found.'}</div>${noteHTML}`;
+
+      const CW = 188, CH = 50, BH = 26, GX = 32, GY = 16, TOP = 36;
+      const pos = {};
+      const cols = [...new Set(ms.map(m => m.col))].sort((a, b) => a - b);
+      cols.forEach(c => {
+        let cursor = 0;
+        ms.filter(m => m.col === c).sort((a, b) => a.order - b.order).forEach(m => {
+          const h = m.kind === 'bye' ? BH : CH;
+          let y = cursor;
+          const anchors = (m.layoutSrc || []).map(s => pos[s.id]).filter(Boolean);
+          if (anchors.length) { const mid = anchors.reduce((a, p) => a + p.y + p.h / 2, 0) / anchors.length; y = Math.max(cursor, mid - h / 2); }
+          pos[m.id] = { x: c * (CW + GX), y, h };
+          cursor = y + h + GY;
+        });
+      });
+      const width = cols.length * CW + (cols.length - 1) * GX;
+      const height = TOP + Math.max(...Object.values(pos).map(p => p.y + p.h)) + 8;
+
+      // connector lines (thin elbow lines, dashed where a loser advances)
+      let paths = '';
+      ms.forEach(m => {
+        [['A', 0], ['B', 1]].forEach(([k, i]) => {
+          const slot = m[k];
+          if (!slot || !slot.src || !pos[slot.src.id] || !pos[m.id] || slot.src.br !== m.br) return;
+          const sp = pos[slot.src.id], tp = pos[m.id];
+          const x1 = sp.x + CW, y1 = TOP + sp.y + sp.h / 2;
+          const x2 = tp.x, y2 = TOP + tp.y + (m.kind === 'bye' ? tp.h / 2 : (i === 0 ? 12.5 : 37.5));
+          const xm = x1 + (x2 - x1) / 2;
+          const adv = slot.id != null && slot.src.status === 'final';
+          paths += `<path class="bk-line${slot.as === 'L' ? ' dashed' : ''}${adv ? ' adv' : ''}" d="M${x1} ${y1}H${xm}V${y2}H${x2}"/>`;
+        });
+      });
+
+      const season = FilterEngine.resolveSeason(bk.year, bk.league);
+      const rowHTML = (m, slot, side) => {
+        const decided = m.winner != null;
+        const isW = decided && slot.id === m.winner, isL = decided && slot.id === m.loser;
+        if (slot.id == null) return `<div class="bk-row tbd"><span class="bk-seed">${slot.seedHint != null ? slot.seedHint : ''}</span><span class="bk-name">${escapeHTML(slot.tbd || 'TBD')}</span></div>`;
+        const t = bk.tmap[slot.id];
+        const col = getManagerColor(t.manager);
+        const place = (decided && m.places) ? m.places[isW ? 0 : 1] : null;
+        const trophy = (place && place <= 3) ? getTrophyBadgeHTML(place) : '';
+        const score = (m.status === 'final' || m.status === 'live') ? (side === 'A' ? m.ptsA : m.ptsB) : null;
+        return `<div class="bk-row${isW ? ' win' : ''}${isL ? ' lose' : ''}" title="${escapeHTML(t.team_name)}"><span class="bk-seed">${slot.seed != null ? slot.seed : ''}</span><span class="bk-name" style="color:${col}">${escapeHTML(t.manager)}${trophy}</span>${place ? `<span class="bk-place">${stOrd(place)}</span>` : ''}<span class="bk-pts">${score !== null && (score > 0 || m.status === 'final') ? score.toFixed(1) : ''}</span></div>`;
+      };
+      let cards = '', caps = '';
+      ms.forEach(m => {
+        const p = pos[m.id];
+        const style = `left:${p.x}px;top:${TOP + p.y}px;width:${CW}px;height:${p.h}px`;
+        if (m.kind === 'bye') {
+          const t = bk.tmap[m.A.id];
+          cards += `<div class="bk-card bye" style="${style}"><div class="bk-row" style="height:${p.h - 2}px"><span class="bk-seed">${m.A.seed != null ? m.A.seed : ''}</span><span class="bk-name" style="color:${getManagerColor(t.manager)}" title="${escapeHTML(t.team_name)}">${escapeHTML(t.manager)}</span><span class="bk-bye">BYE</span></div></div>`;
+          return;
+        }
+        const ready = (m.status === 'final' || m.status === 'live') && m.A.id != null && m.B.id != null;
+        const attrs = ready ? ` data-open="${bk.year}|${escapeHTML(season.league)}|${m.week}|${m.A.id}|${m.B.id}" title="Open this matchup" role="link"` : '';
+        cards += `<div class="bk-card${ready ? ' bk-click' : ''}" style="${style}"${attrs}>${rowHTML(m, m.A, 'A')}${rowHTML(m, m.B, 'B')}</div>`;
+        const capTxt = m.places ? `${m.name} \u00B7 ${stOrd(m.places[0])}/${stOrd(m.places[1])}` : m.name;
+        caps += `<div class="bk-cap" style="left:${p.x + 2}px;top:${TOP + p.y - 12}px">${escapeHTML(capTxt)}</div>`;
+      });
+      const colHs = (bk.cols[brKey] || []).map(c => `<div class="bk-colh" style="left:${c.col * (CW + GX)}px;width:${CW}px">${escapeHTML(c.title)}</div>`).join('');
+      return `<div class="po-scroll"><div class="po-canvas" data-po-canvas="${bk.year}|${bk.league}" style="width:${width}px;height:${height}px"><svg class="bk-svg" width="${width}" height="${height}">${paths}</svg>${colHs}${caps}${cards}</div></div>${noteHTML}`;
+    }
+
+    function stPoId(s) { return `po-${s.year}-${s.league || 'x'}`; }
+
+    function renderPlayoffsSub() {
+      const host = stById('po-seasons'), chipsEl = stById('po-year-chips');
+      if (!host) return;
+      const f = STATE.filters;
+      const br = STATE.st.poBr === 'cons' ? 'cons' : 'champ';
+      const thumb = stById('po-br-thumb');
+      if (thumb) thumb.style.transform = `translateX(${br === 'cons' ? 100 : 0}%)`;
+      document.querySelectorAll('#po-br-slider .pos-mode-btn').forEach(b => {
+        const on = b.getAttribute('data-po-br') === br;
+        b.classList.toggle('active', on); b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      const seasons = FilterEngine.seasons();
+      if (chipsEl) chipsEl.innerHTML = seasons.map(s => `<button type="button" class="po-chip${s.key === f.seasonKey ? ' on' : ''}" data-po-yr="${stPoId(s)}">${escapeHTML(s.label)}</button>`).join('');
+      host.innerHTML = seasons.map(s => {
+        const bk = stGetBracket(s.year, s.league);
+        const label = activeSeasonDisplayName(s.year, s.league);
+        const png = `<button type="button" data-po-png="${s.year}|${s.league}" title="Download as PNG image" class="ml-auto bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> PNG</button>`;
+        let chips = '', body;
+        if (!bk) body = `<div class="text-xs text-slate-500 dark:text-slate-400 py-3">No playoff data for this season.</div>`;
+        else if (bk.unsupported) body = `<div class="text-xs text-slate-500 dark:text-slate-400 py-3">Bracket format (${bk.numPO} playoff teams) is not supported by the final-rank engine.</div>`;
+        else {
+          if (bk.projected) chips += `<span class="sch-pill" title="Seeds come from the current standings; only the first playoff week is populated">Projected seeds${bk.asOfWeek ? ' \u00B7 thru Wk ' + bk.asOfWeek : ''}</span>`;
+          else if (bk.champion != null) chips += `<span class="sch-pill" title="Champion">${getTrophyBadgeHTML(1)}<span style="color:${getManagerColor(bk.tmap[bk.champion].manager)}" class="font-extrabold">${escapeHTML(bk.tmap[bk.champion].manager)}</span></span>`;
+          body = stBracketHTML(bk, br);
+        }
+        return `<section id="${stPoId(s)}" class="po-season" data-po-season="${s.year}|${s.league}">
+          <div class="flex flex-wrap items-center gap-2 mb-2"><h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">${escapeHTML(label)}</h3>${chips}${png}</div>
+          ${body}</section>`;
+      }).join('') || `<div class="text-sm text-slate-500 dark:text-slate-400 p-6 text-center">No seasons loaded yet.</div>`;
+
+      // year filter changed (or deep-linked to an older year) -> scroll that season into view
+      const wasKey = STATE.st._lastPoKey;
+      const first = STATE.st._poFirst;
+      STATE.st._lastPoKey = f.seasonKey;
+      if ((wasKey && wasKey !== f.seasonKey) || (first && seasons.length && seasons[0].key !== f.seasonKey)) {
+        STATE.st._poFirst = false;
+        const s = seasons.find(x => x.key === f.seasonKey);
+        if (s) setTimeout(() => stScrollToSeason(stPoId(s)), 30);
+      }
+      STATE.st._poFirst = false;
+    }
+
+    function stScrollToSeason(id) {
+      const el = stById(id);
+      if (!el) return;
+      const hdr = document.querySelector('header');
+      const off = (hdr ? hdr.offsetHeight : 120) + 8;
+      window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - off), behavior: 'smooth' });
+    }
+
+    function stInit() {
+      document.querySelectorAll('#st-sub-slider .pos-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => setStandingsSub(btn.getAttribute('data-st-sub')));
+      });
+      document.querySelectorAll('#po-br-slider .pos-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const next = btn.getAttribute('data-po-br') === 'cons' ? 'cons' : 'champ';
+          if (STATE.st.poBr === next) return;
+          STATE.st.poBr = next; updateUrlHash(); renderStandingsSection();
+        });
+      });
+      const sec = stById('tab-standings');
+      if (!sec) return;
+      sec.addEventListener('click', e => {
+        const mg = e.target.closest('[data-st-mgr]');
+        if (mg) {
+          const m = mg.getAttribute('data-st-mgr');
+          setSelectedManagers(isMgrSelected(m) && getSelectedManagers().length === 1 ? [] : [m]);   // tapping the selected manager clears it
+          updateFilterBadge(); updateUrlHash(); renderScheduleSub();
+          return;
+        }
+        const yr = e.target.closest('[data-po-yr]');
+        if (yr) { stScrollToSeason(yr.getAttribute('data-po-yr')); return; }
+        const png = e.target.closest('[data-po-png]');
+        if (png) {
+          const [y, l] = png.getAttribute('data-po-png').split('|');
+          const cv = sec.querySelector(`[data-po-canvas="${y}|${l}"]`);
+          const br = STATE.st.poBr === 'cons' ? 'Consolation' : 'Championship';
+          if (cv) ndlWithBusy(png, () => ndlElementToPNG(cv, `${activeSeasonFilePrefix(y, l)}_Playoffs_${br}_${y}.png`, { title: `${br} Bracket \u2014 ${activeSeasonDisplayName(y, l)}` }));
+          return;
+        }
+        const sp = e.target.closest('#btn-export-sched-png');
+        if (sp) {
+          const f = STATE.filters, m = getSelectedManagers()[0] || 'Manager';
+          ndlWithBusy(sp, () => ndlElementToPNG(stById('sch-main'), `${activeSeasonFilePrefix()}_Schedule_${m}_${f.year}.png`, { title: `${m} Schedule \u2014 ${activeSeasonDisplayName()}` }));
+          return;
+        }
+        const op = e.target.closest('[data-open]');
+        if (op) {
+          const [y, l, w, a, b] = op.getAttribute('data-open').split('|');
+          stOpenMatchup(y, l, w, a, b);
+        }
+      });
     }
 
     // ==========================================
@@ -11942,6 +12723,7 @@
       setupTableSorting();
       setupSparklineTooltips();
       ndlSetupPngButtons();
+      stInit();
 
       const mgrBadge = document.getElementById('manager-filter-badge');
       if (mgrBadge) mgrBadge.addEventListener('click', (e) => {
