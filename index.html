@@ -754,6 +754,8 @@
     .dark .mx-pts.mx-pts-live { color: #60a5fa; background-image: linear-gradient(110deg, #60a5fa 0%, #60a5fa 38%, #e0f2fe 50%, #60a5fa 62%, #60a5fa 100%); }
     @keyframes mxShine { 0% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
     @media (prefers-reduced-motion: reduce) { .mx-pts.mx-pts-live { animation: none; } }
+    .mx-pts.mx-pts-fin { --base: #0f172a; --gc: #16a34a; --rc: #dc2626; opacity: .72; color: color-mix(in srgb, var(--rc) var(--r, 0%), color-mix(in srgb, var(--gc) var(--g, 0%), var(--base))); }
+    .dark .mx-pts.mx-pts-fin { --base: #f1f5f9; --gc: #4ade80; --rc: #f87171; }
     .mx-pts.mx-pts-over { color: #6b9b7a; }
     .mx-pts.mx-pts-under { color: #b58585; }
     .dark .mx-pts.mx-pts-over { color: #6f9f7f; }
@@ -3686,12 +3688,20 @@
         const actual = isNaN(pts) ? 0 : pts;
         const proj = mxLookup(idx.proj, yr, lg, wk, pid);
         const lv = mxLookup(idx.live, yr, lg, wk, pid);
-        let pj = null, eff = null, ptsCls = '';
+        let pj = null, eff = null, ptsCls = '', ptsT = 0;
         {
           // Actual-score colouring: game live -> blue (shine); game over (started, live projection 0) -> muted red/green vs proj_points; not begun -> none
           const started = idx.pgs.has(`${yr}|${normLeague(lg)}|${wk}|${pid}`) || idx.pgs.has(`${yr}|*|${wk}|${pid}`);
+          // finished = not live AND (flagged started, OR the week is already past, OR it has points with live projection 0)
+          const cw = getCurrentYearAndWeek();
+          const pastWeek = !!cw && (Number(yr) < cw.curYear || (Number(yr) === cw.curYear && Number(wk) < cw.curWeek));
+          const finished = started || pastWeek || actual !== 0;
           if (lv !== undefined && lv > 0) ptsCls = 'live';
-          else if (started && proj !== undefined && proj !== null) ptsCls = actual < proj ? 'under' : (actual > proj ? 'over' : '');
+          else if (finished && proj !== undefined && proj !== null) {
+            // green > clear > red: actual vs proj_points, saturating at +/-50%
+            ptsCls = 'fin';
+            ptsT = proj > 0 ? Math.max(-1, Math.min(1, (actual - proj) / proj / 0.5)) : (actual > 0 ? 1 : 0);
+          }
         }
         if (lv !== undefined && lv > 0) {
           // game in progress: live projection, green/red against the original projection
@@ -3706,7 +3716,7 @@
         const tx = idx.taxi.get(`${yr}|${pid}`);
         const isDm = !!tx && tx.type === 'dummy' && tx.active;          // active dummy taxi player -> 'DM'
         const isTx = !!tx && tx.type === 'taxi';                        // taxi player -> 'TX' (faded when active = 'N')
-        out.push({ slot, name: String(name), pos, pts: actual, ptsCls, ir: /^IR/.test(sel), pj, eff,
+        out.push({ slot, name: String(name), pos, pts: actual, ptsCls, ptsT, ir: /^IR/.test(sel), pj, eff,
                    projVal: (proj === undefined || proj === null) ? 0 : proj,
                    tx: isTx, txOff: isTx && !tx.active, dm: isDm });
       });
@@ -3806,7 +3816,7 @@
         const starters = slots.filter(s => !mxSlotIsBench(s));
         const bench = slots.filter(s => mxSlotIsBench(s));
         const cell = (p, cls) => p
-          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}${p.dm ? ' (Dummy taxi)' : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}${p.dm ? '<span class="mx-dm" title="Dummy taxi player">DM</span>' : ''}</span><span class="mx-ptscol"><span class="mx-pts${p.ptsCls ? ' mx-pts-' + p.ptsCls : ''}">${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
+          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}${p.dm ? ' (Dummy taxi)' : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}${p.dm ? '<span class="mx-dm" title="Dummy taxi player">DM</span>' : ''}</span><span class="mx-ptscol"><span class="mx-pts${p.ptsCls ? ' mx-pts-' + p.ptsCls : ''}"${p.ptsCls === 'fin' ? ` style="--g:${(Math.max(p.ptsT,0)*100).toFixed(1)}%;--r:${(Math.max(-p.ptsT,0)*100).toFixed(1)}%"` : ''}>${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
           : '<div></div>';
         const rows = (list) => list.map(s => {
           const ra = find(pa, s), rb = find(pb, s);
@@ -8450,9 +8460,33 @@
         },
         plugins: [benchLabelPlugin, alignPlugin]
       });
+      posBindAxisClicks(canvas);
     }
 
     // Resolve which team column an event hits: a bar/plot hit, or a click on the x-axis (manager/team name) label strip.
+    // Chart.js only fires onClick inside the plot area, so clicks on the x-axis labels are caught natively here.
+    function posBindAxisClicks(canvas) {
+      if (!canvas || canvas._axisBound) return;
+      canvas._axisBound = true;
+      const locate = (e) => {
+        const ch = STATE.positions.chartInstance;
+        if (!ch || !ch.scales || !ch.scales.x) return null;
+        const r = canvas.getBoundingClientRect();
+        const x = (e.clientX - r.left) * (ch.width / r.width), y = (e.clientY - r.top) * (ch.height / r.height);
+        const a = ch.chartArea, xs = ch.scales.x;
+        if (x >= a.left && x <= a.right && y >= a.top && y <= a.bottom) return null;   // plot area: Chart.js onClick handles it
+        if (y < xs.top - 2 || y > ch.height || x < xs.left || x > xs.right) return null;
+        const n = xs.ticks.length;
+        const v = Math.round(xs.getValueForPixel(x));
+        return (v >= 0 && v < n) ? v : null;
+      };
+      canvas.addEventListener('click', e => { const i = locate(e); if (i !== null) posColumnClick(i); });
+      canvas.addEventListener('mousemove', e => {
+        const view = STATE.positions.last, i = locate(e);
+        if (i !== null) canvas.style.cursor = (view && view.periodKind !== 'weekly') ? 'pointer' : 'default';
+      });
+    }
+
     function posChartTeamIndexAtEvent(chart, evt) {
       if (!chart || !evt) return null;
       const pts = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, true);
@@ -8530,6 +8564,43 @@
         }
       ];
 
+      // Bench below the x-axis: REAL bench (muted blue, distinct from real points) with the OPTIMAL bench
+      // overlaid as a translucent whited-out bar where they overlap. Optimal bench = everything not in the optimal lineup.
+      const showBench = P.showBench && view.benchSlots.length > 0;
+      const optBench = view.teams.map(t => Math.max(0, (t.realTotal + t.bnTotal) - t.optimalTotal));
+      const maxBench = showBench ? Math.max(0, ...view.teams.map((t, i) => Math.max(t.bnTotal, optBench[i]))) : 0;
+      if (showBench) {
+        const bw = { barPercentage: isMobile ? 0.72 : 0.62, categoryPercentage: 0.9, grouped: false };
+        datasets.push({
+          type: 'bar', label: 'Real Bench', yAxisID: 'y', stack: 'realBench', _isBench: true,
+          data: view.teams.map(t => -t.bnTotal),
+          backgroundColor: view.teams.map((t, i) => dimmed[i] ? 'rgba(100,130,160,0.14)' : (isDark ? 'rgba(96,125,155,0.60)' : 'rgba(110,140,170,0.55)')),
+          borderColor: isDark ? 'rgba(148,163,184,0.5)' : 'rgba(100,116,139,0.5)', borderWidth: 1, order: 3, ...bw
+        });
+        datasets.push({
+          type: 'bar', label: 'Optimal Bench', yAxisID: 'y', stack: 'optBench', _isBench: true,
+          data: optBench.map(v => -v),
+          backgroundColor: view.teams.map((t, i) => dimmed[i] ? 'rgba(255,255,255,0.10)' : (isDark ? 'rgba(226,232,240,0.38)' : 'rgba(255,255,255,0.68)')),
+          borderColor: isDark ? 'rgba(226,232,240,0.7)' : 'rgba(100,116,139,0.7)', borderWidth: 1, borderSkipped: false, order: 2, ...bw
+        });
+      }
+      const effBenchLabelPlugin = {
+        id: 'posEffBenchLabel',
+        afterDatasetsDraw(chart) {
+          if (!showBench) return;
+          const { ctx, chartArea, scales } = chart;
+          const y0 = scales.y.getPixelForValue(0);
+          ctx.save();
+          ctx.fillStyle = textColor;
+          ctx.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('BENCH \u25BE', chartArea.left + 6, Math.min(chartArea.bottom - 4, y0 + 14));
+          ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(15,23,42,0.65)';
+          ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(chartArea.left, y0); ctx.lineTo(chartArea.right, y0); ctx.stroke();
+          ctx.restore();
+        }
+      };
+
       const alignPlugin = {
         id: 'posAlignTable',
         afterLayout() {
@@ -8569,7 +8640,7 @@
             y: {
               stacked: true,
               position: 'left',
-              min: 0,
+              min: showBench ? -Math.ceil(maxBench / 10) * 10 : 0,
               title: {
                 display: !isMobile,
                 text: view.singleWeek ? 'Points' : 'Avg points per week',
@@ -8580,13 +8651,15 @@
               border: { display: false },
               ticks: {
                 color: textColor,
-                font: { size: isMobile ? 10 : 12 }
+                font: { size: isMobile ? 10 : 12 },
+                callback: v => Math.abs(v)
               }
             },
             y1: {
               position: 'right',
               min: 50,
               max: 100,
+              display: true,
               title: {
                 display: !isMobile,
                 text: 'Efficiency (%)',
@@ -8609,6 +8682,8 @@
                 title: items => { const t = view.teams[items[0].dataIndex]; return `${t.team_name} (${t.manager})`; },
                 label: item => {
                   const t = view.teams[item.dataIndex];
+                  if (item.dataset.label === 'Real Bench') return `Real Bench: ${posFmt(t.bnTotal)}`;
+                  if (item.dataset.label === 'Optimal Bench') return `Optimal Bench: ${posFmt(Math.max(0, t.realTotal + t.bnTotal - t.optimalTotal))}`;
                   if (item.datasetIndex === 0) return `Real Lineup: ${posFmt(t.realTotal)}`;
                   if (item.datasetIndex === 1) return `Optimal Lineup: ${posFmt(t.optimalTotal)} (+${posFmt(t.benchLeftPts)} on bench)`;
                   return `Efficiency (Real / Optimal): ${posPctFmt(t.efficiency)}`;
@@ -8617,8 +8692,9 @@
             }
           }
         },
-        plugins: [alignPlugin]
+        plugins: [alignPlugin, effBenchLabelPlugin]
       });
+      posBindAxisClicks(canvas);
     }
 
     function renderPositionsLegend(view) {
@@ -8652,6 +8728,11 @@
         { label: 'Gap', color: isDark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(148, 163, 184, 0.55)' },
         { label: 'Efficiency', color: effColor }
       ];
+      if (STATE.positions.showBench) {
+        groups.splice(2, 0,
+          { label: 'Real Bench', color: isDark ? 'rgba(96,125,155,0.8)' : 'rgba(110,140,170,0.8)' },
+          { label: 'Optimal Bench', color: isDark ? 'rgba(226,232,240,0.5)' : 'rgba(255,255,255,0.9);border:1px solid #94a3b8' });
+      }
       el.innerHTML = groups.map(g =>
         `<span class="pos-legend-item"><span class="pos-chip-dot" style="background:${g.color}"></span>${g.label}</span>`
       ).join('');
@@ -8727,6 +8808,11 @@
         metricRow('BENCH GAP', t => t.benchLeftPts, posFmt, { reverseHeat: true }),
         metricRow('EFF %', t => t.efficiency, posPctFmt, { total: true })
       ];
+      if (STATE.positions.showBench) {
+        rows.push(`<tr class="pos-spacer"><td colspan="${teams.length + 1}"></td></tr>`);
+        rows.push(metricRow('REAL BN', t => t.bnTotal, posFmt));
+        rows.push(metricRow('OPT BN', t => Math.max(0, t.realTotal + t.bnTotal - t.optimalTotal), posFmt));
+      }
 
       tbl.innerHTML = colgroup + head + `<tbody>${rows.join('')}</tbody>`;
       tbl.querySelectorAll('.pos-team-th[data-idx]').forEach(th => th.addEventListener('click', () => posColumnClick(Number(th.getAttribute('data-idx')))));
@@ -10767,7 +10853,7 @@
     const SB_TYPES = [
       { k: 'bar', l: 'Bar', i: 'fa-chart-column' }, { k: 'hbar', l: 'H-Bar', i: 'fa-chart-bar' }, { k: 'stacked', l: 'Stacked', i: 'fa-layer-group' },
       { k: 'line', l: 'Line', i: 'fa-chart-line' }, { k: 'area', l: 'Area', i: 'fa-chart-area' }, { k: 'combo', l: 'Combo', i: 'fa-chart-simple' },
-      { k: 'scatter', l: 'Scatter', i: 'fa-braille' }, { k: 'pie', l: 'Pie', i: 'fa-chart-pie' }, { k: 'doughnut', l: 'Donut', i: 'fa-circle-notch' },
+      { k: 'scatter', l: 'Scatter', i: 'fa-braille' }, { k: 'bubble', l: 'Bubble', i: 'fa-circle' }, { k: 'pie', l: 'Pie', i: 'fa-chart-pie' }, { k: 'doughnut', l: 'Donut', i: 'fa-circle-notch' },
       { k: 'table', l: 'Table', i: 'fa-table' }, { k: 'pivot', l: 'Pivot', i: 'fa-table-cells' }, { k: 'kpi', l: 'Scorecard', i: 'fa-hashtag' }
     ];
     const SB_AGGS = [['sum', 'Sum'], ['avg', 'Average'], ['median', 'Median'], ['min', 'Min'], ['max', 'Max'], ['count', 'Count'], ['countd', 'Distinct count'], ['stdev', 'Std dev']];
@@ -10779,15 +10865,21 @@
     const SB_LITERALS = ['true', 'false', 'null'];
 
     function sbDefaultCfg() {
-      return { ds: 'teamweeks', type: 'bar', title: '', dim: 'manager', split: '', measures: [{ f: 'team_points', a: 'avg' }], filters: [], calcs: [], sort: 'm0', dir: 'desc', limit: 0, dec: 2, labels: false, legend: true };
+      return { ds: 'teamweeks', type: 'bar', title: '', dim: 'manager', xdims: [], split: '', measures: [{ f: 'team_points', a: 'avg' }], filters: [], having: [], cf: [], calcs: [], sort: 'm0', dir: 'desc', limit: 0, dec: 2, labels: false, legend: true, totals: false, tsort: null };
     }
     function sbS() {
       if (!STATE.sandbox) {
-        const sb = { cfg: sbDefaultCfg(), pinned: [], charts: {}, built: false, cache: {}, ver: -1 };
+        const sb = { cfg: sbDefaultCfg(), pinned: [], charts: {}, built: false, cache: {}, ver: -1, hist: [], customDs: {}, dashF: [], mode: 'builder', sql: '', sqlHist: [], join: null, sqlRes: null, sqlErr: '', sqlSort: null, _ctxm: new Map() };
         try {
           const saved = JSON.parse(localStorage.getItem('ndl_sandbox_v1') || 'null');
-          if (saved && Array.isArray(saved.pinned)) sb.pinned = saved.pinned;
-          if (saved && saved.cfg && saved.cfg.ds) sb.cfg = Object.assign(sbDefaultCfg(), saved.cfg);
+          if (saved) {
+            if (Array.isArray(saved.pinned)) sb.pinned = saved.pinned;
+            if (saved.cfg && saved.cfg.ds) sb.cfg = Object.assign(sbDefaultCfg(), saved.cfg);
+            if (saved.customDs && typeof saved.customDs === 'object') sb.customDs = saved.customDs;
+            if (Array.isArray(saved.dashF)) sb.dashF = saved.dashF;
+            if (typeof saved.sql === 'string') sb.sql = saved.sql;
+            if (Array.isArray(saved.sqlHist)) sb.sqlHist = saved.sqlHist.slice(0, 8);
+          }
         } catch (e) {}
         STATE.sandbox = sb;
       }
@@ -10795,7 +10887,7 @@
     }
     function sbSave() {
       const sb = sbS();
-      try { localStorage.setItem('ndl_sandbox_v1', JSON.stringify({ pinned: sb.pinned, cfg: sb.cfg })); } catch (e) {}
+      try { localStorage.setItem('ndl_sandbox_v1', JSON.stringify({ pinned: sb.pinned, cfg: sb.cfg, customDs: sb.customDs, dashF: sb.dashF, sql: sb.sql, sqlHist: sb.sqlHist })); } catch (e) {}
     }
     function sbEnc(cfg) {
       try { return btoa(unescape(encodeURIComponent(JSON.stringify(cfg)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); } catch (e) { return ''; }
@@ -10846,11 +10938,15 @@
         rows = (D.points || []).map(r => {
           const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK'])), lg = normLeague(getVal(r, ['league']));
           const o = Object.assign({}, r);
+          o.year = yr; o.week = wk; o.league = lg; { const tn = Number(getVal(r, ['team_id'])); if (!isNaN(tn)) o.team_id = tn; }
           o.manager = getManagerName(Number(getVal(r, ['team_id'])), yr, getVal(r, ['manager_name', 'manager']), lg);
           const pj = mxLookup(idx.proj, yr, lg, wk, String(getVal(r, ['player_id'])));
           o.proj_points = pj === undefined ? null : pj;
           return o;
         });
+      } else if (sb.customDs[ds]) {
+        try { rows = sbSqlObjects('SELECT * FROM ' + sbQ(ds)); } catch (e) { rows = []; }
+        if (!rows.length && !STATE.SQL) return rows;
       } else if (D[ds]) rows = D[ds];
       sb.cache[key] = rows;
       return rows;
@@ -10893,33 +10989,35 @@
     }
     function sbContext(cfg) {
       const sb = sbS();
-      const key = `${STATE.dataVersion}|${cfg.ds}|${JSON.stringify(cfg.calcs || [])}`;
-      if (sb._ctx && sb._ctx.key === key) return sb._ctx;
-      const base = sbDatasetRows(cfg.ds);
+      if (!sb._ctxm) sb._ctxm = new Map();
+      const key = `${STATE.dataVersion}|${cfg.ds}|${JSON.stringify(cfg.calcs || [])}|${STATE.SQL ? 1 : 0}|${Object.keys(sb.customDs).join()}`;
+      if (sb._ctxm.has(key)) return sb._ctxm.get(key);
+      let rows = sbDatasetRows(cfg.ds);
       const bk = `${STATE.dataVersion}|${cfg.ds}|cols`;
-      if (!sb.cache[bk]) sb.cache[bk] = sbDetectCols(base);
+      if (!sb.cache[bk]) sb.cache[bk] = sbDetectCols(rows);
       const cols = sb.cache[bk].slice();
-      const errors = [], fns = [];
-      const names = new Set(cols.map(c => c.name));
+      const errors = [], names = new Set(cols.map(c => c.name)), added = [];
       (cfg.calcs || []).forEach((c, i) => {
         const nm = String(c.name || '').trim();
         try {
           if (!/^[A-Za-z_]\w*$/.test(nm)) throw new Error('Name: letters, digits, underscore only');
           if (names.has(nm)) throw new Error('Name already in use');
-          fns.push({ name: nm, fn: sbCompile(c.expr, names) }); names.add(nm); errors[i] = '';
+          if (sbIsSql(c.expr)) {
+            const vals = sbEvalSqlCalc(rows, names, c.expr);
+            rows = rows.map((r, j) => { const o = Object.assign({}, r); o[nm] = vals[j] === undefined ? null : vals[j]; return o; });
+          } else {
+            const fn = sbCompile(c.expr, names);
+            rows = rows.map(r => { const o = Object.assign({}, r); o[nm] = fn(o); return o; });
+          }
+          names.add(nm); added.push(nm); errors[i] = '';
         } catch (e) { errors[i] = e.message; }
       });
-      let rows = base;
-      if (fns.length) {
-        rows = base.map(r => { const o = Object.assign({}, r); fns.forEach(f => { o[f.name] = f.fn(o); }); return o; });
-        const cc = sbDetectCols(rows.slice(0, 4000));
-        fns.forEach(f => { const hit = cc.find(x => x.name === f.name); cols.push({ name: f.name, numeric: !!(hit && hit.numeric), calc: true }); });
-      }
-      sb._ctx = { key, rows, cols, errors };
-      return sb._ctx;
+      if (added.length) { const cc = sbDetectCols(rows.slice(0, 4000)); added.forEach(n => { const hit = cc.find(x => x.name === n); cols.push({ name: n, numeric: !!(hit && hit.numeric), calc: true }); }); }
+      const ctx = { key, rows, cols, errors };
+      if (sb._ctxm.size > 12) sb._ctxm.delete(sb._ctxm.keys().next().value);
+      sb._ctxm.set(key, ctx);
+      return ctx;
     }
-
-    // ---------- compute ----------
     function sbSame(v, raw) { if (String(v) === raw) return true; const n = Number(raw); return raw !== '' && isFinite(n) && v !== null && v !== '' && Number(v) === n; }
     function sbPass(r, f) {
       const raw = String(f.v === undefined || f.v === null ? '' : f.v).trim();
@@ -10951,9 +11049,10 @@
       return null;
     }
     function sbMLabel(m) {
-      if (m.f === '*') return 'Record count';
+      const sfx = { pct: ' (% of total)', run: ' (running)', rank: ' (rank)', diff: ' (Δ prev)' }[m.show] || '';
+      if (m.f === '*') return 'Record count' + sfx;
       const a = (SB_AGGS.find(x => x[0] === m.a) || [m.a, m.a])[1];
-      return `${a} of ${m.f}`;
+      return `${a} of ${m.f}${sfx}`;
     }
     function sbTitle(cfg) {
       if (cfg.title) return cfg.title;
@@ -10970,65 +11069,79 @@
       if (typeof v !== 'number') return String(v);
       return v.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
     }
-    function sbDecFor(cfg, m) { return (m && (m.a === 'count' || m.a === 'countd' || m.f === '*')) ? 0 : cfg.dec; }
-
-    function sbCompute(cfg) {
+    function sbDecFor(cfg, m) { return (m && (m.a === 'count' || m.a === 'countd' || m.f === '*' || m.show === 'rank')) ? 0 : cfg.dec; }
+    function sbCompute(cfg, extraF) {
       const ctx = sbContext(cfg);
-      const ms = (cfg.measures || []).filter(m => m && (m.f === '*' || ctx.cols.some(c => c.name === m.f))).map(m => (m.f === '*' ? { f: '*', a: 'count' } : m));
+      const has = n => !!n && ctx.cols.some(c => c.name === n);
+      const ms = (cfg.measures || []).filter(m => m && (m.f === '*' || has(m.f))).map(m => (m.f === '*' ? { f: '*', a: 'count', show: m.show } : m));
       if (!ms.length) return { error: 'Add at least one measure.' };
-      const dimOk = cfg.dim && ctx.cols.some(c => c.name === cfg.dim) ? cfg.dim : '';
-      const splitOk = cfg.split && ctx.cols.some(c => c.name === cfg.split) ? cfg.split : '';
-      const fl = (cfg.filters || []);
+      const dimsAll = [cfg.dim].concat(cfg.xdims || []).filter((n, i, a) => has(n) && a.indexOf(n) === i);
+      const base = { dim: dimsAll.join(' \u00b7 '), dims: dimsAll, ndim: dimsAll.length };
+      const splitOk = has(cfg.split) ? cfg.split : '';
+      const fl = (cfg.filters || []).concat((extraF || []).filter(f => has(f.f)));
       const rows = fl.length ? ctx.rows.filter(r => fl.every(f => sbPass(r, f))) : ctx.rows;
       const type = cfg.type;
+      const hv = (cfg.having || []).filter(h => ms[h.mi] && String(h.v === undefined ? '' : h.v).trim() !== '');
+      const passH = vals => hv.every(h => sbHaving(vals[h.mi], h));
       const lab = v => (v === null || v === undefined || v === '') ? '(blank)' : String(v);
       const mval = (m, rs) => (m.f === '*' ? rs.length : sbAgg(rs.map(r => r[m.f]), m.a));
+      const dKey = r => dimsAll.length ? dimsAll.map(n => lab(r[n])).join(' \u00b7 ') : 'All';
 
-      if (type === 'kpi') return { kind: 'kpi', ms, tiles: ms.map(m => ({ label: sbMLabel(m), value: mval(m, rows), m })), n: rows.length };
+      if (type === 'kpi') return Object.assign({ kind: 'kpi', ms, tiles: ms.map(m => ({ label: sbMLabel(m), value: mval(m, rows), m })), n: rows.length }, base);
 
-      if (type === 'scatter') {
-        if (ms.length < 2) return { error: 'Scatter needs two measures: the first is X, the second is Y.' };
+      if (type === 'scatter' || type === 'bubble') {
+        const need = type === 'bubble' ? 3 : 2;
+        if (ms.length < need) return { error: type === 'bubble' ? 'Bubble needs three measures: X, Y, then bubble size.' : 'Scatter needs two measures: the first is X, the second is Y.' };
         const groups = new Map();
         const pushPt = (sname, pt) => { if (!groups.has(sname)) groups.set(sname, []); groups.get(sname).push(pt); };
-        if (!dimOk) {
-          rows.slice(0, 3000).forEach(r => { const x = Number(r[ms[0].f]), y = Number(r[ms[1].f]); if (isFinite(x) && isFinite(y)) pushPt(splitOk ? lab(r[splitOk]) : 'Rows', { x, y, label: '' }); });
+        if (!dimsAll.length) {
+          rows.slice(0, 3000).forEach(r => { const x = Number(r[ms[0].f]), y = Number(r[ms[1].f]), s = need === 3 ? Number(r[ms[2].f]) : null; if (isFinite(x) && isFinite(y) && (need === 2 || isFinite(s))) pushPt(splitOk ? lab(r[splitOk]) : 'Rows', { x, y, s, label: '' }); });
         } else {
           const g = new Map();
-          rows.forEach(r => { const k = lab(r[dimOk]) + '\u0001' + (splitOk ? lab(r[splitOk]) : ''); if (!g.has(k)) g.set(k, []); g.get(k).push(r); });
-          g.forEach((rs, k) => { const [d, s] = k.split('\u0001'); const x = mval(ms[0], rs), y = mval(ms[1], rs); if (x !== null && y !== null) pushPt(splitOk ? s : 'Points', { x, y, label: d }); });
+          rows.forEach(r => { const k = dKey(r) + '\u0001' + (splitOk ? lab(r[splitOk]) : ''); if (!g.has(k)) g.set(k, []); g.get(k).push(r); });
+          g.forEach((rs, k) => {
+            const i = k.lastIndexOf('\u0001'), d = k.slice(0, i), s = k.slice(i + 1);
+            const vals = ms.map(m => mval(m, rs));
+            if (vals.slice(0, need).some(v => v === null) || !passH(vals)) return;
+            pushPt(splitOk ? s : 'Points', { x: vals[0], y: vals[1], s: need === 3 ? vals[2] : null, label: d });
+          });
         }
-        return { kind: 'scatter', ms, dim: dimOk, series: [...groups.entries()].map(([name, pts]) => ({ name, pts })), n: rows.length };
+        return Object.assign({ kind: 'scatter', bubble: need === 3, ms, series: [...groups.entries()].map(([name, pts]) => ({ name, pts })), n: rows.length }, base);
       }
 
-      // grouped
-      const gmap = new Map(); const splitVals = new Set();
+      const gmap = new Map(), splitVals = new Set(), dparts = new Map();
       rows.forEach(r => {
-        const d = dimOk ? lab(r[dimOk]) : 'All';
-        const s = splitOk ? lab(r[splitOk]) : '';
+        const d = dKey(r), s = splitOk ? lab(r[splitOk]) : '';
         if (splitOk) splitVals.add(s);
-        if (!gmap.has(d)) gmap.set(d, new Map());
+        if (!gmap.has(d)) { gmap.set(d, new Map()); dparts.set(d, dimsAll.map(n => lab(r[n]))); }
         const sm = gmap.get(d); if (!sm.has(s)) sm.set(s, []); sm.get(s).push(r);
       });
       let cats = [...gmap.keys()];
-      let splits = splitOk ? [...splitVals] : [''];
-      const useSplit = splitOk && type !== 'pie' && type !== 'doughnut';
-      if (!useSplit) splits = [''];
+      const useSplit = !!splitOk && type !== 'pie' && type !== 'doughnut';
+      let splits = useSplit ? [...splitVals] : [''];
+      if (type === 'pivot') splits.sort(sbNatSort);
       const cellRows = (d, s) => { const sm = gmap.get(d); if (!sm) return []; if (!useSplit) return [].concat(...sm.values()); return sm.get(s) || []; };
 
       if (type === 'table') {
         const out = [];
-        cats.forEach(d => splits.forEach(s => { const rs = cellRows(d, s); if (rs.length) out.push({ d, s, vals: ms.map(m => mval(m, rs)) }); }));
-        const key = cfg.sort === 'dim' ? null : 0;
-        out.sort((a, b) => key === null ? (sbNatSort(a.d, b.d) || sbNatSort(a.s, b.s)) * (cfg.dir === 'asc' ? 1 : -1) : ((a.vals[0] === null) - (b.vals[0] === null)) || ((a.vals[0] - b.vals[0]) * (cfg.dir === 'asc' ? 1 : -1)));
-        return { kind: 'table', ms, dim: dimOk, split: useSplit ? splitOk : '', rows: cfg.limit > 0 ? out.slice(0, cfg.limit) : out, n: rows.length };
+        cats.forEach(d => splits.forEach(s => { const rs = cellRows(d, s); if (!rs.length) return; const vals = ms.map(m => mval(m, rs)); if (passH(vals)) out.push({ d, dp: dparts.get(d), s, vals }); }));
+        const nd = dimsAll.length, off = nd + (useSplit ? 1 : 0);
+        const colVal = (r, c) => c < nd ? r.dp[c] : ((useSplit && c === nd) ? r.s : r.vals[c - off]);
+        const isN = v => v === null || v === undefined;
+        const ts = cfg.tsort;
+        if (ts && ts.c >= 0) { const dir = ts.dir === 'asc' ? 1 : -1; out.sort((a, b) => { const x = colVal(a, ts.c), y = colVal(b, ts.c); if (isN(x) !== isN(y)) return isN(x) ? 1 : -1; return (typeof x === 'number' && typeof y === 'number' ? x - y : sbNatSort(x, y)) * dir; }); }
+        else if (cfg.sort === 'dim') out.sort((a, b) => (sbNatSort(a.d, b.d) || sbNatSort(a.s, b.s)) * (cfg.dir === 'asc' ? 1 : -1));
+        else out.sort((a, b) => ((a.vals[0] === null) - (b.vals[0] === null)) || ((a.vals[0] - b.vals[0]) * (cfg.dir === 'asc' ? 1 : -1)));
+        ms.forEach((m, mi) => { if (m.show) { const col = sbShowAs(out.map(r => r.vals[mi]), m.show); out.forEach((r, i) => { r.vals[mi] = col[i]; }); } });
+        const totals = cfg.totals ? ms.map(m => m.show ? null : mval(m, rows)) : null;
+        return Object.assign({ kind: 'table', ms, split: useSplit ? splitOk : '', rows: cfg.limit > 0 ? out.slice(0, cfg.limit) : out, totals, n: rows.length }, base);
       }
 
-      // series data
+      if (hv.length) cats = cats.filter(d => { const rs = [].concat(...gmap.get(d).values()); return passH(ms.map(m => mval(m, rs))); });
       let series = [];
       splits.forEach(s => ms.forEach((m, mi) => {
-        series.push({ name: (useSplit ? (ms.length > 1 ? `${s} · ${sbMLabel(m)}` : s) : sbMLabel(m)), mi, m, split: s, data: cats.map(d => { const rs = cellRows(d, s); return rs.length ? mval(m, rs) : null; }) });
+        series.push({ name: (useSplit ? (ms.length > 1 ? `${s} \u00b7 ${sbMLabel(m)}` : s) : sbMLabel(m)), mi, m, split: s, data: cats.map(d => { const rs = cellRows(d, s); return rs.length ? mval(m, rs) : null; }) });
       }));
-      // order categories
       const score = i => series.filter(x => x.mi === 0).reduce((a, x) => a + (x.data[i] || 0), 0);
       let order = cats.map((c, i) => i);
       if (cfg.sort === 'dim') order.sort((a, b) => sbNatSort(cats[a], cats[b]) * (cfg.dir === 'desc' ? -1 : 1));
@@ -11036,23 +11149,27 @@
       if (cfg.limit > 0) order = order.slice(0, cfg.limit);
       cats = order.map(i => cats[i]);
       series.forEach(x => { x.data = order.map(i => x.data[i]); });
-      if (useSplit && series.length > 15) {
-        const tot = x => x.data.reduce((a, b) => a + (b || 0), 0);
-        series = series.sort((a, b) => tot(b) - tot(a)).slice(0, 15);
-      }
+      const cap = type === 'pivot' ? 80 : 15;
+      if (useSplit && series.length > cap) { const tot = x => x.data.reduce((a, b) => a + (b || 0), 0); series = series.sort((a, b) => tot(b) - tot(a)).slice(0, cap); }
+      series.forEach(x => { if (x.m.show) x.data = sbShowAs(x.data, x.m.show); });
       if (type === 'pivot') {
         if (!useSplit) return { error: 'Pivot needs a "Split by" field for the columns.' };
-        return { kind: 'pivot', m: ms[0], dim: dimOk, split: splitOk, cats, cols: series.filter(x => x.mi === 0), n: rows.length };
+        const pc = series.filter(x => x.mi === 0), ts = cfg.tsort;
+        if (ts && ts.c >= 0) {
+          const ix = cats.map((_, i) => i), dir = ts.dir === 'asc' ? 1 : -1;
+          const val = i => ts.c === 0 ? cats[i] : (pc[ts.c - 1] ? pc[ts.c - 1].data[i] : null);
+          ix.sort((a, b) => { const x = val(a), y = val(b), nx = x === null || x === undefined, ny = y === null || y === undefined; if (nx !== ny) return nx ? 1 : -1; return (typeof x === 'number' && typeof y === 'number' ? x - y : sbNatSort(x, y)) * dir; });
+          cats = ix.map(i => cats[i]); pc.forEach(c => { c.data = ix.map(i => c.data[i]); });
+        }
+        return Object.assign({ kind: 'pivot', m: ms[0], split: splitOk, cats, cols: pc, n: rows.length }, base);
       }
-      return { kind: 'chart', ms, dim: dimOk, split: useSplit ? splitOk : '', cats, series, n: rows.length };
+      return Object.assign({ kind: 'chart', ms, split: useSplit ? splitOk : '', cats, series, n: rows.length }, base);
     }
-
-    // ---------- rendering ----------
     function sbDark() { return document.documentElement.classList.contains('dark'); }
     function sbHex(c, a) { const h = c.replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(x => x + x).join('') : h, 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
     function sbColors(res, cfg) {
       const mgrField = f => f && /manager|^opponent$/i.test(f);
-      const byName = !res.split && mgrField(res.dim) && res.series && res.series.length === 1;
+      const byName = !res.split && res.ndim <= 1 && mgrField(res.dim) && res.series && res.series.length === 1;
       return {
         cat: i => byName ? getManagerColor(res.cats[i]) : null,
         ser: (s, i) => (res.split && mgrField(res.split)) ? getManagerColor(s.split) : SB_PALETTE[i % SB_PALETTE.length]
@@ -11081,13 +11198,21 @@
     function sbRender(host, cfg, key, opts = {}) {
       const sb = sbS();
       if (sb.charts[key]) { try { sb.charts[key].destroy(); } catch (e) {} delete sb.charts[key]; }
-      const res = sbCompute(cfg);
+      const res = sbCompute(cfg, opts.extraF);
       host._res = res;
       const dark = sbDark();
       const txt = dark ? '#94a3b8' : '#475569', grid = dark ? 'rgba(148,163,184,.14)' : 'rgba(100,116,139,.18)';
       const h = opts.h || 380;
       if (res.error) { host.innerHTML = `<div class="p-8 text-center text-xs text-slate-500 dark:text-slate-400"><i class="fa-solid fa-circle-info mr-1 text-brand-500"></i>${escapeHTML(res.error)}</div>`; return; }
       const dec = cfg.dec;
+      const bindSort = () => host.querySelectorAll('th[data-sc]').forEach(th => th.addEventListener('click', () => {
+        const c = Number(th.getAttribute('data-sc')), t = cfg.tsort;
+        sbSnap('tsort');
+        cfg.tsort = (t && t.c === c) ? { c, dir: t.dir === 'asc' ? 'desc' : 'asc' } : { c, dir: th.getAttribute('data-txt') ? 'asc' : 'desc' };
+        sbSave(); if (key === 'preview') sbUrlSoon();
+        sbRender(host, cfg, key, opts);
+      }));
+      const sortTh = (label, i, right, txt2) => `<th class="${right ? 'text-right' : 'text-left'}" data-sc="${i}" ${txt2 ? 'data-txt="1"' : ''} style="cursor:pointer;user-select:none;white-space:nowrap" title="Click to sort">${escapeHTML(label)}${cfg.tsort && cfg.tsort.c === i ? (cfg.tsort.dir === 'asc' ? ' \u25B2' : ' \u25BC') : ''}</th>`;
       if (res.kind === 'kpi') {
         host.innerHTML = `<div class="grid gap-2 p-3" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${res.tiles.map(t => `
           <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-3 text-center">
@@ -11097,35 +11222,55 @@
         return;
       }
       if (res.kind === 'table') {
-        const head = [res.dim, res.split].filter(Boolean).map(x => `<th class="text-left">${escapeHTML(x)}</th>`).join('') + res.ms.map(m => `<th class="text-right">${escapeHTML(sbMLabel(m))}</th>`).join('');
-        const body = res.rows.map(r => `<tr>${res.dim ? `<td class="text-left font-sans">${escapeHTML(r.d)}</td>` : ''}${res.split ? `<td class="text-left font-sans">${escapeHTML(r.s)}</td>` : ''}${r.vals.map((v, i) => `<td class="text-right font-mono">${sbFmt(v, sbDecFor(cfg, res.ms[i]))}</td>`).join('')}</tr>`).join('');
-        host.innerHTML = `<div class="overflow-auto" style="max-height:${opts.compact ? 300 : 560}px"><table class="standings-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
-        return;
+        const nd = res.dims.length, hasS = !!res.split, nt = nd + (hasS ? 1 : 0);
+        const labels = [...res.dims, ...(hasS ? [res.split] : [])];
+        const head = labels.map((l, i) => sortTh(l, i, false, true)).join('') + res.ms.map((m, i) => sortTh(sbMLabel(m), nt + i, true, false)).join('');
+        const st = res.ms.map((m, mi) => sbColStats(res.rows.map(r => r.vals[mi])));
+        const body = res.rows.map(r => `<tr>${r.dp.map((p, i) => `<td class="text-left font-sans" style="${sbCfStyle(cfg, res.dims[i], p, null)}">${escapeHTML(p)}</td>`).join('')}${hasS ? `<td class="text-left font-sans" style="${sbCfStyle(cfg, res.split, r.s, null)}">${escapeHTML(r.s)}</td>` : ''}${r.vals.map((v, i) => `<td class="text-right font-mono" style="${sbCfStyle(cfg, sbMLabel(res.ms[i]), v, st[i])}">${sbFmt(v, sbDecFor(cfg, res.ms[i]))}</td>`).join('')}</tr>`).join('');
+        const foot = res.totals ? `<tfoot><tr style="font-weight:800;border-top:2px solid rgba(148,163,184,.5)">${nt ? `<td class="text-left font-sans" colspan="${nt}">Total</td>` : ''}${res.totals.map((v, i) => `<td class="text-right font-mono">${v === null ? '' : sbFmt(v, sbDecFor(cfg, res.ms[i]))}</td>`).join('')}</tr></tfoot>` : '';
+        host.innerHTML = `<div class="overflow-auto" style="max-height:${opts.compact ? 300 : 560}px"><table class="standings-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody>${foot}</table></div>`;
+        bindSort(); return;
       }
       if (res.kind === 'pivot') {
         let mn = Infinity, mx = -Infinity;
         res.cols.forEach(c => c.data.forEach(v => { if (v !== null) { mn = Math.min(mn, v); mx = Math.max(mx, v); } }));
-        const head = `<th class="text-left">${escapeHTML(res.dim || '')}</th>` + res.cols.map(c => `<th class="text-right">${escapeHTML(c.split)}</th>`).join('');
-        const body = res.cats.map((d, i) => `<tr><td class="text-left font-sans">${escapeHTML(d)}</td>${res.cols.map(c => { const v = c.data[i]; return `<td class="text-right font-mono" style="background-color:${v === null ? 'transparent' : HEATMAPS.greenToClear(v, mn, mx)}">${sbFmt(v, sbDecFor(cfg, res.m))}</td>`; }).join('')}</tr>`).join('');
-        host.innerHTML = `<div class="px-3 pt-2 text-[10px] text-slate-400">${escapeHTML(sbMLabel(res.m))}</div><div class="overflow-auto" style="max-height:${opts.compact ? 300 : 560}px"><table class="standings-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
-        return;
+        const lbl = sbMLabel(res.m), st = sbColStats([].concat(...res.cols.map(c => c.data))), hasCf = (cfg.cf || []).some(r => r.c === lbl);
+        const head = sortTh(res.dim || '', 0, false, true) + res.cols.map((c, i) => sortTh(c.split, i + 1, true, false)).join('');
+        const body = res.cats.map((d, i) => `<tr><td class="text-left font-sans" style="${sbCfStyle(cfg, res.dims[0], d, null)}">${escapeHTML(d)}</td>${res.cols.map(c => { const v = c.data[i]; const style = hasCf ? sbCfStyle(cfg, lbl, v, st) : `background-color:${v === null ? 'transparent' : HEATMAPS.greenToClear(v, mn, mx)}`; return `<td class="text-right font-mono" style="${style}">${sbFmt(v, sbDecFor(cfg, res.m))}</td>`; }).join('')}</tr>`).join('');
+        host.innerHTML = `<div class="px-3 pt-2 text-[10px] text-slate-400">${escapeHTML(lbl)}</div><div class="overflow-auto" style="max-height:${opts.compact ? 300 : 560}px"><table class="standings-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+        bindSort(); return;
       }
-      // Chart.js
-      host.innerHTML = `<div style="position:relative;height:${h}px;width:100%" class="p-2"><canvas></canvas></div>`;
+      host.innerHTML = `<div style="position:relative;height:${h}px;width:100%" class="p-2"><canvas></canvas></div>${res.bubble ? `<div class="px-3 pb-2 text-[10px] text-slate-400">Bubble size = ${escapeHTML(sbMLabel(res.ms[2]))}</div>` : ''}`;
       const canvas = host.querySelector('canvas');
-      const type = cfg.type;
-      const col = sbColors(res, cfg);
+      const type = cfg.type, col = sbColors(res, cfg);
       let config;
-      const baseOpt = { responsive: true, maintainAspectRatio: false, animation: { duration: 350 }, interaction: { mode: 'nearest', intersect: false },
+      const xfilter = (e, chart) => {
+        if (key !== 'preview' || res.kind !== 'chart' || res.ndim !== 1) return;
+        const els = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true); if (!els.length) return;
+        const v = res.cats[els[0].index]; if (v === undefined || v === '(blank)') return;
+        sbSnap('xf');
+        const ex = cfg.filters.find(x => x.f === res.dim && x.op === '=');
+        if (ex) ex.v = String(v); else cfg.filters.push({ f: res.dim, op: '=', v: String(v) });
+        sbRebuildPanel(); sbRefreshPreview(); sbUrlSoon();
+      };
+      const baseOpt = { responsive: true, maintainAspectRatio: false, animation: { duration: 350 }, interaction: { mode: 'nearest', intersect: false }, onClick: xfilter,
         plugins: { legend: { display: false, position: 'bottom', labels: { color: txt, boxWidth: 12, font: { size: 11 } } }, tooltip: {}, sbLabels: { on: !!cfg.labels, dec, color: txt } } };
       if (res.kind === 'scatter') {
-        const datasets = res.series.map((s, i) => ({ label: s.name, data: s.pts, backgroundColor: sbHex((res.series.length > 1 && /manager/i.test(cfg.split)) ? getManagerColor(s.name) : SB_PALETTE[i % SB_PALETTE.length], .8), borderColor: (res.series.length > 1 && /manager/i.test(cfg.split)) ? getManagerColor(s.name) : SB_PALETTE[i % SB_PALETTE.length], pointRadius: 5, pointHoverRadius: 7 }));
-        const single = !res.dim ? false : true;
-        config = { type: 'scatter', data: { datasets }, options: Object.assign({}, baseOpt, {
+        const colorOf = (s, i) => (res.series.length > 1 && /manager/i.test(cfg.split)) ? getManagerColor(s.name) : SB_PALETTE[i % SB_PALETTE.length];
+        let rad = () => 5;
+        if (res.bubble) {
+          const sv = [].concat(...res.series.map(s => s.pts.map(p => p.s))).filter(v => v !== null && isFinite(v));
+          const smin = Math.min(...sv), smax = Math.max(...sv), rmax = window.innerWidth < 640 ? 20 : 30;
+          rad = s => smax > smin ? 5 + (rmax - 5) * Math.sqrt((s - smin) / (smax - smin)) : 11;
+        }
+        const datasets = res.series.map((s, i) => ({ label: s.name, data: s.pts.map(p => ({ x: p.x, y: p.y, r: res.bubble ? rad(p.s) : undefined, s: p.s, label: p.label })), backgroundColor: sbHex(colorOf(s, i), res.bubble ? .55 : .8), borderColor: colorOf(s, i), borderWidth: res.bubble ? 1.5 : 1, pointRadius: 5, pointHoverRadius: 7 }));
+        const single = !!res.ndim;
+        config = { type: res.bubble ? 'bubble' : 'scatter', data: { datasets }, options: Object.assign({}, baseOpt, {
+          onClick: null,
           plugins: Object.assign({}, baseOpt.plugins, { legend: { display: res.series.length > 1 && cfg.legend !== false, position: 'bottom', labels: { color: txt, boxWidth: 12 } },
-            tooltip: { callbacks: { label: c => `${c.raw.label ? c.raw.label + ': ' : ''}${sbFmt(c.raw.x, dec)}, ${sbFmt(c.raw.y, dec)}` } } }),
+            tooltip: { callbacks: { label: c => `${c.raw.label ? c.raw.label + ': ' : ''}${sbFmt(c.raw.x, dec)}, ${sbFmt(c.raw.y, dec)}${res.bubble ? ' \u00b7 size ' + sbFmt(c.raw.s, dec) : ''}` } } }),
           scales: { x: { title: { display: true, text: sbMLabel(res.ms[0]), color: txt }, ticks: { color: txt }, grid: { color: grid } }, y: { title: { display: true, text: sbMLabel(res.ms[1]), color: txt }, ticks: { color: txt }, grid: { color: grid } } } }),
-          plugins: [{ id: 'sbPtLabels', afterDatasetsDraw(chart) { if (!single || !cfg.labels) return; const c = chart.ctx; c.save(); c.font = '600 10px sans-serif'; c.fillStyle = txt; c.textAlign = 'left'; c.textBaseline = 'middle'; chart.data.datasets.forEach((d, di) => { chart.getDatasetMeta(di).data.forEach((el, i) => { if (d.data[i].label) c.fillText(d.data[i].label, el.x + 8, el.y); }); }); c.restore(); } }] };
+          plugins: [{ id: 'sbPtLabels', afterDatasetsDraw(chart) { if (!single || !cfg.labels) return; const c = chart.ctx; c.save(); c.font = '600 10px sans-serif'; c.fillStyle = txt; c.textAlign = 'left'; c.textBaseline = 'middle'; chart.data.datasets.forEach((d, di) => { chart.getDatasetMeta(di).data.forEach((el, i) => { if (d.data[i].label) c.fillText(d.data[i].label, el.x + (res.bubble ? (d.data[i].r || 8) + 3 : 8), el.y); }); }); c.restore(); } }] };
       } else if (type === 'pie' || type === 'doughnut') {
         const s0 = res.series[0];
         const colors = res.cats.map((c, i) => col.cat(i) || SB_PALETTE[i % SB_PALETTE.length]);
@@ -11148,7 +11293,7 @@
         });
         const catAxis = { ticks: { color: txt, maxRotation: horiz ? 0 : 60, autoSkip: res.cats.length > 24 }, grid: { display: false }, stacked, title: { display: !!res.dim, text: res.dim, color: txt } };
         const valAxis = { ticks: { color: txt, callback: v => sbFmt(Number(v), 0 === dec ? 0 : (Math.abs(v) < 10 && v % 1 ? Math.min(dec, 2) : 0)) }, grid: { color: grid }, stacked, beginAtZero: type !== 'line', title: { display: res.ms.length === 1, text: res.ms.length === 1 ? sbMLabel(res.ms[0]) : '', color: txt } };
-        const scales = horiz ? { y: Object.assign({}, catAxis, { title: catAxis.title }), x: valAxis } : { x: catAxis, y: valAxis };
+        const scales = horiz ? { y: catAxis, x: valAxis } : { x: catAxis, y: valAxis };
         if (type === 'combo' && res.ms.length > 1) scales.y1 = { position: 'right', ticks: { color: txt }, grid: { drawOnChartArea: false }, title: { display: true, text: res.ms.slice(1).map(sbMLabel).join(' / '), color: txt } };
         config = { type: (type === 'line' || type === 'area') ? 'line' : 'bar', data: { labels: res.cats, datasets },
           options: Object.assign({}, baseOpt, { indexAxis: horiz ? 'y' : 'x', scales,
@@ -11158,8 +11303,6 @@
       config.plugins = (config.plugins || []).concat([sbLabelPlugin]);
       sb.charts[key] = new Chart(canvas, config);
     }
-
-    // ---------- builder panel ----------
     function sbOpts(list, sel, blank) {
       return (blank !== undefined ? `<option value="">${escapeHTML(blank)}</option>` : '') + list.map(o => {
         const v = Array.isArray(o) ? o[0] : o, l = Array.isArray(o) ? o[1] : o;
@@ -11189,10 +11332,12 @@
 
     function sbPanelHTML() {
       const sb = sbS(), cfg = sb.cfg, ctx = sbContext(cfg);
-      const dsList = Object.keys(SB_DS_LABELS).filter(k => sbDatasetRows(k).length).map(k => [k, SB_DS_LABELS[k]]);
+      const labels = sbDsLabels();
+      const dsList = Object.keys(labels).filter(k => sbDatasetRows(k).length || k === cfg.ds).map(k => [k, labels[k]]);
       const allCols = ctx.cols.map(c => [c.name, c.name + (c.calc ? ' ƒ' : '')]);
       const meaCols = [['*', 'Record count'], ...ctx.cols.map(c => [c.name, c.name + (c.numeric ? '' : ' (text)') + (c.calc ? ' ƒ' : '')])];
       const secT = t => `<div class="sb-sec">${t}</div>`;
+      const isCustom = !!sb.customDs[cfg.ds];
       const filtRows = (cfg.filters || []).map((f, i) => {
         const col = ctx.cols.find(c => c.name === f.f);
         let dl = '';
@@ -11203,52 +11348,77 @@
           <button class="sb-x" data-sb="fdel" data-i="${i}" title="Remove filter"><i class="fa-solid fa-xmark"></i></button></div>`;
       }).join('');
       const meaRows = (cfg.measures || []).map((m, i) => `<div class="sb-row"><select class="sb-in" data-sb="mf" data-i="${i}">${sbOpts(meaCols, m.f)}</select>
-          <select class="sb-in" style="max-width:112px" data-sb="ma" data-i="${i}">${sbOpts(SB_AGGS, m.f === '*' ? 'count' : m.a)}</select>
+          <select class="sb-in" style="max-width:100px" data-sb="ma" data-i="${i}">${sbOpts(SB_AGGS, m.f === '*' ? 'count' : m.a)}</select>
+          <select class="sb-in" style="max-width:84px" data-sb="msh" data-i="${i}" title="Show value as">${sbOpts(SB_SHOW, m.show || '')}</select>
           <button class="sb-x" data-sb="mdel" data-i="${i}" title="Remove measure"><i class="fa-solid fa-xmark"></i></button></div>`).join('');
+      const xdRows = (cfg.xdims || []).map((d, i) => `<div class="sb-row"><select class="sb-in" data-sb="xd" data-i="${i}">${sbOpts(allCols, d, 'field…')}</select><button class="sb-x" data-sb="xddel" data-i="${i}" title="Remove dimension"><i class="fa-solid fa-xmark"></i></button></div>`).join('');
+      const mOpts = (cfg.measures || []).map((m, i) => [String(i), sbMLabel(m)]);
+      const havRows = (cfg.having || []).map((h, i) => `<div class="sb-row"><select class="sb-in" data-sb="hm" data-i="${i}">${sbOpts(mOpts, String(h.mi))}</select>
+          <select class="sb-in" style="max-width:62px" data-sb="ho" data-i="${i}">${sbOpts([['>', '>'], ['>=', '≥'], ['<', '<'], ['<=', '≤'], ['=', '='], ['!=', '≠']], h.op)}</select>
+          <input class="sb-in" style="max-width:70px" data-sb="hv" data-i="${i}" value="${escapeHTML(h.v === undefined ? '' : h.v)}" placeholder="value">
+          <button class="sb-x" data-sb="hdel" data-i="${i}"><i class="fa-solid fa-xmark"></i></button></div>`).join('');
       const calcRows = (cfg.calcs || []).map((c, i) => `<div class="sb-calc"><div class="sb-row"><input class="sb-in" style="max-width:120px" data-sb="cn" data-i="${i}" value="${escapeHTML(c.name || '')}" placeholder="name">
-          <input class="sb-in" data-sb="ce" data-i="${i}" value="${escapeHTML(c.expr || '')}" placeholder="e.g. team_points - opponent_points">
+          <input class="sb-in" data-sb="ce" data-i="${i}" value="${escapeHTML(c.expr || '')}" placeholder="e.g. CASE WHEN margin > 20 THEN 'Blowout' ELSE 'Close' END">
           <button class="sb-x" data-sb="cdel" data-i="${i}" title="Remove calculated field"><i class="fa-solid fa-xmark"></i></button></div>
-          ${ctx.errors[i] ? `<div class="text-[10px] text-rose-500 mt-0.5">${escapeHTML(ctx.errors[i])}</div>` : ''}</div>`).join('');
+          ${ctx.errors[i] ? `<div class="text-[10px] text-rose-500 mt-0.5">${escapeHTML(ctx.errors[i])}</div>` : (sbIsSql(c.expr) ? '<div class="text-[10px] text-sky-600 mt-0.5">SQL expression</div>' : '')}</div>`).join('');
+      const cfCols = [...[cfg.dim].concat(cfg.xdims || []).filter(Boolean), ...(cfg.split ? [cfg.split] : []), ...(cfg.measures || []).map(sbMLabel)];
+      const cfRows = (cfg.cf || []).map((r, i) => `<div class="sb-calc"><div class="sb-row"><select class="sb-in" data-sb="cfc" data-i="${i}">${sbOpts(cfCols, r.c, 'column…')}</select><button class="sb-x" data-sb="cfdel" data-i="${i}"><i class="fa-solid fa-xmark"></i></button></div>
+          <div class="sb-row"><select class="sb-in" data-sb="cfo" data-i="${i}">${sbOpts(SB_CF_OPS, r.op)}</select><input class="sb-in" style="max-width:64px" data-sb="cfv" data-i="${i}" value="${escapeHTML(r.v === undefined ? '' : r.v)}" placeholder="value"><input class="sb-in" style="max-width:56px" data-sb="cfv2" data-i="${i}" value="${escapeHTML(r.v2 === undefined ? '' : r.v2)}" placeholder="and">
+          <select class="sb-in" style="max-width:74px" data-sb="cfk" data-i="${i}">${sbOpts(Object.keys(SB_CF_COLORS).map(k => [k, k]), r.k)}</select></div></div>`).join('');
+      const isTbl = cfg.type === 'table' || cfg.type === 'pivot';
       return `
         <div class="sb-card">
           ${secT('Data source')}
           <select class="sb-in" data-sb="ds">${sbOpts(dsList, cfg.ds)}</select>
-          <div class="text-[10px] text-slate-400 mt-1">${ctx.rows.length.toLocaleString()} rows · ${ctx.cols.length} fields</div>
+          <div class="flex items-center justify-between mt-1"><div class="text-[10px] text-slate-400">${ctx.rows.length.toLocaleString()} rows · ${ctx.cols.length} fields${isCustom && sb.customDs[cfg.ds].err ? ' · <span class="text-rose-500">' + escapeHTML(sb.customDs[cfg.ds].err) + '</span>' : ''}</div>
+            <div class="flex gap-2"><button type="button" class="sb-add" data-sb="jopen"><i class="fa-solid fa-link"></i> Join tables</button>${isCustom ? '<button type="button" class="sb-add" style="color:#e11d48" data-sb="dsdel">Delete</button>' : ''}</div></div>
+          ${sbJoinHTML()}
           ${secT('Chart type')}
           <div class="grid grid-cols-4 gap-1.5">${SB_TYPES.map(t => `<button type="button" class="sb-chip${cfg.type === t.k ? ' on' : ''}" data-sb="type" data-k="${t.k}" title="${t.l}"><i class="fa-solid ${t.i}"></i><span>${t.l}</span></button>`).join('')}</div>
           ${secT('Dimensions')}
-          <label class="sb-lbl">${cfg.type === 'scatter' ? 'Point label (group by)' : 'Dimension (X / group by)'}</label>
+          <label class="sb-lbl">${(cfg.type === 'scatter' || cfg.type === 'bubble') ? 'Point label (group by)' : 'Dimension (X / rows / group by)'}</label>
           <select class="sb-in" data-sb="dim">${sbOpts(allCols, cfg.dim, '(none)')}</select>
+          ${xdRows ? '<label class="sb-lbl">Additional dimensions</label>' + xdRows : ''}
+          <button type="button" class="sb-add" data-sb="xdadd"><i class="fa-solid fa-plus"></i> Add dimension</button>
           <label class="sb-lbl">Split by (series / columns)</label>
           <select class="sb-in" data-sb="split">${sbOpts(allCols, cfg.split, '(none)')}</select>
           ${secT('Measures')}
           ${meaRows}
           <button type="button" class="sb-add" data-sb="madd"><i class="fa-solid fa-plus"></i> Add measure</button>
-          ${cfg.type === 'scatter' ? '<div class="text-[10px] text-slate-400 mt-1">Scatter: 1st measure = X, 2nd = Y. Combo: 1st = bars, others = lines on the right axis.</div>' : (cfg.type === 'combo' ? '<div class="text-[10px] text-slate-400 mt-1">Combo: 1st measure = bars, others = lines on the right axis.</div>' : '')}
+          ${cfg.type === 'bubble' ? '<div class="text-[10px] text-slate-400 mt-1">Bubble: 1st measure = X, 2nd = Y, 3rd = bubble size. Split by = colour.</div>' : cfg.type === 'scatter' ? '<div class="text-[10px] text-slate-400 mt-1">Scatter: 1st measure = X, 2nd = Y.</div>' : (cfg.type === 'combo' ? '<div class="text-[10px] text-slate-400 mt-1">Combo: 1st measure = bars, others = lines on the right axis.</div>' : '')}
+          ${secT('Filter by measure')}
+          ${havRows}
+          <button type="button" class="sb-add" data-sb="hadd"><i class="fa-solid fa-plus"></i> Add measure filter</button>
+          <div class="text-[10px] text-slate-400 mt-0.5 leading-snug">Keeps only groups whose aggregated value passes (like SQL HAVING).</div>
           ${secT('Calculated fields')}
           ${calcRows}
           <button type="button" class="sb-add" data-sb="cadd"><i class="fa-solid fa-plus"></i> Add calculated field</button>
-          <div class="text-[10px] text-slate-400 mt-1 leading-snug">Row-level formulas using field names: <code>team_points - opponent_points</code>, <code>if(result == 'W', 1, 0)</code>, <code>round(margin / 2, 1)</code>. Functions: abs, min, max, round, sqrt, pow, floor, ceil, if. Calculated fields (ƒ) then appear in every dropdown.</div>
+          <div class="text-[10px] text-slate-400 mt-1 leading-snug">Row-level. SQL works: <code>CASE WHEN margin &gt; 20 THEN 'Blowout' ELSE 'Close' END</code>, <code>ROUND(team_points / projected_points, 3)</code>, <code>manager || ' W' || week</code> (prefix <code>sql:</code> to force). Plain formulas also work: <code>team_points - opponent_points</code>, <code>if(result == 'W', 1, 0)</code>. Calculated fields (ƒ) appear in every dropdown.</div>
           ${secT('Filters')}
           ${filtRows}
           <button type="button" class="sb-add" data-sb="fadd"><i class="fa-solid fa-plus"></i> Add filter</button>
+          ${isTbl ? secT('Conditional formatting') + cfRows + '<button type="button" class="sb-add" data-sb="cfadd"><i class="fa-solid fa-plus"></i> Add rule</button>' : ''}
           ${secT('Sort & options')}
           <div class="sb-row"><select class="sb-in" data-sb="sort">${sbOpts([['m0', 'Sort by first measure'], ['dim', 'Sort by dimension']], cfg.sort)}</select>
             <select class="sb-in" style="max-width:88px" data-sb="dir">${sbOpts([['desc', 'Desc'], ['asc', 'Asc']], cfg.dir)}</select></div>
           <div class="sb-row mt-1"><label class="sb-lbl" style="margin:0;white-space:nowrap">Top N</label><input class="sb-in" type="number" min="0" data-sb="limit" value="${cfg.limit || 0}" style="max-width:70px">
             <label class="sb-lbl" style="margin:0;white-space:nowrap">Decimals</label><input class="sb-in" type="number" min="0" max="4" data-sb="dec" value="${cfg.dec}" style="max-width:60px"></div>
-          <div class="flex items-center gap-4 mt-2 text-xs text-slate-600 dark:text-slate-300">
+          <div class="flex flex-wrap items-center gap-4 mt-2 text-xs text-slate-600 dark:text-slate-300">
             <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" data-sb="labels" ${cfg.labels ? 'checked' : ''}> Data labels</label>
-            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" data-sb="legend" ${cfg.legend !== false ? 'checked' : ''}> Legend</label></div>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" data-sb="legend" ${cfg.legend !== false ? 'checked' : ''}> Legend</label>
+            ${cfg.type === 'table' ? `<label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" data-sb="totals" ${cfg.totals ? 'checked' : ''}> Totals row</label>` : ''}</div>
           <label class="sb-lbl">Title (optional)</label>
           <input class="sb-in" data-sb="title" value="${escapeHTML(cfg.title || '')}" placeholder="${escapeHTML(sbTitle(Object.assign({}, cfg, { title: '' })))}">
         </div>`;
     }
-
     function sbDashHTML() {
       const sb = sbS();
-      if (!sb.pinned.length) return `<div class="bg-white dark:bg-slate-950 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center text-xs text-slate-500 dark:text-slate-400"><i class="fa-solid fa-thumbtack text-brand-500 mr-1"></i> Build a chart above and press <b>Pin to dashboard</b> to keep it here. Pinned charts live-update with the data and are saved in this browser.</div>`;
-      return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">${sb.pinned.map((p, i) => `
+      if (!sb.pinned.length) return `<div class="bg-white dark:bg-slate-950 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center text-xs text-slate-500 dark:text-slate-400"><i class="fa-solid fa-thumbtack text-brand-500 mr-1"></i> Build a chart above and press <b>Pin</b> to keep it here. Pinned charts live-update with the data and are saved in this browser.</div>`;
+      const fields = new Set(); sb.pinned.forEach(p => sbContext(p.cfg).cols.forEach(c => fields.add(c.name)));
+      const fl = [...fields].sort();
+      const dfRows = (sb.dashF || []).map((f, i) => `<div class="sb-row" style="margin:0"><select class="sb-in" style="max-width:150px" data-sb="dff" data-i="${i}">${sbOpts(fl, f.f, 'field…')}</select><select class="sb-in" style="max-width:90px" data-sb="dfo" data-i="${i}">${sbOpts(SB_OPS, f.op)}</select><input class="sb-in" style="max-width:130px" data-sb="dfv" data-i="${i}" value="${escapeHTML(f.v || '')}" placeholder="value"><button class="sb-x" data-sb="dfdel" data-i="${i}"><i class="fa-solid fa-xmark"></i></button></div>`).join('');
+      return `<div class="flex flex-wrap items-center gap-2 px-1 mb-2"><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dashboard filters</span>${dfRows}<button class="sb-pre" data-sb="dfadd">+ filter all tiles</button></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">${sb.pinned.map((p, i) => `
         <div class="sb-tile bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden ${p.span === 2 ? 'lg:col-span-2' : ''}">
           <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800">
             <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${escapeHTML(sbTitle(p.cfg))}</div>
@@ -11256,12 +11426,13 @@
               <button class="sb-x" data-sb="tleft" data-i="${i}" title="Move earlier"><i class="fa-solid fa-arrow-up"></i></button>
               <button class="sb-x" data-sb="tright" data-i="${i}" title="Move later"><i class="fa-solid fa-arrow-down"></i></button>
               <button class="sb-x hidden lg:inline-flex" data-sb="tspan" data-i="${i}" title="Toggle width"><i class="fa-solid fa-left-right"></i></button>
+              <button class="sb-x" data-sb="tren" data-i="${i}" title="Rename"><i class="fa-solid fa-i-cursor"></i></button>
+              <button class="sb-x" data-sb="tdup" data-i="${i}" title="Duplicate"><i class="fa-solid fa-copy"></i></button>
               <button class="sb-x" data-sb="tedit" data-i="${i}" title="Edit in builder"><i class="fa-solid fa-pen"></i></button>
               <button class="sb-x" data-sb="tdel" data-i="${i}" title="Remove"><i class="fa-solid fa-trash"></i></button>
             </div></div>
           <div class="sb-tile-body" data-i="${i}"></div></div>`).join('')}</div>`;
     }
-
     function sbRefreshPreview() {
       const sb = sbS();
       const host = document.getElementById('sb-preview-body'); if (!host) return;
@@ -11269,14 +11440,18 @@
       const h = window.innerWidth < 640 ? 300 : 400;
       sbRender(host, sb.cfg, 'preview', { h });
       const meta = document.getElementById('sb-preview-meta');
-      if (meta) meta.textContent = host._res && host._res.n !== undefined ? `${host._res.n.toLocaleString()} rows after filters` : '';
+      if (meta) {
+        const r = host._res, up = sb.updated ? ` · updated ${sb.updated.toLocaleTimeString()}` : '';
+        meta.textContent = r && r.n !== undefined ? `${r.n.toLocaleString()} rows after filters${r.kind === 'chart' && r.ndim === 1 ? ' · click a bar to filter' : ''}${up}` : '';
+      }
+      sbSyncUndo();
     }
     function sbRefreshTiles() {
       const sb = sbS();
       Object.keys(sb.charts).filter(k => k !== 'preview').forEach(k => { try { sb.charts[k].destroy(); } catch (e) {} delete sb.charts[k]; });
       document.querySelectorAll('#sb-dash .sb-tile-body').forEach(el => {
         const i = Number(el.getAttribute('data-i')); const p = sb.pinned[i]; if (!p) return;
-        sbRender(el, p.cfg, 'tile' + i, { h: 260, compact: true });
+        sbRender(el, p.cfg, 'tile' + i, { h: 260, compact: true, extraF: sb.dashF });
       });
     }
     function sbRebuildPanel() {
@@ -11296,71 +11471,114 @@
       const sb = sbS();
       if (!sb.built) {
         root.innerHTML = `
-          <div id="sb-presets" class="flex flex-wrap items-center gap-1.5 px-1"></div>
-          <div class="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-3 items-start">
+          <div class="flex flex-wrap items-center gap-2 px-1">
+            <div class="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden text-xs font-bold">
+              <button class="sb-seg px-3 py-1.5" data-sb="mode" data-k="builder"><i class="fa-solid fa-chart-column mr-1"></i>Builder</button>
+              <button class="sb-seg px-3 py-1.5" data-sb="mode" data-k="sql"><i class="fa-solid fa-terminal mr-1"></i>SQL</button></div>
+            <div id="sb-presets" class="flex flex-wrap items-center gap-1.5"></div>
+          </div>
+          <div id="sb-builder"><div class="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-3 items-start">
             <aside id="sb-panel" class="order-2 lg:order-1 lg:sticky lg:top-[150px] lg:max-h-[calc(100vh-170px)] lg:overflow-y-auto"></aside>
             <div class="order-1 lg:order-2 space-y-3 min-w-0">
               <div id="sb-preview" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
                 <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800">
                   <div class="min-w-0"><div id="sb-preview-title" class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate"></div><div id="sb-preview-meta" class="text-[10px] text-slate-400"></div></div>
                   <div class="flex flex-wrap items-center gap-1.5">
+                    <button class="sb-btn" data-sb="undo" title="Undo last change (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i> Undo</button>
+                    <button class="sb-btn" data-sb="refresh" title="Reload data and redraw"><i class="fa-solid fa-arrows-rotate"></i></button>
                     <button class="sb-btn primary" data-sb="pin"><i class="fa-solid fa-thumbtack"></i> Pin</button>
                     <button class="sb-btn" data-sb="png" title="Download as PNG"><i class="fa-solid fa-file-image"></i> PNG</button>
                     <button class="sb-btn" data-sb="csv" title="Download the aggregated data"><i class="fa-solid fa-file-csv"></i> CSV</button>
                     <button class="sb-btn" data-sb="link" title="Copy a link to this chart"><i class="fa-solid fa-link"></i></button>
-                    <button class="sb-btn" data-sb="reset" title="Reset builder"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button class="sb-btn" data-sb="reset" title="Reset builder"><i class="fa-solid fa-eraser"></i></button>
                   </div>
                 </div>
                 <div id="sb-preview-body"></div>
               </div>
               <div class="flex items-center justify-between px-1"><h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-table-columns text-brand-500"></i> Dashboard</h3>
-                <button class="sb-btn" data-sb="clearall" title="Remove every pinned chart"><i class="fa-solid fa-trash"></i> Clear</button></div>
+                <div class="flex gap-1.5"><button class="sb-btn" data-sb="undo" title="Undo"><i class="fa-solid fa-rotate-left"></i> Undo</button><button class="sb-btn" data-sb="refresh" title="Reload data and redraw"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+                <button class="sb-btn" data-sb="clearall" title="Remove every pinned chart"><i class="fa-solid fa-trash"></i> Clear</button></div></div>
               <div id="sb-dash"></div>
             </div>
-          </div>`;
-        if (!root._wired) { root._wired = true; root.addEventListener('change', sbOnChange); root.addEventListener('click', sbOnClick); }
+          </div></div>
+          <div id="sb-sqlview" class="hidden"></div>`;
+        if (!root._wired) {
+          root._wired = true; root.addEventListener('change', sbOnChange); root.addEventListener('click', sbOnClick);
+          root.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.target.id === 'sb-sqltext') { e.preventDefault(); sbRunSqlUI(); } });
+          document.addEventListener('keydown', e => {
+            if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== 'z') return;
+            const t = e.target; if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+            const b = document.querySelector('.tab-btn[data-tab="sandbox"]'); if (!b || !b.classList.contains('active') || sbS().mode !== 'builder') return;
+            e.preventDefault(); sbUndo();
+          });
+        }
         sb.built = true; sb.ver = STATE.dataVersion;
-        sbRebuildPresets(); sbRebuildPanel(); sbRefreshPreview(); sbRebuildDash();
+        sbRebuildPresets(); sbRebuildPanel(); sbRefreshPreview(); sbRebuildDash(); sbApplyMode();
         return;
       }
-      // later renders (data poll, theme change, tab switch): keep the panel untouched while the user is typing in it
       const panel = document.getElementById('sb-panel');
       const typing = panel && panel.contains(document.activeElement);
       if (sb.ver !== STATE.dataVersion) { sb.ver = STATE.dataVersion; sbRebuildPresets(); if (!typing) sbRebuildPanel(); }
       sbRefreshPreview(); sbRefreshTiles();
     }
-
+    function sbApplyMode() {
+      const sb = sbS(), sql = sb.mode === 'sql';
+      const b = document.getElementById('sb-builder'), s = document.getElementById('sb-sqlview'); if (!b || !s) return;
+      b.classList.toggle('hidden', sql); s.classList.toggle('hidden', !sql);
+      document.querySelectorAll('.sb-seg').forEach(x => { const on = x.getAttribute('data-k') === sb.mode; x.style.background = on ? '#0284c7' : ''; x.style.color = on ? '#fff' : ''; });
+      const p = document.getElementById('sb-presets'); if (p) p.style.display = sql ? 'none' : '';
+      if (sql) sbRebuildSql(); else { sbRefreshPreview(); sbRefreshTiles(); }
+      sbSyncUndo();
+    }
     function sbOnChange(e) {
       const el = e.target.closest('[data-sb]'); if (!el) return;
       const sb = sbS(), cfg = sb.cfg, a = el.getAttribute('data-sb'), i = Number(el.getAttribute('data-i'));
       const v = el.type === 'checkbox' ? el.checked : el.value;
+      if (a === 'sqltext') { sb.sql = v; sbSave(); return; }
+      if (a === 'sqlex') { if (v !== '') { const ta = document.getElementById('sb-sqltext'); if (ta) ta.value = SB_SQL_EXAMPLES[Number(v)][1]; sb.sql = SB_SQL_EXAMPLES[Number(v)][1]; el.value = ''; } return; }
       const ctx = sbContext(cfg);
       let structural = false;
+      if (/^j(left|right|type|name|l|r)$/.test(a)) {
+        const j = sb.join; if (!j) return;
+        if (a === 'jleft' || a === 'jright') { j[a === 'jleft' ? 'left' : 'right'] = v; j.pairs = sbSuggestJoin(j.left, j.right); j.err = ''; sbRebuildPanel(); }
+        else if (a === 'jtype') j.type = v; else if (a === 'jname') j.name = v;
+        else if (a === 'jl') j.pairs[i][0] = v; else if (a === 'jr') j.pairs[i][1] = v;
+        return;
+      }
+      if (/^df[fov]$/.test(a)) {
+        sbSnap(a); const f = sb.dashF[i]; if (!f) return;
+        if (a === 'dff') f.f = v; else if (a === 'dfo') f.op = v; else f.v = v;
+        sbSave(); sbRefreshTiles(); return;
+      }
+      sbSnap(a);
       switch (a) {
-        case 'ds': {
-          const fresh = sbDefaultCfg(); const cols = sbDetectCols(sbDatasetRows(v));
-          cfg.ds = v; cfg.calcs = []; cfg.filters = [];
-          const dim = cols.find(c => !c.numeric && !/id$/i.test(c.name)) || cols[0];
-          const mea = cols.find(c => c.numeric && !/(^|_)(id|year|week)$/i.test(c.name)) || cols.find(c => c.numeric);
-          cfg.dim = (v === 'teamweeks') ? 'manager' : (dim ? dim.name : ''); cfg.split = '';
-          cfg.measures = v === 'teamweeks' ? fresh.measures : [mea ? { f: mea.name, a: 'sum' } : { f: '*', a: 'count' }];
-          structural = true; break;
-        }
+        case 'ds': sbSetDs(v); structural = true; break;
         case 'dim': cfg.dim = v; break;
+        case 'xd': cfg.xdims[i] = v; break;
         case 'split': cfg.split = v; break;
         case 'mf': { const m = cfg.measures[i]; m.f = v; const c = ctx.cols.find(x => x.name === v); if (v === '*') m.a = 'count'; else if (c && !c.numeric && !['count', 'countd'].includes(m.a)) m.a = 'countd'; structural = true; break; }
         case 'ma': cfg.measures[i].a = v; break;
+        case 'msh': cfg.measures[i].show = v; structural = true; break;
+        case 'hm': cfg.having[i].mi = Number(v); break;
+        case 'ho': cfg.having[i].op = v; break;
+        case 'hv': cfg.having[i].v = v; break;
         case 'cn': cfg.calcs[i].name = v.trim(); structural = true; break;
         case 'ce': cfg.calcs[i].expr = v; structural = true; break;
         case 'ff': cfg.filters[i].f = v; cfg.filters[i].v = ''; structural = true; break;
         case 'fo': cfg.filters[i].op = v; break;
         case 'fv': cfg.filters[i].v = v; break;
-        case 'sort': cfg.sort = v; break;
-        case 'dir': cfg.dir = v; break;
+        case 'cfc': cfg.cf[i].c = v; break;
+        case 'cfo': cfg.cf[i].op = v; break;
+        case 'cfv': cfg.cf[i].v = v; break;
+        case 'cfv2': cfg.cf[i].v2 = v; break;
+        case 'cfk': cfg.cf[i].k = v; break;
+        case 'sort': cfg.sort = v; cfg.tsort = null; break;
+        case 'dir': cfg.dir = v; cfg.tsort = null; break;
         case 'limit': cfg.limit = Math.max(0, parseInt(v, 10) || 0); break;
         case 'dec': cfg.dec = Math.min(4, Math.max(0, parseInt(v, 10) || 0)); break;
         case 'labels': cfg.labels = !!v; break;
         case 'legend': cfg.legend = !!v; break;
+        case 'totals': cfg.totals = !!v; break;
         case 'title': cfg.title = v; break;
         default: return;
       }
@@ -11368,30 +11586,82 @@
       sbRefreshPreview(); sbUrlSoon();
     }
     function sbOnClick(e) {
-      const el = e.target.closest('[data-sb]'); if (!el || el.tagName === 'SELECT' || el.tagName === 'INPUT') return;
+      const el = e.target.closest('[data-sb]'); if (!el || el.tagName === 'SELECT' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
       const sb = sbS(), cfg = sb.cfg, a = el.getAttribute('data-sb'), i = Number(el.getAttribute('data-i'));
       const panelRefresh = () => { sbRebuildPanel(); sbRefreshPreview(); sbUrlSoon(); };
+      const MUT = ['type', 'madd', 'mdel', 'cadd', 'cdel', 'fadd', 'fdel', 'preset', 'reset', 'pin', 'clearall', 'tdel', 'tleft', 'tright', 'tspan', 'tedit', 'tdup', 'tren', 'xdadd', 'xddel', 'hadd', 'hdel', 'cfadd', 'cfdel', 'dfadd', 'dfdel', 'jcreate', 'dsdel', 'sqluse'];
+      if (MUT.includes(a)) sbSnap();
       switch (a) {
-        case 'type': cfg.type = el.getAttribute('data-k'); if (cfg.type === 'line' || cfg.type === 'area') { cfg.sort = 'dim'; cfg.dir = 'asc'; } panelRefresh(); break;
+        case 'undo': sbUndo(); break;
+        case 'refresh': sbRefresh(el); break;
+        case 'mode': sb.mode = el.getAttribute('data-k'); sbApplyMode(); break;
+        case 'type': {
+          cfg.type = el.getAttribute('data-k'); cfg.tsort = null;
+          if (cfg.type === 'line' || cfg.type === 'area') { cfg.sort = 'dim'; cfg.dir = 'asc'; }
+          const need = cfg.type === 'bubble' ? 3 : (cfg.type === 'scatter' ? 2 : 0), cx = sbContext(cfg);
+          while (cfg.measures.length < need) { const c = cx.cols.find(x => x.numeric && !cfg.measures.some(m => m.f === x.name)); cfg.measures.push(c ? { f: c.name, a: 'avg' } : { f: '*', a: 'count' }); }
+          panelRefresh(); break;
+        }
         case 'madd': { const c = sbContext(cfg).cols.find(x => x.numeric && !cfg.measures.some(m => m.f === x.name)); cfg.measures.push(c ? { f: c.name, a: 'avg' } : { f: '*', a: 'count' }); panelRefresh(); break; }
-        case 'mdel': cfg.measures.splice(i, 1); panelRefresh(); break;
+        case 'mdel': cfg.measures.splice(i, 1); cfg.having = (cfg.having || []).filter(h => h.mi < cfg.measures.length); panelRefresh(); break;
+        case 'xdadd': { const c = sbContext(cfg).cols.find(x => !x.numeric && x.name !== cfg.dim && !(cfg.xdims || []).includes(x.name)) || sbContext(cfg).cols[0]; (cfg.xdims = cfg.xdims || []).push(c ? c.name : ''); panelRefresh(); break; }
+        case 'xddel': cfg.xdims.splice(i, 1); panelRefresh(); break;
+        case 'hadd': (cfg.having = cfg.having || []).push({ mi: 0, op: '>', v: '' }); sbRebuildPanel(); break;
+        case 'hdel': cfg.having.splice(i, 1); panelRefresh(); break;
         case 'cadd': cfg.calcs.push({ name: `calc_${cfg.calcs.length + 1}`, expr: '' }); sbRebuildPanel(); break;
         case 'cdel': cfg.calcs.splice(i, 1); panelRefresh(); break;
         case 'fadd': cfg.filters.push({ f: '', op: '=', v: '' }); sbRebuildPanel(); break;
         case 'fdel': cfg.filters.splice(i, 1); panelRefresh(); break;
+        case 'cfadd': (cfg.cf = cfg.cf || []).push({ c: (cfg.measures[0] ? sbMLabel(cfg.measures[0]) : ''), op: 'scale', v: '', v2: '', k: 'green' }); panelRefresh(); break;
+        case 'cfdel': cfg.cf.splice(i, 1); panelRefresh(); break;
         case 'preset': { const ps = document.getElementById('sb-presets')._ps || []; if (ps[i]) { sb.cfg = Object.assign(sbDefaultCfg(), JSON.parse(JSON.stringify(ps[i].c))); panelRefresh(); } break; }
         case 'reset': sb.cfg = sbDefaultCfg(); panelRefresh(); break;
         case 'pin': {
           sb.pinned.push({ cfg: JSON.parse(JSON.stringify(cfg)), span: 1 }); sbSave(); sbRebuildDash();
-          const d = document.getElementById('sb-dash'); if (d && d.scrollIntoView) { /* stay on builder; flash the new tile */ const last = d.querySelector('.sb-tile:last-child'); if (last) { last.classList.add('mx-flash'); } }
+          const d = document.getElementById('sb-dash'); if (d) { const last = d.querySelector('.sb-tile:last-child'); if (last) last.classList.add('mx-flash'); }
           break;
         }
-        case 'clearall': if (sb.pinned.length && confirm('Remove every pinned chart from the dashboard?')) { sb.pinned = []; sbSave(); sbRebuildDash(); } break;
+        case 'clearall': if (sb.pinned.length && confirm('Remove every pinned chart from the dashboard? (Undo brings them back)')) { sb.pinned = []; sbSave(); sbRebuildDash(); } break;
         case 'tdel': sb.pinned.splice(i, 1); sbSave(); sbRebuildDash(); break;
         case 'tleft': if (i > 0) { const t = sb.pinned[i]; sb.pinned[i] = sb.pinned[i - 1]; sb.pinned[i - 1] = t; sbSave(); sbRebuildDash(); } break;
         case 'tright': if (i < sb.pinned.length - 1) { const t = sb.pinned[i]; sb.pinned[i] = sb.pinned[i + 1]; sb.pinned[i + 1] = t; sbSave(); sbRebuildDash(); } break;
         case 'tspan': sb.pinned[i].span = sb.pinned[i].span === 2 ? 1 : 2; sbSave(); sbRebuildDash(); break;
+        case 'tdup': sb.pinned.splice(i + 1, 0, JSON.parse(JSON.stringify(sb.pinned[i]))); sbSave(); sbRebuildDash(); break;
+        case 'tren': { const p = sb.pinned[i]; const t = prompt('Tile title', sbTitle(p.cfg)); if (t !== null) { p.cfg.title = t.trim(); sbSave(); sbRebuildDash(); } break; }
         case 'tedit': sb.cfg = Object.assign(sbDefaultCfg(), JSON.parse(JSON.stringify(sb.pinned[i].cfg))); panelRefresh(); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {} break;
+        case 'dfadd': sb.dashF.push({ f: '', op: '=', v: '' }); sbSave(); sbRebuildDash(); break;
+        case 'dfdel': sb.dashF.splice(i, 1); sbSave(); sbRebuildDash(); break;
+        case 'jopen': { const left = cfg.ds, right = Object.keys(sbDsLabels()).find(k => k !== left && sbDatasetRows(k).length) || left; sb.join = { left, right, type: 'left', pairs: sbSuggestJoin(left, right), name: '', err: '' }; sbRebuildPanel(); break; }
+        case 'jclose': sb.join = null; sbRebuildPanel(); break;
+        case 'jpdel': sb.join.pairs.splice(i, 1); sbRebuildPanel(); break;
+        case 'jpadd': { const n = el.getAttribute('data-n'); sb.join.pairs.push([n || sbTableCols(sb.join.left)[0].name, n || sbTableCols(sb.join.right)[0].name]); sbRebuildPanel(); break; }
+        case 'jcreate': {
+          const j = sb.join; if (!j.pairs.length) { j.err = 'Add at least one join key.'; sbRebuildPanel(); break; }
+          if (!(j.name || '').trim()) { j.err = 'Give the new source a name.'; sbRebuildPanel(); break; }
+          if (!sbSqlDb()) { j.err = 'SQL engine is still loading — try again in a moment.'; sbRebuildPanel(); break; }
+          try {
+            const sql = sbBuildJoinSQL(j); sbRunSQL(`SELECT COUNT(*) FROM (${sql})`);
+            const id = sbRegisterDs(j.name.trim(), sql); sb.join = null; sbSetDs(id); sbSave(); sbRebuildPresets(); panelRefresh(); sbRebuildDash();
+          } catch (err) { j.err = err.message; sbRebuildPanel(); }
+          break;
+        }
+        case 'dsdel': if (sb.customDs[cfg.ds] && confirm(`Delete the source "${sb.customDs[cfg.ds].label}"? Charts using it will stop working.`)) { delete sb.customDs[cfg.ds]; sbInvalidate(); sbSetDs('teamweeks'); sbSave(); sbRebuildPresets(); panelRefresh(); sbRebuildDash(); } break;
+        case 'sqlrun': sbRunSqlUI(); break;
+        case 'sqlins': { const ta = document.getElementById('sb-sqltext'); if (ta) { const s = ta.selectionStart, t = el.getAttribute('data-t'); ta.value = ta.value.slice(0, s) + t + ta.value.slice(ta.selectionEnd); ta.focus(); ta.selectionStart = ta.selectionEnd = s + t.length; sb.sql = ta.value; } break; }
+        case 'sqlhist': { const ta = document.getElementById('sb-sqltext'); if (ta && sb.sqlHist[i]) { ta.value = sb.sqlHist[i]; sb.sql = ta.value; } break; }
+        case 'sqlsort': { const t = sb.sqlSort; sb.sqlSort = (t && t.c === i) ? { c: i, dir: t.dir === 'asc' ? 'desc' : 'asc' } : { c: i, dir: 'asc' }; const r = document.getElementById('sb-sqlres'); if (r) r.innerHTML = sbSqlResultHTML(); break; }
+        case 'sqlcsv': {
+          const r = sb.sqlRes; if (!r) break;
+          const q = v => { const s = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+          const blob = new Blob([[r.cols.map(q).join(','), ...r.rows.map(row => row.map(q).join(','))].join('\n')], { type: 'text/csv;charset=utf-8;' });
+          const l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = 'Sandbox_SQL.csv'; document.body.appendChild(l); l.click(); setTimeout(() => { URL.revokeObjectURL(l.href); l.remove(); }, 500); break;
+        }
+        case 'sqluse': {
+          sbRunSqlUI(); if (!sb.sqlRes) break;
+          const name = prompt('Name this datasource:', 'Query ' + (Object.keys(sb.customDs).length + 1)); if (!name || !name.trim()) break;
+          const id = sbRegisterDs(name.trim(), sb.sql.trim().replace(/;+\s*$/, ''));
+          sbSetDs(id); sb.mode = 'builder'; sbSave(); sbApplyMode(); sbRebuildPresets(); panelRefresh(); break;
+        }
         case 'png': {
           const name = (sbTitle(cfg).replace(/[^A-Za-z0-9]+/g, '_').slice(0, 60) || 'Sandbox') + '.png';
           ndlElementToPNG(document.getElementById('sb-preview-body'), name, { title: sbTitle(cfg) }); break;
@@ -11405,21 +11675,263 @@
           break;
         }
       }
+      sbSyncUndo();
     }
     function sbDownloadCSV() {
       const host = document.getElementById('sb-preview-body'); const res = host && host._res; if (!res || res.error) return;
       const q = v => { const s = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
       let lines = [];
       if (res.kind === 'kpi') { lines.push('measure,value'); res.tiles.forEach(t => lines.push([q(t.label), q(t.value)].join(','))); }
-      else if (res.kind === 'table') { lines.push([res.dim, res.split, ...res.ms.map(sbMLabel)].filter((x, i) => x || i > 1).map(q).join(',')); res.rows.forEach(r => lines.push([...(res.dim ? [r.d] : []), ...(res.split ? [r.s] : []), ...r.vals].map(q).join(','))); }
+      else if (res.kind === 'table') { lines.push([...res.dims, ...(res.split ? [res.split] : []), ...res.ms.map(sbMLabel)].map(q).join(',')); res.rows.forEach(r => lines.push([...r.dp, ...(res.split ? [r.s] : []), ...r.vals].map(q).join(','))); }
       else if (res.kind === 'pivot') { lines.push([res.dim, ...res.cols.map(c => c.split)].map(q).join(',')); res.cats.forEach((d, i) => lines.push([d, ...res.cols.map(c => c.data[i])].map(q).join(','))); }
-      else if (res.kind === 'scatter') { lines.push(['series', 'label', 'x', 'y'].join(',')); res.series.forEach(s => s.pts.forEach(p => lines.push([s.name, p.label, p.x, p.y].map(q).join(',')))); }
+      else if (res.kind === 'scatter') { lines.push(['series', 'label', 'x', 'y', ...(res.bubble ? ['size'] : [])].join(',')); res.series.forEach(s => s.pts.forEach(p => lines.push([s.name, p.label, p.x, p.y, ...(res.bubble ? [p.s] : [])].map(q).join(',')))); }
       else { lines.push([res.dim || 'category', ...res.series.map(s => s.name)].map(q).join(',')); res.cats.forEach((d, i) => lines.push([d, ...res.series.map(s => s.data[i])].map(q).join(','))); }
       const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Sandbox_${(sbTitle(sbS().cfg).replace(/[^A-Za-z0-9]+/g, '_').slice(0, 50)) || 'data'}.csv`;
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
     }
+    // ======================= Sandbox v2 additions =======================
+    const SB_CF_OPS = [['gt', '>'], ['gte', '≥'], ['lt', '<'], ['lte', '≤'], ['eq', '='], ['ne', '≠'], ['btw', 'between'], ['has', 'contains'], ['top', 'top N'], ['bot', 'bottom N'], ['scale', 'scale green→red'], ['scaler', 'scale red→green'], ['bar', 'data bar']];
+    const SB_CF_COLORS = { green: '34,197,94', red: '239,68,68', amber: '245,158,11', blue: '14,165,233', grey: '148,163,184' };
+    const SB_SHOW = [['', 'Value'], ['pct', '% of total'], ['run', 'Running total'], ['rank', 'Rank'], ['diff', 'Δ vs previous']];
+    const SB_SQL_EXAMPLES = [
+      ['Avg points by manager', 'SELECT manager, COUNT(*) AS games, ROUND(AVG(team_points), 2) AS avg_pts\nFROM teamweeks\nGROUP BY manager\nORDER BY avg_pts DESC'],
+      ['Highest score each week', 'SELECT year, week, manager, MAX(team_points) AS pts\nFROM teamweeks\nGROUP BY year, week\nORDER BY year DESC, week DESC\nLIMIT 50'],
+      ['Player-week × team-week join', 'SELECT t.manager, t.year, t.week, t.team_points, p.position, SUM(p.player_pts) AS pos_pts\nFROM teamweeks t\nJOIN players p ON p.year = t.year AND p.week = t.week AND p.league = t.league AND p.team_id = t.team_id\nGROUP BY 1, 2, 3, 4, 5\nLIMIT 200'],
+      ['Win % with CASE WHEN', "SELECT manager,\n  SUM(CASE WHEN result = 'W' THEN 1 ELSE 0 END) AS w,\n  SUM(CASE WHEN result = 'L' THEN 1 ELSE 0 END) AS l,\n  ROUND(AVG(win), 3) AS win_pct\nFROM teamweeks\nWHERE result <> ''\nGROUP BY manager\nORDER BY win_pct DESC"]
+    ];
+    function sbDsLabels() { const o = Object.assign({}, SB_DS_LABELS); const c = sbS().customDs || {}; Object.keys(c).forEach(k => { o[k] = c[k].label + ' (custom)'; }); return o; }
+    function sbInvalidate() { const sb = sbS(); sb.cache = {}; sb._ctx = null; sb._ctxm = new Map(); if (sb._db) { try { sb._db.close(); } catch (e) {} sb._db = null; } }
+    const sbQ = n => '"' + String(n).replace(/"/g, '""') + '"';
+    function sbTableCols(ds) { const seen = new Set(); return sbDetectCols(sbDatasetRows(ds)).filter(c => { const k = c.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }); }
 
+    // ---------- SQL engine (sql.js, in-memory copy of every datasource) ----------
+    function sbSqlReady() {
+      if (STATE.SQL) return true;
+      if (window.initSqlJs && !STATE._sqlP) {
+        STATE._sqlP = initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${f}` }).then(S => {
+          STATE.SQL = S; sbInvalidate();
+          const sb = STATE.sandbox;
+          if (sb && sb.built) { sbRebuildPanel(); sbRefreshPreview(); sbRefreshTiles(); if (sb.mode === 'sql') sbRebuildSql(); }
+        }).catch(e => console.warn('[Sandbox] sql.js failed', e));
+      }
+      return false;
+    }
+    function sbLoadTable(db, name, rows, cols) {
+      if (!cols.length) { db.run(`CREATE TABLE ${sbQ(name)} (_empty TEXT)`); return; }
+      db.run(`CREATE TABLE ${sbQ(name)} (${cols.map(c => sbQ(c.name) + (c.numeric ? ' REAL' : ' TEXT')).join(',')})`);
+      const st = db.prepare(`INSERT INTO ${sbQ(name)} VALUES (${cols.map(() => '?').join(',')})`);
+      db.run('BEGIN');
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        st.run(cols.map(c => { const v = r[c.name]; if (v === undefined || v === null || v === '') return null; if (typeof v === 'number') return isFinite(v) ? v : null; if (typeof v === 'boolean') return v ? 1 : 0; if (typeof v === 'object') return JSON.stringify(v); return (c.numeric && isFinite(Number(v))) ? Number(v) : String(v); }));
+      }
+      db.run('COMMIT'); st.free();
+    }
+    function sbSqlDb() {
+      const sb = sbS(); if (!sbSqlReady()) return null;
+      const key = STATE.dataVersion + '|' + JSON.stringify(Object.keys(sb.customDs).map(k => [k, sb.customDs[k].sql]));
+      if (sb._db && sb._dbKey === key) return sb._db;
+      if (sb._db) { try { sb._db.close(); } catch (e) {} }
+      const db = new STATE.SQL.Database();
+      Object.keys(SB_DS_LABELS).forEach(ds => { const rows = sbDatasetRows(ds); if (rows.length) sbLoadTable(db, ds, rows, sbTableCols(ds)); });
+      Object.keys(sb.customDs).forEach(k => { try { db.run(`CREATE TABLE ${sbQ(k)} AS ${sb.customDs[k].sql}`); sb.customDs[k].err = ''; } catch (e) { sb.customDs[k].err = e.message; } });
+      sb._db = db; sb._dbKey = key; return db;
+    }
+    function sbRunSQL(sql) {
+      const db = sbSqlDb(); if (!db) throw new Error('SQL engine is still loading — try again in a moment.');
+      const clean = String(sql).replace(/^(\s|--[^\n]*(\n|$)|\/\*[\s\S]*?\*\/)+/, '');
+      if (!/^(select|with|pragma|explain)\b/i.test(clean)) throw new Error('Only read-only SELECT / WITH queries are supported.');
+      const t0 = performance.now(); const res = db.exec(sql); const last = res[res.length - 1];
+      return { cols: last ? last.columns : [], rows: last ? last.values : [], ms: Math.round(performance.now() - t0) };
+    }
+    function sbSqlObjects(sql) { const r = sbRunSQL(sql); return r.rows.map(v => { const o = {}; r.cols.forEach((c, i) => { o[c] = v[i]; }); return o; }); }
+    function sbIsSql(e) { return /^\s*sql:/i.test(e) || /\b(case|when|like|glob|between|ifnull|iif|cast|substr|instr|length|upper|lower|trim|nullif)\b|\bis\s+(not\s+)?null\b|\bin\s*\(/i.test(String(e || '').replace(/'(?:[^']|'')*'/g, "''")); }
+    function sbEvalSqlCalc(rows, names, expr) {
+      if (!sbSqlReady()) throw new Error('SQL engine loading…');
+      let e = String(expr || '').replace(/^\s*sql:\s*/i, '').trim();
+      if (!e) throw new Error('Enter a formula');
+      if (/;/.test(e)) throw new Error('Remove the semicolon');
+      const stripped = e.replace(/'(?:[^']|'')*'/g, "''");
+      const used = [], seen = new Set();
+      (stripped.match(/\[[^\]]+\]|"[^"]+"|\b[A-Za-z_]\w*\b/g) || []).forEach(tok => {
+        let n = tok.replace(/^\[|\]$/g, '').replace(/^"|"$/g, '').trim(); if (!names.has(n)) n = n.replace(/\s+/g, '_');
+        if (names.has(n) && !seen.has(n)) { seen.add(n); used.push(n); }
+      });
+      e = e.replace(/\[([^\]]+)\]/g, (m, n) => sbQ(n.trim().replace(/\s+/g, '_')));
+      const db = new STATE.SQL.Database();
+      try {
+        db.run(`CREATE TABLE t (_x${used.map(u => ',' + sbQ(u)).join('')})`);
+        const st = db.prepare(`INSERT INTO t VALUES (NULL${used.map(() => ',?').join('')})`);
+        db.run('BEGIN');
+        rows.forEach(r => st.run(used.map(u => { const v = r[u]; return (v === undefined || v === '') ? null : (typeof v === 'boolean' ? (v ? 1 : 0) : v); })));
+        db.run('COMMIT'); st.free();
+        const res = db.exec(`SELECT (${e}) FROM t ORDER BY rowid`);
+        return res.length ? res[0].values.map(v => v[0]) : [];
+      } catch (err) { throw new Error('SQL: ' + err.message); } finally { try { db.close(); } catch (x) {} }
+    }
+
+    // ---------- undo ----------
+    function sbSnap(tag) {
+      const sb = sbS(), now = Date.now();
+      const s = JSON.stringify({ cfg: sb.cfg, pinned: sb.pinned, dashF: sb.dashF, customDs: sb.customDs });
+      const last = sb.hist[sb.hist.length - 1];
+      if (last && last.s === s) return;
+      if (tag && last && last.tag === tag && now - last.t < 1500) { last.t = now; return; }
+      sb.hist.push({ s, tag, t: now }); if (sb.hist.length > 60) sb.hist.shift(); sbSyncUndo();
+    }
+    function sbSyncUndo() { document.querySelectorAll('[data-sb="undo"]').forEach(b => { const off = !sbS().hist.length; b.disabled = off; b.style.opacity = off ? '.4' : '1'; }); }
+    function sbUndo() {
+      const sb = sbS(); const h = sb.hist.pop(); if (!h) return;
+      const o = JSON.parse(h.s);
+      sb.cfg = Object.assign(sbDefaultCfg(), o.cfg); sb.pinned = o.pinned || []; sb.dashF = o.dashF || [];
+      const changed = JSON.stringify(o.customDs || {}) !== JSON.stringify(sb.customDs); sb.customDs = o.customDs || {}; if (changed) sbInvalidate();
+      sbSave(); sbRebuildPresets(); sbRebuildPanel(); sbRefreshPreview(); sbRebuildDash(); sbSyncUndo(); updateUrlHash();
+    }
+    async function sbRefresh(btn) {
+      const ic = btn && btn.querySelector('i'); if (ic) ic.classList.add('fa-spin');
+      try { await loadDataPipeline(); } catch (e) {}
+      const sb = sbS(); sbInvalidate(); sb.ver = STATE.dataVersion; sb.updated = new Date();
+      sbRebuildPresets(); sbRebuildPanel(); sbRefreshPreview(); sbRefreshTiles(); if (sb.mode === 'sql') sbRebuildSql();
+      if (ic) ic.classList.remove('fa-spin');
+    }
+
+    // ---------- joins ----------
+    function sbSuggestJoin(l, r) {
+      const lc = sbTableCols(l).map(c => c.name), rc = sbTableCols(r).map(c => c.name);
+      const out = [];
+      ['year', 'league', 'week', 'team_id', 'player_id'].forEach(k => { const a = lc.find(x => x.toLowerCase() === k), b = rc.find(x => x.toLowerCase() === k); if (a && b) out.push([a, b]); });
+      if (!out.some(p => p[0].toLowerCase() === 'team_id')) ['manager', 'team_name'].forEach(k => { const a = lc.find(x => x.toLowerCase() === k), b = rc.find(x => x.toLowerCase() === k); if (a && b) out.push([a, b]); });
+      lc.forEach(a => { if (out.some(p => p[0] === a)) return; const b = rc.find(x => x.toLowerCase() === a.toLowerCase()); if (b && /_id$/i.test(a)) out.push([a, b]); });
+      return out;
+    }
+    function sbBuildJoinSQL(j) {
+      const lc = sbTableCols(j.left).map(c => c.name), rc = sbTableCols(j.right).map(c => c.name);
+      const keysR = new Set(j.pairs.filter(p => p[0].toLowerCase() === p[1].toLowerCase()).map(p => p[1].toLowerCase()));
+      const lset = new Set(lc.map(x => x.toLowerCase()));
+      const sel = lc.filter(n => n[0] !== '_').map(n => `a.${sbQ(n)}`);
+      rc.forEach(n => { if (n[0] === '_' || keysR.has(n.toLowerCase())) return; sel.push(`b.${sbQ(n)}${lset.has(n.toLowerCase()) ? ` AS ${sbQ(n + '_' + j.right)}` : ''}`); });
+      return `SELECT ${sel.join(', ')} FROM ${sbQ(j.left)} a ${j.type === 'inner' ? 'INNER' : 'LEFT'} JOIN ${sbQ(j.right)} b ON ${j.pairs.map(p => `a.${sbQ(p[0])} = b.${sbQ(p[1])}`).join(' AND ')}`;
+    }
+    function sbJoinHTML() {
+      const sb = sbS(), j = sb.join; if (!j) return '';
+      const labels = sbDsLabels(); const keys = Object.keys(labels).filter(k => sbDatasetRows(k).length);
+      const lc = sbTableCols(j.left).map(c => c.name), rc = sbTableCols(j.right).map(c => c.name);
+      const pairs = j.pairs.map((p, i) => `<div class="sb-row"><select class="sb-in" data-sb="jl" data-i="${i}">${sbOpts(lc, p[0])}</select><span class="text-slate-400 text-xs">=</span><select class="sb-in" data-sb="jr" data-i="${i}">${sbOpts(rc, p[1])}</select><button class="sb-x" data-sb="jpdel" data-i="${i}"><i class="fa-solid fa-xmark"></i></button></div>`).join('');
+      const extra = lc.filter(n => rc.some(m => m.toLowerCase() === n.toLowerCase()) && !j.pairs.some(p => p[0] === n)).slice(0, 8);
+      return `<div class="rounded-lg border border-brand-500/40 bg-sky-50/60 dark:bg-sky-950/20 p-2 mt-2">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-300 mb-1">Join tables → new source</div>
+        <div class="sb-row"><select class="sb-in" data-sb="jleft">${sbOpts(keys.map(k => [k, labels[k]]), j.left)}</select></div>
+        <div class="sb-row"><select class="sb-in" style="max-width:92px" data-sb="jtype">${sbOpts([['left', 'Left join'], ['inner', 'Inner join']], j.type)}</select><select class="sb-in" data-sb="jright">${sbOpts(keys.map(k => [k, labels[k]]), j.right)}</select></div>
+        <div class="sb-lbl">Join on <span class="text-slate-400">(suggested from matching fields)</span></div>
+        ${pairs || '<div class="text-[10px] text-amber-600">No matching fields found — add a key pair.</div>'}
+        <div class="flex flex-wrap gap-1 mb-1"><button class="sb-pre" data-sb="jpadd" data-n="">+ key pair</button>${extra.map(n => `<button class="sb-pre" data-sb="jpadd" data-n="${escapeHTML(n)}">+ ${escapeHTML(n)}</button>`).join('')}</div>
+        <input class="sb-in" data-sb="jname" value="${escapeHTML(j.name || '')}" placeholder="New source name, e.g. Player-Week + Team">
+        ${j.err ? `<div class="text-[10px] text-rose-500 mt-1">${escapeHTML(j.err)}</div>` : ''}
+        <div class="flex gap-1.5 mt-2"><button class="sb-btn primary" data-sb="jcreate"><i class="fa-solid fa-link"></i> Create source</button><button class="sb-btn" data-sb="jclose">Cancel</button></div></div>`;
+    }
+    function sbSetDs(v) {
+      const sb = sbS(), cfg = sb.cfg, fresh = sbDefaultCfg(), cols = sbDetectCols(sbDatasetRows(v));
+      cfg.ds = v; cfg.calcs = []; cfg.filters = []; cfg.xdims = []; cfg.having = []; cfg.cf = []; cfg.tsort = null;
+      const dim = cols.find(c => !c.numeric && !/id$/i.test(c.name)) || cols[0];
+      const mea = cols.find(c => c.numeric && !/(^|_)(id|year|week)$/i.test(c.name)) || cols.find(c => c.numeric);
+      cfg.dim = (v === 'teamweeks') ? 'manager' : (dim ? dim.name : ''); cfg.split = '';
+      cfg.measures = v === 'teamweeks' ? fresh.measures : [mea ? { f: mea.name, a: 'sum' } : { f: '*', a: 'count' }];
+    }
+    function sbRegisterDs(label, sql) {
+      const sb = sbS(); let id = (label || 'custom').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30) || 'custom';
+      if (/^\d/.test(id)) id = 'ds_' + id;
+      let base = id, n = 2; while (SB_DS_LABELS[id] || (sb.customDs[id] && sb.customDs[id].label !== label)) id = base + '_' + (n++);
+      sb.customDs[id] = { label, sql }; sbInvalidate(); return id;
+    }
+
+    // ---------- conditional formatting ----------
+    function sbColStats(vals) {
+      const n = vals.filter(v => typeof v === 'number' && isFinite(v)).sort((a, b) => a - b);
+      return n.length ? { min: n[0], max: n[n.length - 1], mid: n[n.length >> 1], sorted: n } : null;
+    }
+    function sbCfStyle(cfg, label, v, st) {
+      const rules = cfg.cf || []; if (!rules.length || v === null || v === undefined) return '';
+      for (const r of rules) {
+        if (r.c !== label) continue;
+        const rgb = SB_CF_COLORS[r.k] || SB_CF_COLORS.green, a = (r.v === undefined || r.v === null) ? '' : String(r.v).trim();
+        const n = Number(a), n2 = Number(r.v2), num = typeof v === 'number' ? v : Number(v);
+        let hit = false;
+        switch (r.op) {
+          case 'gt': hit = a !== '' && num > n; break; case 'gte': hit = a !== '' && num >= n; break;
+          case 'lt': hit = a !== '' && num < n; break; case 'lte': hit = a !== '' && num <= n; break;
+          case 'eq': hit = a !== '' && (String(v) === a || (isFinite(n) && num === n)); break;
+          case 'ne': hit = a !== '' && !(String(v) === a || (isFinite(n) && num === n)); break;
+          case 'btw': hit = a !== '' && r.v2 !== '' && r.v2 !== undefined && num >= Math.min(n, n2) && num <= Math.max(n, n2); break;
+          case 'has': hit = a !== '' && String(v).toLowerCase().includes(a.toLowerCase()); break;
+          case 'top': hit = !!st && a !== '' && num >= st.sorted[Math.max(0, st.sorted.length - Math.max(1, Math.floor(n)))]; break;
+          case 'bot': hit = !!st && a !== '' && num <= st.sorted[Math.min(st.sorted.length - 1, Math.max(1, Math.floor(n)) - 1)]; break;
+          case 'scale': case 'scaler':
+            if (st && typeof v === 'number') return `background-color:${r.op === 'scale' ? HEATMAPS.greenClearRed(v, st.min, st.mid, st.max) : HEATMAPS.redClearGreen(v, st.min, st.mid, st.max)}`; continue;
+          case 'bar':
+            if (st && typeof v === 'number' && st.max > st.min) { const p = Math.max(0, Math.min(100, 100 * (v - st.min) / (st.max - st.min))).toFixed(1); return `background:linear-gradient(90deg,rgba(${rgb},.45) ${p}%,transparent ${p}%)`; } continue;
+        }
+        if (hit) return `background-color:rgba(${rgb},.32);font-weight:700`;
+      }
+      return '';
+    }
+    function sbShowAs(arr, mode) {
+      if (!mode) return arr;
+      const nums = arr.filter(v => v !== null && v !== undefined && isFinite(v)).map(Number);
+      if (mode === 'pct') { const t = nums.reduce((a, b) => a + b, 0); return arr.map(v => (v === null || !t) ? null : 100 * v / t); }
+      if (mode === 'run') { let a = 0; return arr.map(v => { if (v === null) return null; a += v; return a; }); }
+      if (mode === 'rank') { const s = nums.slice().sort((a, b) => b - a); return arr.map(v => v === null ? null : s.indexOf(Number(v)) + 1); }
+      if (mode === 'diff') { let p = null; return arr.map(v => { if (v === null) return null; const d = p === null ? null : v - p; p = v; return d; }); }
+      return arr;
+    }
+    function sbHaving(v, h) {
+      const raw = String(h.v === undefined ? '' : h.v).trim(); if (raw === '') return true; if (v === null || v === undefined) return false;
+      const n = Number(raw);
+      switch (h.op) { case '>': return v > n; case '>=': return v >= n; case '<': return v < n; case '<=': return v <= n; case '=': return v === n; case '!=': return v !== n; }
+      return true;
+    }
+
+    // ---------- SQL tab ----------
+    function sbSqlHTML() {
+      const sb = sbS(), labels = sbDsLabels();
+      const keys = Object.keys(labels).filter(k => sbDatasetRows(k).length || sb.customDs[k]);
+      const schema = keys.map(k => { const cols = sbTableCols(k);
+        return `<div class="mb-2"><button class="sb-pre" data-sb="sqlins" data-t="${escapeHTML(k)}">${escapeHTML(k)}</button>
+          <details class="mt-1"><summary class="text-[10px] text-slate-400 cursor-pointer">${cols.length} columns</summary><div class="flex flex-wrap gap-1 mt-1">${cols.map(c => `<button class="sb-pre" style="font-size:10px;padding:1px 7px" data-sb="sqlins" data-t="${escapeHTML(/^[A-Za-z_]\w*$/.test(c.name) ? c.name : sbQ(c.name))}" title="${c.numeric ? 'number' : 'text'}">${escapeHTML(c.name)}</button>`).join('')}</div></details></div>`; }).join('');
+      return `<div class="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-3 items-start">
+        <aside class="sb-card lg:max-h-[calc(100vh-190px)] overflow-y-auto"><div class="sb-sec">Tables</div>${schema || '<div class="text-xs text-slate-400">Loading tables…</div>'}
+          <div class="text-[10px] text-slate-400 mt-2 leading-snug">SQLite syntax. Click a table or column to insert it. Joined/saved sources appear here too.</div></aside>
+        <div class="space-y-3 min-w-0"><div class="sb-card">
+          <div class="flex flex-wrap items-center gap-1.5 mb-2"><select class="sb-in" style="max-width:210px" data-sb="sqlex"><option value="">Examples…</option>${SB_SQL_EXAMPLES.map((x, i) => `<option value="${i}">${escapeHTML(x[0])}</option>`).join('')}</select>
+            <button class="sb-btn primary" data-sb="sqlrun"><i class="fa-solid fa-play"></i> Run <span class="opacity-70 hidden sm:inline">Ctrl+↵</span></button>
+            <button class="sb-btn" data-sb="sqluse" title="Save this query as a datasource for the chart builder"><i class="fa-solid fa-database"></i> Use in builder</button>
+            <button class="sb-btn" data-sb="sqlcsv"><i class="fa-solid fa-file-csv"></i> CSV</button></div>
+          <textarea id="sb-sqltext" data-sb="sqltext" spellcheck="false" class="sb-in" style="font-family:ui-monospace,Menlo,monospace;min-height:150px;resize:vertical;line-height:1.45">${escapeHTML(sb.sql || SB_SQL_EXAMPLES[0][1])}</textarea>
+          ${sb.sqlHist.length ? `<div class="flex flex-wrap gap-1 mt-2"><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">Recent</span>${sb.sqlHist.map((q, i) => `<button class="sb-pre" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-sb="sqlhist" data-i="${i}" title="${escapeHTML(q)}">${escapeHTML(q.replace(/\s+/g, ' ').slice(0, 34))}</button>`).join('')}</div>` : ''}</div>
+          <div id="sb-sqlres" class="sb-card" style="padding:0;overflow:hidden"></div></div></div>`;
+    }
+    function sbSqlResultHTML() {
+      const sb = sbS();
+      if (sb.sqlErr) return `<div class="p-4 text-xs text-rose-500 font-mono whitespace-pre-wrap"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escapeHTML(sb.sqlErr)}</div>`;
+      const r = sb.sqlRes; if (!r) return '<div class="p-6 text-center text-xs text-slate-500 dark:text-slate-400"><i class="fa-solid fa-circle-info mr-1 text-brand-500"></i>Write a query and press Run.</div>';
+      let rows = r.rows; const ts = sb.sqlSort;
+      if (ts) rows = rows.slice().sort((a, b) => { const x = a[ts.c], y = b[ts.c], nx = x === null || x === undefined, ny = y === null || y === undefined; if (nx !== ny) return nx ? 1 : -1; return (typeof x === 'number' && typeof y === 'number' ? x - y : sbNatSort(x, y)) * (ts.dir === 'asc' ? 1 : -1); });
+      const f = v => v === null || v === undefined ? '<span class="text-slate-400">NULL</span>' : (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : String(Number(v.toFixed(4)))) : escapeHTML(String(v)));
+      const head = r.cols.map((c, i) => `<th class="text-left" data-sb="sqlsort" data-i="${i}" style="cursor:pointer;white-space:nowrap">${escapeHTML(c)}${ts && ts.c === i ? (ts.dir === 'asc' ? ' ▲' : ' ▼') : ''}</th>`).join('');
+      const body = rows.slice(0, 500).map(row => `<tr>${row.map(v => `<td class="${typeof v === 'number' ? 'text-right font-mono' : 'text-left font-sans'}">${f(v)}</td>`).join('')}</tr>`).join('');
+      return `<div class="px-3 py-1.5 text-[10px] text-slate-400 border-b border-slate-200 dark:border-slate-800">${r.rows.length.toLocaleString()} rows · ${r.ms} ms${r.rows.length > 500 ? ' · showing first 500 (CSV has all)' : ''} · click a header to sort</div><div class="overflow-auto" style="max-height:520px"><table class="standings-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+    function sbRebuildSql() { const el = document.getElementById('sb-sqlview'); if (!el) return; el.innerHTML = sbSqlHTML(); const r = document.getElementById('sb-sqlres'); if (r) r.innerHTML = sbSqlResultHTML(); }
+    function sbRunSqlUI(retry) {
+      const sb = sbS(), ta = document.getElementById('sb-sqltext'); if (ta) sb.sql = ta.value;
+      const text = (sb.sql || '').trim(); if (!text) return;
+      try {
+        if (!sbSqlDb()) { if (!retry) { sb.sqlErr = ''; sb.sqlRes = null; const r = document.getElementById('sb-sqlres'); if (r) r.innerHTML = '<div class="p-6 text-center text-xs text-slate-500">Loading SQL engine…</div>'; setTimeout(() => sbRunSqlUI(true), 1200); return; } }
+        sb.sqlRes = sbRunSQL(text); sb.sqlErr = ''; sb.sqlSort = null;
+        sb.sqlHist = [text].concat(sb.sqlHist.filter(q => q !== text)).slice(0, 8);
+      } catch (e) { sb.sqlErr = e.message; sb.sqlRes = null; }
+      sbSave(); const r = document.getElementById('sb-sqlres'); if (r) r.innerHTML = sbSqlResultHTML();
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
