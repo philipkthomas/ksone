@@ -771,6 +771,10 @@
     .dark .mx-rec, .dark .mx-rankv { color: #cbd5e1; }
     .mx-dotsep { font-size: 11px; color: #94a3b8; flex-shrink: 0; margin: 0 -2px; }
     /* Player actual score colouring */
+    /* live player NAME: same subtle blue shine as the live score */
+    .mx-nm-live { font-weight: 700; color: #2563eb; background: linear-gradient(110deg, #2563eb 0%, #2563eb 38%, #93c5fd 50%, #2563eb 62%, #2563eb 100%); background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: mxShine 2.8s linear infinite; }
+    .dark .mx-nm-live { color: #60a5fa; background-image: linear-gradient(110deg, #60a5fa 0%, #60a5fa 38%, #e0f2fe 50%, #60a5fa 62%, #60a5fa 100%); }
+    @media (prefers-reduced-motion: reduce) { .mx-nm-live { animation: none; } }
     .mx-pts.mx-pts-live { font-weight: 800; color: #2563eb; background: linear-gradient(110deg, #2563eb 0%, #2563eb 38%, #93c5fd 50%, #2563eb 62%, #2563eb 100%); background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: mxShine 2.8s linear infinite; }
     .dark .mx-pts.mx-pts-live { color: #60a5fa; background-image: linear-gradient(110deg, #60a5fa 0%, #60a5fa 38%, #e0f2fe 50%, #60a5fa 62%, #60a5fa 100%); }
     @keyframes mxShine { 0% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
@@ -832,13 +836,16 @@
     @media (max-width: 639px) { .sb-in { font-size:16px; } }
 
     /* ===== Standings subtabs: Schedule + Playoffs ===== */
+    /* sub-tab selector sticks directly under the (sticky) header + filter bar */
+    .st-sub-sticky { position: sticky; top: calc(var(--hdr-h, 118px) - 1px); z-index: 30; padding: 6px 4px; background: #f1f5f9; }
+    .dark .st-sub-sticky { background: #0f172a; }
     .mx-best { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; white-space: nowrap; }
     .mx-best-n { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
     #matchups-table td, #matchups-table th { white-space: nowrap; }
     @media (max-width: 639px) { #matchups-table td.font-sans { font-size: 11px; } #matchups-table td, #matchups-table th { padding-left: 6px; padding-right: 6px; } }
     .sch-wrap { display: flex; gap: 8px; align-items: flex-start; }
     .sch-sel { flex: 0 0 100%; min-width: 0; transition: flex-basis .32s cubic-bezier(.22, 1, .36, 1); }
-    .sch-wrap.compact .sch-sel { flex-basis: 56px; position: sticky; top: calc(var(--hdr-h, 118px) + 8px); }
+    .sch-wrap.compact .sch-sel { flex-basis: 56px; position: sticky; top: calc(var(--hdr-h, 118px) + var(--st-sub-h, 0px) + 8px); }
     @media (min-width: 640px) { .sch-wrap.compact .sch-sel { flex-basis: 118px; } }
     .sch-sel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #64748b; padding: 2px 2px 8px; }
     .sch-wrap.compact .sch-sel-title { display: none; }
@@ -1129,7 +1136,7 @@
 
     <!-- STANDINGS TAB CONTENT -->
     <section id="tab-standings" class="tab-content space-y-3">
-      <div class="flex items-center justify-between gap-2 px-1">
+      <div id="st-sub-row" class="st-sub-sticky flex items-center justify-between gap-2 px-1">
         <div class="pos-mode-slider" id="st-sub-slider" style="--n:3" role="tablist" aria-label="Standings views">
           <div class="pos-mode-thumb" id="st-sub-thumb"></div>
           <button type="button" class="pos-mode-btn active" data-st-sub="standings" role="tab" aria-selected="true">Standings</button>
@@ -3737,6 +3744,57 @@
       if (live === null || live === undefined) return '';
       return live > orig + 0.06 + 1e-9 ? 'mx-live-g' : (live < orig - 0.06 - 1e-9 ? 'mx-live-r' : '');
     }
+    // Style string (CSS vars for .ndl-heat) for a live team total vs the original projection: green > clear > red at +20 / even / -20.
+    // Within 0.06 of the projection is rounding noise -> no colour.
+    function ndlLiveHeat(live, orig) {
+      if (live === null || live === undefined || !(orig > 0) || Math.abs(live - orig) <= 0.06 + 1e-9) return ndlHeat(0);
+      return ndlHeat((live - orig) / 20);
+    }
+    // header + sticky sub-tab row heights -> CSS vars (sticky offsets) and a JS helper for scroll offsets
+    function stLayoutVars() {
+      const hdr = document.querySelector('header'), row = stById('st-sub-row');
+      const root = document.documentElement.style;
+      if (hdr) root.setProperty('--hdr-h', hdr.offsetHeight + 'px');
+      root.setProperty('--st-sub-h', (row && row.offsetParent !== null ? row.offsetHeight : 0) + 'px');
+    }
+    function stStickyOff() {
+      const hdr = document.querySelector('header'), row = stById('st-sub-row');
+      return (hdr ? hdr.offsetHeight : 120) + (row && row.offsetParent !== null ? row.offsetHeight : 0) + 8;
+    }
+    // programmatic scrolls (year filter -> scroll to season) must not feed back into the scroll-spy
+    function stLockSpy() {
+      const st = STATE.st; if (!st) return;
+      st._progScroll = true; clearTimeout(st._progT);
+      st._progT = setTimeout(() => { st._progScroll = false; }, 500);
+    }
+    // scroll-spy -> year filter: the season under the sticky bars becomes the selected year (no re-render, no re-scroll)
+    function stSpyYear(s) {
+      const f = STATE.filters, st = STATE.st;
+      if (!s || s.key === f.seasonKey) return;
+      st._lastSchKey = s.key; st._lastPoKey = s.key;
+      const season = FilterEngine.resolveSeason(s.year, s.league);
+      f.year = season.year; f.league = season.league; f.seasonKey = season.key;
+      STATE.weekUserOverride = false;
+      const weeks = FilterEngine.weeksForSeason(f.year, f.league);
+      f.weekMin = weeks[0];
+      f.weekMax = FilterEngine.defaultWeekMax(f.year, FilterEngine.activeTab(), f.league);
+      f.matchup = null;
+      syncFilterUI();
+      updateUrlHash();
+      const pid = stPoId(s);
+      document.querySelectorAll('#po-year-chips .po-chip').forEach(b => b.classList.toggle('on', b.getAttribute('data-po-yr') === pid));
+    }
+    function stPoSpy() {
+      const secs = document.querySelectorAll('#po-seasons .po-season');
+      if (!secs.length) return;
+      const line = stStickyOff() + 24;
+      let cur = secs[0];
+      secs.forEach(el => { if (el.getBoundingClientRect().top <= line) cur = el; });
+      const [y, l] = cur.getAttribute('data-po-season').split('|');
+      const s = FilterEngine.seasons().find(x => String(x.year) === y && (x.league || '') === (l || ''));
+      stSpyYear(s);
+    }
+
     // Top-ranked manager of the active season (regular-season rank), used to pre-fill the Schedule filter
     function stTopManager() {
       const f = STATE.filters, yr = f.year, lg = f.league;
@@ -4009,7 +4067,9 @@
       // rank is shown the same way everywhere ("#n"); in the playoffs it is the seed (regular-season finish)
       const stFor = (id, r) => {
         const isPO = r.week >= psw;
-        const w = r.status === 'future' ? Math.min(psw - 1, isCur ? curWk - 1 : psw - 1) : Math.min(r.week, psw - 1);
+        // LIVE week: with "Hide curr. wk" on, the record / rank exclude the in-progress week
+        const w = r.status === 'future' ? Math.min(psw - 1, isCur ? curWk - 1 : psw - 1)
+          : (r.status === 'live' && f.hideCW ? Math.min(r.week - 1, psw - 1) : Math.min(r.week, psw - 1));
         const x = w >= 1 ? stStandingsAt(yr, lg, w).get(id) : null;
         if (!x) return { rk: '\u2014', rec: '0-0', pct: null, isPO };
         return { rk: '#' + x.regularRank, rec: stRec(x), pct: x.winPct, isPO };
@@ -4072,10 +4132,10 @@
           if (r.status === 'live') {
             const lt = stLiveTotal(yr, lg, r.week, id);
             if (lt === null) return proj > 0 ? `<div class="sch-pl ${align}"><span class="sch-pj" title="Original team projection">${fmt(proj)}</span></div>` : '';
-            const cls = ndlLiveCls(lt, proj) || 'mx-live-e';
-            const lv = `<span class="sch-lp ${cls}" title="Live projected total (original ${fmt(proj)})">${fmt(lt)}</span>`;
-            const o = proj > 0 ? `<span class="sch-pj sch-strike" title="Original team projection">${fmt(proj)}</span>` : '';
-            const ar = proj > 0 ? ndlArrow(L ? 'r' : 'l', lt, proj, `Original projection ${fmt(proj)} \u2192 live total ${fmt(lt)}`, cls) : '';
+            const hs = ndlLiveHeat(lt, proj);
+            const lv = `<span class="sch-lp ndl-heat" style="${hs}" title="Live projected total (original ${fmt(proj)})">${fmt(lt)}</span>`;
+            const o = proj > 0 ? `<span class="sch-pj" title="Original team projection">${fmt(proj)}</span>` : '';
+            const ar = proj > 0 ? `<span class="ndl-arw-w ndl-heat" style="${hs}" title="Original projection ${fmt(proj)} \u2192 live total ${fmt(lt)}"><svg class="ndl-arw ${L ? 'r' : 'l'}" viewBox="0 0 16 10" aria-hidden="true"><path d="M0.8 5H13.2M9.2 1.3L13.4 5L9.2 8.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : '';
             return `<div class="sch-pl ${align}">${L ? o + ar + lv : lv + ar + o}</div>`;
           }
           if (r.status === 'final' && show && proj > 0) {
@@ -4113,9 +4173,8 @@
       if (!s) return;
       const el = stById(stSchId(s));
       if (!el) return;
-      const hdr = document.querySelector('header');
-      const off = (hdr ? hdr.offsetHeight : 120) + 8;
-      window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - off), behavior: 'smooth' });
+      stLockSpy();
+      window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - stStickyOff()), behavior: 'smooth' });
     }
 
     // scroll-spy: the section sitting under the header decides which season the sidebar shows
@@ -4123,14 +4182,15 @@
       if (!STATE.st || STATE.st.sub !== 'schedule') return;
       const secs = document.querySelectorAll('#sch-main .sch-season');
       if (!secs.length) return;
-      const hdr = document.querySelector('header');
-      const line = (hdr ? hdr.offsetHeight : 120) + 40;
+      const line = stStickyOff() + 24;
       let cur = secs[0];
       secs.forEach(el => { if (el.getBoundingClientRect().top <= line) cur = el; });
       const [y, l] = cur.getAttribute('data-sch-season').split('|');
       const seasons = FilterEngine.seasons();
       const s = seasons.find(x => String(x.year) === y && (x.league || '') === (l || ''));
-      if (!s || s.key === STATE.st.viewKey) return;
+      if (!s) return;
+      stSpyYear(s);                                   // scrolled-to season drives the Year filter
+      if (s.key === STATE.st.viewKey) return;
       STATE.st.viewKey = s.key;
       const selEl = stById('sch-sel'), chosen = getSelectedManagers();
       const selMgr = chosen[0] || null;
@@ -4142,7 +4202,7 @@
       const wrap = stById('sch-wrap'), selEl = stById('sch-sel'), mainEl = stById('sch-main');
       if (!wrap || !selEl || !mainEl) return;
       const hdr = document.querySelector('header');
-      if (hdr) document.documentElement.style.setProperty('--hdr-h', hdr.offsetHeight + 'px');
+      stLayoutVars();
 
       const seasons = FilterEngine.seasons();
       if (!seasons.length) { selEl.innerHTML = ''; mainEl.innerHTML = ''; wrap.classList.remove('compact'); return; }
@@ -4169,7 +4229,7 @@
       else if (STATE.st._keepView) {
         // manager switched while scrolled to an older year: stay on that year
         const s = seasons.find(x => x.key === STATE.st.viewKey), el = s && stById(stSchId(s));
-        if (el) { const off = (hdr ? hdr.offsetHeight : 120) + 8; window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - off) }); }
+        if (el) { stLockSpy(); window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - stStickyOff()) }); }
       }
       STATE.st._keepView = false;
     }
@@ -4488,9 +4548,8 @@
     function stScrollToSeason(id) {
       const el = stById(id);
       if (!el) return;
-      const hdr = document.querySelector('header');
-      const off = (hdr ? hdr.offsetHeight : 120) + 8;
-      window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - off), behavior: 'smooth' });
+      stLockSpy();
+      window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - stStickyOff()), behavior: 'smooth' });
     }
 
     function stInit() {
@@ -4505,7 +4564,21 @@
           STATE.st.poBr = next; updateUrlHash(); renderStandingsSection();
         });
       });
-      { let tick = false; window.addEventListener('scroll', () => { if (tick || !STATE.st || STATE.st.sub !== 'schedule') return; tick = true; requestAnimationFrame(() => { tick = false; stSchedSpy(); }); }, { passive: true }); }
+      // keep the sticky offsets in sync with the header / sub-tab row heights
+      try {
+        stLayoutVars();
+        window.addEventListener('resize', stLayoutVars);
+        if (window.ResizeObserver) { const ro = new ResizeObserver(stLayoutVars); const h = document.querySelector('header'), r = stById('st-sub-row'); if (h) ro.observe(h); if (r) ro.observe(r); }
+      } catch (e) {}
+      // scroll-spy: on Standings > Schedule / Playoffs the season under the sticky bars sets the Year filter
+      { let tick = false; window.addEventListener('scroll', () => {
+          const st = STATE.st;
+          if (!st) return;
+          if (st._progScroll) { clearTimeout(st._progT); st._progT = setTimeout(() => { st._progScroll = false; }, 140); return; }   // programmatic scroll: wait until it settles
+          if (tick || (st.sub !== 'schedule' && st.sub !== 'playoffs') || FilterEngine.activeTab() !== 'standings') return;
+          tick = true;
+          requestAnimationFrame(() => { tick = false; if (st._progScroll) return; if (st.sub === 'schedule') stSchedSpy(); else stPoSpy(); });
+        }, { passive: true }); }
       const sec = stById('tab-standings');
       if (!sec) return;
       sec.addEventListener('click', e => {
@@ -5031,11 +5104,22 @@
       // Live week: ~~original projection~~ -> live total, pinned to the far left / right under the team (arrow points toward the live total)
       const liveLine = (mx, align) => {
         if (!(isLive && mx && mx.liveTot !== null)) return '';
-        const L = align === 'l', cls = mx.cls || 'mx-live-e', orig = mx.orig;
-        const lv = `<span class="mx-lv ${cls}" title="Live total: actual points for finished players, live projection for players in play, original projection for players yet to play">${fmt(mx.liveTot)}</span>`;
-        const o = orig > 0 ? `<span class="mx-o mx-strike" title="Original team projection">${fmt(orig)}</span>` : '';
-        const ar = orig > 0 ? ndlArrow(L ? 'r' : 'l', mx.liveTot, orig, `Original projection ${fmt(orig)} \u2192 live total ${fmt(mx.liveTot)}`, cls) : '';
+        const L = align === 'l', orig = mx.orig, hs = ndlLiveHeat(mx.liveTot, orig);
+        const lv = `<span class="mx-lv ndl-heat" style="${hs}" title="Live total: actual points for finished players, live projection for players in play, original projection for players yet to play">${fmt(mx.liveTot)}</span>`;
+        const o = orig > 0 ? `<span class="mx-o" title="Original team projection">${fmt(orig)}</span>` : '';
+        const ar = orig > 0 ? `<span class="ndl-arw-w ndl-heat" style="${hs}" title="Original projection ${fmt(orig)} \u2192 live total ${fmt(mx.liveTot)}"><svg class="ndl-arw ${L ? 'r' : 'l'}" viewBox="0 0 16 10" aria-hidden="true"><path d="M0.8 5H13.2M9.2 1.3L13.4 5L9.2 8.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : '';
         return `<div class="mx-pline ${L ? 'l' : 'r'}">${L ? o + ar + lv : lv + ar + o}</div>`;
+      };
+
+      // Non-live weeks: original team projection (+ arrow toward the actual score on finished weeks) pinned to the far left / right under the team
+      const projLine = (t, mx, align) => {
+        if (isLive && mx && mx.liveTot !== null) return liveLine(mx, align);
+        const orig = mx ? mx.orig : 0;
+        if (!(orig > 0)) return '';
+        const L = align === 'l';
+        const o = `<span class="mx-o" title="Original team projection">${fmt(orig)}</span>`;
+        const ar = isFinal ? ndlArrow(L ? 'r' : 'l', Number(t.pf) || 0, orig) : '';
+        return `<div class="mx-pline ${L ? 'l' : 'r'}">${L ? o + ar : ar + o}</div>`;
       };
 
       // Identity block (name, record, rank, team name). A win gets the same W badge used on the Schedule (no L badge).
@@ -5048,7 +5132,7 @@
           <div class="min-w-0 ${align === 'r' ? 'text-right' : 'text-left'}">
             <div class="mx-mgr-row ${align === 'r' ? 'r' : ''}">${badge}<span class="mx-mgr" style="color:${col}">${escapeHTML(t.manager)}</span>${finalRanks && finalRanks[t.team_id] ? getTrophyBadgeHTML(Number(finalRanks[t.team_id]), true) : ''}<span class="mx-rec" title="Record entering the week">${r.rec}</span><span class="mx-dotsep">\u00B7</span><span class="mx-rankv" title="Rank entering the week">${r.rank}</span></div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${escapeHTML(t.team_name)}</div>
-            ${liveLine(mx, align)}
+            ${projLine(t, mx, align)}
           </div>`;
       };
 
@@ -5057,16 +5141,8 @@
       //  live  : [proj -> live total  points] VS [points  live total <- proj]   (live total coloured vs proj; arrow follows it)
       const half = (t, mx, align) => {
         const big = `<span class="mx-big">${fmt(t.pf)}</span>`;
-        const orig = mx.orig;
-        const o = (orig > 0) ? `<span class="mx-o" title="Original team projection">${fmt(orig)}</span>` : '<span class="mx-o">\u2014</span>';
-        const L = align === 'l';
-        if (isFinal) {
-          if (!(orig > 0)) return `<div class="mx-ch ${align}">${big}</div>`;
-          const ar = ndlArrow(L ? 'r' : 'l', Number(t.pf) || 0, orig);
-          return L ? `<div class="mx-ch l">${o}${ar}${big}</div>` : `<div class="mx-ch r">${big}${ar}${o}</div>`;
-        }
-        if (isLive && mx.liveTot !== null) return `<div class="mx-ch ${align}">${big}</div>`;   // live: points only, the projection line sits under the team
-        return `<div class="mx-ch ${align}">${o}</div>`;   // not started: just the original projection
+        if (isFinal || (isLive && mx.liveTot !== null)) return `<div class="mx-ch ${align}">${big}</div>`;   // points only: the projection line sits under the team
+        return `<div class="mx-ch ${align}"></div>`;   // not started: the projection sits under the team
       };
 
       const bodyFor = (A, B) => {
@@ -5076,7 +5152,7 @@
         const starters = slots.filter(s => !mxSlotIsBench(s));
         const bench = slots.filter(s => mxSlotIsBench(s));
         const cell = (p, cls) => p
-          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}${p.dm ? ' (Dummy taxi)' : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}${p.dm ? '<span class="mx-dm" title="Dummy taxi player">DM</span>' : ''}</span><span class="mx-ptscol"><span class="mx-pts${p.ptsCls ? ' mx-pts-' + p.ptsCls : ''}"${p.ptsCls === 'fin' ? ` style="--g:${(Math.max(p.ptsT,0)*100).toFixed(1)}%;--r:${(Math.max(-p.ptsT,0)*100).toFixed(1)}%"` : ''}>${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
+          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}${p.dm ? ' (Dummy taxi)' : ''}${p.ptsCls === 'live' ? ' (live)' : ''}">${p.ptsCls === 'live' ? `<span class="mx-nm-live">${escapeHTML(p.name)}</span>` : escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}${p.dm ? '<span class="mx-dm" title="Dummy taxi player">DM</span>' : ''}</span><span class="mx-ptscol"><span class="mx-pts${p.ptsCls ? ' mx-pts-' + p.ptsCls : ''}"${p.ptsCls === 'fin' ? ` style="--g:${(Math.max(p.ptsT,0)*100).toFixed(1)}%;--r:${(Math.max(-p.ptsT,0)*100).toFixed(1)}%"` : ''}>${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
           : '<div></div>';
         const rows = (list) => list.map(s => {
           const ra = find(pa, s), rb = find(pb, s);
@@ -5090,7 +5166,7 @@
         const liveTag = (T) => {
           const m = mxCalc(T, 0);
           if (isFinal) return m.orig > 0 ? `<span class="mx-pj mx-pj-e" title="Original team projection">${fmt(m.orig)}</span>` : '';
-          return m.liveTot === null ? '' : `<span class="mx-pj mx-live ${m.cls || 'mx-pj-e'}" title="Live projection total">${fmt(m.liveTot)}</span>`;
+          return m.liveTot === null ? '' : `<span class="mx-pj mx-live ndl-heat" style="${ndlLiveHeat(m.liveTot, m.orig)}" title="Live projection total">${fmt(m.liveTot)}</span>`;
         };
         // finished weeks: actual starter total coloured green > clear > red against the original team projection (+20 / even / -20)
         const totPts = (T, arr) => {
