@@ -711,7 +711,10 @@
     .mx-ptscol { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.12; flex-shrink: 0; }
     .mx-cell.r .mx-ptscol { align-items: flex-start; }
     .mx-pj { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 600; }
-    .mx-pj-n { color: #94a3b8; opacity: .85; }
+    .mx-pj-n { color: #64748b; }
+    .dark .mx-pj-n { color: #94a3b8; }
+    .mx-pj-x { --base: #64748b; --gc: #16a34a; --rc: #dc2626; color: color-mix(in srgb, var(--rc) var(--r, 0%), color-mix(in srgb, var(--gc) var(--g, 0%), var(--base))); }
+    .dark .mx-pj-x { --base: #94a3b8; --gc: #4ade80; --rc: #f87171; }
     .mx-pj-e { color: #64748b; }
     .dark .mx-pj-e { color: #94a3b8; }
     .mx-pj-g, .mx-live-g { color: #16a34a !important; }
@@ -827,7 +830,7 @@
     /* ===== Standings subtabs: Schedule + Playoffs ===== */
     .sch-wrap { display: flex; gap: 8px; align-items: flex-start; }
     .sch-sel { flex: 0 0 100%; min-width: 0; transition: flex-basis .32s cubic-bezier(.22, 1, .36, 1); }
-    .sch-wrap.compact .sch-sel { flex-basis: 62px; position: sticky; top: calc(var(--hdr-h, 118px) + 8px); }
+    .sch-wrap.compact .sch-sel { flex-basis: 66px; position: sticky; top: calc(var(--st-top, 160px) + 8px); }
     @media (min-width: 640px) { .sch-wrap.compact .sch-sel { flex-basis: 136px; } }
     .sch-sel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #64748b; padding: 2px 2px 8px; }
     .sch-wrap.compact .sch-sel-title { display: none; }
@@ -978,6 +981,54 @@
     .dark .po-chip { border-color: #334155; color: #94a3b8; }
     .po-chip:hover { border-color: #0ea5e9; color: #0284c7; }
     .po-chip.on { background: #0284c7; border-color: #0284c7; color: #ffffff; }
+
+    /* ---- Round 24/25: sticky Standings sub-tab bar, all-years Schedule, Matchups header, live names, swipe ---- */
+    .st-subbar { position: sticky; top: var(--hdr-h, 118px); z-index: 30; background: #f1f5f9; padding: 6px 4px; margin-left: -4px; margin-right: -4px; }
+    .dark .st-subbar { background: #0f172a; }
+    .sch-season + .sch-season { margin-top: 16px; }
+    .sch-season:last-child, .po-season:last-child { min-height: calc(100vh - var(--st-top, 160px) - 24px); }
+    .sch-yh { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 2px 6px; }
+    .sch-yh-t { font-size: 13px; font-weight: 800; color: #0f172a; }
+    .dark .sch-yh-t { color: #f1f5f9; }
+    .sch-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .sch-r1 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: baseline; }
+    .sch-r2 { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
+    .sch-pc { display: flex; align-items: center; gap: 4px; white-space: nowrap; min-width: 0; }
+    .sch-pc.l { justify-content: flex-start; }
+    .sch-pc.r { justify-content: flex-end; }
+    .sch-ctr { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .sch-gn { font-size: 8.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #0284c7; text-align: center; }
+    .dark .sch-gn { color: #38bdf8; }
+    .sch-bye .sch-body { opacity: .78; }
+    .sch-byetag { font-size: 10px; font-weight: 800; letter-spacing: .12em; color: #94a3b8; }
+    .sch-dot { margin: 0 1px; color: #94a3b8; }
+    .sch-sel-yr { display: none; text-align: center; font-size: 10px; font-weight: 800; color: #64748b; padding: 0 0 4px; }
+    .sch-wrap.compact .sch-sel-yr { display: block; }
+    .sch-mbtn-nr { display: flex; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
+    .sch-mbtn-nr .inline-flex { margin-left: 1px !important; flex-shrink: 0; }
+    .sch-mbtn-nr .inline-flex svg { width: 11px; height: 10px; }
+    .sch-mbtn-meta { white-space: nowrap; }
+    .sch-wrap.compact .sch-mbtn-meta { font-size: 8.5px; letter-spacing: -.3px; }
+    .sch-wrap.compact .sch-dot { margin: 0; }
+    .mx-cl3 { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; margin-top: 4px; }
+    .mx-ctr { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .mx-pc { display: flex; align-items: center; gap: 4px; white-space: nowrap; min-width: 0; }
+    .mx-pc.l { justify-content: flex-start; }
+    .mx-pc.r { justify-content: flex-end; }
+    @media (max-width: 420px) { .mx-ctr { gap: 6px; } .mx-pc { gap: 3px; } }
+    .mx-gname { text-align: center; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #0284c7; margin-bottom: 4px; }
+    .dark .mx-gname { color: #38bdf8; }
+    .mx-mgr-row .inline-flex { flex-shrink: 0; }
+    .mx-mgr-row.r .inline-flex { margin-left: 0 !important; margin-right: 6px; }
+    .mx-nowrap { white-space: nowrap; }
+    .mx-nm-live { color: #2563eb; background: linear-gradient(110deg, #2563eb 0%, #2563eb 38%, #93c5fd 50%, #2563eb 62%, #2563eb 100%); background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: mxShine 2.8s linear infinite; }
+    .dark .mx-nm-live { color: #60a5fa; background-image: linear-gradient(110deg, #60a5fa 0%, #60a5fa 38%, #e0f2fe 50%, #60a5fa 62%, #60a5fa 100%); }
+    @media (prefers-reduced-motion: reduce) { .mx-nm-live { animation: none; } }
+    .bk-place.bk-troph .inline-flex { margin-left: 0 !important; }
+    @media (max-width: 639px) { .bk-pts { min-width: 32px; } }
+    @keyframes swIn { from { opacity: .55; transform: translateX(var(--sw-x, 24px)) rotate(var(--sw-r, .9deg)); } to { opacity: 1; transform: none; } }
+    .swipe-in { animation: swIn .28s ease-out both; }
+    @media (prefers-reduced-motion: reduce) { .swipe-in { animation: none; } }
   </style>
 </head>
 
@@ -1095,7 +1146,7 @@
 
     <!-- STANDINGS TAB CONTENT -->
     <section id="tab-standings" class="tab-content space-y-3">
-      <div class="flex items-center justify-between gap-2 px-1">
+      <div id="st-subbar" class="st-subbar flex items-center justify-between gap-2 px-1">
         <div class="pos-mode-slider" id="st-sub-slider" style="--n:3" role="tablist" aria-label="Standings views">
           <div class="pos-mode-thumb" id="st-sub-thumb"></div>
           <button type="button" class="pos-mode-btn active" data-st-sub="standings" role="tab" aria-selected="true">Standings</button>
@@ -1863,7 +1914,7 @@
     }
 
     const STATE = {
-      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [], past_game_start: [] },
+      data: { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [], past_game_start: [], scoreslive: [] },
       filters: { year: 2026, league: '', seasonKey: '2026', weekMin: 1, weekMax: 8, hideCW: false, selectedManagers: [], matchup: null },
       hcwUserOverride: false,
       weekUserOverride: false,
@@ -2198,7 +2249,7 @@
       live_prob:  { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       belt:       { from: false, hcw: true,  defaultHcw: false, regularSeasonDefault: true,  label: 'W' },
       positions:  { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: true,  label: 'W' },
-      odds:       { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W', hideSeasonControls: true },
+      odds:       { from: true,  hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W' },
       historical: { from: true,  hcw: true,  defaultHcw: true,  regularSeasonDefault: false, label: 'W' },
       sandbox:    { from: false, hcw: false, defaultHcw: false, regularSeasonDefault: false, label: 'W', hideSeasonControls: true }
     };
@@ -2278,6 +2329,7 @@
         };
         scan(STATE.data.points);
         scan(STATE.data.scores);
+        scan(STATE.data.scoreslive);
         const cw = getCurrentYearAndWeek();
         if (cw && Number(cw.curYear) === Number(year)) set.add(cw.curWeek);
         let weeks = [...set].sort((a, b) => a - b);
@@ -3044,7 +3096,7 @@
             } else if (window.initSqlJs) {
               if (!STATE.SQL) STATE.SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
               const db = new STATE.SQL.Database(new Uint8Array(buffer));
-              const tmp = { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [], past_game_start: [] };
+              const tmp = { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [], past_game_start: [], scoreslive: [] };
               Object.keys(tmp).forEach(table => {
                 try {
                   const res = db.exec(`SELECT * FROM ${table}`);
@@ -3072,7 +3124,7 @@
 
         if (!fresh && firstLoad) {
           try {
-            const [points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi, past_game_start] = await Promise.all([
+            const [points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi, past_game_start, scoreslive] = await Promise.all([
               parseCSVUrl('./points.csv').catch(() => []),
               parseCSVUrl('./teams.csv').catch(() => []),
               parseCSVUrl('./scores.csv').catch(() => []),
@@ -3082,9 +3134,10 @@
               parseCSVUrl('./projectedpoints.csv').catch(() => []),
               parseCSVUrl('./liveprojectedpoints.csv').catch(() => []),
               parseCSVUrl('./taxi.csv').catch(() => []),
-              parseCSVUrl('./past_game_start.csv').catch(() => [])
+              parseCSVUrl('./past_game_start.csv').catch(() => []),
+              parseCSVUrl('./scoreslive.csv').catch(() => [])
             ]);
-            if (points && points.length > 0) fresh = { points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi, past_game_start };
+            if (points && points.length > 0) fresh = { points, teams, scores, transactions, currentweek, schedule, projectedpoints, liveprojectedpoints, taxi, past_game_start, scoreslive };
           } catch (err) {
             console.warn("CSV Fallback failed:", err);
           }
@@ -3146,6 +3199,74 @@
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => activateTab(btn.getAttribute('data-tab')));
       });
+      setupTabSwipe();
+    }
+
+    // Swipe left / right anywhere on a phone to move to the next / previous tab, with a subtle lean while dragging
+    function setupTabSwipe() {
+      const mq = window.matchMedia ? window.matchMedia('(max-width: 1023px)') : null;
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let sx = 0, sy = 0, t0 = 0, track = false, horiz = false, sec = null, dir = 0;
+      const order = () => [...document.querySelectorAll('.tab-btn')].map(b => b.getAttribute('data-tab'));
+      const blocked = el0 => {
+        for (let el = el0; el && el !== document.body && el.nodeType === 1; el = el.parentElement) {
+          if (el.matches && el.matches('input, select, textarea, [data-noswipe], #main-tab-nav')) return true;
+          const cs = getComputedStyle(el);
+          if (cs.position === 'fixed') return true;
+          if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll') && el.scrollWidth > el.clientWidth + 4) return true;
+        }
+        return false;
+      };
+      const target = d => { const o = order(), i = o.indexOf(FilterEngine.activeTab()); const n = o[i + d]; return n || null; };
+      const clear = (animate) => {
+        if (!sec) return;
+        const el = sec;
+        if (animate) { el.style.transition = 'transform .2s ease'; setTimeout(() => { el.style.transition = ''; el.style.transform = ''; el.style.transformOrigin = ''; }, 210); el.style.transform = 'none'; }
+        else { el.style.transition = ''; el.style.transform = ''; el.style.transformOrigin = ''; }
+      };
+      document.addEventListener('touchstart', e => {
+        track = false; horiz = false; sec = null;
+        if (!mq || !mq.matches || e.touches.length !== 1 || !STATE.loaded) return;
+        if (blocked(e.target)) return;
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY; t0 = Date.now(); track = true;
+        sec = document.getElementById('tab-' + FilterEngine.activeTab());
+      }, { passive: true });
+      document.addEventListener('touchmove', e => {
+        if (!track || !sec) return;
+        const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+        if (!horiz) {
+          if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) { track = false; return; }
+          if (Math.abs(dx) > 14 && Math.abs(dx) > 1.6 * Math.abs(dy)) horiz = true; else return;
+        }
+        if (reduce) return;
+        dir = dx < 0 ? 1 : -1;
+        const k = target(dir) ? 1 : 0.25;
+        const c = Math.max(-260, Math.min(260, dx)) * k;
+        sec.style.transition = 'none';
+        sec.style.transformOrigin = `50% ${Math.round(window.scrollY + window.innerHeight * 0.5 - sec.offsetTop)}px`;
+        sec.style.transform = `translateX(${(c * 0.2).toFixed(1)}px) rotate(${(c * 0.0035).toFixed(3)}deg)`;
+      }, { passive: true });
+      document.addEventListener('touchend', e => {
+        if (!track) return;
+        const t = e.changedTouches && e.changedTouches[0];
+        const dx = t ? t.clientX - sx : 0, dy = t ? t.clientY - sy : 0, dt = Date.now() - t0;
+        const go = horiz && Math.abs(dx) > Math.abs(dy) * 1.6 && (Math.abs(dx) > 70 || (Math.abs(dx) > 40 && dt < 260));
+        const next = go ? target(dx < 0 ? 1 : -1) : null;
+        track = false;
+        if (!next) { clear(horiz); return; }
+        clear(false);
+        const lean = dx < 0 ? 1 : -1;
+        activateTab(next);
+        try { window.scrollTo(0, 0); } catch (err) {}
+        const ns = document.getElementById('tab-' + next);
+        if (ns && !reduce) {
+          ns.style.setProperty('--sw-x', (lean * 26) + 'px'); ns.style.setProperty('--sw-r', (lean * 0.9) + 'deg');
+          ns.style.transformOrigin = '50% 40vh';
+          ns.classList.remove('swipe-in'); void ns.offsetWidth; ns.classList.add('swipe-in');
+          ns.addEventListener('animationend', function h() { ns.classList.remove('swipe-in'); ns.style.transformOrigin = ''; ns.removeEventListener('animationend', h); });
+        }
+      }, { passive: true });
+      document.addEventListener('touchcancel', () => { if (track) { track = false; clear(true); } }, { passive: true });
     }
 
     function activateTab(tabKey, opts = {}) {
@@ -3646,6 +3767,7 @@
     function renderStandingsSection() {
       if (!STATE.loaded) return;
       stSyncSubUI();
+      stSetStickyVars();
       const sub = STATE.st.sub;
       if (sub === 'schedule') renderScheduleSub();
       else if (sub === 'playoffs') renderPlayoffsSub();
@@ -3763,87 +3885,170 @@
         .map(r => ({ ...r, oppProj: (idx.get(`${r.week}_${r.opp}`) || {}).proj || 0 }));
     }
 
-    function renderScheduleSub() {
-      const f = STATE.filters, yr = f.year, lg = f.league;
-      const wrap = stById('sch-wrap'), selEl = stById('sch-sel'), mainEl = stById('sch-main');
-      if (!wrap || !selEl || !mainEl) return;
+    // ---- light cumulative regular-season standings (W-L-T + rank after every week), cached per season ----
+    function stCum(yr, lg) {
+      const C = stCache(), key = `cum|${yr}|${normLeague(lg)}`;
+      if (C[key]) return C[key];
+      const idx = stWeekIndex(yr, lg), psw = getPlayoffStartWeek(yr, lg);
+      const ids = new Set(); idx.forEach(v => ids.add(v.id));
+      const run = {}; ids.forEach(id => { run[id] = { W: 0, L: 0, T: 0, PF: 0 }; });
+      const snaps = [new Map()];
+      for (let w = 1; w < psw; w++) {
+        ids.forEach(id => {
+          const v = idx.get(`${w}_${id}`);
+          if (!v || v.opp <= 0 || !(v.pf > 0 || v.pa > 0)) return;
+          const o = resolveMatchupOutcome(yr, lg, w, id, v.opp, v.pf, v.pa, v.raw);
+          run[id].PF += v.pf; run[id].W += o.win; run[id].T += o.tie; run[id].L += o.loss;
+        });
+        const order = [...ids].sort((x, y) => (run[y].W - run[x].W) || (run[y].T - run[x].T) || (run[y].PF - run[x].PF));
+        const m = new Map();
+        order.forEach((id, i) => { const r = run[id], g = r.W + r.L + r.T; m.set(id, { W: r.W, L: r.L, T: r.T, PF: r.PF, rank: i + 1, pct: g ? (r.W + 0.5 * r.T) / g : null }); });
+        snaps[w] = m;
+      }
+      return (C[key] = { psw, snaps });
+    }
+    function stRecStr(x) { return `${x.W}-${x.L}${x.T > 0 ? '-' + x.T : ''}`; }
+
+    // ---- sticky offsets (header + Standings sub-tab bar) ----
+    function stStickyTopPx() {
+      const hdr = document.querySelector('header'), sb = stById('st-subbar');
+      return (hdr ? hdr.offsetHeight : 0) + (sb && sb.offsetParent !== null ? sb.offsetHeight : 0);
+    }
+    function stSetStickyVars() {
       const hdr = document.querySelector('header');
-      if (hdr) document.documentElement.style.setProperty('--hdr-h', hdr.offsetHeight + 'px');
+      const h = hdr ? hdr.offsetHeight : 118;
+      document.documentElement.style.setProperty('--hdr-h', h + 'px');
+      document.documentElement.style.setProperty('--st-top', stStickyTopPx() + 'px');
+    }
+    function stLockScroll() {
+      STATE.st._lock = true;
+      clearTimeout(STATE.st._lockT);
+      STATE.st._lockT = setTimeout(() => { STATE.st._lock = false; }, 1500);
+    }
 
-      const teams = stSeasonTeams(yr, lg);
-      if (!teams.length) { selEl.innerHTML = ''; mainEl.innerHTML = ''; wrap.classList.remove('compact'); return; }
+    // One manager's rows for one season: regular season + playoff games (named) + BYE weeks
+    function stSeasonRows(teamId, yr, lg) {
+      const rows = stBuildSchedule(teamId, yr, lg);
       const psw = getPlayoffStartWeek(yr, lg);
-      const cwx = getCurrentYearAndWeek();
-      let baseW = Math.max(0, psw - 1);
-      if (cwx && Number(yr) === Number(cwx.curYear)) baseW = Math.min(baseW, Math.max(0, Number(cwx.curWeek) - 1));
-      const stand = stStandingsAt(yr, lg, baseW);
-      teams.forEach(t => { const s = stand.get(t.id); t.rank = s ? s.regularRank : 99; t.rec = s ? stRec(s) : '0-0'; });
-      teams.sort((a, b) => a.rank - b.rank || a.manager.localeCompare(b.manager));
+      const cw = getCurrentYearAndWeek();
+      const curYr = cw ? Number(cw.curYear) : null, curWk = cw ? Number(cw.curWeek) : null;
+      let bk = null; try { bk = stGetBracket(yr, lg); } catch (e) {}
+      const ok = bk && !bk.unsupported;
+      const have = new Set(rows.map(r => r.week));
+      rows.forEach(r => {
+        if (r.week < psw) return;
+        const m = ok ? bk.matches.find(x => x.kind !== 'bye' && x.weeks.includes(r.week) && ((x.A.id === teamId && x.B.id === r.opp) || (x.B.id === teamId && x.A.id === r.opp))) : null;
+        r.gname = m ? (m.name + (m.weeks.length > 1 ? ' \u00B7 2-wk total' : '')) : 'Playoffs';
+      });
+      if (ok) {
+        const finalWeek = Math.max(...bk.matches.map(x => x.weeks[x.weeks.length - 1]));
+        for (let w = psw; w <= finalWeek; w++) {
+          if (have.has(w)) continue;
+          if (curYr !== null && (Number(yr) > curYr || (Number(yr) === curYr && w > curWk))) continue;   // not played yet
+          rows.push({ week: w, bye: true, status: (curYr !== null && Number(yr) === curYr && w === curWk) ? 'live' : 'final', pf: null, pa: null, proj: 0, opp: 0, oppProj: 0 });
+        }
+      }
+      return rows.sort((x, y) => x.week - y.week);
+    }
 
-      const chosen = getSelectedManagers();
-      const selMgr = chosen.find(m => teams.some(t => t.manager === m)) || null;
-      const missing = (!selMgr && chosen.length) ? chosen[0] : null;
+    function stRenderSchedSidebar(selMgr, teams) {
+      const f = STATE.filters, yr = f.year, lg = f.league;
+      const selEl = stById('sch-sel');
+      if (!selEl) return;
+      const cw = getCurrentYearAndWeek();
+      const curYr = cw ? Number(cw.curYear) : null, curWk = cw ? Number(cw.curWeek) : null;
+      const psw = getPlayoffStartWeek(yr, lg);
+      const done = curYr === null || Number(yr) < curYr || isPlayoffsFinished(yr, lg);
+      const cum = stCum(yr, lg);
+      let wEnd = psw - 1;
+      if (curYr !== null && Number(yr) === curYr) wEnd = Math.min(wEnd, Math.max(0, curWk - 1));
+      let fr = null; if (done) { try { fr = computeFinalRanks(yr, lg); } catch (e) {} }
+      teams.forEach(t => {
+        const sn = (wEnd >= 1 && cum.snaps[wEnd]) ? cum.snaps[wEnd].get(t.id) : null;
+        t.reg = sn ? sn.rank : 99; t.rec = sn ? stRecStr(sn) : '0-0';
+        t.fr = (fr && fr[t.id] !== undefined && fr[t.id] !== null) ? Number(fr[t.id]) : null;
+        t.rank = t.fr !== null ? t.fr : t.reg;
+      });
+      teams.sort((x, y) => x.rank - y.rank || x.manager.localeCompare(y.manager));
+      const inHere = selMgr && teams.some(t => t.manager === selMgr);
+      const missing = (selMgr && !inHere) ? selMgr : null;
       const label = activeSeasonDisplayName(yr, lg);
-
       selEl.innerHTML = `
+        <div class="sch-sel-yr" title="${escapeHTML(label)}">${yr}</div>
         <div class="sch-sel-title">Select a manager${missing ? ` <span class="normal-case tracking-normal font-semibold text-amber-600 dark:text-amber-400">\u00B7 ${escapeHTML(missing)} is not in ${escapeHTML(label)}</span>` : ''}</div>
         <div class="sch-sel-list">${teams.map(t => {
           const c = getManagerColor(t.manager);
           const on = t.manager === selMgr;
+          const tro = (t.fr !== null && t.fr <= 3) ? getTrophyBadgeHTML(t.fr) : '';
           return `<button type="button" class="sch-mbtn${on ? ' on' : ''}" data-st-mgr="${escapeHTML(t.manager)}" style="${on ? `background:${stRgba(c, 0.12)};color:${c};` : ''}" title="${on ? 'Selected \u2014 tap to clear' : 'View ' + escapeHTML(t.manager) + ' schedule'}" aria-pressed="${on}">
             <span class="sch-mbtn-bar" style="background:${c}"></span>
-            <span class="sch-mbtn-name" style="color:${c}">${escapeHTML(t.manager)}</span>
+            <span class="sch-mbtn-nr"><span class="sch-mbtn-name" style="color:${c}">${escapeHTML(t.manager)}</span>${tro}</span>
             <span class="sch-mbtn-team">${escapeHTML(t.team_name)}</span>
-            <span class="sch-mbtn-meta">${t.rank < 99 ? '#' + t.rank + ' \u00B7 ' : ''}${t.rec}</span>
+            <span class="sch-mbtn-meta">${t.rank < 99 ? '#' + t.rank + '<span class="sch-dot">\u00B7</span>' : ''}${t.rec}</span>
           </button>`;
         }).join('')}</div>`;
-      wrap.classList.toggle('compact', !!selMgr);
-      if (!selMgr) { mainEl.innerHTML = ''; return; }
+    }
 
-      const me = teams.find(t => t.manager === selMgr);
+    // Season block for one manager: header + every game of the year (regular season, playoffs, BYEs)
+    function stSchedSeasonHTML(s, me, selMgr) {
+      const f = STATE.filters, yr = s.year, lg = s.league;
       const col = getManagerColor(selMgr);
       const cw = getCurrentYearAndWeek();
       const curYr = cw ? Number(cw.curYear) : null, curWk = cw ? Number(cw.curWeek) : null;
       const isCur = curYr !== null && Number(yr) === curYr;
-      const rows = stBuildSchedule(me.id, yr, lg);
-      const meNow = stand.get(me.id);
-      let frChip = '';
-      if (curYr !== null && Number(yr) < curYr) {
-        let fr = null; try { fr = (computeFinalRanks(yr, lg) || {})[me.id]; } catch (e) {}
-        if (fr) frChip = `<span class="sch-pill" title="Final rank">Final #${fr}${getTrophyBadgeHTML(fr)}</span>`;
-      }
-      const head = `
-        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 px-0.5">
-          <span class="inline-block w-1 h-5 rounded" style="background:${col}"></span>
-          <span class="text-base font-extrabold leading-none" style="color:${col}">${escapeHTML(selMgr)}</span>
-          <span class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[40vw]">${escapeHTML(me.team_name)}</span>
-          <span class="sch-pill">${escapeHTML(label)}</span>
-          <span class="sch-pill font-mono">${meNow ? stRec(meNow) + ' \u00B7 #' + meNow.regularRank : '0-0'}</span>${frChip}
-          <button type="button" id="btn-export-sched-png" title="Download as PNG image" class="ml-auto bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> PNG</button>
-        </div>`;
-
-      if (!rows.length) {
-        mainEl.innerHTML = head + `<div class="sch-card p-6 text-center text-sm text-slate-500 dark:text-slate-400">No matchups for ${escapeHTML(selMgr)} in ${escapeHTML(label)} within the selected weeks. Widen the week filter or pick another year.</div>`;
-        return;
-      }
-
-      const stFor = (id, r) => {
-        const isPO = r.week >= psw;
-        const w = r.status === 'future' ? Math.min(psw - 1, isCur ? curWk - 1 : psw - 1) : Math.min(r.week, psw - 1);
-        const s = w >= 1 ? stStandingsAt(yr, lg, w).get(id) : null;
-        if (!s) return { rk: '\u2014', rec: '0-0', pct: null, isPO };
-        return { rk: (isPO ? 'S' : '#') + s.regularRank, rec: stRec(s), pct: s.winPct, isPO };
-      };
-      const oppName = id => getManagerName(id, yr, '', lg);
+      const psw = getPlayoffStartWeek(yr, lg);
+      const label = activeSeasonDisplayName(yr, lg);
+      const cum = stCum(yr, lg);
+      const rows = stSeasonRows(me.id, yr, lg);
+      const snapAt = (id, w) => (w >= 1 && cum.snaps[w]) ? (cum.snaps[w].get(id) || null) : null;
       const fmt = n => (Number(n) || 0).toFixed(2);
 
-      const heatTxt = ndlHeat;
+      // record + rank shown for a team in a row: through that week (regular season only; playoff rows show the final seed).
+      // The LIVE week respects "Hide curr. wk": hidden -> through last week, shown -> includes the in-progress week.
+      const stFor = (id, r) => {
+        let w;
+        if (r.status === 'future') w = isCur ? curWk - 1 : psw - 1;
+        else if (r.status === 'live') w = f.hideCW ? r.week - 1 : r.week;
+        else w = r.week;
+        const sn = snapAt(id, Math.min(w, psw - 1));
+        if (!sn) return { rk: '\u2014', rec: '0-0', pct: null };
+        return { rk: '#' + sn.rank, rec: stRecStr(sn), pct: sn.pct };
+      };
+
+      const wEndHead = isCur ? Math.min(psw - 1, f.hideCW ? curWk - 1 : curWk) : psw - 1;
+      const hs = snapAt(me.id, wEndHead);
+      const done = curYr === null || Number(yr) < curYr || isPlayoffsFinished(yr, lg);
+      let frChip = '';
+      if (done) { let fr = null; try { fr = (computeFinalRanks(yr, lg) || {})[me.id]; } catch (e) {} if (fr) frChip = `<span class="sch-pill" title="Final rank">Final #${fr}${getTrophyBadgeHTML(fr)}</span>`; }
+      const head = `
+        <div class="sch-yh">
+          <span class="inline-block w-1 h-5 rounded" style="background:${col}"></span>
+          <span class="sch-yh-t">${escapeHTML(label)}</span>
+          <span class="text-xs font-extrabold" style="color:${col}">${escapeHTML(selMgr)}</span>
+          <span class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[30vw] hidden sm:inline">${escapeHTML(me.team_name)}</span>
+          <span class="sch-pill font-mono">${hs ? stRecStr(hs) + ' \u00B7 #' + hs.rank : '0-0'}</span>${frChip}
+          <button type="button" data-sch-png="${yr}|${escapeHTML(lg)}" title="Download as PNG image" class="ml-auto bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 transition flex items-center gap-1 text-xs"><i class="fa-solid fa-file-image text-xs"></i> PNG</button>
+        </div>`;
 
       let html = '', sawPO = false;
       rows.forEach(r => {
-        if (r.week >= psw && !sawPO) { sawPO = true; html += `<div class="sch-sep2">Playoffs \u00B7 rank shows seed</div>`; }
-        const om = oppName(r.opp), oc = getManagerColor(om);
-        const a = stFor(me.id, r), b = stFor(r.opp, r);
+        if (r.week >= psw && !sawPO) { sawPO = true; html += `<div class="sch-sep2">Playoffs</div>`; }
+        const a = stFor(me.id, r);
+        const heat = x => x.pct === null ? '' : ndlHeat((x.pct - 0.5) / 0.5);
+        const idBlock = (nm, c, x, align) => `
+          <div class="sch-side ${align}">
+            <div class="sch-id"><span class="sch-nm" style="color:${c}">${escapeHTML(nm)}</span><span class="sch-rc sch-heat" style="${heat(x)}" title="Record after this week">${x.rec}</span><span class="sch-rk2" title="${r.week >= psw ? 'Seed' : 'Rank after this week'}">${x.rk}</span></div>
+          </div>`;
+        if (r.bye) {
+          html += `
+          <div class="sch-g sch-bye">
+            <div class="sch-lead"><span class="sch-wk2">${r.week}</span><span class="sch-chip fut" title="No game this week">BYE</span></div>
+            <div class="sch-body"><div class="sch-r1">${idBlock(selMgr, col, a, 'l')}<div class="sch-side r"><span class="sch-byetag">BYE</span></div></div></div>
+          </div>`;
+          return;
+        }
+        const om = getManagerName(r.opp, yr, '', lg), oc = getManagerColor(om);
+        const b = stFor(r.opp, r);
         const show = r.status !== 'future' && r.pf !== null;
         let res = '\u2014', resCls = 'fut', resTip = 'Scheduled';
         if (r.status === 'live') { res = 'LIVE'; resCls = 'live shine'; resTip = 'In progress'; }
@@ -3851,11 +4056,9 @@
           const o = resolveMatchupOutcome(yr, lg, r.week, me.id, r.opp, r.pf, r.pa);
           res = o.result; resCls = o.result.toLowerCase(); resTip = o.result === 'W' ? 'Win' : o.result === 'L' ? 'Loss' : 'Tie';
         }
-        const recHeat = x => x.pct === null ? '' : heatTxt((x.pct - 0.5) / 0.5);
         const clickable = r.status !== 'future' && show;
         const attrs = clickable ? ` data-open="${yr}|${escapeHTML(lg)}|${r.week}|${me.id}|${r.opp}" title="Open this matchup"` : '';
 
-        // live win-prob line under the in-progress matchup
         let wpLine = '';
         if (r.status === 'live') {
           try {
@@ -3868,41 +4071,134 @@
           } catch (e) { console.warn('[Schedule] live win prob unavailable', e); }
         }
 
-        const idBlock = (nm, c, x, align) => `
-          <div class="sch-side ${align}">
-            <div class="sch-id"><span class="sch-nm" style="color:${c}">${escapeHTML(nm)}</span><span class="sch-rc sch-heat" style="${recHeat(x)}" title="Record after this week">${x.rec}</span><span class="sch-rk2" title="${x.isPO ? 'Seed' : 'Rank after this week'}">${x.rk}</span></div>
-          </div>`;
-
-        // centre cluster: [projection -> points] vs [points <- projection]; live week: [live projection  points] vs [points  live projection]
-        const ptsHTML = (v) => `<span class="sch-pt">${show ? fmt(v) : '\u2014'}</span>`;
-        const half = (pts, proj, id, align) => {
+        // projection cluster pinned to the far left / far right under the manager (like the Matchups cards)
+        const pcOf = (pts, proj, id, align) => {
+          const L = align === 'l';
+          const pj = proj > 0 ? `<span class="sch-pj" title="Original team projection">${fmt(proj)}</span>` : '';
           if (r.status === 'live') {
             const lt = stLiveTotal(yr, lg, r.week, id);
-            const lpHTML = lt === null ? '' : `<span class="sch-lp ${ndlLiveCls(lt, proj) || 'sch-lp-e'}" title="Live projected total (original ${fmt(proj)})">${fmt(lt)}</span>`;
-            return align === 'l' ? `<div class="sch-ch l">${lpHTML}${ptsHTML(pts)}</div>` : `<div class="sch-ch r">${ptsHTML(pts)}${lpHTML}</div>`;
+            if (lt === null) return `<div class="sch-pc ${align}">${pj}</div>`;
+            const cls = ndlLiveCls(lt, proj) || 'mx-live-e';
+            const lp = `<span class="sch-lp ${cls}" title="Live projected total (original ${fmt(proj)})">${fmt(lt)}</span>`;
+            const ar = proj > 0 ? ndlArrow(L ? 'r' : 'l', lt, proj, `Original projection ${fmt(proj)} \u2192 live total ${fmt(lt)}`, cls) : '';
+            return `<div class="sch-pc ${align}">${L ? pj + ar + lp : lp + ar + pj}</div>`;
           }
           if (r.status === 'final' && show && proj > 0) {
-            const pj = `<span class="sch-pj" title="Original team projection">${fmt(proj)}</span>`;
-            return align === 'l' ? `<div class="sch-ch l">${pj}${ndlArrow('r', pts, proj)}${ptsHTML(pts)}</div>` : `<div class="sch-ch r">${ptsHTML(pts)}${ndlArrow('l', pts, proj)}${pj}</div>`;
+            const ar = ndlArrow(L ? 'r' : 'l', pts, proj);
+            return `<div class="sch-pc ${align}">${L ? pj + ar : ar + pj}</div>`;
           }
-          return `<div class="sch-ch ${align}">${ptsHTML(pts)}</div>`;
+          return `<div class="sch-pc ${align}">${pj}</div>`;
         };
+        const ptsHTML = v => `<span class="sch-pt">${show ? fmt(v) : '\u2014'}</span>`;
 
         html += `
           <div class="sch-g${clickable ? ' sch-click' : ''}${r.status === 'future' ? ' sch-fut' : ''}"${attrs}>
             <div class="sch-lead"><span class="sch-wk2">${r.week}</span><span class="sch-chip ${resCls}" title="${resTip}">${res}</span></div>
             <div class="sch-body">
-              ${idBlock(selMgr, col, a, 'l')}
-              <div class="sch-cl">${half(r.pf, r.proj, me.id, 'l')}<span class="sch-mid">vs</span>${half(r.pa, r.oppProj, r.opp, 'r')}</div>
-              ${idBlock(om, oc, b, 'r')}
+              ${r.gname ? `<div class="sch-gn">${escapeHTML(r.gname)}</div>` : ''}
+              <div class="sch-r1">${idBlock(selMgr, col, a, 'l')}${idBlock(om, oc, b, 'r')}</div>
+              <div class="sch-r2">${pcOf(r.pf, r.proj, me.id, 'l')}<div class="sch-ctr">${ptsHTML(r.pf)}<span class="sch-mid">vs</span>${ptsHTML(r.pa)}</div>${pcOf(r.pa, r.oppProj, r.opp, 'r')}</div>
             </div>
             ${wpLine}
           </div>`;
       });
-      mainEl.innerHTML = head + `
-        <div class="sch-card" id="sch-table-wrap">
-          <div class="sch-list">${html}</div>
-        </div>`;
+      if (!rows.length) html = `<div class="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No matchups for ${escapeHTML(selMgr)} in ${escapeHTML(label)}.</div>`;
+      return `<section class="sch-season" id="sch-${yr}-${lg || 'x'}" data-sch-season="${yr}|${escapeHTML(lg)}">${head}<div class="sch-card"><div class="sch-list">${html}</div></div></section>`;
+    }
+
+    function stScrollToSched(seasonKey, behavior) {
+      const sp = parseSeasonKey(seasonKey);
+      const sec = document.querySelector(`#sch-main .sch-season[data-sch-season="${sp.year}|${sp.league}"]`);
+      if (!sec) return false;
+      stLockScroll();
+      const y = sec.getBoundingClientRect().top + window.scrollY - stStickyTopPx() - 6;
+      window.scrollTo({ top: Math.max(0, y), behavior: behavior || 'auto' });
+      return true;
+    }
+
+    function renderScheduleSub() {
+      const f = STATE.filters;
+      const wrap = stById('sch-wrap'), selEl = stById('sch-sel'), mainEl = stById('sch-main');
+      if (!wrap || !selEl || !mainEl) return;
+      stSetStickyVars();
+
+      const teamsNow = stSeasonTeams(f.year, f.league);
+      if (!teamsNow.length) { selEl.innerHTML = ''; mainEl.innerHTML = ''; wrap.classList.remove('compact'); STATE.st._schKey = null; return; }
+
+      const seasons = FilterEngine.seasons();
+      const byKey = new Map(seasons.map(x => [x.key, stSeasonTeams(x.year, x.league)]));
+      const chosen = getSelectedManagers();
+      const selMgr = chosen.find(m => [...byKey.values()].some(ts => ts.some(t => t.manager === m))) || null;
+
+      stRenderSchedSidebar(selMgr, teamsNow);
+      wrap.classList.toggle('compact', !!selMgr);
+      if (!selMgr) { mainEl.innerHTML = ''; STATE.st._schKey = null; STATE.st._schMgr = null; return; }
+
+      const key = `${STATE.dataVersion}|${selMgr}|${f.hideCW ? 1 : 0}`;
+      let scrollNow = false;
+      if (STATE.st._schKey !== key || !mainEl.querySelector('.sch-season')) {
+        const y0 = window.scrollY;
+        const blocks = seasons.map(x => {
+          const me = (byKey.get(x.key) || []).find(t => t.manager === selMgr);
+          return me ? stSchedSeasonHTML(x, me, selMgr) : '';
+        }).join('');
+        mainEl.innerHTML = blocks || `<div class="sch-card p-6 text-center text-sm text-slate-500 dark:text-slate-400">No schedule found for ${escapeHTML(selMgr)}.</div>`;
+        const mgrKey = `${selMgr}|${f.hideCW ? 1 : 0}`;
+        if (STATE.st._schMgr !== mgrKey) { STATE.st._schMgr = mgrKey; STATE.st._schActive = null; scrollNow = true; }
+        else window.scrollTo(0, y0);   // plain data refresh: keep the reader where they are
+        STATE.st._schKey = key;
+      }
+      // the Year filter (or the first open) scrolls the list to that season
+      if (STATE.st._schActive !== f.seasonKey) {
+        const smooth = !scrollNow && STATE.st._schActive != null;
+        STATE.st._schActive = f.seasonKey;
+        stScrollToSched(f.seasonKey, smooth ? 'smooth' : 'auto');
+      }
+    }
+
+    // Scrolling the Schedule or Playoffs list down to another season moves the Year filter there (both sub-tabs share it)
+    function stApplySeason(year, league) {
+      const f = STATE.filters;
+      const season = FilterEngine.resolveSeason(Number(year), league);
+      if (season.key === f.seasonKey) return;
+      f.year = season.year; f.league = season.league; f.seasonKey = season.key;
+      STATE.weekUserOverride = false;
+      const weeks = FilterEngine.weeksForSeason(f.year, f.league);
+      f.weekMin = weeks[0];
+      f.weekMax = FilterEngine.defaultWeekMax(f.year, 'standings', f.league);
+      f.matchup = null;
+      STATE.st._schActive = season.key;
+      if (STATE.st.sub === 'playoffs') STATE.st._lastPoKey = season.key;
+      syncFilterUI();
+      updateUrlHash();
+      if (STATE.st.sub === 'schedule') {
+        const teams = stSeasonTeams(f.year, f.league);
+        const chosen = getSelectedManagers();
+        const selMgr = chosen.find(m => (STATE.st._schMgr || '').split('|')[0] === m) || chosen[0] || null;
+        stRenderSchedSidebar(selMgr, teams);
+      }
+    }
+    function stTrackSeason() {
+      if (!STATE.loaded || FilterEngine.activeTab() !== 'standings') return;
+      const sub = STATE.st.sub;
+      if (sub !== 'schedule' && sub !== 'playoffs') return;
+      const attr = sub === 'schedule' ? 'data-sch-season' : 'data-po-season';
+      const secs = [...document.querySelectorAll(sub === 'schedule' ? '#sch-main .sch-season' : '#po-seasons .po-season')];
+      if (!secs.length) return;
+      const top = stStickyTopPx() + 14;
+      let active = secs[0];
+      for (const sc of secs) { if (sc.getBoundingClientRect().top <= top) active = sc; else break; }
+      const [y, l] = String(active.getAttribute(attr)).split('|');
+      stApplySeason(y, l || '');
+    }
+    function stOnScroll() {
+      if (STATE.st._lock) {
+        clearTimeout(STATE.st._lockT);
+        STATE.st._lockT = setTimeout(() => { STATE.st._lock = false; stTrackSeason(); }, 160);
+        return;
+      }
+      if (STATE.st._raf) return;
+      STATE.st._raf = requestAnimationFrame(() => { STATE.st._raf = 0; stTrackSeason(); });
     }
 
     // ==========================================
@@ -4109,7 +4405,7 @@
       if (!ms.length) return `<div class="text-xs text-slate-500 dark:text-slate-400 py-3">${brKey === 'cons' ? 'No consolation games this season.' : 'No bracket games found.'}</div>${noteHTML}`;
 
       const mob = window.matchMedia && window.matchMedia('(max-width: 639px)').matches;
-      const CW = mob ? 120 : 212, CH = 50, BH = 26, GX = mob ? 12 : 32, GY = 16, TOP = 36;
+      const CW = mob ? 124 : 212, CH = 50, BH = 26, GX = mob ? 12 : 32, GY = 16, TOP = 36;
       const pos = {};
       const cols = [...new Set(ms.map(m => m.col))].sort((a, b) => a - b);
       cols.forEach(c => {
@@ -4149,9 +4445,9 @@
         const t = bk.tmap[slot.id];
         const col = getManagerColor(t.manager);
         const place = (decided && m.places) ? m.places[isW ? 0 : 1] : null;
-        const trophy = (place && place <= 3) ? getTrophyBadgeHTML(place) : '';
+        const trophy = '';
         const score = (m.status === 'final' || m.status === 'live') ? (side === 'A' ? m.ptsA : m.ptsB) : null;
-        return `<div class="bk-row${isW ? ' win' : ''}${isL ? ' lose' : ''}" title="${escapeHTML(t.team_name)}"><span class="bk-seed">${slot.seed != null ? slot.seed : ''}</span><span class="bk-name" style="color:${col}">${escapeHTML(t.manager)}${trophy}</span>${place ? `<span class="bk-place">${stOrd(place)}</span>` : ''}<span class="bk-pts">${score !== null && (score > 0 || m.status === 'final') ? score.toFixed(1) : ''}</span></div>`;
+        return `<div class="bk-row${isW ? ' win' : ''}${isL ? ' lose' : ''}" title="${escapeHTML(t.team_name)}"><span class="bk-seed">${slot.seed != null ? slot.seed : ''}</span><span class="bk-name" style="color:${col}">${escapeHTML(t.manager)}${trophy}</span>${place ? `<span class="bk-place${place <= 3 ? ' bk-troph' : ''}">${place <= 3 ? getTrophyBadgeHTML(place) : stOrd(place)}</span>` : ''}<span class="bk-pts">${score !== null && (score > 0 || m.status === 'final') ? score.toFixed(1) : ''}</span></div>`;
       };
       let cards = '', caps = '';
       ms.forEach(m => {
@@ -4219,12 +4515,14 @@
     function stScrollToSeason(id) {
       const el = stById(id);
       if (!el) return;
-      const hdr = document.querySelector('header');
-      const off = (hdr ? hdr.offsetHeight : 120) + 8;
-      window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - off), behavior: 'smooth' });
+      stLockScroll();
+      window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - stStickyTopPx() - 8), behavior: 'smooth' });
     }
 
     function stInit() {
+      window.addEventListener('scroll', stOnScroll, { passive: true });
+      window.addEventListener('resize', () => { try { stSetStickyVars(); } catch (e) {} });
+      try { if (typeof ResizeObserver === 'function') { const ro = new ResizeObserver(() => stSetStickyVars()); const h = document.querySelector('header'); if (h) ro.observe(h); } } catch (e) {}
       try { const mq = window.matchMedia('(max-width: 639px)'); const h = () => { if (STATE.st && STATE.st.sub === 'playoffs') renderPlayoffsSub(); }; if (mq.addEventListener) mq.addEventListener('change', h); else if (mq.addListener) mq.addListener(h); } catch (e) {}
       document.querySelectorAll('#st-sub-slider .pos-mode-btn').forEach(btn => {
         btn.addEventListener('click', () => setStandingsSub(btn.getAttribute('data-st-sub')));
@@ -4256,10 +4554,11 @@
           if (cv) ndlWithBusy(png, () => ndlElementToPNG(cv, `${activeSeasonFilePrefix(y, l)}_Playoffs_${br}_${y}.png`, { title: `${br} Bracket \u2014 ${activeSeasonDisplayName(y, l)}` }));
           return;
         }
-        const sp = e.target.closest('#btn-export-sched-png');
+        const sp = e.target.closest('[data-sch-png]');
         if (sp) {
-          const f = STATE.filters, m = getSelectedManagers()[0] || 'Manager';
-          ndlWithBusy(sp, () => ndlElementToPNG(stById('sch-main'), `${activeSeasonFilePrefix()}_Schedule_${m}_${f.year}.png`, { title: `${m} Schedule \u2014 ${activeSeasonDisplayName()}` }));
+          const [y, l] = sp.getAttribute('data-sch-png').split('|');
+          const box = sp.closest('.sch-season'), m = getSelectedManagers()[0] || 'Manager';
+          if (box) ndlWithBusy(sp, () => ndlElementToPNG(box, `${activeSeasonFilePrefix(y, l)}_Schedule_${m}_${y}.png`, { title: `${m} Schedule \u2014 ${activeSeasonDisplayName(y, l)}` }));
           return;
         }
         const op = e.target.closest('[data-open]');
@@ -4517,13 +4816,11 @@
             <td class="text-center font-mono font-semibold" style="background-color: ${etewBg}">
               ${r.etewValid ? `${r.etewWins} - ${r.etewLosses}` : '--'}
             </td>
-            <td class="text-left font-sans text-xs" style="background-color: ${starterBg}">
-              <span class="font-medium text-slate-800 dark:text-slate-200">${escapeHTML(r.bestStarter.name)}</span>
-              ${r.bestStarter.pts > 0 ? `<span class="float-right font-mono font-bold ml-2">${r.bestStarter.pts.toFixed(2)}</span>` : ''}
+            <td class="text-left font-sans text-xs mx-nowrap" style="background-color: ${starterBg}">
+              <div class="flex items-center justify-between gap-2"><span class="font-medium text-slate-800 dark:text-slate-200">${escapeHTML(r.bestStarter.name)}</span>${r.bestStarter.pts > 0 ? `<span class="font-mono font-bold">${r.bestStarter.pts.toFixed(2)}</span>` : ''}</div>
             </td>
-            <td class="text-left font-sans text-xs" style="background-color: ${benchBg}">
-              <span class="font-medium text-slate-800 dark:text-slate-200">${escapeHTML(r.bestBench.name)}</span>
-              ${r.bestBench.pts > 0 ? `<span class="float-right font-mono font-bold ml-2">${r.bestBench.pts.toFixed(2)}</span>` : ''}
+            <td class="text-left font-sans text-xs mx-nowrap" style="background-color: ${benchBg}">
+              <div class="flex items-center justify-between gap-2"><span class="font-medium text-slate-800 dark:text-slate-200">${escapeHTML(r.bestBench.name)}</span>${r.bestBench.pts > 0 ? `<span class="font-mono font-bold">${r.bestBench.pts.toFixed(2)}</span>` : ''}</div>
             </td>
           </tr>`;
       }).join('');
@@ -4561,7 +4858,7 @@
       if (STATE._mxIdx && STATE._mxIdx.v === STATE.dataVersion) return STATE._mxIdx;
       const D = STATE.data;
       const num = v => { if (v === null || v === undefined || v === '') return null; const n = Number(v); return isNaN(n) ? null : n; };
-      const proj = new Map(), live = new Map(), liveWeeks = new Set(), taxi = new Map(), pgs = new Set();
+      const proj = new Map(), live = new Map(), liveWeeks = new Set(), taxi = new Map(), pgs = new Set(), pgsWk = new Set();
       const put = (map, r, valKey) => {
         const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
         const pid = String(getVal(r, ['player_id']));
@@ -4597,8 +4894,9 @@
         const lg = normLeague(getVal(r, ['league']));
         pgs.add(`${yr}|${lg}|${wk}|${pid}`);
         pgs.add(`${yr}|*|${wk}|${pid}`);
+        pgsWk.add(`${yr}|*|${wk}`);
       });
-      STATE._mxIdx = { v: STATE.dataVersion, proj, live, liveWeeks, taxi, pgs };
+      STATE._mxIdx = { v: STATE.dataVersion, proj, live, liveWeeks, taxi, pgs, pgsWk };
       return STATE._mxIdx;
     }
     function mxLookup(map, yr, lg, wk, pid) {
@@ -4625,29 +4923,32 @@
         const proj = mxLookup(idx.proj, yr, lg, wk, pid);
         const lv = mxLookup(idx.live, yr, lg, wk, pid);
         let pj = null, eff = null, ptsCls = '', ptsT = 0;
-        {
-          // Actual-score colouring: game live -> blue (shine); game over (started, live projection 0) -> muted red/green vs proj_points; not begun -> none
-          const started = idx.pgs.has(`${yr}|${normLeague(lg)}|${wk}|${pid}`) || idx.pgs.has(`${yr}|*|${wk}|${pid}`);
-          // finished = not live AND (flagged started, OR the week is already past, OR it has points with live projection 0)
-          const cw = getCurrentYearAndWeek();
-          const pastWeek = !!cw && (Number(yr) < cw.curYear || (Number(yr) === cw.curYear && Number(wk) < cw.curWeek));
-          const finished = started || pastWeek || actual !== 0;
-          if (lv !== undefined && lv > 0) ptsCls = 'live';
-          else if (finished && proj !== undefined && proj !== null) {
-            // green > clear > red: actual vs proj_points, saturating at +/-50%
-            ptsCls = 'fin';
-            ptsT = proj > 0 ? Math.max(-1, Math.min(1, (actual - proj) / proj / 0.5)) : (actual > 0 ? 1 : 0);
-          }
+        // Player status (all three tables):
+        //   liveprojectedpoints.live_proj_points > 0      -> in play  (live projection)
+        //   past_game_start.past_gm_start = 'Y' (live = 0) -> game over (actual points from the points table)
+        //   otherwise                                      -> not begun (projectedpoints.proj_points)
+        const started = idx.pgs.has(`${yr}|${normLeague(lg)}|${wk}|${pid}`) || idx.pgs.has(`${yr}|*|${wk}|${pid}`);
+        const hasPgs = idx.pgsWk.has(`${yr}|*|${wk}`);
+        const cw = getCurrentYearAndWeek();
+        const pastWeek = !!cw && (Number(yr) < cw.curYear || (Number(yr) === cw.curYear && Number(wk) < cw.curWeek));
+        // past weeks are always final; when past_game_start has no rows for this week at all, fall back to "has points" as the finished signal
+        const finished = started || pastWeek || (!hasPgs && actual !== 0);
+        const inPlay = lv !== undefined && lv > 0;
+        if (inPlay) ptsCls = 'live';
+        else if (finished && proj !== undefined && proj !== null) {
+          // green > clear > red: actual vs proj_points, saturating at +/-50%
+          ptsCls = 'fin';
+          ptsT = proj > 0 ? Math.max(-1, Math.min(1, (actual - proj) / proj / 0.4)) : (actual > 0 ? 1 : 0);
         }
-        if (lv !== undefined && lv > 0) {
+        if (inPlay) {
           // game in progress: live projection, green/red against the original projection
           const base = proj === undefined ? null : proj;
-          pj = { val: lv, cls: base === null ? 'e' : (lv > base + 0.005 ? 'g' : (lv < base - 0.005 ? 'r' : 'e')) };
+          pj = { val: lv, cls: 'x', t: (base !== null && base > 0) ? Math.max(-1, Math.min(1, (lv - base) / base / 0.4)) : 0 };
           eff = lv;
         } else {
-          // not started (or no live value): original projection, greyed. A player with points but live_proj = 0 has finished: actual counts.
+          // not begun: original projection, greyed. Game over: the actual points count.
           pj = (proj === undefined || proj === null) ? null : { val: proj, cls: 'n' };
-          eff = (actual !== 0) ? actual : (proj === undefined || proj === null ? 0 : proj);
+          eff = finished ? actual : ((proj === undefined || proj === null) ? actual : proj);
         }
         const tx = idx.taxi.get(`${yr}|${pid}`);
         const isDm = !!tx && tx.type === 'dummy' && tx.active;          // active dummy taxi player -> 'DM'
@@ -4690,6 +4991,23 @@
         pairs.push({ key, A: byId[a], B: byId[b] });
       });
       pairs.sort((x, y) => x.A.team_id - y.A.team_id);
+
+      // Final week of the playoffs: label every game, order by importance (Championship -> 3rd place -> 5th ...),
+      // and mark the managers who finished 1st / 2nd / 3rd with trophies.
+      const poGame = {};
+      let finalRanksMap = null;
+      try {
+        const bk = stGetBracket(yr, lg);
+        if (bk && !bk.unsupported && !bk.projected) {
+          const fin = bk.matches.find(m => m.places && m.places[0] === 1);
+          if (fin && Number(fin.week) === Number(wk)) {
+            bk.matches.filter(m => m.places && Number(m.week) === Number(wk) && m.A.id != null && m.B.id != null)
+              .forEach(m => { poGame[[m.A.id, m.B.id].sort((x, y) => x - y).join('_')] = m; });
+            pairs.sort((x, y) => ((poGame[x.key] ? poGame[x.key].places[0] : 99) - (poGame[y.key] ? poGame[y.key].places[0] : 99)) || (x.A.team_id - y.A.team_id));
+            if (isPlayoffsFinished(yr, lg)) finalRanksMap = computeFinalRanks(yr, lg);
+          }
+        }
+      } catch (e) { console.warn('[Matchups] final-week labels unavailable', e); }
 
       if (!pairs.length) { wrap.innerHTML = ''; return; }
 
@@ -4737,31 +5055,29 @@
         const badge = won ? '<span class="sch-chip w" title="Win">W</span>' : '';
         return `
           <div class="min-w-0 ${align === 'r' ? 'text-right' : 'text-left'}">
-            <div class="mx-mgr-row ${align === 'r' ? 'r' : ''}">${badge}<span class="mx-mgr" style="color:${col}">${escapeHTML(t.manager)}</span><span class="mx-rec" title="Record entering the week">${r.rec}</span><span class="mx-dotsep">\u00B7</span><span class="mx-rankv" title="Rank entering the week">${r.rank}</span></div>
+            <div class="mx-mgr-row ${align === 'r' ? 'r' : ''}">${badge}<span class="mx-mgr" style="color:${col}">${escapeHTML(t.manager)}</span>${(finalRanksMap && finalRanksMap[t.team_id]) ? getTrophyBadgeHTML(finalRanksMap[t.team_id]) : ''}<span class="mx-rec" title="Record entering the week">${r.rec}</span><span class="mx-dotsep">\u00B7</span><span class="mx-rankv" title="Rank entering the week">${r.rank}</span></div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${escapeHTML(t.team_name)}</div>
           </div>`;
       };
 
-      // Score cluster, centred on the middle label.
-      //  final : [proj -> points] FINAL [points <- proj]       (arrow coloured green > clear > red at +20 / even / -20 vs proj)
-      //  live  : [proj -> live total  points] VS [points  live total <- proj]   (live total coloured vs proj; arrow follows it)
+      // Header row under the team names (like the live screenshot):
+      //   far left  : [orig proj -> live total]     centre : points VS points     far right : [live total <- orig proj]
+      //   final week: [orig proj -> (arrow coloured vs proj)] ... centre scores ... [(arrow) <- orig proj]
       const half = (t, mx, align) => {
         const big = `<span class="mx-big">${fmt(t.pf)}</span>`;
         const orig = mx.orig;
         const o = (orig > 0) ? `<span class="mx-o" title="Original team projection">${fmt(orig)}</span>` : '<span class="mx-o">\u2014</span>';
         const L = align === 'l';
+        let pc;
         if (isFinal) {
-          if (!(orig > 0)) return `<div class="mx-ch ${align}">${big}</div>`;
-          const ar = ndlArrow(L ? 'r' : 'l', Number(t.pf) || 0, orig);
-          return L ? `<div class="mx-ch l">${o}${ar}${big}</div>` : `<div class="mx-ch r">${big}${ar}${o}</div>`;
-        }
-        if (isLive && mx.liveTot !== null) {
+          if (orig > 0) { const ar = ndlArrow(L ? 'r' : 'l', Number(t.pf) || 0, orig); pc = L ? o + ar : ar + o; } else pc = '';
+        } else if (isLive && mx.liveTot !== null) {
           const cls = mx.cls || 'mx-live-e';
           const lv = `<span class="mx-lv ${cls}" title="Live total: actual points for finished players, live projection for players in play, original projection for players yet to play">${fmt(mx.liveTot)}</span>`;
           const ar = orig > 0 ? ndlArrow(L ? 'r' : 'l', mx.liveTot, orig, `Original projection ${fmt(orig)} \u2192 live total ${fmt(mx.liveTot)}`, cls) : '';
-          return L ? `<div class="mx-ch l">${o}${ar}${lv}${big}</div>` : `<div class="mx-ch r">${big}${lv}${ar}${o}</div>`;
-        }
-        return `<div class="mx-ch ${align}">${o}</div>`;   // not started: just the original projection
+          pc = L ? o + ar + lv : lv + ar + o;
+        } else pc = o;   // not started: just the original projection
+        return { big, pc: `<div class="mx-pc ${align}">${pc}</div>` };
       };
 
       const bodyFor = (A, B) => {
@@ -4771,7 +5087,7 @@
         const starters = slots.filter(s => !mxSlotIsBench(s));
         const bench = slots.filter(s => mxSlotIsBench(s));
         const cell = (p, cls) => p
-          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}${p.dm ? ' (Dummy taxi)' : ''}">${escapeHTML(p.name)}<span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}${p.dm ? '<span class="mx-dm" title="Dummy taxi player">DM</span>' : ''}</span><span class="mx-ptscol"><span class="mx-pts${p.ptsCls ? ' mx-pts-' + p.ptsCls : ''}"${p.ptsCls === 'fin' ? ` style="--g:${(Math.max(p.ptsT,0)*100).toFixed(1)}%;--r:${(Math.max(-p.ptsT,0)*100).toFixed(1)}%"` : ''}>${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}" title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
+          ? `<div class="mx-cell ${cls}"><span class="mx-name" title="${escapeHTML(p.name)}${p.ir ? ' (IR)' : ''}${p.tx ? (p.txOff ? ' (Taxi - inactive)' : ' (Taxi)') : ''}${p.dm ? ' (Dummy taxi)' : ''}"><span class="${p.ptsCls === 'live' ? 'mx-nm-live' : ''}">${escapeHTML(p.name)}</span><span class="mx-pos">${escapeHTML(p.pos)}</span>${p.ir ? '<span class="mx-ir" title="Selected position: IR">IR</span>' : ''}${p.tx ? `<span class="mx-tx${p.txOff ? ' off' : ''}" title="${p.txOff ? 'Taxi squad (inactive)' : 'Taxi squad'}">TX</span>` : ''}${p.dm ? '<span class="mx-dm" title="Dummy taxi player">DM</span>' : ''}</span><span class="mx-ptscol"><span class="mx-pts${p.ptsCls ? ' mx-pts-' + p.ptsCls : ''}"${p.ptsCls === 'fin' ? ` style="--g:${(Math.max(p.ptsT,0)*100).toFixed(1)}%;--r:${(Math.max(-p.ptsT,0)*100).toFixed(1)}%"` : ''}>${fmt(p.pts)}</span>${p.pj ? `<span class="mx-pj mx-pj-${p.pj.cls}"${p.pj.cls === 'x' ? ` style="--g:${(Math.max(p.pj.t, 0) * 100).toFixed(1)}%;--r:${(Math.max(-p.pj.t, 0) * 100).toFixed(1)}%"` : ''} title="${p.pj.cls === 'n' ? 'Projected points' : 'Live projection'}">${fmt(p.pj.val)}</span>` : ''}</span></div>`
           : '<div></div>';
         const rows = (list) => list.map(s => {
           const ra = find(pa, s), rb = find(pb, s);
@@ -4809,23 +5125,26 @@
       wrap.innerHTML = pairs.map(({ key, A, B }) => {
         const lp = buildLiveProbPoints(STATE.data.scores || [], yr, wk, A.team_id, B.team_id, lg);
         const last = lp.length ? lp[lp.length - 1] : null;
-        const projA = last ? last.projA : 0, projB = last ? last.projB : 0;
+        const projA = last ? (last.origProjA !== undefined ? last.origProjA : last.projA) : 0, projB = last ? (last.origProjB !== undefined ? last.origProjB : last.projB) : 0;
         const wpA = last ? Math.round(last.wpA * 10) / 10 : null;
         const colA = getManagerColor(A.manager), colB = getManagerColor(B.manager);
         const open = STATE.mxOpen.has(key);
         const mA = mxCalc(A, projA), mB = mxCalc(B, projB);
+        const hA = half(A, mA, 'l'), hB = half(B, mB, 'r');
+        const gm = poGame[key];
         return `
           <div class="mx-card ${open ? 'open' : ''} bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-key="${key}">
             <button type="button" class="mx-head w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition" aria-expanded="${open}">
+              ${gm ? `<div class="mx-gname">${escapeHTML(gm.name)}${gm.weeks.length > 1 ? ' \u00B7 2-wk total' : ''}</div>` : ''}
               <div class="grid items-start gap-2" style="grid-template-columns: minmax(0,1fr) auto minmax(0,1fr)">
                 ${side(A, 'l')}
                 <div class="flex justify-center">${isLive ? '<span class="sch-chip live shine" title="In progress">LIVE</span>' : ''}</div>
                 ${side(B, 'r')}
               </div>
-              <div class="mx-cl">
-                ${half(A, mA, 'l')}
-                <span class="mx-mid">${isFinal ? 'Final' : 'vs'}</span>
-                ${half(B, mB, 'r')}
+              <div class="mx-cl3">
+                ${hA.pc}
+                <div class="mx-ctr">${hA.big}<span class="mx-mid">${isFinal ? 'Final' : 'vs'}</span>${hB.big}</div>
+                ${hB.pc}
               </div>
               <div class="flex justify-center text-slate-400 mt-0.5"><i class="mx-chev fa-solid fa-chevron-down text-xs"></i></div>
               ${wpA !== null ? `
@@ -7057,7 +7376,7 @@
       const lg = STATE.filters.league;
       const wk = Number(STATE.filters.weekMax);
 
-      const sc = STATE.data.scores || [];
+      const sc = lpUseLive(yr) ? STATE.data.scoreslive : (STATE.data.scores || []);
 
       // One entry per matchup: the score table can hold both orientations (A vs B and B vs A).
       const seen = new Set();
@@ -7134,7 +7453,11 @@
     // - Win prob is only ever the ratio A/(A+B) of the two stored values, so it is independent of 0-1 vs 0-100 storage.
     //   Rows without BOTH win-prob values (or with a zero sum) are skipped; they are never turned into a neutral 50/50 row.
     // - Rows sharing the same TIME+RUN (e.g. both orientations of the same snapshot) collapse to one point.
+    // 2026 and later: the live win-prob series comes from the `scoreslive` table (falls back to `scores` only if that table is absent/empty)
+    function lpUseLive(yr) { return Number(yr) >= 2026 && (STATE.data.scoreslive || []).length > 0; }
     function buildLiveProbPoints(scores, yr, wk, tma, tmb, league = STATE.filters.league) {
+      const useLive = lpUseLive(yr);
+      if (useLive) scores = STATE.data.scoreslive;
       const num = v => (v === undefined || v === null || v === '') ? NaN : Number(v);
       const timeOf = r => getVal(r, ['TIME', 'time', 'TS', 'timestamp', 'ts']);
       const runOf = r => Number(getVal(r, ['RUN', 'run']) || 0);
@@ -7167,8 +7490,11 @@
           time: timeOf(r),
           ptsA: Number(A(['TMAPTS', 'team_points'], ['TMBPTS', 'opponent_points'])) || 0,
           ptsB: Number(A(['TMBPTS', 'opponent_points'], ['TMAPTS', 'team_points'])) || 0,
-          projA: Number(A(['TMAPROJ', 'team_proj_points'], ['TMBPROJ', 'opponent_proj_points'])) || 0,
-          projB: Number(A(['TMBPROJ', 'opponent_proj_points'], ['TMAPROJ', 'team_proj_points'])) || 0,
+          // dashed projection lines: TMALIVEPROJ / TMBLIVEPROJ for 2026+ (scoreslive), original TMAPROJ / TMBPROJ before that
+          projA: (useLive && isFinite(num(A(['TMALIVEPROJ'], ['TMBLIVEPROJ'])))) ? num(A(['TMALIVEPROJ'], ['TMBLIVEPROJ'])) : (Number(A(['TMAPROJ', 'team_proj_points'], ['TMBPROJ', 'opponent_proj_points'])) || 0),
+          projB: (useLive && isFinite(num(A(['TMBLIVEPROJ'], ['TMALIVEPROJ'])))) ? num(A(['TMBLIVEPROJ'], ['TMALIVEPROJ'])) : (Number(A(['TMBPROJ', 'opponent_proj_points'], ['TMAPROJ', 'team_proj_points'])) || 0),
+          origProjA: Number(A(['TMAPROJ', 'team_proj_points'], ['TMBPROJ', 'opponent_proj_points'])) || 0,
+          origProjB: Number(A(['TMBPROJ', 'opponent_proj_points'], ['TMAPROJ', 'team_proj_points'])) || 0,
           wpRawA: wpA, wpRawB: wpB,
           wpA: normA, wpB: 100 - normA
         };
@@ -11646,13 +11972,12 @@
     }
     function oddsNum(v) { return v === 0 ? '0' : String(Number((Math.round(v * 100) / 100).toFixed(2))); }
 
-    // The odds always describe the CURRENT season (year from the currentweek table)
+    // The odds follow the Year filter (and the Week range: scores / SD come only from the filtered weeks, the rest of the schedule is simulated)
     function oddsSeason() {
-      const cw = getCurrentYearAndWeek();
+      const f = STATE.filters;
       const seasons = FilterEngine.seasons();
       if (!seasons.length) return null;
-      const yr = cw ? cw.curYear : seasons[0].year;
-      const s0 = seasons.find(x => x.year === yr) || seasons[0];
+      const s0 = FilterEngine.resolveSeason(f.year, f.league);
       return { year: s0.year, league: s0.league };
     }
 
@@ -11663,9 +11988,13 @@
       const psw = getPlayoffStartWeek(S.year, S.league);
       const lastReg = Math.max(1, psw - 1);
       const curWeek = (cw && Number(cw.curYear) === Number(S.year)) ? cw.curWeek : lastReg + 1;
-      const playedMax = Math.min(curWeek - 1, lastReg);
+      const wmin = Math.max(1, Number(STATE.filters.weekMin) || 1), wmax = Math.max(1, Number(STATE.filters.weekMax) || 1);
+      // Week 1 selected: nothing to learn from yet, so every team gets the same league-wide distribution and the same odds
+      const uniform = wmax <= 1;
+      // results = completed regular-season weeks inside the Week range (the in-progress week is never a result)
+      const playedMax = uniform ? 0 : Math.min(wmax, lastReg, curWeek - 1);
 
-      const st = playedMax >= 1 ? MetricsEngine.computeStandings(S.year, 1, playedMax, S.league) : [];
+      const st = (playedMax >= wmin) ? MetricsEngine.computeStandings(S.year, wmin, playedMax, S.league) : [];
       const stById = {}; st.forEach(r => { stById[r.team_id] = r; });
 
       const ids = new Set();
@@ -11677,7 +12006,7 @@
       (STATE.data.points || []).forEach(r => {
         if (!rowMatchesSeason(r, S.year, S.league)) return;
         const w = Number(getVal(r, ['week', 'WK']));
-        if (w >= 1 && w <= playedMax) { const pts = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])); if (pts > 0) allScores.push(pts); }
+        if (w >= wmin && w <= (uniform ? Math.max(1, wmax) : playedMax)) { const pts = Number(getVal(r, ['team_points', 'points', 'TMAPTS'])); if (pts > 0) allScores.push(pts); }
       });
       const gMean = allScores.length ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 100;
       const gSd = allScores.length > 1 ? Math.sqrt(allScores.reduce((a, b) => a + (b - gMean) ** 2, 0) / (allScores.length - 1)) : 25;
@@ -11689,7 +12018,8 @@
           id, mgr, name: getTeamName(id, S.year, r ? r.team_name : '', S.league),
           W: r ? r.W : 0, L: r ? r.L : 0, T: r ? r.T : 0, PF: r ? r.PF : 0,
           mean: r && r.AVG > 0 ? r.AVG : gMean,
-          sd: r && r.SDEV > 0 ? r.SDEV : gSd
+          // fewer than 3 games in the filtered weeks -> league-wide SD
+          sd: (r && r.SDEV > 0 && (r.W + r.L + r.T) >= 3) ? r.SDEV : gSd
         };
       });
 
@@ -11707,6 +12037,17 @@
         seen.add(key);
         matchups.push({ key, week: w, a, b });
       });
+      // weeks already played (past years, or earlier weeks than now) come from the points table's actual pairings
+      try {
+        stWeekIndex(S.year, S.league).forEach(v => {
+          if (v.opp <= 0 || v.id >= v.opp || v.week <= playedMax || v.week > lastReg) return;
+          if (!ids.has(v.id) || !ids.has(v.opp)) return;
+          const key = `${v.week}|${Math.min(v.id, v.opp)}|${Math.max(v.id, v.opp)}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          matchups.push({ key, week: v.week, a: v.id, b: v.opp });
+        });
+      } catch (e) { console.warn('[Odds] played pairings unavailable', e); }
       matchups.sort((x, y) => x.week - y.week || x.a - y.a);
       // current week's games use the latest live win probability (when one exists) instead of the avg/SD draw
       if (cw && Number(cw.curYear) === Number(S.year)) {
@@ -11722,7 +12063,7 @@
 
       const meta = (STATE.data.teams || []).find(t => rowMatchesSeason(t, S.year, S.league)) || {};
       const cutoff = is2021Okl(S.year, S.league) ? 4 : (Number(getVal(meta, ['num_playoff_teams'])) || 6);
-      return { S, teams, matchups, playedMax, lastReg, curWeek, cutoff, hasSchedule: (STATE.data.schedule || []).length > 0 };
+      return { S, teams, matchups, playedMax, lastReg, curWeek, cutoff, wmin, wmax, uniform, hasSchedule: (STATE.data.schedule || []).length > 0 };
     }
 
     // Records shown in the table include the what-if picks (a pick is a decided result)
@@ -11790,8 +12131,12 @@
       Object.keys(STATE.odds.picks).forEach(k => { if (!live.has(k)) delete STATE.odds.picks[k]; });
 
       const picks = STATE.odds.picks;
-      const cacheKey = `${STATE.dataVersion}|${JSON.stringify(picks)}`;
-      if (STATE.odds._key !== cacheKey) { STATE.odds._res = oddsSimulate(model, picks); STATE.odds._key = cacheKey; }
+      const cacheKey = `${STATE.dataVersion}|${model.S.year}|${model.wmin}|${model.wmax}|${JSON.stringify(picks)}`;
+      if (STATE.odds._key !== cacheKey) {
+        const nT = model.teams.length;
+        STATE.odds._res = (model.uniform && !Object.keys(picks).length) ? model.teams.map(() => new Array(nT).fill(100 / nT)) : oddsSimulate(model, picks);
+        STATE.odds._key = cacheKey;
+      }
       const probs = STATE.odds._res;
       const rec = oddsRecords(model, picks);
       const n = model.teams.length;
@@ -11833,7 +12178,7 @@
 
       const nPicks = Object.keys(picks).length;
       const tipText = `${ODDS_SIMS.toLocaleString()} Monte Carlo simulations \u00B7 each remaining game is drawn from both teams' ${model.S.year} average points and standard deviation \u00B7 ranks are final regular-season seeds (W, then T, then PF) \u00B7 TOTAL = chance of a top-${cut} finish`
-        + (model.playedMax >= 1 ? ` \u00B7 records through Week ${model.playedMax}` : '')
+        + (model.uniform ? ' \u00B7 Week 1 selected: no results counted, every team gets the same distribution and the same odds' : (model.playedMax >= model.wmin ? ` \u00B7 scores, SD and records from Weeks ${model.wmin}\u2013${model.playedMax} (teams with fewer than 3 games use the league-wide SD)` : ''))
         + (nPicks ? ` \u00B7 ${nPicks} what-if result${nPicks === 1 ? '' : 's'} applied` : '');
       const ttl = document.getElementById('odds-title'); if (ttl) ttl.setAttribute('data-tip', tipText);
 
