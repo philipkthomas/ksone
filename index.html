@@ -3187,7 +3187,7 @@
     // Swipe left / right anywhere on a touch screen -> the tab to the left / right (with a subtle lean). Swipes that start inside a
     // horizontally scrollable area (tables, matrices, chips) scroll that area first and only change tab once it is at its edge.
     // Flip SWIPE_FOLLOWS_FINGER to false if you would rather have the usual "swipe left = next tab" direction.
-    const SWIPE_FOLLOWS_FINGER = true;
+    const SWIPE_FOLLOWS_FINGER = false;
     function setupSwipeNav() {
       if (setupSwipeNav._done) return; setupSwipeNav._done = true;
       const isTouch = () => ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
