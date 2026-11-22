@@ -731,12 +731,12 @@
     .mx-ch.r { justify-content: flex-start; }
     .mx-big { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; line-height: 1.1; font-weight: 800; color: #0f172a; }
     .dark .mx-big { color: #f1f5f9; }
-    .mx-o { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; font-weight: 600; color: #94a3b8; }
-    .mx-lv { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; font-weight: 800; }
+    .mx-o { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 600; color: #94a3b8; }
+    .mx-lv { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9.5px; font-weight: 800; }
     .mx-live-e { color: #64748b; }
     .dark .mx-live-e { color: #94a3b8; }
     .mx-mid { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; text-align: center; }
-    @media (max-width: 420px) { .mx-big { font-size: 15.5px; } .mx-o { font-size: 9.5px; } .mx-lv { font-size: 10.5px; } .mx-ch { gap: 3px; } .mx-cl { gap: 4px; } .ndl-arw { width: 12px; } }
+    @media (max-width: 420px) { .mx-big { font-size: 15.5px; } .mx-o { font-size: 8.5px; } .mx-lv { font-size: 9px; } .mx-ch { gap: 3px; } .mx-cl { gap: 4px; } .ndl-arw { width: 9.5px; height: 6.5px; } }
     .mx-cell.r .mx-tx { margin-left: 4px; margin-right: 0; }
     .mx-wp-link { cursor: pointer; border-radius: 6px; }
     .mx-wp-link:hover { background: rgba(148,163,184,0.16); }
@@ -910,16 +910,16 @@
     .sch-ch { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
     .sch-ch.l { justify-content: flex-end; }
     .sch-ch.r { justify-content: flex-start; }
-    .sch-pj { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; font-weight: 600; color: #94a3b8; }
-    .sch-lp { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 800; }
+    .sch-pj { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 600; color: #94a3b8; }
+    .sch-lp { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9.5px; font-weight: 800; }
     .sch-lp-e { color: #64748b; }
     .dark .sch-lp-e { color: #94a3b8; }
     .ndl-heat { color: var(--hl, #64748b); }
     .dark .ndl-heat { color: var(--hd, #94a3b8); }
     .ndl-arw-w { display: inline-flex; align-items: center; flex-shrink: 0; line-height: 0; }
-    .ndl-arw { width: 15px; height: 10px; display: block; }
+    .ndl-arw { width: 11px; height: 7.5px; display: block; }
     .ndl-arw.l { transform: scaleX(-1); }
-    @media (min-width: 640px) { .sch-main { max-width: 600px; } }
+    @media (min-width: 640px) { .sch-main { max-width: 650px; } }
     .sch-side { min-width: 0; }
     .sch-side.r { text-align: right; }
     .sch-id { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
@@ -1099,8 +1099,8 @@
         <div class="pos-mode-slider" id="st-sub-slider" style="--n:3" role="tablist" aria-label="Standings views">
           <div class="pos-mode-thumb" id="st-sub-thumb"></div>
           <button type="button" class="pos-mode-btn active" data-st-sub="standings" role="tab" aria-selected="true">Standings</button>
-          <button type="button" class="pos-mode-btn" data-st-sub="schedule" role="tab" aria-selected="false">Schedule</button>
           <button type="button" class="pos-mode-btn" data-st-sub="playoffs" role="tab" aria-selected="false">Playoffs</button>
+          <button type="button" class="pos-mode-btn" data-st-sub="schedule" role="tab" aria-selected="false">Schedule</button>
         </div>
       </div>
       <div id="st-pane-standings" class="space-y-3">
@@ -3151,6 +3151,7 @@
     function activateTab(tabKey, opts = {}) {
       const { render = true } = opts;
       if (!TAB_FILTER_MODE[tabKey]) return;
+      if (tabKey === 'live_prob' && STATE.liveProb) { STATE.liveProb._autoPending = !opts.keepMatchup; STATE.liveProb._skipAuto = !!opts.keepMatchup; }
 
       if (tabKey !== 'survivor') {
         pauseSurvivorReplay();
@@ -3203,7 +3204,7 @@
       show('week-filter-group', !m.hideSeasonControls);
       show('wk-from-wrap', m.from && !m.hideSeasonControls);
       show('hcw-wrap', m.hcw);
-      show('fb-bench-wrap', tabKey === 'matchups' || (tabKey === 'positions' && (STATE.positions.viewMode || 'real') !== 'efficiency'));
+      show('fb-bench-wrap', tabKey === 'matchups' || tabKey === 'positions');
       show('hist-po-wrap', tabKey === 'historical');
       { const vm = document.getElementById('fb-view-matchup'); if (vm) vm.style.display = tabKey === 'live_prob' ? 'inline-flex' : 'none'; }
       show('hist-chips-wrap', tabKey === 'historical');
@@ -3541,7 +3542,7 @@
     // STANDINGS SUBTABS: Standings | Schedule | Playoffs
     // ==========================================
     STATE.st = { sub: 'standings', poBr: 'champ', _cache: { v: -1, m: {} }, _lastPoKey: null, _poFirst: true };
-    const ST_SUBS = ['standings', 'schedule', 'playoffs'];
+    const ST_SUBS = ['standings', 'playoffs', 'schedule'];
 
     function stCache() {
       if (STATE.st._cache.v !== STATE.dataVersion) STATE.st._cache = { v: STATE.dataVersion, m: {} };
@@ -3901,8 +3902,7 @@
       mainEl.innerHTML = head + `
         <div class="sch-card" id="sch-table-wrap">
           <div class="sch-list">${html}</div>
-        </div>
-        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 px-1">Rank &amp; record are as of the end of that week and shaded by win % (text colour). The arrow runs from each team\u2019s original projection to its actual points and is coloured green +20 \u2192 red \u221220. The live week shows the live projected total instead. Tap a game to open it in Matchups.</div>`;
+        </div>`;
     }
 
     // ==========================================
@@ -4109,7 +4109,7 @@
       if (!ms.length) return `<div class="text-xs text-slate-500 dark:text-slate-400 py-3">${brKey === 'cons' ? 'No consolation games this season.' : 'No bracket games found.'}</div>${noteHTML}`;
 
       const mob = window.matchMedia && window.matchMedia('(max-width: 639px)').matches;
-      const CW = mob ? 112 : 188, CH = 50, BH = 26, GX = mob ? 12 : 32, GY = 16, TOP = 36;
+      const CW = mob ? 120 : 212, CH = 50, BH = 26, GX = mob ? 12 : 32, GY = 16, TOP = 36;
       const pos = {};
       const cols = [...new Set(ms.map(m => m.col))].sort((a, b) => a - b);
       cols.forEach(c => {
@@ -4283,7 +4283,7 @@
         if (wpLink) {
           e.preventDefault(); e.stopPropagation();
           STATE.filters.matchup = wpLink.getAttribute('data-mu') || null;
-          activateTab('live_prob');
+          activateTab('live_prob', { keepMatchup: true });
           try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {}
           return;
         }
@@ -7088,7 +7088,16 @@
       // A saved/URL matchup may be in either orientation.
       const wanted = STATE.filters.matchup;
       const hit = wanted ? matchupList.find(m => `${m.tma}_${m.tmb}` === wanted || `${m.tmb}_${m.tma}` === wanted) : null;
-      matchupSelect.value = hit ? `${hit.tma}_${hit.tmb}` : `${matchupList[0].tma}_${matchupList[0].tmb}`;
+      let pick = hit || matchupList[0];
+      const mgrs = getSelectedManagers();
+      const mk = `${yr}|${lg}|${wk}|${mgrs.join(',')}`;
+      const lpS = STATE.liveProb;
+      if (mgrs.length && !lpS._skipAuto && (lpS._autoPending || lpS._mgrKey !== mk)) {
+        const involves = m => mgrs.includes(getManagerName(m.tma, yr, '', lg)) || mgrs.includes(getManagerName(m.tmb, yr, '', lg));
+        if (!(hit && involves(hit))) { const f = matchupList.find(involves); if (f) pick = f; }
+      }
+      lpS._mgrKey = mk; lpS._autoPending = false; lpS._skipAuto = false;
+      matchupSelect.value = `${pick.tma}_${pick.tmb}`;
       STATE.filters.matchup = matchupSelect.value;
     }
 
@@ -7367,10 +7376,7 @@
           animation: false,
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: {
-              position: 'top',
-              labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14 }
-            },
+            legend: { display: false, position: 'top', labels: { color: textColor, font: { size: 11, weight: '600' }, boxWidth: 14 } },
             tooltip: {
               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               titleColor: isDark ? '#f8fafc' : '#0f172a',
@@ -11702,6 +11708,17 @@
         matchups.push({ key, week: w, a, b });
       });
       matchups.sort((x, y) => x.week - y.week || x.a - y.a);
+      // current week's games use the latest live win probability (when one exists) instead of the avg/SD draw
+      if (cw && Number(cw.curYear) === Number(S.year)) {
+        matchups.forEach(m => {
+          if (m.week !== curWeek) return;
+          try {
+            const lp = buildLiveProbPoints(STATE.data.scores || [], S.year, m.week, m.a, m.b, S.league);
+            const last = lp.length ? lp[lp.length - 1] : null;
+            if (last && isFinite(last.wpA)) m.wp = Math.max(0, Math.min(1, last.wpA / 100));
+          } catch (e) { console.warn('[Odds] live win prob unavailable', e); }
+        });
+      }
 
       const meta = (STATE.data.teams || []).find(t => rowMatchesSeason(t, S.year, S.league)) || {};
       const cutoff = is2021Okl(S.year, S.league) ? 4 : (Number(getVal(meta, ['num_playoff_teams'])) || 6);
@@ -11740,6 +11757,7 @@
           if (pk === 'a') W[ia]++;
           else if (pk === 'b') W[ib]++;
           else if (pk === 't') { T[ia]++; T[ib]++; }
+          else if (m.wp !== undefined) { if (rng() < m.wp) W[ia]++; else W[ib]++; }
           else if (sa > sb) W[ia]++;
           else if (sb > sa) W[ib]++;
           else { T[ia]++; T[ib]++; }
