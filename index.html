@@ -869,7 +869,7 @@
     .sch-wrap.compact .sch-mbtn { padding: 4px 2px 4px 7px; border-radius: .45rem; }
     .sch-wrap.compact .sch-sel-year { display: block; text-align: center; font-size: 9px; font-weight: 800; letter-spacing: .06em; color: #64748b; padding: 0 0 4px; }
     .sch-wrap.compact .sch-mbtn-meta { gap: 2px; height: 11px; line-height: 11px; letter-spacing: -.03em; }
-    .sch-wrap.compact .sch-mbtn-meta .rk::after { content: none; }
+    .sch-wrap.compact .sch-mbtn-meta .rk::after { content: ''; display: inline-block; width: 2.5px; height: 2.5px; border-radius: 50%; background: #94a3b8; margin: 0 0 0 2px; vertical-align: middle; }
     .sch-wrap.compact .sch-mbtn-name { font-size: 10.5px; text-overflow: clip; }
     .sch-wrap.compact .sch-mbtn-team { display: none; }
     .sch-wrap.compact .sch-mbtn-meta { font-size: 8px; }
@@ -3734,11 +3734,12 @@
         if (rows.length) {
           const t = { team_id: teamId, pf: Number(getVal(rows[0], ['team_points', 'points', 'TMAPTS'])) || 0, players: rows };
           const st = mxTeamPlayers(t, yr, lg, wk).filter(p => !mxSlotIsBench(p.slot));
-          if (st.length) out = st.reduce((a, p) => a + (p.eff || 0), 0);
+          if (st.length) { const b = mxLiveSum(st); out = b.total; C[key + '|b'] = b; }
         }
       } catch (e) { console.warn('[Schedule] live total unavailable', e); }
       return (C[key] = out);
     }
+    function stLiveBreakdown(yr, lg, wk, teamId) { return stCache()[`lt|${yr}|${normLeague(lg)}|${wk}|${teamId}|b`] || null; }
     // class for a live total vs the original projection (within 0.06 = rounding noise -> no colour)
     function ndlLiveCls(live, orig) {
       if (live === null || live === undefined) return '';
@@ -4133,7 +4134,7 @@
             const lt = stLiveTotal(yr, lg, r.week, id);
             if (lt === null) return proj > 0 ? `<div class="sch-pl ${align}"><span class="sch-pj" title="Original team projection">${fmt(proj)}</span></div>` : '';
             const hs = ndlLiveHeat(lt, proj);
-            const lv = `<span class="sch-lp ndl-heat" style="${hs}" title="Live projected total (original ${fmt(proj)})">${fmt(lt)}</span>`;
+            const lv = `<span class="sch-lp ndl-heat" style="${hs}" title="${stLiveBreakdown(yr, lg, r.week, id) ? mxLiveTip(stLiveBreakdown(yr, lg, r.week, id), proj) : 'Live projected total (original ' + fmt(proj) + ')'}">${fmt(lt)}</span>`;
             const o = proj > 0 ? `<span class="sch-pj" title="Original team projection">${fmt(proj)}</span>` : '';
             const ar = proj > 0 ? `<span class="ndl-arw-w ndl-heat" style="${hs}" title="Original projection ${fmt(proj)} \u2192 live total ${fmt(lt)}"><svg class="ndl-arw ${L ? 'r' : 'l'}" viewBox="0 0 16 10" aria-hidden="true"><path d="M0.8 5H13.2M9.2 1.3L13.4 5L9.2 8.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : '';
             return `<div class="sch-pl ${align}">${L ? o + ar + lv : lv + ar + o}</div>`;
@@ -4899,17 +4900,26 @@
     }
 
     // Projection / taxi lookups (rebuilt whenever live.db changes)
+    // player_id normaliser: '12345', 12345, ' 12345 ' and '12345.0' all become '12345'
+    function mxPid(v) {
+      if (v === undefined || v === null) return '';
+      return String(v).trim().replace(/\.0+$/, '');
+    }
     function mxProjIndex() {
       if (STATE._mxIdx && STATE._mxIdx.v === STATE.dataVersion) return STATE._mxIdx;
       const D = STATE.data;
+      const cwNow = getCurrentYearAndWeek();
       const num = v => { if (v === null || v === undefined || v === '') return null; const n = Number(v); return isNaN(n) ? null : n; };
       const proj = new Map(), live = new Map(), liveWeeks = new Set(), taxi = new Map(), pgs = new Set();
       const put = (map, r, valKey) => {
-        const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
-        const pid = String(getVal(r, ['player_id']));
+        // live tables only describe the current week: if a row has no year / week column, assume the current ones
+        let yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
+        if (!yr && cwNow) yr = cwNow.curYear;
+        if (!wk && cwNow) wk = cwNow.curWeek;
+        const pid = mxPid(getVal(r, ['player_id']));
         const lg = normLeague(getVal(r, ['league']));
         const v = num(getVal(r, [valKey]));
-        if (v === null) return null;
+        if (v === null || !pid) return null;
         map.set(`${yr}|${lg}|${wk}|${pid}`, v);
         map.set(`${yr}|*|${wk}|${pid}`, v);
         return { yr, wk, lg };
@@ -4923,8 +4933,8 @@
         const typeRaw = String(getVal(r, ['type']) || 'taxi').trim().toLowerCase();
         const type = /dummy|^dm$/.test(typeRaw) ? 'dummy' : (typeRaw === 'taxi' ? 'taxi' : '');
         if (!type) return;
-        const yr = Number(getVal(r, ['year', 'YR'])), pid = String(getVal(r, ['player_id']));
-        if (!yr || pid === 'undefined') return;
+        const yr = Number(getVal(r, ['year', 'YR'])), pid = mxPid(getVal(r, ['player_id']));
+        if (!yr || !pid) return;
         const stamp = String(getVal(r, ['last_warn_time']) || '');
         const active = String(getVal(r, ['active']) || 'Y').trim().toUpperCase() !== 'N';
         const k = `${yr}|${pid}`, prev = taxi.get(k);
@@ -4934,8 +4944,11 @@
       (D.past_game_start || []).forEach(r => {
         const flag = String(getVal(r, ['past_gm_start', 'player_gm_start']) || '').trim().toUpperCase();
         if (flag !== 'Y') return;
-        const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
-        const pid = String(getVal(r, ['player_id']));
+        let yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
+        if (!yr && cwNow) yr = cwNow.curYear;
+        if (!wk && cwNow) wk = cwNow.curWeek;
+        const pid = mxPid(getVal(r, ['player_id']));
+        if (!pid) return;
         const lg = normLeague(getVal(r, ['league']));
         pgs.add(`${yr}|${lg}|${wk}|${pid}`);
         pgs.add(`${yr}|*|${wk}|${pid}`);
@@ -4947,6 +4960,22 @@
       let v = map.get(`${yr}|${normLeague(lg)}|${wk}|${pid}`);
       if (v === undefined) v = map.get(`${yr}|*|${wk}|${pid}`);
       return v;
+    }
+
+    // ONE rule for the live team total, used by Matchups and Standings > Schedule. Sum over the team's starters of:
+    //   live_proj_points  (liveprojectedpoints, > 0)                       -> game in progress
+    //   points            (points table, actual)                           -> live_proj_points = 0 AND player_id in past_game_start (game over)
+    //   proj_points       (projectedpoints)                                -> game not started (player_id not in past_game_start)
+    function mxLiveSum(starters) {
+      const r = { total: 0, nLive: 0, nDone: 0, nPend: 0 };
+      starters.forEach(p => {
+        r.total += (p.eff || 0);
+        if (p.state === 'live') r.nLive++; else if (p.state === 'done') r.nDone++; else r.nPend++;
+      });
+      return r;
+    }
+    function mxLiveTip(b, orig) {
+      return `Live total ${b.total.toFixed(2)}${orig > 0 ? ' vs original projection ' + orig.toFixed(2) : ''} \u00B7 ${b.nDone} played (actual) + ${b.nLive} in play (live proj) + ${b.nPend} to play (proj)`;
     }
 
     function mxTeamPlayers(t, yr = STATE.filters.year, lg = STATE.filters.league, wk = STATE.filters.weekMax) {
@@ -4962,7 +4991,7 @@
         let slot = p.normalized_position || '';
         if (!slot) slot = NP_NOT_STARTED.has(sel) ? (sel && sel !== '' ? (sel === 'BN' || sel === 'BE' || sel === 'BENCH' ? 'BN' : sel) : 'BN') : sel;
         const pos = String(getVal(p, ['position', 'POS', 'pos', 'POSITION']) || '').toUpperCase();
-        const pid = String(getVal(p, ['player_id']));
+        const pid = mxPid(getVal(p, ['player_id']));
         const actual = isNaN(pts) ? 0 : pts;
         const proj = mxLookup(idx.proj, yr, lg, wk, pid);
         const lv = mxLookup(idx.live, yr, lg, wk, pid);
@@ -4998,7 +5027,7 @@
         const tx = idx.taxi.get(`${yr}|${pid}`);
         const isDm = !!tx && tx.type === 'dummy' && tx.active;          // active dummy taxi player -> 'DM'
         const isTx = !!tx && tx.type === 'taxi';                        // taxi player -> 'TX' (faded when active = 'N')
-        out.push({ slot, name: String(name), pos, pts: actual, ptsCls, ptsT, ir: /^IR/.test(sel), pj, eff,
+        out.push({ slot, name: String(name), pos, pts: actual, ptsCls, ptsT, ir: /^IR/.test(sel), pj, eff, state,
                    projVal: (proj === undefined || proj === null) ? 0 : proj,
                    tx: isTx, txOff: isTx && !tx.active, dm: isDm });
       });
@@ -5090,14 +5119,16 @@
         const players = mxTeamPlayers(t, yr, lg, wk);
         const starters = players.filter(p => !mxSlotIsBench(p.slot));
         const ptsProj = Number(getVal(t.rawRow, ['team_projected_points', 'team_proj_points'])) || 0;
-        const sumProj = starters.reduce((a, p) => a + (p.pj && p.pj.cls === 'n' ? p.pj.val : 0), 0);
+        // original (pre-game) projection of every starter, whatever state the player is in now
+        const sumProj = starters.reduce((a, p) => a + (p.projVal || 0), 0);
         const orig = ptsProj > 0 ? ptsProj : (projScores > 0 ? projScores : sumProj);
         // Live total = sum over starters of: proj_points (to play) | live_proj_points (in play) | actual (played).
         // Finished weeks just show the final score, so no live total is needed there.
-        const liveTot = (isFinal || !starters.length) ? null : starters.reduce((a, p) => a + (p.eff || 0), 0);
+        const lsum = (isFinal || !starters.length) ? null : mxLiveSum(starters);
+        const liveTot = lsum ? lsum.total : null;
         // within 0.06 of the original projection is rounding noise -> no colour
         const cls = liveTot === null ? '' : (liveTot > orig + 0.06 + 1e-9 ? 'mx-live-g' : (liveTot < orig - 0.06 - 1e-9 ? 'mx-live-r' : ''));
-        t._mx = { players, orig, liveTot, cls };
+        t._mx = { players, orig, liveTot, cls, lsum };
         return t._mx;
       };
 
@@ -5105,7 +5136,7 @@
       const liveLine = (mx, align) => {
         if (!(isLive && mx && mx.liveTot !== null)) return '';
         const L = align === 'l', orig = mx.orig, hs = ndlLiveHeat(mx.liveTot, orig);
-        const lv = `<span class="mx-lv ndl-heat" style="${hs}" title="Live total: actual points for finished players, live projection for players in play, original projection for players yet to play">${fmt(mx.liveTot)}</span>`;
+        const lv = `<span class="mx-lv ndl-heat" style="${hs}" title="${mxLiveTip(mx.lsum, orig)}">${fmt(mx.liveTot)}</span>`;
         const o = orig > 0 ? `<span class="mx-o" title="Original team projection">${fmt(orig)}</span>` : '';
         const ar = orig > 0 ? `<span class="ndl-arw-w ndl-heat" style="${hs}" title="Original projection ${fmt(orig)} \u2192 live total ${fmt(mx.liveTot)}"><svg class="ndl-arw ${L ? 'r' : 'l'}" viewBox="0 0 16 10" aria-hidden="true"><path d="M0.8 5H13.2M9.2 1.3L13.4 5L9.2 8.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : '';
         return `<div class="mx-pline ${L ? 'l' : 'r'}">${L ? o + ar + lv : lv + ar + o}</div>`;
@@ -5166,7 +5197,7 @@
         const liveTag = (T) => {
           const m = mxCalc(T, 0);
           if (isFinal) return m.orig > 0 ? `<span class="mx-pj mx-pj-e" title="Original team projection">${fmt(m.orig)}</span>` : '';
-          return m.liveTot === null ? '' : `<span class="mx-pj mx-live ndl-heat" style="${ndlLiveHeat(m.liveTot, m.orig)}" title="Live projection total">${fmt(m.liveTot)}</span>`;
+          return m.liveTot === null ? '' : `<span class="mx-pj mx-live ndl-heat" style="${ndlLiveHeat(m.liveTot, m.orig)}" title="${mxLiveTip(m.lsum, m.orig)}">${fmt(m.liveTot)}</span>`;
         };
         // finished weeks: actual starter total coloured green > clear > red against the original team projection (+20 / even / -20)
         const totPts = (T, arr) => {
