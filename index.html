@@ -3702,24 +3702,8 @@
       const t = tip || (proj > 0 ? `Proj ${proj.toFixed(2)} \u00B7 ${pts - proj >= 0 ? '+' : ''}${(pts - proj).toFixed(2)}` : '');
       return `<span class="ndl-arw-w ${cls || 'ndl-heat'}" style="${heat}" title="${t}"><svg class="ndl-arw ${dir}" viewBox="0 0 16 10" aria-hidden="true"><path d="M0.8 5H13.2M9.2 1.3L13.4 5L9.2 8.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
     }
-    // Live team total for one team/week (same rule as the Matchups cards): proj_points for players still to play,
-    // live_proj_points for players in play, actual points for players who are done.
-    function stLiveTotal(yr, lg, wk, teamId) {
-      const C = stCache();
-      const key = `lt|${yr}|${normLeague(lg)}|${wk}|${teamId}`;
-      if (key in C) return C[key];
-      let out = null;
-      try {
-        try { getNormalizedForYear(yr); } catch (e) {}
-        const rows = (STATE.data.points || []).filter(r => rowMatchesSeason(r, yr, lg) && Number(getVal(r, ['week', 'WK'])) === Number(wk) && Number(getVal(r, ['team_id', 'TMA', 'team'])) === Number(teamId));
-        if (rows.length) {
-          const t = { team_id: teamId, pf: Number(getVal(rows[0], ['team_points', 'points', 'TMAPTS'])) || 0, players: rows };
-          const st = mxTeamPlayers(t, yr, lg, wk).filter(p => !mxSlotIsBench(p.slot));
-          if (st.length) out = st.reduce((a, p) => a + (p.eff || 0), 0);
-        }
-      } catch (e) { console.warn('[Schedule] live total unavailable', e); }
-      return (C[key] = out);
-    }
+    // Live team total for one team/week: the live_team_projected_points.py SQL (see mxLiveTotals), shared with Matchups.
+    function stLiveTotal(yr, lg, wk, teamId) { return mxLiveTotal(yr, lg, wk, teamId); }
     // class for a live total vs the original projection (within 0.06 = rounding noise -> no colour)
     function ndlLiveCls(live, orig) {
       if (live === null || live === undefined) return '';
@@ -4853,26 +4837,51 @@
       return `background:${c[0]};color:${c[1]}${bench ? ';opacity:.62' : ''}`;
     }
 
-    // Projection / taxi lookups (rebuilt whenever live.db changes)
+    // Projection / taxi / game-status lookups. Built ONCE per live.db refresh (STATE.dataVersion) and shared by the
+    // Matchups cards and the Standings > Schedule view, so nothing is re-scanned per team or per render.
+    //   proj    : projectedpoints.proj_points            (only proj_points is ever read from that table)
+    //   live    : liveprojectedpoints.live_proj_points
+    //   actual  : points.points (player points)
+    //   pgs     : any past_game_start row = the player's game has started
+    //   weekRows: projectedpoints rows (team_id, selected_position, proj_points) grouped by year|league|week
     function mxProjIndex() {
       if (STATE._mxIdx && STATE._mxIdx.v === STATE.dataVersion) return STATE._mxIdx;
       const D = STATE.data;
       const num = v => { if (v === null || v === undefined || v === '') return null; const n = Number(v); return isNaN(n) ? null : n; };
-      const proj = new Map(), live = new Map(), liveWeeks = new Set(), taxi = new Map(), pgs = new Set(), pgsWk = new Set();
+      const fld = (r, k, alts) => (r[k] !== undefined && r[k] !== null) ? r[k] : getVal(r, alts || [k]);
+      const proj = new Map(), live = new Map(), actual = new Map(), liveWeeks = new Set(), taxi = new Map(), pgs = new Set(), pgsWk = new Set(), weekRows = new Map();
+      const keyOf = r => ({
+        yr: Number(fld(r, 'year', ['year', 'YR'])), wk: Number(fld(r, 'week', ['week', 'WK'])),
+        pid: String(fld(r, 'player_id')), lg: normLeague(fld(r, 'league'))
+      });
       const put = (map, r, valKey) => {
-        const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
-        const pid = String(getVal(r, ['player_id']));
-        const lg = normLeague(getVal(r, ['league']));
-        const v = num(getVal(r, [valKey]));
+        const k = keyOf(r), v = num(fld(r, valKey));
         if (v === null) return null;
-        map.set(`${yr}|${lg}|${wk}|${pid}`, v);
-        map.set(`${yr}|*|${wk}|${pid}`, v);
-        return { yr, wk, lg };
+        map.set(`${k.yr}|${k.lg}|${k.wk}|${k.pid}`, v);
+        map.set(`${k.yr}|*|${k.wk}|${k.pid}`, v);
+        return k;
       };
-      (D.projectedpoints || []).forEach(r => put(proj, r, 'proj_points'));
+      (D.projectedpoints || []).forEach(r => {
+        const k = put(proj, r, 'proj_points');
+        if (!k) return;
+        const wkKey = `${k.yr}|${k.lg || '*'}|${k.wk}`;
+        let arr = weekRows.get(wkKey); if (!arr) weekRows.set(wkKey, arr = []);
+        arr.push({
+          pid: k.pid, team: Number(fld(r, 'team_id', ['team_id', 'team'])),
+          sel: String(fld(r, 'selected_position', ['selected_position', 'selected_pos']) || '').trim().toUpperCase(),
+          proj: num(fld(r, 'proj_points'))
+        });
+      });
       (D.liveprojectedpoints || []).forEach(r => {
         const k = put(live, r, 'live_proj_points');
         if (k) { liveWeeks.add(`${k.yr}|${k.lg}|${k.wk}`); liveWeeks.add(`${k.yr}|*|${k.wk}`); }
+      });
+      (D.points || []).forEach(r => {
+        const v = num(fld(r, 'points', ['player_pts', 'player_points', 'playerpts', 'pts', 'PTS', 'player_score', 'actual_pts', 'points']));
+        if (v === null) return;
+        const k = keyOf(r);
+        actual.set(`${k.yr}|${k.lg}|${k.wk}|${k.pid}`, v);
+        actual.set(`${k.yr}|*|${k.wk}|${k.pid}`, v);
       });
       (D.taxi || []).forEach(r => {
         const typeRaw = String(getVal(r, ['type']) || 'taxi').trim().toLowerCase();
@@ -4885,18 +4894,14 @@
         const k = `${yr}|${pid}`, prev = taxi.get(k);
         if (!prev || stamp >= prev.stamp) taxi.set(k, { active, stamp, type });
       });
-      // past_game_start: player-weeks whose game has already started (flag 'Y'); not in the table = game not begun
+      // past_game_start: ANY row for the player-week means that game has started; no row = not begun
       (D.past_game_start || []).forEach(r => {
-        const flag = String(getVal(r, ['past_gm_start', 'player_gm_start']) || '').trim().toUpperCase();
-        if (flag !== 'Y') return;
-        const yr = Number(getVal(r, ['year', 'YR'])), wk = Number(getVal(r, ['week', 'WK']));
-        const pid = String(getVal(r, ['player_id']));
-        const lg = normLeague(getVal(r, ['league']));
-        pgs.add(`${yr}|${lg}|${wk}|${pid}`);
-        pgs.add(`${yr}|*|${wk}|${pid}`);
-        pgsWk.add(`${yr}|*|${wk}`);
+        const k = keyOf(r);
+        pgs.add(`${k.yr}|${k.lg}|${k.wk}|${k.pid}`);
+        pgs.add(`${k.yr}|*|${k.wk}|${k.pid}`);
+        pgsWk.add(`${k.yr}|*|${k.wk}`);
       });
-      STATE._mxIdx = { v: STATE.dataVersion, proj, live, liveWeeks, taxi, pgs, pgsWk };
+      STATE._mxIdx = { v: STATE.dataVersion, proj, live, actual, liveWeeks, taxi, pgs, pgsWk, weekRows, liveTot: new Map() };
       return STATE._mxIdx;
     }
     function mxLookup(map, yr, lg, wk, pid) {
@@ -4905,9 +4910,52 @@
       return v;
     }
 
+    // Live team totals for one year/league/week -> Map(team_id -> total). This is the SQL in live_team_projected_points.py:
+    // driven by projectedpoints rows whose selected_position is not BN/IR (and that have a points row, as the WHERE on
+    // points makes that LEFT JOIN behave like an inner join), each contributing:
+    //   past_game_start row AND live_proj_points = 0  -> points.points      (game finished)
+    //   live_proj_points > 0                          -> live_proj_points   (game in progress)
+    //   otherwise                                     -> proj_points        (game not started)
+    // summed per team and rounded to 2 decimals. One pass over the week's rows; cached until live.db changes.
+    function mxLiveTotals(yr, lg, wk) {
+      const idx = mxProjIndex();
+      const L = normLeague(lg), ck = `${yr}|${L}|${wk}`;
+      let out = idx.liveTot.get(ck);
+      if (out) return out;
+      out = new Map();
+      const rows = idx.weekRows.get(ck) || idx.weekRows.get(`${yr}|*|${wk}`) || [];
+      const p1 = `${yr}|${L}|${wk}|`, p2 = `${yr}|*|${wk}|`;
+      const pick = (map, pid) => { const v = map.get(p1 + pid); return v !== undefined ? v : map.get(p2 + pid); };
+      for (const r of rows) {
+        if (!r.sel || r.sel === 'BN' || r.sel === 'IR') continue;
+        const act = pick(idx.actual, r.pid);
+        if (act === undefined) continue;
+        const lv = pick(idx.live, r.pid) || 0;
+        const started = idx.pgs.has(p1 + r.pid) || idx.pgs.has(p2 + r.pid);
+        let v;
+        if (started && lv === 0) v = act;
+        else if (lv > 0) v = lv;
+        else v = r.proj;
+        if (v === null || v === undefined || isNaN(v)) continue;
+        out.set(r.team, (out.get(r.team) || 0) + v);
+      }
+      out.forEach((v, k) => out.set(k, Math.round(v * 100) / 100));
+      idx.liveTot.set(ck, out);
+      return out;
+    }
+    function mxLiveTotal(yr, lg, wk, teamId) {
+      const v = mxLiveTotals(yr, lg, wk).get(Number(teamId));
+      return v === undefined ? null : v;
+    }
+
     function mxTeamPlayers(t, yr = STATE.filters.year, lg = STATE.filters.league, wk = STATE.filters.weekMax) {
       const out = [];
       const idx = mxProjIndex();
+      const L = normLeague(lg), pre = `${yr}|${L}|${wk}|`, pre2 = `${yr}|*|${wk}|`;
+      const look = (map, pid) => { const v = map.get(pre + pid); return v !== undefined ? v : map.get(pre2 + pid); };
+      const hasPgs = idx.pgsWk.has(`${yr}|*|${wk}`);
+      const cw = getCurrentYearAndWeek();
+      const pastWeek = !!cw && (Number(yr) < cw.curYear || (Number(yr) === cw.curYear && Number(wk) < cw.curWeek));
       t.players.forEach(p => {
         const name = getVal(p, ['player_name', 'player', 'name', 'PLAYER', 'PLAYER_NAME', 'full_name']);
         if (!name) return;
@@ -4920,40 +4968,30 @@
         const pos = String(getVal(p, ['position', 'POS', 'pos', 'POSITION']) || '').toUpperCase();
         const pid = String(getVal(p, ['player_id']));
         const actual = isNaN(pts) ? 0 : pts;
-        const proj = mxLookup(idx.proj, yr, lg, wk, pid);
-        const lv = mxLookup(idx.live, yr, lg, wk, pid);
-        let pj = null, eff = null, ptsCls = '', ptsT = 0;
-        // Player status (all three tables):
-        //   liveprojectedpoints.live_proj_points > 0      -> in play  (live projection)
-        //   past_game_start.past_gm_start = 'Y' (live = 0) -> game over (actual points from the points table)
-        //   otherwise                                      -> not begun (projectedpoints.proj_points)
-        const started = idx.pgs.has(`${yr}|${normLeague(lg)}|${wk}|${pid}`) || idx.pgs.has(`${yr}|*|${wk}|${pid}`);
-        const hasPgs = idx.pgsWk.has(`${yr}|*|${wk}`);
-        const cw = getCurrentYearAndWeek();
-        const pastWeek = !!cw && (Number(yr) < cw.curYear || (Number(yr) === cw.curYear && Number(wk) < cw.curWeek));
-        // past weeks are always final; when past_game_start has no rows for this week at all, fall back to "has points" as the finished signal
-        const finished = started || pastWeek || (!hasPgs && actual !== 0);
-        const inPlay = lv !== undefined && lv > 0;
-        if (inPlay) ptsCls = 'live';
-        else if (finished && proj !== undefined && proj !== null) {
-          // green > clear > red: actual vs proj_points, saturating at +/-50%
-          ptsCls = 'fin';
-          ptsT = proj > 0 ? Math.max(-1, Math.min(1, (actual - proj) / proj / 0.4)) : (actual > 0 ? 1 : 0);
-        }
+        const proj = look(idx.proj, pid);
+        const lv = look(idx.live, pid) || 0;                       // liveprojectedpoints.live_proj_points, coalesced to 0
+        const started = idx.pgs.has(pre + pid) || idx.pgs.has(pre2 + pid);
+        // Player status:
+        //   live_proj_points > 0                              -> in play
+        //   past_game_start row (live = 0)                    -> game done
+        //   otherwise                                         -> not started
+        // (past weeks that have no past_game_start rows at all are treated as done)
+        const inPlay = lv > 0;
+        const done = !inPlay && (started || (pastWeek && !hasPgs));
+        const hasProj = proj !== undefined && proj !== null;
+        const heat = (val, base) => base > 0 ? Math.max(-1, Math.min(1, (val - base) / base / 0.4)) : (val > base ? 1 : 0);   // green > clear > red, +/-40%
+        let pj = null, ptsCls = '', ptsT = 0;
         if (inPlay) {
-          // game in progress: live projection, green/red against the original projection
-          const base = proj === undefined ? null : proj;
-          pj = { val: lv, cls: 'x', t: (base !== null && base > 0) ? Math.max(-1, Math.min(1, (lv - base) / base / 0.4)) : 0 };
-          eff = lv;
+          ptsCls = 'live';                                          // blue + shine (name and points)
+          pj = { val: lv, cls: 'x', t: hasProj ? heat(lv, proj) : 0 };   // live projection vs original proj_points
         } else {
-          // not begun: original projection, greyed. Game over: the actual points count.
-          pj = (proj === undefined || proj === null) ? null : { val: proj, cls: 'n' };
-          eff = finished ? actual : ((proj === undefined || proj === null) ? actual : proj);
+          if (done && hasProj) { ptsCls = 'fin'; ptsT = heat(actual, proj); }   // actual vs original proj_points
+          pj = hasProj ? { val: proj, cls: 'n' } : null;            // not started / done: original proj_points, no colour
         }
         const tx = idx.taxi.get(`${yr}|${pid}`);
         const isDm = !!tx && tx.type === 'dummy' && tx.active;          // active dummy taxi player -> 'DM'
         const isTx = !!tx && tx.type === 'taxi';                        // taxi player -> 'TX' (faded when active = 'N')
-        out.push({ slot, name: String(name), pos, pts: actual, ptsCls, ptsT, ir: /^IR/.test(sel), pj, eff,
+        out.push({ slot, name: String(name), pos, pts: actual, ptsCls, ptsT, ir: /^IR/.test(sel), pj,
                    projVal: (proj === undefined || proj === null) ? 0 : proj,
                    tx: isTx, txOff: isTx && !tx.active, dm: isDm });
       });
@@ -5038,11 +5076,9 @@
         const ptsProj = Number(getVal(t.rawRow, ['team_projected_points', 'team_proj_points'])) || 0;
         const sumProj = starters.reduce((a, p) => a + (p.pj && p.pj.cls === 'n' ? p.pj.val : 0), 0);
         const orig = ptsProj > 0 ? ptsProj : (projScores > 0 ? projScores : sumProj);
-        // Live total = sum over starters of: proj_points (to play) | live_proj_points (in play) | actual (played).
-        // Finished weeks just show the final score, so no live total is needed there.
-        const liveTot = (isFinal || !starters.length) ? null : starters.reduce((a, p) => a + (p.eff || 0), 0);
-        // within 0.06 of the original projection is rounding noise -> no colour
-        const cls = liveTot === null ? '' : (liveTot > orig + 0.06 + 1e-9 ? 'mx-live-g' : (liveTot < orig - 0.06 - 1e-9 ? 'mx-live-r' : ''));
+        // Live total comes from the shared SQL-equivalent (mxLiveTotals). Finished weeks just show the final score.
+        const liveTot = isFinal ? null : mxLiveTotal(yr, lg, wk, t.team_id);
+        const cls = ndlLiveCls(liveTot, orig);   // within 0.06 of the original projection = rounding noise -> no colour
         t._mx = { players, orig, liveTot, cls };
         return t._mx;
       };
