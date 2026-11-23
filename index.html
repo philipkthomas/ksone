@@ -4889,9 +4889,13 @@
           proj: num(fld(r, 'proj_points'))
         });
       });
+      // A player can have more than one liveprojectedpoints row for a week (e.g. a blank league_id duplicate, or a 0.0 row written
+      // before the next fill): a value > 0 means the player is in play, so a positive value is never overwritten by a 0.
       (D.liveprojectedpoints || []).forEach(r => {
-        const k = put(live, r, 'live_proj_points');
-        if (k) { liveWeeks.add(`${k.yr}|${k.lg}|${k.wk}`); liveWeeks.add(`${k.yr}|*|${k.wk}`); }
+        const k = keyOf(r), v = num(fld(r, 'live_proj_points'));
+        if (v === null || !k.pid) return;
+        keysFor(k).forEach(kk => { const prev = live.get(kk); if (prev === undefined || v > 0 || !(prev > 0)) live.set(kk, (prev > 0 && v <= 0) ? prev : v); });
+        liveWeeks.add(`${k.yr}|${k.lg}|${k.wk}`); liveWeeks.add(`${k.yr}|*|${k.wk}`);
       });
       (D.points || []).forEach(r => {
         const v = num(fld(r, 'points', ['player_pts', 'player_points', 'playerpts', 'pts', 'PTS', 'player_score', 'actual_pts', 'points']));
@@ -4988,6 +4992,24 @@
       };
       console.table(out.rows_this_week); console.table(out.starters_matched); console.log('[mxDebug]', out);
       return out;
+    };
+    // Console helper: mxWhy('McCaffrey') shows exactly how one player is being classified (in play / finished / not started) and why.
+    window.mxWhy = function (name) {
+      const f = STATE.filters, yr = Number(f.year), wk = Number(f.weekMax), L = normLeague(f.league), idx = mxProjIndex();
+      const q = String(name || '').toLowerCase();
+      const rows = (STATE.data.points || []).filter(r => mxInt(getVal(r, ['year', 'YR'])) === yr && mxInt(getVal(r, ['week', 'WK'])) === wk
+        && String(getVal(r, ['player_name', 'player', 'name']) || '').toLowerCase().includes(q));
+      const out = rows.map(r => {
+        const raw = getVal(r, ['player_id']), pid = mxPid(raw);
+        const sameId = t => (STATE.data[t] || []).filter(x => mxPid(getVal(x, ['player_id'])) === pid);
+        return {
+          name: getVal(r, ['player_name', 'player', 'name']), player_id_raw: raw, player_id_type: typeof raw, key_used: pid,
+          points: getVal(r, ['points', 'player_pts']), proj_points: mxGetKey(idx.proj, yr, L, wk, pid),
+          live_proj_points_lookup: mxGetKey(idx.live, yr, L, wk, pid), in_past_game_start: mxGetKey(idx.pgs, yr, L, wk, pid),
+          liveprojectedpoints_rows_for_id: sameId('liveprojectedpoints'), past_game_start_rows_for_id: sameId('past_game_start')
+        };
+      });
+      console.log('[mxWhy]', q, out); return out;
     };
     function mxLiveTotal(yr, lg, wk, teamId) {
       const v = mxLiveTotals(yr, lg, wk).get(Number(teamId));
