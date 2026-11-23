@@ -1042,6 +1042,34 @@
     .sch-pt.lose { color: #a3aebf; font-weight: 700; }
     .dark .sch-pt.lose { color: #5d6675; }
     @media (max-width: 420px) { .sch-pt { font-size: 17px; } .sch-nm { font-size: 12px; } .sch-g { gap: 8px; padding-right: 8px; } }
+
+    /* ---- Round 30: Schedule — smaller projection/points, left/right alignment per side ---- */
+    /* only the POINTS vs POINTS cluster is centered; everything else hugs its own side */
+    .sch-gn { text-align: left; }
+    .sch-r1 { justify-items: stretch; }
+    .sch-side.l { text-align: left; }
+    .sch-side.r { text-align: right; }
+    .sch-side.l .sch-id { justify-content: flex-start; }
+    .sch-side.r .sch-id { justify-content: flex-start; } /* row-reverse: flex-start = right edge */
+    .sch-r2 { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; }
+    .sch-pc { min-width: 0; gap: 3px; }
+    .sch-pc.l { justify-content: flex-start; text-align: left; }
+    .sch-pc.r { justify-content: flex-end; text-align: right; }
+    .sch-ctr { justify-self: center; gap: 6px; }
+    .sch-pt { font-size: 16px; }
+    .sch-mid { font-size: 9px; }
+    .sch-pj, .sch-lp { font-size: 10px; }
+    .sch-pc .ndl-arw { width: 10px; height: 7px; }
+    @media (max-width: 480px) {
+      .sch-g { gap: 6px; padding: 8px 6px 9px 4px; grid-template-columns: 28px minmax(0, 1fr); }
+      .sch-pt { font-size: 13px; }
+      .sch-mid { font-size: 8px; letter-spacing: .04em; }
+      .sch-ctr { gap: 4px; }
+      .sch-pj, .sch-lp { font-size: 9px; }
+      .sch-pc { gap: 2px; }
+      .sch-pc .ndl-arw { width: 9px; height: 6px; }
+      .sch-r2 { gap: 4px; }
+    }
     .mx-cl3 { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; margin-top: 4px; }
     .mx-ctr { display: flex; align-items: center; justify-content: center; gap: 8px; }
     .mx-pc { display: flex; align-items: center; gap: 4px; white-space: nowrap; min-width: 0; }
