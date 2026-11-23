@@ -1045,6 +1045,15 @@
 
     /* ---- Round 30: Schedule — smaller projection/points, left/right alignment per side ---- */
     /* only the POINTS vs POINTS cluster is centered; everything else hugs its own side */
+    /* root cause: the earlier grid .sch-body kept align-items:center, which centers/shrink-wraps children once it became a flex column */
+    .sch-body { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; width: 100%; min-width: 0; }
+    .sch-r1, .sch-r2, .sch-gn { width: 100%; }
+    .sch-r1 > .sch-side { width: 100%; min-width: 0; }
+    .sch-r1 > .sch-side.l { justify-self: start; }
+    .sch-r1 > .sch-side.r { justify-self: end; }
+    .sch-id { width: 100%; }
+    .sch-r2 > .sch-pc.l { justify-self: start; width: 100%; }
+    .sch-r2 > .sch-pc.r { justify-self: end; width: 100%; }
     .sch-gn { text-align: left; }
     .sch-r1 { justify-items: stretch; }
     .sch-side.l { text-align: left; }
