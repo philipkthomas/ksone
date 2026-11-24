@@ -1085,6 +1085,14 @@
     .mx-pc.l { justify-content: flex-start; }
     .mx-pc.r { justify-content: flex-end; }
     @media (max-width: 420px) { .mx-ctr { gap: 6px; } .mx-pc { gap: 3px; } }
+    .mx-2wk { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 4px 10px; margin-top: 5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #475569; }
+    .dark .mx-2wk { color: #94a3b8; }
+    .mx-2l { text-align: right; } .mx-2r { text-align: left; }
+    .mx-2m { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; text-align: center; }
+    .mx-2t { font-size: 14px; font-weight: 800; color: #0f172a; }
+    .dark .mx-2t { color: #f1f5f9; }
+    .mx-2t.mx-lose { color: #a3aebf; font-weight: 700; }
+    .dark .mx-2t.mx-lose { color: #5d6675; }
     .mx-gname { text-align: center; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #0284c7; margin-bottom: 4px; }
     .dark .mx-gname { color: #38bdf8; }
     .mx-mgr-row .inline-flex { flex-shrink: 0; }
@@ -1372,8 +1380,8 @@
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="survivor-speed-slider" min="0.5" max="6" value="2" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="survivor-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">2x</span>
+            <input type="range" id="survivor-speed-slider" min="0" max="100" value="50" step="1" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="survivor-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -1473,8 +1481,8 @@
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="div-speed-slider" min="0.5" max="6" value="2" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="div-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">2x</span>
+            <input type="range" id="div-speed-slider" min="0" max="100" value="50" step="1" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="div-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -1530,8 +1538,8 @@
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="wae-speed-slider" min="0.5" max="6" value="2" step="0.5" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="wae-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">2x</span>
+            <input type="range" id="wae-speed-slider" min="0" max="100" value="50" step="1" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="wae-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[32px]">1x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -1596,7 +1604,7 @@
       </div>
 
       <div id="live-prob-chart-container" class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xl transition-all duration-200">
-        <div class="relative w-full h-[480px]">
+        <div class="relative w-full h-[560px]">
           <canvas id="liveWinProbChart"></canvas>
         </div>
       </div>
@@ -1614,8 +1622,8 @@
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="replay-speed-slider" min="1" max="12" value="6" step="1" class="w-20 accent-brand-500 cursor-pointer" />
-            <span id="replay-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">6x</span>
+            <input type="range" id="replay-speed-slider" min="0" max="100" value="50" step="1" class="w-20 accent-brand-500 cursor-pointer" />
+            <span id="replay-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[24px]">1x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -1772,8 +1780,8 @@
         <div class="flex flex-wrap items-center gap-3 sm:gap-4">
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
             <span class="text-slate-500 dark:text-slate-400 font-medium">Speed:</span>
-            <input type="range" id="belt-speed-slider" min="0.5" max="6" value="2" step="0.5" class="w-16 sm:w-20 accent-brand-500 cursor-pointer" />
-            <span id="belt-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[28px]">2x</span>
+            <input type="range" id="belt-speed-slider" min="0" max="100" value="50" step="1" class="w-16 sm:w-20 accent-brand-500 cursor-pointer" />
+            <span id="belt-speed-val" class="font-mono font-bold text-brand-600 dark:text-brand-400 min-w-[28px]">1x</span>
           </div>
 
           <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 px-2.5 py-1 rounded-md">
@@ -1982,6 +1990,87 @@
       const lg = normLeague(league) || 'NDL';
       return `${lg}`;
     }
+
+    // ==========================================
+    // SHARED PLAYBACK CONTROLS (Survivor, Props, Wins Above Even, Live Win Prob, Belt)
+    // One speed / play-pause / scrubber state for the whole microsite, locked together and persisted in the URL
+    // (`spd`, `pb`, `pos`). The speed slider is logarithmic with 1x in the MIDDLE (0.25x ... 4x); 1x equals the
+    // default pace each tab had before, so every tab moves at the same relative speed.
+    // ==========================================
+    const PB = {
+      spd: 50,          // slider position 0..100 (50 = middle = 1x)
+      playing: true,    // user's play / pause choice (the automatic pause at the end of a run does NOT change this)
+      pos: null,        // scrubber % (0..100) a tab should open at when paused / scrubbed; null = start from the beginning
+      BASE: { survivor: 375, props: 175, wae: 175, belt: 460, live: 20 },   // ms per step at 1x
+      SLIDERS: [['survivor-speed-slider', 'survivor-speed-val'], ['div-speed-slider', 'div-speed-val'], ['wae-speed-slider', 'wae-speed-val'], ['replay-speed-slider', 'replay-speed-val'], ['belt-speed-slider', 'belt-speed-val']],
+      SCRUBBERS: { survivor: 'survivor-scrubber', props: 'div-scrubber', wins_above: 'wae-scrubber', live_prob: 'replay-scrubber', belt: 'belt-scrubber' },
+      mult() { return Math.pow(4, (this.spd - 50) / 50); },
+      label() {
+        const m = this.mult();
+        return (m < 1 ? m.toFixed(2) : m.toFixed(1)).replace(/\.?0+$/, '') + 'x';
+      },
+      interval(key, minMs) { return Math.max(minMs, Math.round(this.BASE[key] / this.mult())); },
+      clampPos(v) { const n = Number(v); return isFinite(n) ? Math.min(100, Math.max(0, n)) : null; },
+      syncSliders() {
+        this.SLIDERS.forEach(([sid, vid]) => {
+          const sl = document.getElementById(sid), vl = document.getElementById(vid);
+          if (sl) { sl.min = 0; sl.max = 100; sl.step = 1; sl.value = this.spd; }
+          if (vl) vl.innerText = this.label();
+        });
+      },
+      isPlaybackTab(tab) { return Object.prototype.hasOwnProperty.call(this.SCRUBBERS, tab); },
+      scrubPct(tab) { const el = document.getElementById(this.SCRUBBERS[tab]); return el ? this.clampPos(el.value) : null; },
+      setSpeed(v) {
+        this.spd = Math.round(Math.min(100, Math.max(0, Number(v))));
+        this.syncSliders();
+        try {
+          if (STATE.survivor.isPlaying) restartSurvivorIntervalTimer();
+          if (STATE.props.isPlaying) restartDivIntervalTimer();
+          if (STATE.wae.isPlaying) restartWaeIntervalTimer();
+          if (STATE.liveProb.isPlaying) restartIntervalTimer();
+          if (STATE.belt.isPlaying) restartBeltIntervalTimer();
+        } catch (e) { console.warn('[Playback] timer restart failed', e); }
+        updateUrlHash();
+      },
+      bindSlider(id) {
+        const sl = document.getElementById(id);
+        if (sl) sl.addEventListener('input', (e) => PB.setSpeed(e.target.value));
+      },
+      // Play / Pause button: remember the choice (and where we paused) for every other tab
+      onToggle(tab, toggleFn, isPlayingFn) {
+        const willPlay = !isPlayingFn();
+        this.playing = willPlay; this.pos = null;
+        toggleFn();
+        if (!willPlay) this.pos = this.scrubPct(tab);
+        updateUrlHash();
+      },
+      // Restart button: everybody plays again from the beginning
+      onRestart(restartFn) {
+        this.playing = true; this.pos = null;
+        restartFn();
+        updateUrlHash();
+      },
+      // Scrubber moved: while paused the position is shared; while playing the run simply continues from there
+      onScrub(isPlayingFn, pct) {
+        this.pos = isPlayingFn() ? null : this.clampPos(pct);
+        updateUrlHash();
+      },
+      fromUrl(p) {
+        if (p.has('spd')) { const n = toInt(p.get('spd'), 0, 100); if (n !== null) this.spd = n; }
+        if (p.has('pb')) this.playing = !['0', 'false', 'off'].includes(String(p.get('pb')).toLowerCase());
+        if (p.has('pos')) { const n = this.clampPos(p.get('pos')); if (n !== null) this.pos = n; }
+        if (!this.playing && this.pos === null) this.pos = 100;
+        this.syncSliders();
+      },
+      toUrl(p, tab) {
+        // always written on the tabs that have playback controls; elsewhere only when it differs from the defaults,
+        // so the locked speed / pause state also survives a reload from any tab
+        if (!this.isPlaybackTab(tab) && this.spd === 50 && this.playing) return;
+        p.set('spd', this.spd);
+        p.set('pb', this.playing ? 1 : 0);
+        if (!this.playing && this.pos !== null) p.set('pos', Math.round(this.pos));
+      }
+    };
 
     const STATE = {
       data: { scores: [], teams: [], transactions: [], points: [], currentweek: [], schedule: [], projectedpoints: [], liveprojectedpoints: [], taxi: [], past_game_start: [], scoreslive: [] },
@@ -2524,6 +2613,7 @@
       if (getSelectedManagers().length) p.set('mgr', getSelectedManagers().join(','));
       if (tab === 'standings') { p.set('ssub', STATE.st.sub); if (STATE.st.sub === 'playoffs') p.set('pbr', STATE.st.poBr); }
       if (tab === 'live_prob' && f.matchup) p.set('mu', f.matchup);
+      PB.toUrl(p, tab);
       if (tab === 'sandbox' && STATE.sandbox) p.set('sb', sbEnc(STATE.sandbox.cfg));
       if (tab === 'positions') {
         p.set('psub', STATE.positions.sub || 'season');
@@ -2596,6 +2686,7 @@
         STATE.hcwUserOverride = false;
       }
 
+      PB.fromUrl(p);
       setSelectedManagers(String(p.get('mgr') || '').split(','));
       if (p.has('bench') && (activeTab === 'positions' || activeTab === 'matchups')) STATE.positions.showBench = !['0', 'false', 'off'].includes(String(p.get('bench')).toLowerCase());
       if (p.has('pmode') && ['real', 'optimal', 'efficiency'].includes(String(p.get('pmode')).toLowerCase())) {
@@ -5198,22 +5289,53 @@
       });
       pairs.sort((x, y) => x.A.team_id - y.A.team_id);
 
-      // Final week of the playoffs: label every game, order by importance (Championship -> 3rd place -> 5th ...),
-      // and mark the managers who finished 1st / 2nd / 3rd with trophies.
+      // EVERY playoff week: label each game (Quarterfinal, Semifinal, Championship, 3rd Place ...), order the cards by
+      // importance (Championship -> Semifinals -> 3rd -> Quarterfinals -> 5th -> consolation ...; ties broken by the
+      // highest seed in the matchup) and, in the final playoff week, mark the 1st / 2nd / 3rd finishers with trophies.
+      // Multi-week games (2021 OKL 2-wk totals) are matched in EVERY week they span.
       const poGame = {};
+      const twoWk = {};
       let finalRanksMap = null;
       try {
         const bk = stGetBracket(yr, lg);
         if (bk && !bk.unsupported && !bk.projected) {
-          const fin = bk.matches.find(m => m.places && m.places[0] === 1);
-          if (fin && Number(fin.week) === Number(wk)) {
-            bk.matches.filter(m => m.places && Number(m.week) === Number(wk) && m.A.id != null && m.B.id != null)
-              .forEach(m => { poGame[[m.A.id, m.B.id].sort((x, y) => x - y).join('_')] = m; });
-            pairs.sort((x, y) => ((poGame[x.key] ? poGame[x.key].places[0] : 99) - (poGame[y.key] ? poGame[y.key].places[0] : 99)) || (x.A.team_id - y.A.team_id));
-            if (isPlayoffsFinished(yr, lg)) finalRanksMap = computeFinalRanks(yr, lg);
+          const spans = m => (m.weeks && m.weeks.length ? m.weeks : [m.week]).map(Number);
+          const games = bk.matches.filter(m => m.kind !== 'bye' && m.name && spans(m).includes(Number(wk)) && m.A.id != null && m.B.id != null);
+          const pkey = (a, b2) => [a, b2].sort((x, y) => x - y).join('_');
+          games.forEach(m => { poGame[pkey(m.A.id, m.B.id)] = m; });
+          if (games.length) {
+            const importance = g => {
+              if (g.places && g.places.length) return g.places[0];
+              const nm = String(g.name || '');
+              if (/^semifinal/i.test(nm)) return 2;
+              if (/^quarterfinal/i.test(nm)) return 4;
+              if (/^consolation semi/i.test(nm)) return 6;
+              if (/^toilet bowl semi/i.test(nm)) return 8;
+              return 50;
+            };
+            const topSeed = g => Math.min((bk.idToSeed || {})[g.A.id] || 99, (bk.idToSeed || {})[g.B.id] || 99);
+            pairs.sort((x, y) => {
+              const gx = poGame[x.key], gy = poGame[y.key];
+              return ((gx ? importance(gx) : 99) - (gy ? importance(gy) : 99))
+                || ((gx ? topSeed(gx) : 99) - (gy ? topSeed(gy) : 99))
+                || (x.A.team_id - y.A.team_id);
+            });
+            const fin = bk.matches.find(m => m.places && m.places[0] === 1);
+            if (fin && Number(fin.week) === Number(wk) && isPlayoffsFinished(yr, lg)) finalRanksMap = computeFinalRanks(yr, lg);
+            // 2-wk total games: per-week scores + running total for each side
+            const wIdx = stWeekIndex(yr, lg);
+            const pfOf = (w, t) => (wIdx.get(`${w}_${t}`) || {}).pf || 0;
+            games.forEach(m => {
+              const ws = spans(m);
+              if (ws.length < 2) return;
+              const per = {}, tot = {};
+              [m.A.id, m.B.id].forEach(id => { per[id] = ws.map(w => pfOf(w, id)); tot[id] = per[id].reduce((a, v) => a + v, 0); });
+              const last = ws[ws.length - 1];
+              twoWk[pkey(m.A.id, m.B.id)] = { ws, per, tot, isLast: Number(wk) === last };
+            });
           }
         }
-      } catch (e) { console.warn('[Matchups] final-week labels unavailable', e); }
+      } catch (e) { console.warn('[Matchups] playoff labels unavailable', e); }
 
       if (!pairs.length) { wrap.innerHTML = ''; return; }
 
@@ -5251,11 +5373,21 @@
         return t._mx;
       };
 
+      // Result for a team on this card: 2-wk total games are decided on the TOTAL in their last week (and undecided in the first)
+      const mxRes = (t) => {
+        const tw = t._k && twoWk[t._k];
+        if (!tw) return t.result;
+        if (!tw.isLast) return '';
+        const ids = Object.keys(tw.tot).map(Number);
+        const mine = tw.tot[t.team_id], oth = tw.tot[ids.find(i => i !== t.team_id)];
+        return mine > oth ? 'W' : (mine < oth ? 'L' : t.result);
+      };
       // Identity block (name, record, rank, team name). A win gets the same W badge used on the Schedule (no L badge).
       const side = (t, align) => {
         const r = recOf(t.team_id);
         const col = getManagerColor(t.manager);
-        const won = isFinal && t.result === 'W';
+        const res = mxRes(t);
+        const won = isFinal && res === 'W';
         const badge = won ? '<span class="sch-chip w" title="Win">W</span>' : '';
         return `
           <div class="min-w-0 ${align === 'r' ? 'text-right' : 'text-left'}">
@@ -5269,7 +5401,7 @@
       //   final week: [orig proj -> (arrow coloured vs proj)] ... centre scores ... [(arrow) <- orig proj]
       const half = (t, mx, align) => {
         // past weeks only: the losing team's score is grayed out (never on the LIVE week)
-        const lose = isFinal && t.result === 'L';
+        const lose = isFinal && mxRes(t) === 'L';
         const big = `<span class="mx-big${lose ? ' mx-lose' : ''}">${fmt(t.pf)}</span>`;
         const orig = mx.orig;
         const o = (orig > 0) ? `<span class="mx-o" title="Original team projection">${fmt(orig)}</span>` : '<span class="mx-o">\u2014</span>';
@@ -5332,6 +5464,7 @@
       };
 
       wrap.innerHTML = pairs.map(({ key, A, B }) => {
+        A._k = key; B._k = key;
         const lp = buildLiveProbPoints(STATE.data.scores || [], yr, wk, A.team_id, B.team_id, lg);
         const last = lp.length ? lp[lp.length - 1] : null;
         const projA = last ? (last.origProjA !== undefined ? last.origProjA : last.projA) : 0, projB = last ? (last.origProjB !== undefined ? last.origProjB : last.projB) : 0;
@@ -5341,6 +5474,14 @@
         const mA = mxCalc(A, projA), mB = mxCalc(B, projB);
         const hA = half(A, mA, 'l'), hB = half(B, mB, 'r');
         const gm = poGame[key];
+        const tw = twoWk[key];
+        let twHTML = '';
+        if (tw && tw.isLast) {
+          const lastI = tw.ws.length - 1;
+          const wkRows = tw.ws.slice(0, lastI).map((w, i) => `<span class="mx-2l">${fmt(tw.per[A.team_id][i])}</span><span class="mx-2m">Wk ${w}</span><span class="mx-2r">${fmt(tw.per[B.team_id][i])}</span>`).join('');
+          const aWin = tw.tot[A.team_id] > tw.tot[B.team_id], bWin = tw.tot[B.team_id] > tw.tot[A.team_id];
+          twHTML = `<div class="mx-2wk">${wkRows}<span class="mx-2l mx-2t${bWin ? ' mx-lose' : ''}">${fmt(tw.tot[A.team_id])}</span><span class="mx-2m">${tw.ws.length}-Wk Total</span><span class="mx-2r mx-2t${aWin ? ' mx-lose' : ''}">${fmt(tw.tot[B.team_id])}</span></div>`;
+        }
         return `
           <div class="mx-card ${open ? 'open' : ''} bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden" data-key="${key}">
             <button type="button" class="mx-head w-full text-left px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition" aria-expanded="${open}">
@@ -5355,6 +5496,7 @@
                 <div class="mx-ctr">${hA.big}<span class="mx-mid">${isFinal ? 'Final' : 'vs'}</span>${hB.big}</div>
                 ${hB.pc}
               </div>
+              ${twHTML}
               <div class="flex justify-center text-slate-400 mt-0.5"><i class="mx-chev fa-solid fa-chevron-down text-xs"></i></div>
               ${wpA !== null ? `
               <div class="mt-2.5 mx-wp-link" data-mu="${key}" role="link" tabindex="0" title="Open the Live Win Prob chart for this matchup">
@@ -5634,6 +5776,7 @@
     };
 
     function initSurvivorTab() {
+      PB.syncSliders();
       const btnTable = document.getElementById('btn-toggle-survivor-table');
       const btnChart = document.getElementById('btn-toggle-survivor-chart');
       const playPauseBtn = document.getElementById('btn-survivor-play-pause');
@@ -5654,23 +5797,17 @@
         });
       }
 
-      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleSurvivorPlayPause);
-      if (restartBtn) restartBtn.addEventListener('click', restartSurvivorReplay);
+      if (playPauseBtn) playPauseBtn.addEventListener('click', () => PB.onToggle('survivor', toggleSurvivorPlayPause, () => STATE.survivor.isPlaying));
+      if (restartBtn) restartBtn.addEventListener('click', () => PB.onRestart(restartSurvivorReplay));
 
-      if (speedSlider) {
-        speedSlider.addEventListener('input', (e) => {
-          const mult = Number(e.target.value);
-          STATE.survivor.speedMultiplier = mult;
-          document.getElementById('survivor-speed-val').innerText = `${mult}x`;
-          if (STATE.survivor.isPlaying) restartSurvivorIntervalTimer();
-        });
-      }
+      if (speedSlider) PB.bindSlider(speedSlider.id);
 
       if (scrubber) {
         scrubber.addEventListener('input', (e) => {
           const pct = Number(e.target.value);
           const total = STATE.survivor.fullSeries ? STATE.survivor.fullSeries.maxWeek : 0;
           if (total === 0) return;
+          PB.onScrub(() => STATE.survivor.isPlaying, pct);
           const targetIdx = Math.max(1, Math.round((pct / 100) * total));
           STATE.survivor.prevIdx = STATE.survivor.currentIdx;
           STATE.survivor.currentIdx = targetIdx;
@@ -6091,6 +6228,7 @@
               iconHtml = `<i class="fa-solid fa-fire survivor-flame-icon text-[12px] shrink-0"></i>`;
             } else if (isGrayedOut) {
               bgColor = isDark ? '#334155' : '#e2e8f0';
+              borderColor = bgColor;   // gray bars carry no visible outline (no white ring)
               if (isNewlyRevealed) extraBoxClasses = 'survivor-bar-newly-revealed';
             } else {
               bgColor = isDark ? '#ea580c' : '#fdba74';
@@ -6190,16 +6328,22 @@
     }
 
     function restartSurvivorReplay() {
+      // Honors the shared playback state: open at the shared paused/scrubbed position, play or stay paused as the user left it
+      const total = STATE.survivor.fullSeries ? STATE.survivor.fullSeries.maxWeek : 0;
+      let idx = 1;
+      if (PB.pos !== null && total > 0) idx = Math.max(1, Math.min(total, Math.round((PB.pos / 100) * total)));
+      if (PB.playing && total > 0 && idx >= total) idx = 1;
       STATE.survivor.prevIdx = 0;
-      STATE.survivor.currentIdx = 1;
-      renderSurvivorFrameAtIdx(1, true);
-      startSurvivorReplay();
+      STATE.survivor.currentIdx = idx;
+      STATE.survivor._forceScroll = idx > 1;
+      renderSurvivorFrameAtIdx(idx, idx === 1);
+      STATE.survivor._forceScroll = false;
+      if (PB.playing) startSurvivorReplay(); else pauseSurvivorReplay();
     }
 
     function restartSurvivorIntervalTimer() {
       if (STATE.survivor.animationTimer) clearInterval(STATE.survivor.animationTimer);
-      const mult = STATE.survivor.speedMultiplier || 2.0;
-      const intervalMs = Math.max(90, Math.round(750 / mult));
+      const intervalMs = PB.interval('survivor', 60);
 
       STATE.survivor.animationTimer = setInterval(() => {
         const s = STATE.survivor.fullSeries;
@@ -6277,23 +6421,17 @@
       const csvBtn = document.getElementById('btn-export-props-csv');
       const pngBtn = document.getElementById('btn-export-div-png');
 
-      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleDivPlayPause);
-      if (restartBtn) restartBtn.addEventListener('click', restartDivReplay);
+      if (playPauseBtn) playPauseBtn.addEventListener('click', () => PB.onToggle('props', toggleDivPlayPause, () => STATE.props.isPlaying));
+      if (restartBtn) restartBtn.addEventListener('click', () => PB.onRestart(restartDivReplay));
 
-      if (speedSlider) {
-        speedSlider.addEventListener('input', (e) => {
-          const mult = Number(e.target.value);
-          STATE.props.speedMultiplier = mult;
-          document.getElementById('div-speed-val').innerText = `${mult}x`;
-          if (STATE.props.isPlaying) restartDivIntervalTimer();
-        });
-      }
+      if (speedSlider) PB.bindSlider(speedSlider.id);
 
       if (scrubber) {
         scrubber.addEventListener('input', (e) => {
           const pct = Number(e.target.value);
           const total = STATE.props.fullSeries ? STATE.props.fullSeries.weeks.length : 0;
           if (total === 0) return;
+          PB.onScrub(() => STATE.props.isPlaying, pct);
           const targetIdx = Math.round((pct / 100) * (total - 1));
           STATE.props.currentIdx = targetIdx;
           renderDivFrameAtIdx(targetIdx);
@@ -6833,16 +6971,19 @@
     }
 
     function restartDivReplay() {
-      STATE.props.currentIdx = 0;
-      renderDivFrameAtIdx(0);
-      startDivReplay();
+      const total = STATE.props.fullSeries ? STATE.props.fullSeries.weeks.length : 0;
+      let idx = 0;
+      if (PB.pos !== null && total > 1) idx = Math.max(0, Math.min(total - 1, Math.round((PB.pos / 100) * (total - 1))));
+      if (PB.playing && total > 1 && idx >= total - 1) idx = 0;
+      STATE.props.currentIdx = idx;
+      renderDivFrameAtIdx(idx);
+      if (PB.playing) startDivReplay(); else pauseDivReplay();
     }
 
     function restartDivIntervalTimer() {
       if (STATE.props.animationTimer) clearInterval(STATE.props.animationTimer);
 
-      const mult = STATE.props.speedMultiplier || 2.0;
-      const intervalMs = Math.max(40, Math.round(350 / mult));
+      const intervalMs = PB.interval('props', 25);
 
       STATE.props.animationTimer = setInterval(() => {
         const s = STATE.props.fullSeries;
@@ -6939,23 +7080,17 @@
         });
       }
 
-      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleWaePlayPause);
-      if (restartBtn) restartBtn.addEventListener('click', restartWaeReplay);
+      if (playPauseBtn) playPauseBtn.addEventListener('click', () => PB.onToggle('wins_above', toggleWaePlayPause, () => STATE.wae.isPlaying));
+      if (restartBtn) restartBtn.addEventListener('click', () => PB.onRestart(restartWaeReplay));
 
-      if (speedSlider) {
-        speedSlider.addEventListener('input', (e) => {
-          const mult = Number(e.target.value);
-          STATE.wae.speedMultiplier = mult;
-          document.getElementById('wae-speed-val').innerText = `${mult}x`;
-          if (STATE.wae.isPlaying) restartWaeIntervalTimer();
-        });
-      }
+      if (speedSlider) PB.bindSlider(speedSlider.id);
 
       if (scrubber) {
         scrubber.addEventListener('input', (e) => {
           const pct = Number(e.target.value);
           const total = STATE.wae.fullSeries ? STATE.wae.fullSeries.weeks.length : 0;
           if (total === 0) return;
+          PB.onScrub(() => STATE.wae.isPlaying, pct);
           const targetIdx = Math.round((pct / 100) * (total - 1));
           STATE.wae.currentIdx = targetIdx;
           renderWaeFrameAtIdx(targetIdx);
@@ -7024,7 +7159,7 @@
         teamMetaList.push({ team_id: tId, manager: mgrName, color });
 
         seriesMap[tId] = {
-          cumMatchup: [0], cumEtew: [0],
+          cumMatchup: [0], cumEtew: [0], cumTie: [0],
           cumMatchupDisplay: [], cumEtewDisplay: [],
           matchupRank: [numTeams], etewRank: [numTeams]
         };
@@ -7053,7 +7188,8 @@
 
             const out = resolveMatchupOutcome(yr, lg, w, tId, oppId, pf, pa, teamRow);
             const winVal = out.win + 0.5 * out.tie;
-            s.cumMatchup.push(prevMatchup + (winVal - 0.5));
+            if (oppId === 0) { s.cumMatchup.push(prevMatchup); s.cumTie.push(s.cumTie[w - 1]); }
+            else { s.cumMatchup.push(prevMatchup + (winVal - 0.5)); s.cumTie.push(s.cumTie[w - 1] + (out.tie || 0)); }
 
             if (pf > 0 && oppId !== 0) {
               let beats = 0, ties = 0;
@@ -7071,6 +7207,7 @@
             }
           } else {
             s.cumMatchup.push(prevMatchup);
+            s.cumTie.push(s.cumTie[w - 1]);
             s.cumEtew.push(prevEtew);
           }
         });
@@ -7079,17 +7216,25 @@
       for (let w = 1; w <= maxWk; w++) {
         const wkStandings = teamMetaList.map(meta => {
           const tId = meta.team_id;
-          const group = ptsYr.filter(r => Number(getVal(r, ['week', 'WK'])) <= w && Number(getVal(r, ['team_id', 'TMA', 'team'])) === tId);
-          const pfSum = group.reduce((acc, r) => acc + (Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0), 0);
+          // points table is player-level: dedupe to ONE row per team-week so PF matches the Standings tab
+          const seenWk = new Set();
+          let pfSum = 0;
+          ptsYr.forEach(r => {
+            const rw = Number(getVal(r, ['week', 'WK']));
+            if (rw > w || Number(getVal(r, ['team_id', 'TMA', 'team'])) !== tId || seenWk.has(rw)) return;
+            seenWk.add(rw);
+            pfSum += (Number(getVal(r, ['team_points', 'points', 'TMAPTS'])) || 0);
+          });
           return {
             team_id: tId,
             matchupVal: seriesMap[tId].cumMatchup[w],
             etewVal: seriesMap[tId].cumEtew[w],
+            tieCnt: seriesMap[tId].cumTie[w] || 0,
             pf: pfSum
           };
         });
 
-        const matchupSorted = [...wkStandings].sort((a, b) => (b.matchupVal - a.matchupVal) || (b.pf - a.pf));
+        const matchupSorted = [...wkStandings].sort((a, b) => (b.matchupVal - a.matchupVal) || (b.tieCnt - a.tieCnt) || (b.pf - a.pf));
         matchupSorted.forEach((item, rIdx) => {
           seriesMap[item.team_id].matchupRank[w] = rIdx + 1;
         });
@@ -7363,16 +7508,19 @@
     }
 
     function restartWaeReplay() {
-      STATE.wae.currentIdx = 0;
-      renderWaeFrameAtIdx(0);
-      startWaeReplay();
+      const total = STATE.wae.fullSeries ? STATE.wae.fullSeries.weeks.length : 0;
+      let idx = 0;
+      if (PB.pos !== null && total > 1) idx = Math.max(0, Math.min(total - 1, Math.round((PB.pos / 100) * (total - 1))));
+      if (PB.playing && total > 1 && idx >= total - 1) idx = 0;
+      STATE.wae.currentIdx = idx;
+      renderWaeFrameAtIdx(idx);
+      if (PB.playing) startWaeReplay(); else pauseWaeReplay();
     }
 
     function restartWaeIntervalTimer() {
       if (STATE.wae.animationTimer) clearInterval(STATE.wae.animationTimer);
 
-      const mult = STATE.wae.speedMultiplier || 2.0;
-      const intervalMs = Math.max(40, Math.round(350 / mult));
+      const intervalMs = PB.interval('wae', 25);
 
       STATE.wae.animationTimer = setInterval(() => {
         const s = STATE.wae.fullSeries;
@@ -7452,6 +7600,17 @@
         if (curIdx0 < 0) return;
 
         ctx.save();
+        // Horizontal divider between the win-prob panel (top) and the points panel (bottom)
+        if (scales.y) {
+          const divY = (scales.y1.bottom + scales.y.top) / 2;
+          const isDarkNow = document.documentElement.classList.contains('dark');
+          ctx.beginPath();
+          ctx.strokeStyle = isDarkNow ? 'rgba(148, 163, 184, 0.75)' : 'rgba(71, 85, 105, 0.75)';
+          ctx.lineWidth = 1.5;
+          ctx.moveTo(chartArea.left, divY);
+          ctx.lineTo(chartArea.right, divY);
+          ctx.stroke();
+        }
         const y50 = scales.y1.getPixelForValue(50);
         ctx.beginPath();
         ctx.setLineDash([4, 4]);
@@ -7548,23 +7707,17 @@
         renderLiveProbMatchup();
       });
 
-      if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
-      if (restartBtn) restartBtn.addEventListener('click', restartReplay);
+      if (playPauseBtn) playPauseBtn.addEventListener('click', () => PB.onToggle('live_prob', togglePlayPause, () => STATE.liveProb.isPlaying));
+      if (restartBtn) restartBtn.addEventListener('click', () => PB.onRestart(restartReplay));
 
-      if (speedSlider) {
-        speedSlider.addEventListener('input', (e) => {
-          const mult = Number(e.target.value);
-          STATE.liveProb.speedMultiplier = mult;
-          document.getElementById('replay-speed-val').innerText = `${mult}x`;
-          if (STATE.liveProb.isPlaying) restartIntervalTimer();
-        });
-      }
+      if (speedSlider) PB.bindSlider(speedSlider.id);
 
       if (scrubber) {
         scrubber.addEventListener('input', (e) => {
           const pct = Number(e.target.value);
           const total = STATE.liveProb.fullSeries ? STATE.liveProb.fullSeries.labels.length : 0;
           if (total === 0) return;
+          PB.onScrub(() => STATE.liveProb.isPlaying, pct);
           const targetIdx = Math.max(1, Math.round((pct / 100) * total));
           STATE.liveProb.currentIdx = targetIdx;
           renderFrameAtIdx(targetIdx);
@@ -7822,6 +7975,16 @@
 
       const emptyArray = new Array(fullLabels.length).fill(null);
 
+      // Lock the points y-axis for the whole animation: max across ALL team points + projections, plus slight padding
+      const lpS = STATE.liveProb.fullSeries || {};
+      const lpVals = [].concat(lpS.tmaPts || [], lpS.tmbPts || [], lpS.tmaProj || [], lpS.tmbProj || []).map(Number).filter(v => isFinite(v));
+      const lpRawMax = lpVals.length ? Math.max(...lpVals) : 100;
+      const lpPadded = Math.max(10, lpRawMax * 1.05);
+      const lpStepRaw = lpPadded / 5;
+      const lpMag = Math.pow(10, Math.floor(Math.log10(lpStepRaw)));
+      const lpStep = [1, 2, 2.5, 5, 10].map(m => m * lpMag).find(v => v >= lpStepRaw) || lpStepRaw;
+      const lpAxis = { max: Math.ceil(lpPadded / lpStep) * lpStep, step: lpStep };
+
       const ctx = canvas.getContext('2d');
       STATE.liveProb.chartInstance = new Chart(ctx, {
         type: 'line',
@@ -7942,25 +8105,35 @@
                 }
               }
             },
+            // Top panel: stacked win-probability area (0% sits on the divider line)
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              weight: 2,            // higher weight = top of the stack
+              stack: 'lpPanels',
+              stackWeight: 1,
+              stacked: true,
+              title: { display: true, text: 'Win Prob (%)', color: textColor, font: { size: 11, weight: '700' } },
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { size: 10 }, stepSize: 25, callback: v => `${v}%` },
+              min: 0,
+              max: 100
+            },
+            // Bottom panel: points lines, y-axis LOCKED to the max of every actual/projection value in the matchup
             y: {
               type: 'linear',
               display: true,
               position: 'left',
-              title: { display: true, text: 'Points Scored', color: textColor, font: { size: 11, weight: '700' } },
+              weight: 1,
+              stack: 'lpPanels',
+              stackWeight: 1.5,
+              offset: true,         // breathing room so the top points label never collides with the 0% label on the divider
+              title: { display: true, text: 'Points', color: textColor, font: { size: 11, weight: '700' } },
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 10 } },
-              min: 0
-            },
-            y1: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              stacked: true,
-              title: { display: true, text: 'Win Probability (%)', color: textColor, font: { size: 11, weight: '700' } },
-              grid: { drawOnChartArea: false },
-              ticks: { color: textColor, font: { size: 10 }, callback: v => `${v}%` },
+              ticks: { color: textColor, font: { size: 10 }, stepSize: lpAxis.step },
               min: 0,
-              max: 100
+              max: lpAxis.max
             }
           }
         }
@@ -8079,15 +8252,18 @@
     }
 
     function restartReplay() {
-      STATE.liveProb.currentIdx = 1;
-      renderFrameAtIdx(1);
-      startReplay();
+      const total = STATE.liveProb.fullSeries ? STATE.liveProb.fullSeries.labels.length : 0;
+      let idx = 1;
+      if (PB.pos !== null && total > 0) idx = Math.max(1, Math.min(total, Math.round((PB.pos / 100) * total)));
+      if (PB.playing && total > 0 && idx >= total) idx = 1;
+      STATE.liveProb.currentIdx = idx;
+      renderFrameAtIdx(idx);
+      if (PB.playing) startReplay(); else pauseReplay();
     }
 
     function restartIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
-      const mult = STATE.liveProb.speedMultiplier || 6;
-      const intervalMs = Math.max(10, Math.round(120 / mult));
+      const intervalMs = PB.interval('live', 8);
 
       STATE.liveProb.animationTimer = setInterval(() => {
         const s = STATE.liveProb.fullSeries;
@@ -8333,17 +8509,10 @@
       const csvBtn = document.getElementById('btn-export-belt-csv');
       const pngBtn = document.getElementById('btn-export-belt-png');
 
-      if (playPauseBtn) playPauseBtn.addEventListener('click', toggleBeltPlayPause);
-      if (restartBtn) restartBtn.addEventListener('click', restartBeltReplay);
+      if (playPauseBtn) playPauseBtn.addEventListener('click', () => PB.onToggle('belt', toggleBeltPlayPause, () => STATE.belt.isPlaying));
+      if (restartBtn) restartBtn.addEventListener('click', () => PB.onRestart(restartBeltReplay));
 
-      if (speedSlider) {
-        speedSlider.addEventListener('input', (e) => {
-          const mult = Number(e.target.value);
-          STATE.belt.speedMultiplier = mult;
-          document.getElementById('belt-speed-val').innerText = `${mult}x`;
-          if (STATE.belt.isPlaying) restartBeltIntervalTimer();
-        });
-      }
+      if (speedSlider) PB.bindSlider(speedSlider.id);
 
       if (scrubber) {
         scrubber.addEventListener('input', (e) => {
@@ -8351,6 +8520,7 @@
           const total = STATE.belt.lineage ? STATE.belt.lineage.rows.length : 0;
           if (total === 0) return;
           pauseBeltReplay();
+          PB.playing = false; PB.onScrub(() => false, pct);   // scrubbing the belt pauses it, so the pause is shared too
           const targetIdx = Math.max(0, Math.min(total - 1, Math.round((pct / 100) * (total - 1))));
           STATE.belt.currentIdx = targetIdx;
           const row = STATE.belt.lineage.rows[targetIdx];
@@ -8502,7 +8672,7 @@
       const bottomY = (cellTop + targetCell.offsetHeight) - beltH - 1;
 
       if (animateGlide) {
-        const mult = STATE.belt.speedMultiplier || 2.0;
+        const mult = PB.mult() * 2;
         const glideMs = Math.max(150, Math.round(420 / mult));
         beltEl.style.transition = `left ${glideMs}ms cubic-bezier(0.22, 1, 0.36, 1), top ${glideMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
       } else {
@@ -8567,7 +8737,7 @@
       const row = lineage.rows[rowIdx];
       if (!row || !row.beltChanged) return;
 
-      const mult = STATE.belt.speedMultiplier || 2.0;
+      const mult = PB.mult() * 2;
       const transferDelay = Math.max(130, Math.round(380 / mult));
 
       STATE.belt.subTimer = setTimeout(() => {
@@ -8619,11 +8789,21 @@
       STATE.belt.currentIdx = 0;
       STATE.belt.activeCol = 'mgr';
 
-      renderBeltFrameAtIdx(0, 'mgr', true);
-      scheduleBeltWinnerTransfer(0);
-
       const lineage = STATE.belt.lineage;
-      if (lineage && lineage.rows.length > 1) {
+      const total = lineage ? lineage.rows.length : 0;
+      let idx = 0;
+      if (PB.pos !== null && total > 1) idx = Math.max(0, Math.min(total - 1, Math.round((PB.pos / 100) * (total - 1))));
+      if (PB.playing && total > 1 && idx >= total - 1) idx = 0;
+      if (idx === 0) {
+        renderBeltFrameAtIdx(0, 'mgr', true);
+        scheduleBeltWinnerTransfer(0);
+      } else {
+        const row = lineage.rows[idx];
+        STATE.belt.activeCol = row && row.beltChanged ? 'opp' : 'mgr';
+        renderBeltFrameAtIdx(idx, STATE.belt.activeCol, false);
+      }
+
+      if (total > 1 && PB.playing) {
         startBeltReplay();
       } else {
         updateBeltPlayPauseUI();
@@ -8632,8 +8812,8 @@
 
     function restartBeltIntervalTimer() {
       if (STATE.belt.animationTimer) clearInterval(STATE.belt.animationTimer);
-      const mult = STATE.belt.speedMultiplier || 2.0;
-      const intervalMs = Math.max(140, Math.round(920 / mult));
+      const mult = PB.mult() * 2;   // belt sub-delays were tuned at the old 2x default; 1x now equals that pace
+      const intervalMs = PB.interval('belt', 90);
 
       STATE.belt.animationTimer = setInterval(() => {
         const lineage = STATE.belt.lineage;
@@ -10729,7 +10909,7 @@
       // Columns that never name a team (players, dates, ids, picks...)
       const TX_SKIP_COL_RE = /player|pid|week|^wk$|year|^yr$|season|league|stamp|date|time|status|type|points|score|pick|round|note|desc|position|^pos$|nfl|bye|^id$|transaction_id|tx_id|trade_id|^rowid$|faab|bid|waiver|count|rank/i;
       // Numeric values are only read as team ids in columns that look like they hold a team / manager
-      const TX_NUMCOL_RE = /team|(^|_)tm|from|(^|_)to(_|$)|partner|trader|opponent|other|owner|dest|source|receiv|send|give|(^|_)get|manager|mgr|(^|_)[ab]$/i;
+      const TX_NUMCOL_RE = /team|(^|_)tm|from|(^|_)to(_|$)|partner|trader|opponent|other|owner|dest|source|orig|(^|_)src|recipient|target|receiv|send|give|(^|_)get|manager|mgr|(^|_)[ab]$/i;
       const teamNameMgr = {};
       (STATE.data.teams || []).forEach(t => {
         const y = Number(getVal(t, ['year', 'YR']));
@@ -10797,13 +10977,25 @@
         else if (stamp !== undefined && stamp !== null && stamp !== '') evKey = `${sKey}|t${stamp}`;
         else evKey = `${sKey}|w${wkRaw === undefined || wkRaw === null ? '' : wkRaw}|${[...mgrs].sort().join('+') || ('row' + rowIdx)}`;
         let ev = tradeEvents.get(evKey);
-        if (!ev) { ev = { sKey, mgrs: new Set() }; tradeEvents.set(evKey, ev); }
+        if (!ev) { ev = { sKey, mgrs: new Set(), origin: new Set(), dest: new Set() }; tradeEvents.set(evKey, ev); }
         mgrs.forEach(m => ev.mgrs.add(m));
+        // Track origin vs destination columns separately: a transaction id with only ONE origin must credit the trade to
+        // that origin AND every destination (previously a destination that sat in its own column could be missed).
+        Object.keys(tx).forEach(col => {
+          if (TX_SKIP_COL_RE.test(col)) return;
+          const isOrig = /(^|_)(orig|origin|source|src|from|sender|giver)/i.test(col);
+          const isDest = /(^|_)(dest|destination|to|recipient|receiver|recv|target)(_|$|id|team|tm)/i.test(col);
+          if (!isOrig && !isDest) return;
+          const v = tx[col];
+          if (v === undefined || v === null || v === '') return;
+          resolveTxMgrs(v, yr, trLg, col).forEach(m => { (isOrig ? ev.origin : ev.dest).add(m); });
+        });
       });
 
       const tradeSeasonTotals = {};
       let tradeGrandAll = 0;
       tradeEvents.forEach(ev => {
+        if (ev.origin && ev.origin.size === 1) ev.dest.forEach(m => ev.mgrs.add(m));   // single-origin: origin + destination both count
         ev.mgrs.forEach(mgr => {
           if (!tradesMatrix[mgr]) tradesMatrix[mgr] = { bySeason: {}, grandTotal: 0 };
           tradesMatrix[mgr].bySeason[ev.sKey] = (tradesMatrix[mgr].bySeason[ev.sKey] || 0) + 1;
