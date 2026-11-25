@@ -1994,8 +1994,8 @@
     // ==========================================
     // SHARED PLAYBACK CONTROLS (Survivor, Props, Wins Above Even, Live Win Prob, Belt)
     // One speed / play-pause / scrubber state for the whole microsite, locked together and persisted in the URL
-    // (`spd`, `pb`, `pos`). The speed slider is logarithmic with 1x in the MIDDLE (0.25x ... 4x); 1x equals the
-    // default pace each tab had before, so every tab moves at the same relative speed.
+    // (`spd`, `pb`, `pos`). The speed slider is logarithmic with 1x in the MIDDLE (0.1x ... 10x); the displayed 1x runs
+    // FAST_BASE (2.5x) the old default pace, so every tab moves at the same relative speed.
     // ==========================================
     const PB = {
       spd: 50,          // slider position 0..100 (50 = middle = 1x)
@@ -2004,9 +2004,11 @@
       BASE: { survivor: 375, props: 175, wae: 175, belt: 460, live: 20 },   // ms per step at 1x
       SLIDERS: [['survivor-speed-slider', 'survivor-speed-val'], ['div-speed-slider', 'div-speed-val'], ['wae-speed-slider', 'wae-speed-val'], ['replay-speed-slider', 'replay-speed-val'], ['belt-speed-slider', 'belt-speed-val']],
       SCRUBBERS: { survivor: 'survivor-scrubber', props: 'div-scrubber', wins_above: 'wae-scrubber', live_prob: 'replay-scrubber', belt: 'belt-scrubber' },
-      mult() { return Math.pow(4, (this.spd - 50) / 50); },
+      FAST_BASE: 2.5,   // displayed 1x runs 2.5x the previous default pace
+      sliderMult() { return Math.pow(10, (this.spd - 50) / 50); },   // 0.1x ... 1x ... 10x (what the label shows)
+      mult() { return this.sliderMult() * this.FAST_BASE; },        // effective speed used for all timing
       label() {
-        const m = this.mult();
+        const m = this.sliderMult();
         return (m < 1 ? m.toFixed(2) : m.toFixed(1)).replace(/\.?0+$/, '') + 'x';
       },
       interval(key, minMs) { return Math.max(minMs, Math.round(this.BASE[key] / this.mult())); },
@@ -6343,7 +6345,7 @@
 
     function restartSurvivorIntervalTimer() {
       if (STATE.survivor.animationTimer) clearInterval(STATE.survivor.animationTimer);
-      const intervalMs = PB.interval('survivor', 60);
+      const intervalMs = PB.interval('survivor', 12);
 
       STATE.survivor.animationTimer = setInterval(() => {
         const s = STATE.survivor.fullSeries;
@@ -6826,7 +6828,7 @@
           data: [...emptyArray],
           backgroundColor: mgrColor,
           borderColor: isDark ? '#0f172a' : '#ffffff',
-          borderWidth: meta.manager === 'Dan' ? 1.5 : 0.5,
+          borderWidth: meta.manager === 'Dan' ? 0 : 0.5,
           stack: 'div',
           order: 2,
           barPercentage: 0.55
@@ -6983,7 +6985,7 @@
     function restartDivIntervalTimer() {
       if (STATE.props.animationTimer) clearInterval(STATE.props.animationTimer);
 
-      const intervalMs = PB.interval('props', 25);
+      const intervalMs = PB.interval('props', 6);
 
       STATE.props.animationTimer = setInterval(() => {
         const s = STATE.props.fullSeries;
@@ -7520,7 +7522,7 @@
     function restartWaeIntervalTimer() {
       if (STATE.wae.animationTimer) clearInterval(STATE.wae.animationTimer);
 
-      const intervalMs = PB.interval('wae', 25);
+      const intervalMs = PB.interval('wae', 6);
 
       STATE.wae.animationTimer = setInterval(() => {
         const s = STATE.wae.fullSeries;
@@ -8263,7 +8265,7 @@
 
     function restartIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
-      const intervalMs = PB.interval('live', 8);
+      const intervalMs = PB.interval('live', 4);
 
       STATE.liveProb.animationTimer = setInterval(() => {
         const s = STATE.liveProb.fullSeries;
@@ -8813,7 +8815,7 @@
     function restartBeltIntervalTimer() {
       if (STATE.belt.animationTimer) clearInterval(STATE.belt.animationTimer);
       const mult = PB.mult() * 2;   // belt sub-delays were tuned at the old 2x default; 1x now equals that pace
-      const intervalMs = PB.interval('belt', 90);
+      const intervalMs = PB.interval('belt', 18);
 
       STATE.belt.animationTimer = setInterval(() => {
         const lineage = STATE.belt.lineage;
@@ -10970,6 +10972,21 @@
           if (v === undefined || v === null || v === '') return;
           resolveTxMgrs(v, yr, trLg, col).forEach(m => mgrs.add(m));
         });
+        // Exact rule when the table has the standard origin / destination team_id columns: a trade (distinct transaction_id)
+        // counts once for every manager whose team_id appears in EITHER origin OR destination on ANY of its rows - so a
+        // single-origin trade (one origin, several players / rows) credits the origin AND each destination.
+        const oCol = Object.keys(tx).find(c => /^(origin|orig|origin_team_id|origin_id)$/i.test(c));
+        const dCol = Object.keys(tx).find(c => /^(destination|dest|destination_team_id|destination_id)$/i.test(c));
+        if (oCol && dCol) {
+          mgrs.clear();
+          [tx[oCol], tx[dCol]].forEach(v => {
+            if (v === undefined || v === null || v === '') return;
+            (String(v).match(/\d+/g) || []).forEach(n => {
+              const m = getManagerName(Number(n), yr, '', trLg);
+              if (m && !/^Team \d+$/.test(m)) mgrs.add(m);
+            });
+          });
+        }
         if (mgrs.size === 0) tradeRowsUnresolved++;
 
         let evKey;
