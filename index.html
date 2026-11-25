@@ -8267,10 +8267,10 @@
 
     function restartIntervalTimer() {
       if (STATE.liveProb.animationTimer) clearInterval(STATE.liveProb.animationTimer);
-      // Live Win Prob only: the shared 1x runs LIVE_SPEED_BOOST (10x) faster than the other playback tabs.
+      // Live Win Prob only: the shared 1x runs LIVE_SPEED_BOOST (2.5x) faster than the other playback tabs.
       // Browsers can't fire timers faster than ~4ms, so tick at a steady rate and advance several data points per
       // tick based on elapsed time. The slider (0.1x ... 10x) still scales the pace as before.
-      const LIVE_SPEED_BOOST = 10;
+      const LIVE_SPEED_BOOST = 2.5;
       const perStepMs = PB.BASE.live / (PB.mult() * LIVE_SPEED_BOOST);   // ms of replay time per data point
       const tickMs = 16;
       let lastT = performance.now(), acc = 0;
